@@ -14,9 +14,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * Class to define a 5D boolean mask and make basic boolean operation between masks.<br>
- * The bounds property of this object define the area of the mask where the mask contains the
- * boolean mask itself.
+ * Class to define a 5D boolean mask region and make basic boolean operation between masks.<br>
+ * The bounds property of this object represents the region defined by the boolean mask.
  * 
  * @author Stephane
  */
@@ -88,7 +87,7 @@ public class BooleanMask5D
      * 
      * <pre>
      *        mask1          +       mask2        =      result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############     ################
      *     ############             ############     ################
@@ -146,7 +145,7 @@ public class BooleanMask5D
      * 
      * <pre>
      *        mask1     intersect     mask2      =        result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############       ############
      *     ############             ############         ########
@@ -204,7 +203,7 @@ public class BooleanMask5D
      * 
      * <pre>
      *          mask1       xor      mask2        =       result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##            ##
      *     ############             ############     ####        ####
@@ -262,7 +261,7 @@ public class BooleanMask5D
      * 
      * <pre>
      *        mask1          -        mask2       =  result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##
      *     ############             ############     ####
@@ -1040,6 +1039,19 @@ public class BooleanMask5D
         }
 
         return result.asArray();
+    }
+
+    /**
+     * Return the number of points contained in this boolean mask.
+     */
+    public int getNumberOfPoints()
+    {
+        int result = 0;
+
+        for (BooleanMask4D mask4d : mask.values())
+            result += mask4d.getNumberOfPoints();
+
+        return result;
     }
 
     /**

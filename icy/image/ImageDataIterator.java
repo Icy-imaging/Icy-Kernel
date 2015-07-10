@@ -42,17 +42,15 @@ public class ImageDataIterator implements DataIterator
     protected final IcyBufferedImage image;
     protected final DataType dataType;
 
-    protected int startX, endX;
-    protected int startY, endY;
-
-    protected final int fixedC, fixedZ, fixedT;
-    protected final boolean inclusive;
-
     /**
      * internals
      */
-    protected BooleanMask2D maskXY;
+    protected final BooleanMask2D mask;
+    protected final Rectangle bounds;
+    protected final int w, h;
+    protected final int c;
     protected int x, y;
+    protected int off;
     protected boolean done;
     protected Object data;
 
@@ -66,36 +64,54 @@ public class ImageDataIterator implements DataIterator
      * @param channel
      *        channel (C position) we want to iterate data
      */
-    public ImageDataIterator(IcyBufferedImage image, Rectangle XYBounds, int channel)
+    protected ImageDataIterator(IcyBufferedImage image, Rectangle boundsXY, BooleanMask2D maskXY, int channel)
     {
         super();
 
+        final Rectangle bnd;
+
+        if (boundsXY != null)
+            bnd = boundsXY;
+        else
+            bnd = maskXY.bounds;
+
         this.image = image;
-        maskXY = null;
-        fixedZ = 0;
-        fixedT = 0;
-        inclusive = false;
+        this.mask = maskXY;
 
         if (image != null)
         {
             dataType = image.getDataType_();
-
-            final Rectangle bounds = XYBounds.intersection(image.getBounds());
-
-            startX = bounds.x;
-            endX = (bounds.x + bounds.width) - 1;
-            startY = bounds.y;
-            endY = (bounds.y + bounds.height) - 1;
-            fixedC = channel;
+            bounds = bnd.intersection(image.getBounds());
+            c = channel;
         }
         else
         {
             dataType = DataType.UNDEFINED;
-            fixedC = 0;
+            bounds = new Rectangle();
+            c = 0;
         }
+
+        // cached
+        w = bounds.width;
+        h = bounds.height;
 
         // start iterator
         reset();
+    }
+
+    /**
+     * Create a new ImageData iterator to iterate data through the specified XY region and channel.
+     * 
+     * @param image
+     *        Image we want to iterate data from
+     * @param boundsXY
+     *        XY region to iterate (inclusive).
+     * @param channel
+     *        channel (C position) we want to iterate data
+     */
+    public ImageDataIterator(IcyBufferedImage image, Rectangle boundsXY, int channel)
+    {
+        this(image, boundsXY, null, channel);
     }
 
     /**
@@ -152,34 +168,7 @@ public class ImageDataIterator implements DataIterator
      */
     public ImageDataIterator(IcyBufferedImage image, BooleanMask2D maskXY, int channel)
     {
-        super();
-
-        this.image = image;
-        this.maskXY = maskXY;
-        fixedZ = 0;
-        fixedT = 0;
-        inclusive = false;
-
-        if (image != null)
-        {
-            dataType = image.getDataType_();
-
-            final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
-
-            startX = bounds.x;
-            endX = (bounds.x + bounds.width) - 1;
-            startY = bounds.y;
-            endY = (bounds.y + bounds.height) - 1;
-            fixedC = channel;
-        }
-        else
-        {
-            dataType = DataType.UNDEFINED;
-            fixedC = 0;
-        }
-
-        // start iterator
-        reset();
+        this(image, null, maskXY, channel);
     }
 
     /**
@@ -202,52 +191,68 @@ public class ImageDataIterator implements DataIterator
         this(image, roi.getBooleanMask2D(0, 0, 0, false));
     }
 
+    public int getMinX()
+    {
+        return bounds.x;
+    }
+
+    public int getMaxX()
+    {
+        return (bounds.x + bounds.width) - 1;
+    }
+
+    public int getMinY()
+    {
+        return bounds.y;
+    }
+
+    public int getMaxY()
+    {
+        return (bounds.y + bounds.height) - 1;
+    }
+
     @Override
     public void reset()
     {
-        done = (image == null) || (fixedC < 0) || (fixedC >= image.getSizeC()) || (startY > endY) || (startX > endX);
+        done = (image == null) || (c < 0) || (c >= image.getSizeC()) || bounds.isEmpty();
 
         if (!done)
         {
             // get data
-            data = image.getDataXY(fixedC);
+            data = image.getDataXY(c);
 
-            // and set start XY position
-            y = startY;
-            x = startX - 1;
-            // allow to correctly set the XY position with boolean mask
+            // reset position
+            y = 0;
+            x = -1;
+            off = -1;
+            // allow to correctly set initial position in boolean mask
             next();
         }
-    }
-
-    protected boolean maskContains()
-    {
-        return maskXY.mask[(x - maskXY.bounds.x) + ((y - maskXY.bounds.y) * maskXY.bounds.width)];
     }
 
     @Override
     public void next()
     {
-        internalNext();
+        nextPosition();
 
-        // advance while ROI do not contains current point
-        if (maskXY != null)
+        if (mask != null)
         {
-            while (!done && !maskContains())
-                internalNext();
+            // advance while mask do not contains current point
+            while (!done && !mask.mask[off])
+                nextPosition();
         }
     }
 
     /**
-     * Advance one position.
+     * Advance one position
      */
-    protected void internalNext()
+    protected void nextPosition()
     {
-        if (++x > endX)
+        off++;
+        if (++x >= w)
         {
-            x = startX;
-
-            if (++y > endY)
+            x = 0;
+            if (++y >= h)
                 done = true;
         }
     }
@@ -264,7 +269,7 @@ public class ImageDataIterator implements DataIterator
         if (done)
             throw new NoSuchElementException(null);
 
-        return Array1DUtil.getValue(data, image.getOffset(x, y), dataType);
+        return Array1DUtil.getValue(data, image.getOffset(x + bounds.x, y + bounds.y), dataType);
     }
 
     @Override
@@ -273,13 +278,13 @@ public class ImageDataIterator implements DataIterator
         if (done)
             throw new NoSuchElementException(null);
 
-        Array1DUtil.setValue(data, image.getOffset(x, y), dataType, value);
+        Array1DUtil.setValue(data, image.getOffset(x + bounds.x, y + bounds.y), dataType, value);
     }
 
     /**
      * Returns current X position.
      */
-    public int getPositionX()
+    public int getX()
     {
         return x;
     }
@@ -287,7 +292,7 @@ public class ImageDataIterator implements DataIterator
     /**
      * Returns current Y position.
      */
-    public int getPositionY()
+    public int getY()
     {
         return y;
     }
@@ -295,8 +300,35 @@ public class ImageDataIterator implements DataIterator
     /**
      * Returns C position (fixed)
      */
+    public int getC()
+    {
+        return c;
+    }
+
+    /**
+     * @deprecated Use {@link #getX()} instead
+     */
+    @Deprecated
+    public int getPositionX()
+    {
+        return x;
+    }
+
+    /**
+     * @deprecated Use {@link #getY()} instead
+     */
+    @Deprecated
+    public int getPositionY()
+    {
+        return y;
+    }
+
+    /**
+     * @deprecated Use {@link #getC()} instead
+     */
+    @Deprecated
     public int getPositionC()
     {
-        return fixedC;
+        return c;
     }
 }

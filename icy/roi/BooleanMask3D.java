@@ -9,9 +9,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * Class to define a 3D boolean mask and make basic boolean operation between masks.<br>
- * The bounds property of this object define the area of the mask where the mask contains the
- * boolean mask itself.
+ * Class to define a 3D boolean mask region and make basic boolean operation between masks.<br>
+ * The bounds property of this object represents the region defined by the boolean mask.
  * 
  * @author Stephane
  */
@@ -785,7 +784,7 @@ public class BooleanMask3D implements Cloneable
         }
     }
 
-    int[] toInt3D(int[] source2D, int z)
+    protected int[] toInt3D(int[] source2D, int z)
     {
         final int[] result = new int[(source2D.length * 3) / 2];
 
@@ -796,6 +795,19 @@ public class BooleanMask3D implements Cloneable
             result[pt++] = source2D[i + 1];
             result[pt++] = z;
         }
+
+        return result;
+    }
+
+    /**
+     * Return the number of points contained in this boolean mask.
+     */
+    public int getNumberOfPoints()
+    {
+        int result = 0;
+
+        for (BooleanMask2D mask2d : mask.values())
+            result += mask2d.getNumberOfPoints();
 
         return result;
     }
@@ -830,14 +842,12 @@ public class BooleanMask3D implements Cloneable
 
     /**
      * Return an array of {@link icy.type.point.Point3D.Integer} containing the contour/surface
-     * points
-     * of the 3D mask.<br>
+     * points of the 3D mask.<br>
      * Points are returned in ascending XYZ order. <br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
      * It returns all points from the first and the last Z slices + contour points for intermediate
-     * Z
-     * slices.
+     * Z slices.
      * 
      * @see #getContourPointsAsIntArray()
      */
@@ -856,8 +866,7 @@ public class BooleanMask3D implements Cloneable
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
      * It returns all points from the first and the last Z slices + contour points for intermediate
-     * Z
-     * slices.
+     * Z slices.
      * 
      * @see #getContourPoints()
      */

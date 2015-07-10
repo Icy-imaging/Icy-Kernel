@@ -21,6 +21,7 @@ package icy.gui.frame;
 import icy.file.FileUtil;
 import icy.image.ImageUtil;
 import icy.resource.ResourceUtil;
+import icy.util.Random;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -56,10 +57,7 @@ public class SplashScreenFrame extends JFrame
             final String[] files = FileUtil.getFiles(SPLASH_FOLDER, null, false, false, false);
 
             if (files.length > 0)
-            {
-                final String fileName = files[(int) Math.round(Math.random() * (files.length - 1))];
-                image = ImageUtil.load(fileName);
-            }
+                image = ImageUtil.load(files[Random.nextInt(files.length)]);
             else
                 image = null;
 

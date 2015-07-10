@@ -35,7 +35,7 @@ import java.util.NoSuchElementException;
  * as double in XYCZT <i>([T[Z[C[Y[X}}]]])</i> dimension order.<br>
  * Whatever is the internal {@link DataType} data is returned and set as double.<br>
  * <b>If the sequence size or type is modified during iteration the iterator
- * becomes invalid and can causes exception to happen.</b>
+ * becomes invalid and can exception can happen.</b>
  * 
  * @author Stephane
  */
@@ -184,14 +184,14 @@ public class SequenceDataIterator implements DataIterator
      * @param inclusive
      *        If true then all partially contained (intersected) pixels in the ROI are included.
      * @param z
-     *        The specific Z position (slice) we want to iterate or <code>-1</code> to iterate over the whole
-     *        ROI Z dimension.
+     *        The specific Z position (slice) we want to iterate or <code>-1</code> to iterate over
+     *        the whole ROI Z dimension.
      * @param t
-     *        The specific T position (frame) we want to iterate or <code>-1</code> to iterate over the whole
-     *        ROI T dimension.
+     *        The specific T position (frame) we want to iterate or <code>-1</code> to iterate over
+     *        the whole ROI T dimension.
      * @param c
-     *        The specific C position (channel) we want to iterate or <code>-1</code> to iterate over the
-     *        whole ROI C dimension.
+     *        The specific C position (channel) we want to iterate or <code>-1</code> to iterate
+     *        over the whole ROI C dimension.
      */
     public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive, int z, int t, int c)
     {

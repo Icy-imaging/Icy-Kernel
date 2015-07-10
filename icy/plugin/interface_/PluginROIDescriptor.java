@@ -40,13 +40,13 @@ public interface PluginROIDescriptor extends PluginNoEDTConstructor
      * Computes the descriptor(s) (declared in the {@link #getDescriptors()}) on the
      * specified ROI. Depending on the type of descriptor and ROI, this method may compute (and
      * populate the map with) only a subset of the declared descriptors.<br/>
-     * Note this using this method may be faster than calling the <code>compute</code> method for
+     * Note that using this method may be faster than calling the <code>compute</code> method for
      * each descriptor separately as some descriptor may group their calculation.
      * 
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
-     *        an optional sequence where the pixel size can be retrieved
+     *        an optional sequence where the pixel informations can be retrieved
      * @param z
      *        the specific Z position (slice) where we want to compute the descriptor or
      *        <code>-1</code> to compute it over the whole ROI Z dimension.

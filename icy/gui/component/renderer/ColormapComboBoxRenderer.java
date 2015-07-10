@@ -20,7 +20,12 @@ package icy.gui.component.renderer;
 
 import icy.gui.lut.ColormapIcon;
 import icy.image.colormap.IcyColorMap;
+import icy.util.ReflectionUtil;
 
+import java.awt.Dimension;
+import java.awt.Insets;
+
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JList;
 
@@ -33,21 +38,19 @@ public class ColormapComboBoxRenderer extends CustomComboBoxRenderer
      * 
      */
     private static final long serialVersionUID = 8439070623266035911L;
-    
-    private final int width;
-    private final int height;
 
+    /**
+     * @deprecated Use {@link #ColormapComboBoxRenderer(JComboBox)} instead
+     */
+    @Deprecated
     public ColormapComboBoxRenderer(JComboBox combo, int w, int h)
     {
-        super(combo);
-
-        this.width = w;
-        this.height = h;
+        this(combo);
     }
 
     public ColormapComboBoxRenderer(JComboBox combo)
     {
-        this(combo, 64, 16);
+        super(combo);
     }
 
     @Override
@@ -56,9 +59,33 @@ public class ColormapComboBoxRenderer extends CustomComboBoxRenderer
         if (value instanceof IcyColorMap)
         {
             final IcyColorMap colormap = (IcyColorMap) value;
+            final JComboBox comboBox = getComboBox();
+            final Dimension dim = comboBox.getSize();
+            int btnWidth;
 
-            setIcon(new ColormapIcon(colormap, width, height));
-            setText(null);
+            try
+            {
+                // a bit ugly but we really want to access it
+                final JButton popBtn = (JButton) ReflectionUtil.getFieldObject(comboBox.getUI(), "arrowButton", true);
+                
+                btnWidth = popBtn.getWidth();
+                if (btnWidth <= 0)
+                    btnWidth = popBtn.getPreferredSize().width;
+                if (btnWidth <= 0)
+                    btnWidth = 20;
+            }
+            catch (Exception e)
+            {
+                btnWidth = 20;
+            }
+
+            final Insets insets = getInsets();
+
+            dim.width -= btnWidth + insets.left + insets.right;
+            dim.height -= insets.top + insets.bottom + 2;
+
+            setIcon(new ColormapIcon(colormap, dim.width, dim.height));
+            setText("");
             setToolTipText("Set " + colormap.getName() + " colormap");
             setEnabled(list.isEnabled());
             setFont(list.getFont());

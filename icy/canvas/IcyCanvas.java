@@ -4483,95 +4483,24 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * Sequence overlay has changed
      * 
      * @param overlay
-     *        overlay which has changed (null if global overlay changed)
+     *        overlay which has changed
      * @param type
      *        event type
      */
     protected void sequenceOverlayChanged(Overlay overlay, SequenceEventType type)
     {
-        final Sequence sequence = getSequence();
-
         switch (type)
         {
             case ADDED:
-                // handle special case of multiple adds
-                if (overlay == null)
-                {
-                    if (sequence != null)
-                    {
-                        final Set<Overlay> overlays = getOverlays();
-
-                        beginUpdate();
-                        try
-                        {
-                            // add layers which are present in sequence and not in canvas
-                            for (Overlay seqOverlay : sequence.getOverlaySet())
-                                if (!overlays.contains(seqOverlay))
-                                    addLayer(seqOverlay);
-                        }
-                        finally
-                        {
-                            endUpdate();
-                        }
-                    }
-                }
-                else
-                    addLayer(overlay);
+                addLayer(overlay);
                 break;
 
             case REMOVED:
-                // handle special case of multiple removes
-                if (overlay == null)
-                {
-                    if (sequence != null)
-                    {
-                        final Set<Overlay> seqOverlays = sequence.getOverlaySet();
-
-                        beginUpdate();
-                        try
-                        {
-                            // remove layers which are not anymore present in sequence
-                            for (Overlay o : getOverlays())
-                                if ((o != imageOverlay) && !seqOverlays.contains(o))
-                                    removeLayer(o);
-                        }
-                        finally
-                        {
-                            endUpdate();
-                        }
-                    }
-                }
-                else
-                    removeLayer(overlay);
+                removeLayer(overlay);
                 break;
 
             case CHANGED:
-                // handle special case of multiple removes or/and adds
-                if (overlay == null)
-                {
-                    if (sequence != null)
-                    {
-                        final Set<Overlay> overlays = getOverlays();
-                        final Set<Overlay> seqOverlays = sequence.getOverlaySet();
-
-                        beginUpdate();
-                        try
-                        {
-                            // remove layers which are not anymore present in sequence
-                            for (Overlay o : getOverlays())
-                                if ((o != imageOverlay) && !seqOverlays.contains(o))
-                                    removeLayer(o);
-                            // add layers which are present in sequence and not in canvas
-                            for (Overlay seqOverlay : seqOverlays)
-                                if (!overlays.contains(seqOverlay))
-                                    addLayer(seqOverlay);
-                        }
-                        finally
-                        {
-                            endUpdate();
-                        }
-                    }
-                }
+                // nothing to do here
                 break;
         }
     }

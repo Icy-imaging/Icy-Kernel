@@ -3,7 +3,6 @@
  */
 package plugins.kernel.roi.descriptor.basic;
 
-import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
@@ -15,18 +14,11 @@ import icy.sequence.Sequence;
  */
 public class ContourROIDescriptor extends ROIDescriptor
 {
-    public static final String ID = BasicROIDescriptorPlugin.ID_CONTOUR;
+    public static final String ID = "Contour";
 
-    @Override
-    public String getId()
+    public ContourROIDescriptor()
     {
-        return ID;
-    }
-
-    @Override
-    public String getName()
-    {
-        return "Contour";
+        super(ID, "Contour", Double.class);
     }
 
     @Override
@@ -42,15 +34,9 @@ public class ContourROIDescriptor extends ROIDescriptor
     }
 
     @Override
-    public Class<?> getType()
+    public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        return Double.class;
-    }
-
-    @Override
-    public Object compute(ROI roi, Sequence sequence, int z, int t, int c) throws UnsupportedOperationException
-    {
-        return Double.valueOf(computeContour(roi, z, t, c));
+        return Double.valueOf(computeContour(roi));
     }
 
     /**
@@ -58,34 +44,10 @@ public class ContourROIDescriptor extends ROIDescriptor
      * 
      * @param roi
      *        the ROI on which we want to compute the number of contour point
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
      * @return the number of contour point
-     * @throws UnsupportedOperationException
-     *         if the specified Z, T or C position are not supported for this descriptor.
      */
-    public static double computeContour(ROI roi, int z, int t, int c) throws UnsupportedOperationException
+    public static double computeContour(ROI roi)
     {
-        if ((z != -1) || (t != -1) || (c != -1))
-        {
-            // use the boolean mask
-            final BooleanMask2D mask = roi.getBooleanMask2D(z, t, c, true);
-
-            if (mask == null)
-                throw new UnsupportedOperationException("Can't process '" + ID
-                        + "' calculation on a specific Z, T, C position.");
-
-            // use the contour length of the mask
-            return mask.getContourLength();
-        }
-
         return roi.getNumberOfContourPoints();
     }
 
@@ -107,6 +69,7 @@ public class ContourROIDescriptor extends ROIDescriptor
      *        the input sequence used to retrieve operation unit by using pixel size information.
      * @param dim
      *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
+     * @return the number of contour point
      * @see Sequence#getBestPixelSizeUnit(int, int)
      * @throws UnsupportedOperationException
      *         if the contour calculation for the specified dimension is not supported by the ROI
@@ -114,7 +77,7 @@ public class ContourROIDescriptor extends ROIDescriptor
     static double computeContour(double contourPoints, ROI roi, Sequence sequence, int dim)
             throws UnsupportedOperationException
     {
-        final double mul = BasicROIDescriptorPlugin.getMultiplierFactor(sequence, roi, dim);
+        final double mul = BasicMeasureROIDescriptorsPlugin.getMultiplierFactor(sequence, roi, dim);
 
         // 0 means the operation is not supported for this ROI
         if (mul == 0d)

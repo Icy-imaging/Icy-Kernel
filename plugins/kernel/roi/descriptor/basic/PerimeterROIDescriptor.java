@@ -5,6 +5,7 @@ package plugins.kernel.roi.descriptor.basic;
 
 import icy.math.UnitUtil.UnitPrefix;
 import icy.roi.ROI;
+import icy.roi.ROI2D;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
 
@@ -15,18 +16,11 @@ import icy.sequence.Sequence;
  */
 public class PerimeterROIDescriptor extends ROIDescriptor
 {
-    public static final String ID = BasicROIDescriptorPlugin.ID_PERIMETER;
+    public static final String ID = "Perimeter";
 
-    @Override
-    public String getId()
+    public PerimeterROIDescriptor()
     {
-        return ID;
-    }
-
-    @Override
-    public String getName()
-    {
-        return "Perimeter";
+        super(ID, "Perimeter", Double.class);
     }
 
     @Override
@@ -45,15 +39,9 @@ public class PerimeterROIDescriptor extends ROIDescriptor
     }
 
     @Override
-    public Class<?> getType()
+    public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        return Double.class;
-    }
-
-    @Override
-    public Object compute(ROI roi, Sequence sequence, int z, int t, int c) throws UnsupportedOperationException
-    {
-        return Double.valueOf(computePerimeter(roi, sequence, z, t, c));
+        return Double.valueOf(computePerimeter(roi, sequence));
     }
 
     /**
@@ -65,24 +53,16 @@ public class PerimeterROIDescriptor extends ROIDescriptor
      *        the ROI on which we want to compute the perimeter
      * @param sequence
      *        an optional sequence where the pixel size can be retrieved
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
      * @return the perimeter
      * @throws UnsupportedOperationException
-     *         if the specified Z, T or C position are not supported for this descriptor or if
-     *         perimeter calculation is not supported on this ROI.
+     *         if the operation is not supported for this ROI
      */
-    public static double computePerimeter(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException
+    public static double computePerimeter(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        return computePerimeter(ContourROIDescriptor.computeContour(roi, z, t, c), roi, sequence);
+        if (!(roi instanceof ROI2D))
+            throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
+
+        return computePerimeter(ContourROIDescriptor.computeContour(roi), roi, sequence);
     }
 
     /**
@@ -97,10 +77,12 @@ public class PerimeterROIDescriptor extends ROIDescriptor
      * @param sequence
      *        the input sequence used to retrieve operation unit by using pixel size
      *        information.
+     * @return the perimeter
      * @throws UnsupportedOperationException
-     *         if the perimeter calculation for the specified dimension is not supported by the ROI
+     *         if the operation is not supported for this ROI
      */
-    static double computePerimeter(double contourPoints, ROI roi, Sequence sequence) throws UnsupportedOperationException
+    public static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
+            throws UnsupportedOperationException
     {
         try
         {

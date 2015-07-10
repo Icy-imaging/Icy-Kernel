@@ -3,7 +3,6 @@
  */
 package plugins.kernel.roi.descriptor.basic;
 
-import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
@@ -15,18 +14,11 @@ import icy.sequence.Sequence;
  */
 public class InteriorROIDescriptor extends ROIDescriptor
 {
-    public static final String ID = BasicROIDescriptorPlugin.ID_INTERIOR;
+    public static final String ID = "Interior";
 
-    @Override
-    public String getId()
+    public InteriorROIDescriptor()
     {
-        return ID;
-    }
-
-    @Override
-    public String getName()
-    {
-        return "Interior";
+        super(ID, "Interior", Double.class);
     }
 
     @Override
@@ -42,15 +34,9 @@ public class InteriorROIDescriptor extends ROIDescriptor
     }
 
     @Override
-    public Class<?> getType()
+    public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        return Double.class;
-    }
-
-    @Override
-    public Object compute(ROI roi, Sequence sequence, int z, int t, int c) throws UnsupportedOperationException
-    {
-        return Double.valueOf(computeInterior(roi, z, t, c));
+        return Double.valueOf(computeInterior(roi));
     }
 
     /**
@@ -58,69 +44,46 @@ public class InteriorROIDescriptor extends ROIDescriptor
      * 
      * @param roi
      *        the ROI on which we want to compute the number of contour point
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
-     * @return the number of contour point
-     * @throws UnsupportedOperationException
-     *         if the specified Z, T or C position are not supported for this descriptor.
+     * @return the number of point inside the ROI
      */
-    public static double computeInterior(ROI roi, int z, int t, int c) throws UnsupportedOperationException
+    public static double computeInterior(ROI roi)
     {
-        if ((z != -1) || (t != -1) || (c != -1))
-        {
-            // use the boolean mask
-            final BooleanMask2D mask = roi.getBooleanMask2D(z, t, c, false);
-
-            if (mask == null)
-                throw new UnsupportedOperationException("Can't process '" + ID
-                        + "' calculation on a specific Z, T, C position.");
-
-            // use the contour length of the mask
-            return mask.getContourLength();
-        }
-
         return roi.getNumberOfPoints();
     }
 
     /**
-     * Returns the contour size from a given number of contour points in the best unit (see
+     * Returns the interior size from a given number of interior points in the best unit (see
      * {@link Sequence#getBestPixelSizeUnit(int, int)}) for the specified sequence and dimension.<br>
      * <ul>
      * Ex:
-     * <li>getContourSize(sequence, roi, 2) return the perimeter value</li>
-     * <li>getContourSize(sequence, roi, 3) return the surface area value</li>
+     * <li>computeInterior(sequence, roi, 2) return the area value</li>
+     * <li>computeInterior(sequence, roi, 3) return the volume value</li>
      * </ul>
      * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
      * 
-     * @param contourPoints
-     *        the number of contour points (override the ROI value)
+     * @param interiorPoints
+     *        the number of interior points (override the ROI value)
      * @param roi
-     *        the ROI we want to compute the contour size
+     *        the ROI we want to compute the interior size
      * @param sequence
      *        the input sequence used to retrieve operation unit by using pixel size information.
      * @param dim
-     *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
+     *        the dimension for the interior size operation (2 = area, 3 = volume, ...)
+     * @return the number of point inside the ROI
      * @see Sequence#getBestPixelSizeUnit(int, int)
      * @throws UnsupportedOperationException
-     *         if the contour calculation for the specified dimension is not supported by the ROI
+     *         if the interior calculation for the specified dimension is not supported by the ROI
      */
-    static double computeInterior(double contourPoints, ROI roi, Sequence sequence, int dim)
+    static double computeInterior(double interiorPoints, ROI roi, Sequence sequence, int dim)
             throws UnsupportedOperationException
     {
-        final double mul = BasicROIDescriptorPlugin.getMultiplierFactor(sequence, roi, dim);
+        final double mul = BasicMeasureROIDescriptorsPlugin.getMultiplierFactor(sequence, roi, dim);
 
         // 0 means the operation is not supported for this ROI
         if (mul == 0d)
             throw new UnsupportedOperationException("Can't process '" + ID + "' calculation for dimension " + dim
                     + " on the ROI: " + roi.getName());
 
-        return sequence.calculateSizeBestUnit(contourPoints * mul, dim, dim - 1);
+        return sequence.calculateSizeBestUnit(interiorPoints * mul, dim, dim);
     }
 }

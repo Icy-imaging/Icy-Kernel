@@ -109,6 +109,7 @@ public class MainInterfaceGui implements MainInterface
     private final SequenceListener sequenceListener;
 
     private final List<Viewer> viewers;
+    private final List<Sequence> sequences;
     private final List<WeakReference<Plugin>> activePlugins;
 
     private final SwimmingPool swimmingPool;
@@ -128,9 +129,8 @@ public class MainInterfaceGui implements MainInterface
     public MainInterfaceGui()
     {
         listeners = new EventListenerList();
-        // try to not dispatch on AWT when possible !
-        // updater = new UpdateEventHandler(this, false);
         viewers = new ArrayList<Viewer>();
+        sequences = new ArrayList<Sequence>();
         activePlugins = new ArrayList<WeakReference<Plugin>>();
         swimmingPool = new SwimmingPool();
         taskFrameManager = new TaskFrameManager();
@@ -145,13 +145,13 @@ public class MainInterfaceGui implements MainInterface
             }
         };
 
-        // global and active sequence listener
+        // global sequence listener
         sequenceListener = new SequenceAdapter()
         {
             @Override
             public void sequenceChanged(SequenceEvent event)
             {
-                activeSequenceChanged(event);
+                MainInterfaceGui.this.sequenceChanged(event);
             }
         };
 
@@ -386,6 +386,7 @@ public class MainInterfaceGui implements MainInterface
         if (activeViewer == viewer)
             return;
 
+        // got a previously active viewer ?
         if (activeViewer != null)
         {
             // remove active viewer listener
@@ -507,10 +508,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void registerViewer(Viewer viewer)
     {
-        synchronized (viewers)
-        {
-            viewers.add(viewer);
-        }
+        if (viewer == null)
+            return;
 
         // viewer opened
         viewerOpened(viewer);
@@ -519,10 +518,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void unRegisterViewer(Viewer viewer)
     {
-        synchronized (viewers)
-        {
-            viewers.remove(viewer);
-        }
+        if (viewer == null)
+            return;
 
         // viewer closed
         viewerClosed(viewer);
@@ -533,7 +530,6 @@ public class MainInterfaceGui implements MainInterface
             setActiveViewer(null);
         else
         {
-
             final IcyFrame frame = IcyFrame.findIcyFrame(getDesktopPane().getSelectedFrame());
 
             if (frame instanceof Viewer)
@@ -655,21 +651,10 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public ArrayList<Sequence> getSequences()
     {
-        final ArrayList<Sequence> result = new ArrayList<Sequence>();
-
-        synchronized (viewers)
+        synchronized (sequences)
         {
-            for (Viewer viewer : viewers)
-            {
-                final Sequence sequence = viewer.getSequence();
-
-                // no duplicate
-                if (!result.contains(sequence))
-                    result.add(sequence);
-            }
+            return new ArrayList<Sequence>(sequences);
         }
-
-        return result;
     }
 
     @Override
@@ -1361,23 +1346,34 @@ public class MainInterfaceGui implements MainInterface
      */
     private void viewerOpened(Viewer viewer)
     {
-        // check if a sequence has been opened
-        final Sequence sequence;
+        final Sequence sequence = viewer.getSequence();
+        boolean opened = true;
 
-        // get the sequence
-        if (viewer != null)
-            sequence = viewer.getSequence();
-        else
-            sequence = null;
-
-        if (sequence != null)
+        synchronized (viewers)
         {
-            // if only 1 viewer for this sequence
-            if (getViewers(viewer.getSequence()).size() == 1)
-                // sequence opened
-                sequenceOpened(sequence);
+            // check if the sequence has just been opened
+            if (sequence != null)
+            {
+                for (Viewer v : viewers)
+                {
+                    if (v.getSequence() == sequence)
+                    {
+                        opened = false;
+                        break;
+                    }
+                }
+            }
+
+            // add viewer to the viewer list
+            viewers.add(viewer);
         }
 
+        // single viewer for this sequence ?
+        if ((sequence != null) && opened)
+            // send opened event
+            sequenceOpened(sequence);
+
+        // fire viewer open event (after sequence open)
         fireViewerOpenedEvent(viewer);
     }
 
@@ -1386,11 +1382,19 @@ public class MainInterfaceGui implements MainInterface
      */
     private void viewerActivationChanged(Viewer oldActive, Viewer newActive)
     {
-        // check if active sequence has changed
         final Sequence sequence;
 
+        // new active viewer is not null ?
         if (newActive != null)
+        {
+            // remove focus on ImageJ image
+            final ImageJWrapper ij = Icy.getMainInterface().getImageJ();
+            if (ij != null)
+                ij.setActiveImage(null);
+
+            // get active sequence
             sequence = newActive.getSequence();
+        }
         else
             sequence = null;
 
@@ -1400,11 +1404,10 @@ public class MainInterfaceGui implements MainInterface
         if (oldActiveSequence != sequence)
         {
             activeSequence = sequence;
-
-            // focus changed
             sequenceActivationChanged(oldActiveSequence, sequence);
         }
 
+        // fire deactivated / activated events
         fireViewerDeactivatedEvent(oldActive);
         fireViewerActivatedEvent(newActive);
     }
@@ -1425,28 +1428,30 @@ public class MainInterfaceGui implements MainInterface
      */
     private void viewerClosed(Viewer viewer)
     {
-        // fire viewer closed event
-        fireViewerClosedEvent(viewer);
-
-        // check if a sequence has been closed
-        final Sequence sequence;
-
-        if (viewer != null)
-            sequence = viewer.getSequence();
-        else
-            sequence = null;
-
-        if (sequence != null)
-        {
-            // if no viewer for this sequence
-            if (getViewers(viewer.getSequence()).size() == 0)
-                // sequence close
-                sequenceClosed(sequence, viewer);
-        }
+        // retrieve the viewer LUT before we release it
+        final LUT lut = viewer.getLut();
 
         // remove active viewer listener
         if (viewer == activeViewer)
             viewer.removeListener(activeViewerListener);
+        // remove viewer from the viewer list
+        synchronized (viewers)
+        {
+            viewers.remove(viewer);
+        }
+        // fire viewer closed event (before sequence close)
+        fireViewerClosedEvent(viewer);
+
+        final Sequence sequence = viewer.getSequence();
+
+        // check if a sequence has been closed
+        if (sequence != null)
+        {
+            // if no viewer for this sequence
+            if (getViewers(sequence).isEmpty())
+                // sequence close
+                sequenceClosed(sequence, lut);
+        }
     }
 
     /**
@@ -1454,18 +1459,22 @@ public class MainInterfaceGui implements MainInterface
      */
     private void sequenceOpened(Sequence sequence)
     {
+        // add to sequence list
+        synchronized (sequences)
+        {
+            sequences.add(sequence);
+        }
         // listen the sequence
         sequence.addListener(sequenceListener);
-
-        // check if it contains new ROI
-        for (ROI roi : sequence.getROIs())
-            checkRoiAdded(roi);
-        // check if it contains new Painter
-        for (Overlay overlay : sequence.getOverlays())
-            checkOverlayAdded(overlay);
-
-        // fire sequence opened event
+        // fire sequence opened event (before roi / overlay events)
         fireSequenceOpenedEvent(sequence);
+
+        // check about ROI add event
+        for (ROI roi : sequence.getROIs())
+            checkRoiAdded(roi, false);
+        // check about Overlay add event
+        for (Overlay overlay : sequence.getOverlays())
+            checkOverlayAdded(overlay, false);
     }
 
     /**
@@ -1479,9 +1488,9 @@ public class MainInterfaceGui implements MainInterface
     }
 
     /**
-     * called when activated sequence changed
+     * called when a sequence changed
      */
-    void activeSequenceChanged(SequenceEvent event)
+    void sequenceChanged(SequenceEvent event)
     {
         final Sequence sequence = event.getSequence();
 
@@ -1494,11 +1503,11 @@ public class MainInterfaceGui implements MainInterface
                     switch (event.getType())
                     {
                         case ADDED:
-                            checkRoiAdded((ROI) event.getSource());
+                            checkRoiAdded((ROI) event.getSource(), false);
                             break;
 
                         case REMOVED:
-                            checkRoiRemoved((ROI) event.getSource());
+                            checkRoiRemoved((ROI) event.getSource(), false);
                             break;
                     }
                     break;
@@ -1507,11 +1516,11 @@ public class MainInterfaceGui implements MainInterface
                     switch (event.getType())
                     {
                         case ADDED:
-                            checkOverlayAdded((Overlay) event.getSource());
+                            checkOverlayAdded((Overlay) event.getSource(), false);
                             break;
 
                         case REMOVED:
-                            checkOverlayRemoved((Overlay) event.getSource());
+                            checkOverlayRemoved((Overlay) event.getSource(), false);
                             break;
                     }
                     break;
@@ -1519,7 +1528,6 @@ public class MainInterfaceGui implements MainInterface
         }
 
         // propagate event if it comes from the active sequence
-        // FIXME: why we need to test that ? it should always be the active sequence ?
         if (sequence == activeSequence)
             fireActiveSequenceChangedEvent(event);
     }
@@ -1532,69 +1540,69 @@ public class MainInterfaceGui implements MainInterface
      * @param viewer
      *        the viewer which has been closed.
      */
-    private void sequenceClosed(Sequence sequence, Viewer viewer)
+    private void sequenceClosed(Sequence sequence, LUT userLut)
     {
-        // check if it still contains Overlay
+        // check about Overlay remove event
         for (Overlay overlay : sequence.getOverlays())
-            // the sequence is already removed so the method is ok
-            checkOverlayRemoved(overlay);
-        // check if it still contains ROI
+            checkOverlayRemoved(overlay, true);
+        // check about ROI remove event
         for (ROI roi : sequence.getROIs())
-            // the sequence is already removed so the method is ok
-            checkRoiRemoved(roi);
-
-        // save user LUT
-        sequence.setUserLUT(viewer.getLut());
-        // inform sequence is now closed
-        sequence.closed();
+            checkRoiRemoved(roi, true);
 
         // remove from sequence listener
         sequence.removeListener(sequenceListener);
+        // remove from the sequence list
+        synchronized (sequences)
+        {
+            sequences.remove(sequence);
+        }
 
-        // fire event
+        // set the user LUT in the sequence
+        if (userLut != null)
+            sequence.setUserLUT(userLut);
+        // inform sequence is now closed
+        sequence.closed();
+        
+        // fire sequence closed event (after roi / overlay events)
         fireSequenceClosedEvent(sequence);
     }
 
-    private void checkRoiAdded(ROI roi)
+    private void checkRoiAdded(ROI roi, boolean checkBeforeAdd)
     {
-        // special case of multiple ROI add --> we assume ROI has been added...
-        if (roi == null)
-            roiAdded(null);
-        // if only 1 sequence contains this roi
-        else if (getSequencesContaining(roi).size() == 1)
+        final List<Sequence> sequencesContainingRoi = getSequencesContaining(roi);
+
+        // only 1 sequence contains (or will contain) this roi ?
+        if (sequencesContainingRoi.size() == (checkBeforeAdd ? 0 : 1))
             // roi added
             roiAdded(roi);
     }
 
-    private void checkRoiRemoved(ROI roi)
+    private void checkRoiRemoved(ROI roi, boolean checkBeforeRemove)
     {
-        // special case of multiple ROI remove --> we assume ROI has been removed...
-        if (roi == null)
-            roiRemoved(null);
-        // if no sequence contains this roi
-        else if (getSequencesContaining(roi).size() == 0)
+        final List<Sequence> sequencesContainingRoi = getSequencesContaining(roi);
+
+        // no more sequence contains (or will contain) this roi ?
+        if (sequencesContainingRoi.size() == (checkBeforeRemove ? 1 : 0))
             // roi removed
             roiRemoved(roi);
     }
 
-    private void checkOverlayAdded(Overlay overlay)
+    private void checkOverlayAdded(Overlay overlay, boolean checkBeforeAdd)
     {
-        // special case of multiple overlay add --> we assume overlay has been added...
-        if (overlay == null)
-            overlayAdded(null);
-        // if only 1 sequence contains this overlay
-        else if (getSequencesContaining(overlay).size() == 1)
+        final List<Sequence> sequencesContainingOverlay = getSequencesContaining(overlay);
+
+        // only 1 sequence contains (or will contain) this overlay ?
+        if (sequencesContainingOverlay.size() == (checkBeforeAdd ? 0 : 1))
             // overlay added
             overlayAdded(overlay);
     }
 
-    private void checkOverlayRemoved(Overlay overlay)
+    private void checkOverlayRemoved(Overlay overlay, boolean checkBeforeRemove)
     {
-        // special case of multiple overlay remove --> we assume overlay has been removed...
-        if (overlay == null)
-            overlayRemoved(null);
-        // if no sequence contains this overlay
-        else if (getSequencesContaining(overlay).size() == 0)
+        final List<Sequence> sequencesContainingOverlay = getSequencesContaining(overlay);
+
+        // no more sequence contains (or will contain) this overlay ?
+        if (sequencesContainingOverlay.size() == (checkBeforeRemove ? 1 : 0))
             // overlay removed
             overlayRemoved(overlay);
     }

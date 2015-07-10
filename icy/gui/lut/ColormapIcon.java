@@ -42,8 +42,8 @@ public class ColormapIcon implements Icon
         super();
 
         this.colormap = colormap;
-        w = width;
-        h = height;
+        w = (width <= 0) ? 64 : width;
+        h = (height <= 0) ? 20 : height;
     }
 
     public ColormapIcon(IcyColorMap colormap)

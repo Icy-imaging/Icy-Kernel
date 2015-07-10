@@ -24,6 +24,7 @@ import icy.util.ReflectionUtil;
 
 import java.awt.BufferCapabilities;
 import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.awt.DisplayMode;
 import java.awt.Event;
 import java.awt.GraphicsConfiguration;
@@ -37,6 +38,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.VolatileImage;
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -180,6 +182,23 @@ public class SystemUtil
             return Desktop.getDesktop();
 
         return null;
+    }
+
+    /**
+     * Launch the system file manager on specified folder (if supported)
+     * @throws IOException 
+     */
+    public static boolean openFolder(String folder) throws IOException
+    {
+        final Desktop desktop = getDesktop();
+
+        if ((desktop != null) && desktop.isSupported(Action.OPEN))
+        {
+            desktop.open(new File(folder));
+            return true;
+        }
+
+        return false;
     }
 
     /**

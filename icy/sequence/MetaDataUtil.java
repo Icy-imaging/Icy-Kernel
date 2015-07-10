@@ -421,7 +421,7 @@ public class MetaDataUtil
                 return OMEUtil.getValue(timeInc, defaultValue);
 
             // try to compute time interval from time position
-            final double result = computeTimeInternalFromTimePosition(pix);
+            final double result = computeTimeIntervalFromTimePosition(pix);
             if (!Double.isNaN(result))
             {
                 // we set the time interval
@@ -519,12 +519,16 @@ public class MetaDataUtil
      * Computes time interval from the time position informations.<br>
      * Returns <code>Double.Nan</code> if time position information are missing.
      */
-    private static double computeTimeInternalFromTimePosition(Pixels pix)
+    private static double computeTimeIntervalFromTimePosition(Pixels pix)
     {
         final int sizeT = getSizeT(pix);
 
+        if (sizeT <= 1)
+            return Double.NaN;
+
         double result = 0d;
         double last = -1d;
+        int lastT = 0;
         int num = 0;
 
         for (int t = 0; t < sizeT; t++)
@@ -540,11 +544,12 @@ public class MetaDataUtil
                     if (last != -1d)
                     {
                         // get delta
-                        result += timePos - last;
+                        result += (timePos - last) / (t - lastT);
                         num++;
                     }
 
                     last = timePos;
+                    lastT = t;
                 }
             }
         }

@@ -460,7 +460,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * Optimize the bounds size to the minimum surface which still include all mask<br>
+     * Optimize the bounds size to the minimum surface which still include all mask.<br>
      * You should call it after consecutive remove operations.
      */
     public void optimizeBounds()

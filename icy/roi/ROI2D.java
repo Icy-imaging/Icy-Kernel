@@ -1362,8 +1362,8 @@ public abstract class ROI2D extends ROI
         double numPoints = 0;
 
         // approximation by using number of point of boolean mask with and without border
-        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
-        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(true).getNumberOfPoints();
+        numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
 
         return numPoints / getDimension();

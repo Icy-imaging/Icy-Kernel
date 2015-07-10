@@ -124,9 +124,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     /**
      * Possible rounded zoom factor : 0.01 --> 100
      */
-    final static double[] zoomRoundedFactors = new double[] {0.01d, 0.02d, 0.0333d, 0.05d, 0.075d, 0.1d, 0.15d, 0.2d,
-            0.25d, 0.333d, 0.5d, 0.66d, 0.75d, 1d, 1.25d, 1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d, 10d, 15d, 20d,
-            30d, 50d, 66d, 75d, 100d};
+    final static double[] zoomRoundedFactors = new double[]
+    {
+            0.01d, 0.02d, 0.0333d, 0.05d, 0.075d, 0.1d, 0.15d, 0.2d, 0.25d, 0.333d, 0.5d, 0.66d, 0.75d, 1d, 1.25d,
+            1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d, 10d, 15d, 20d, 30d, 50d, 66d, 75d, 100d
+    };
 
     /**
      * Image overlay to encapsulate image display in a canvas layer
@@ -712,7 +714,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         double curScaleX;
         double curScaleY;
         private double startRotationZ;
-//        private Cursor previousCursor;
+        // private Cursor previousCursor;
         boolean moving;
         boolean rotating;
         boolean hasMouseFocus;
@@ -729,7 +731,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             startOffset = null;
             curScaleX = -1;
             curScaleY = -1;
-//            previousCursor = getCursor();
+            // previousCursor = getCursor();
             moving = false;
             rotating = false;
             hasMouseFocus = false;
@@ -1377,19 +1379,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final Graphics2D g2 = (Graphics2D) g.create();
 
                 // apply filtering
-                if (CanvasPreferences.getFiltering())
-                {
-                    if (getScaleX() < 4d && getScaleY() < 4d)
-                    {
-                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                    }
-                    else
-                    {
-                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                    }
-                }
+                if (CanvasPreferences.getFiltering() && ((getScaleX() < 4d) && (getScaleY() < 4d)))
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                else
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 // apply transformation
@@ -1992,7 +1986,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // init transform (5 values, log transition type)
         transform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);
         // initials transform values
-        transform.setValues(new double[] {0d, 0d, 1d, 1d, 0d});
+        transform.setValues(new double[]
+        {
+                0d, 0d, 1d, 1d, 0d
+        });
         textInfos = null;
         modifyingZoom = false;
         modifyingRotation = false;
@@ -2106,7 +2103,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // canvas panel (for inspector)
         panel = new JPanel();
 
-        zoomComboBox = new JComboBox(new String[] {"10", "50", "100", "200", "400", "1000"});
+        zoomComboBox = new JComboBox(new String[]
+        {
+                "10", "50", "100", "200", "400", "1000"
+        });
         zoomComboBox.setEditable(true);
         zoomComboBox.setToolTipText("Select zoom factor");
         zoomComboBox.setSelectedIndex(2);
@@ -2135,7 +2135,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        rotationComboBox = new JComboBox(new String[] {"0", "45", "90", "135", "180", "225", "270", "315"});
+        rotationComboBox = new JComboBox(new String[]
+        {
+                "0", "45", "90", "135", "180", "225", "270", "315"
+        });
         rotationComboBox.setEditable(true);
         rotationComboBox.setToolTipText("Select rotation angle");
         rotationComboBox.setSelectedIndex(0);
@@ -2326,9 +2329,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         toolBar.addSeparator();
         toolBar.add(zoomFitCanvasButton);
-//        toolBar.addSeparator();
-//        toolBar.add(zoomFitImageButton);
-//        toolBar.add(centerImageButton);
+        // toolBar.addSeparator();
+        // toolBar.add(zoomFitImageButton);
+        // toolBar.add(centerImageButton);
     }
 
     @Override
@@ -2401,7 +2404,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     protected void setTransform(int tx, int ty, double sx, double sy, double rot, boolean smooth)
     {
-        final double[] values = new double[] {tx, ty, sx, sy, rot};
+        final double[] values = new double[]
+        {
+                tx, ty, sx, sy, rot
+        };
 
         // modify all at once for synchronized change events
         if (smooth)
@@ -2870,19 +2876,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (cv)
             {
                 // apply filtering
-                if (CanvasPreferences.getFiltering())
-                {
-                    if (getScaleX() < 4d && getScaleY() < 4d)
-                    {
-                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                    }
-                    else
-                    {
-                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                    }
-                }
+                if (CanvasPreferences.getFiltering() && ((getScaleX() < 4d) && (getScaleY() < 4d)))
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                else
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 // apply transformation
@@ -2890,8 +2888,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
             else
             {
-                // default filtering
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                // apply filtering
+                if (CanvasPreferences.getFiltering())
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                else
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             }
 

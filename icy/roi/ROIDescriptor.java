@@ -14,13 +14,37 @@ import icy.util.StringUtil;
  */
 public abstract class ROIDescriptor
 {
+    protected final String id;
+    protected final String name;
+    protected final Class<?> type;
+
+    /**
+     * Create a new {@link ROIDescriptor} with given id, name and type
+     */
+    protected ROIDescriptor(String id, String name, Class<?> type)
+    {
+        super();
+
+        this.id = id;
+        this.name = name;
+        this.type = type;
+    }
+
+    /**
+     * Create a new {@link ROIDescriptor} with given name and type
+     */
+    protected ROIDescriptor(String name, Class<?> type)
+    {
+        this(name, name, type);
+    }
+
     /**
      * Returns the id of this descriptor.<br/>
-     * By default it is the same as the name but it can be overridden to be different.
+     * By default it uses the descriptor's name but it can be overridden to be different.
      */
     public String getId()
     {
-        return getName();
+        return id;
     }
 
     /**
@@ -28,7 +52,10 @@ public abstract class ROIDescriptor
      * The name is used as title (column header) in the ROI panel so keep it short and self
      * explanatory.
      */
-    public abstract String getName();
+    public String getName()
+    {
+        return name;
+    };
 
     /**
      * Returns a single line description (used as tooltip) for this descriptor
@@ -56,7 +83,10 @@ public abstract class ROIDescriptor
      * 
      * @see #compute(ROI, Sequence, int, int, int)
      */
-    public abstract Class<?> getType();
+    public Class<?> getType()
+    {
+        return type;
+    };
 
     /**
      * Computes the descriptor on the specified ROI and return the result.
@@ -64,7 +94,7 @@ public abstract class ROIDescriptor
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
-     *        an optional sequence where the pixel size can be retrieved
+     *        an optional sequence where the pixel informations can be retrieved
      * @param z
      *        the specific Z position (slice) where we want to compute the descriptor or
      *        <code>-1</code> to compute it over the whole ROI Z dimension.
@@ -76,12 +106,22 @@ public abstract class ROIDescriptor
      *        <code>-1</code> to compute it over the whole ROI C dimension.
      * @return the result of this descriptor computed from the specified parameters.
      * @throws UnsupportedOperationException
-     *         if the type of the given ROI is not supported by this descriptor, or if
-     *         <code>sequence</code> is <code>null</code> while the calculation requires it, or if
-     *         the specified Z, T or C position are not supported for this descriptor
+     *         if the specified ROI is not supported by this descriptor, or if <code>sequence</code>
+     *         is <code>null</code> while the operation requires it, or if the specified Z, T or C
+     *         position are not supported for this descriptor
      */
-    public abstract Object compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException;
+    public Object compute(ROI roi, Sequence sequence, int z, int t, int c)
+    {
+        final Object result;
+
+        // want a sub part of the ROI ?
+        if ((z != -1) || (t != -1) || (c != -1))
+            result = compute(roi.getSubROI(z, t, c, false), sequence);
+        else
+            result = compute(roi, sequence);
+
+        return result;
+    }
 
     /**
      * Computes the descriptor on the specified ROI and return the result.
@@ -89,16 +129,13 @@ public abstract class ROIDescriptor
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
-     *        an optional sequence where the pixel size can be retrieved
+     *        an optional sequence where the pixel informations can be retrieved
      * @return the result of this descriptor computed from the specified parameters.
      * @throws UnsupportedOperationException
      *         if the type of the given ROI is not supported by this descriptor, or if
      *         <code>sequence</code> is <code>null</code> while the calculation requires it
      */
-    public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
-    {
-        return compute(roi, sequence, -1, -1, -1);
-    }
+    public abstract Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException;
 
     /*
      * We want a unique id for each {@link ROIDescriptor}

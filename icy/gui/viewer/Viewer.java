@@ -233,11 +233,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             public void icyFrameActivated(IcyFrameEvent e)
             {
                 Icy.getMainInterface().setActiveViewer(Viewer.this);
-
-                // lost focus on ImageJ image
-                final ImageJWrapper ij = Icy.getMainInterface().getImageJ();
-                if (ij != null)
-                    ij.setActiveImage(null);
             }
 
             @Override

@@ -72,6 +72,11 @@ public class CustomComboBoxRenderer extends SubstanceDefaultComboBoxRenderer
         this.combo = combo;
     }
 
+    public JComboBox getComboBox()
+    {
+        return combo;
+    }
+
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
             boolean cellHasFocus)
@@ -254,7 +259,7 @@ public class CustomComboBoxRenderer extends SubstanceDefaultComboBoxRenderer
 
     private SubstanceColorScheme getColorSchemeForState(JList list, SubstanceListUI ui, ComponentState state)
     {
-        UpdateOptimizationInfo updateOptimizationInfo = ui.getUpdateOptimizationInfo();
+        final UpdateOptimizationInfo updateOptimizationInfo = ui.getUpdateOptimizationInfo();
 
         if (state == ComponentState.ENABLED)
         {
@@ -273,11 +278,10 @@ public class CustomComboBoxRenderer extends SubstanceDefaultComboBoxRenderer
     private SubstanceColorScheme getColorSchemeForState(JList list, int index, SubstanceListUI listUI,
             ComponentState state)
     {
-        boolean toUseHighlightKindForCurrState = (index >= 0)
+        final boolean toUseHighlightKindForCurrState = (index >= 0)
                 && (state.isFacetActive(ComponentStateFacet.ROLLOVER) || state
                         .isFacetActive(ComponentStateFacet.SELECTION));
-
-        UpdateOptimizationInfo updateOptimizationInfo = listUI.getUpdateOptimizationInfo();
+        final UpdateOptimizationInfo updateOptimizationInfo = listUI.getUpdateOptimizationInfo();
 
         if (toUseHighlightKindForCurrState)
         {

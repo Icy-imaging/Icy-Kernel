@@ -29,9 +29,8 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Class to define a 2D boolean mask and make basic boolean operation between masks.<br>
- * The bounds property of this object define the area of the mask where the mask contains the
- * boolean mask itself.
+ * Class to define a 2D boolean mask region and make basic boolean operation between masks.<br>
+ * The bounds property of this object represents the region defined by the boolean mask.
  * 
  * @author Stephane
  */
@@ -826,7 +825,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Return true if mask contains the specified 2Dmask.
+     * Return true if mask contains the specified 2D mask.
      */
     public boolean contains(BooleanMask2D booleanMask)
     {
@@ -896,6 +895,20 @@ public class BooleanMask2D implements Cloneable
         }
 
         return false;
+    }
+
+    /**
+     * Return the number of points contained in this boolean mask.
+     */
+    public int getNumberOfPoints()
+    {
+        int result = 0;
+
+        for (int i = 0; i < mask.length;)
+            if (mask[i++])
+                result++;
+
+        return result;
     }
 
     /**

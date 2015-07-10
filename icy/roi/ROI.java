@@ -250,10 +250,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     try
                     {
                         // get constructor (Point5D)
-                        final Constructor<? extends ROI> constructor = roiClazz
-                                .getConstructor(new Class[] {Point5D.class});
+                        final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[]
+                        {
+                            Point5D.class
+                        });
                         // build ROI
-                        result = constructor.newInstance(new Object[] {imagePoint});
+                        result = constructor.newInstance(new Object[]
+                        {
+                            imagePoint
+                        });
                     }
                     catch (NoSuchMethodException e1)
                     {
@@ -2068,11 +2073,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * <code>&nbsp mask[(y - bounds.y) * bounds.width) + (x - bounds.x)] = false</code>
      * 
      * @param z
-     *        Z position we want to retrieve the boolean mask
+     *        Z position we want to retrieve the boolean mask.<br>
+     *        Set it to -1 to retrieve the mask whatever is the Z position of ROI2D.
      * @param t
      *        T position we want to retrieve the boolean mask
+     *        Set it to -1 to retrieve the mask whatever is the T position of ROI2D/ROI3D.
      * @param c
      *        C position we want to retrieve the boolean mask
+     *        Set it to -1 to retrieve the mask whatever is the C position of ROI2D/ROI3D/ROI4D.
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
      */
@@ -2612,8 +2620,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Returns a specific part of the ROI.<br/>
-     * The returned ROI is one of the following type: {@link ROI2DArea}, {@link ROI3DArea},
-     * {@link ROI4DArea} or {@link ROI5DArea}.<br/>
+     * The returned ROI is always in "area" format ({@link ROI2DArea}, {@link ROI3DArea},
+     * {@link ROI4DArea} or {@link ROI5DArea}).
      * 
      * @param z
      *        the specific Z position (slice) we want to retrieve (<code>-1</code> to retrieve the
@@ -2628,7 +2636,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      *        If true then all partially contained (intersected) pixels are included in the
      *        resulting ROI.
      */
-    protected ROI getSubROI(int z, int t, int c, boolean inclusive)
+    public ROI getSubROI(int z, int t, int c, boolean inclusive)
     {
         final ROI result;
 
@@ -2640,29 +2648,63 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
             case 3:
                 if (z == -1)
-                    result = new ROI3DArea(((ROI3D) this).getBooleanMask3D(t, c, inclusive));
+                    result = new ROI3DArea(((ROI3D) this).getBooleanMask3D(z, t, c, inclusive));
                 else
                     result = new ROI2DArea(((ROI3D) this).getBooleanMask2D(z, t, c, inclusive));
                 break;
 
             case 4:
-                if ((t == -1) && (z == -1))
-                    result = new ROI4DArea(((ROI4D) this).getBooleanMask4D(c, inclusive));
-                else if (z == -1)
-                    result = new ROI3DArea(((ROI4D) this).getBooleanMask3D(t, c, inclusive));
+                if (z == -1)
+                {
+                    if (t == -1)
+                        result = new ROI4DArea(((ROI4D) this).getBooleanMask4D(z, t, c, inclusive));
+                    else
+                        result = new ROI3DArea(((ROI4D) this).getBooleanMask3D(z, t, c, inclusive));
+                }
                 else
-                    result = new ROI2DArea(((ROI4D) this).getBooleanMask2D(z, t, c, inclusive));
+                {
+                    if (t == -1)
+                        result = new ROI4DArea(((ROI4D) this).getBooleanMask4D(z, t, c, inclusive));
+                    else
+                        result = new ROI2DArea(((ROI4D) this).getBooleanMask2D(z, t, c, inclusive));
+                }
                 break;
 
             case 5:
-                if ((t == -1) && (z == -1) && (c == -1))
-                    result = new ROI5DArea(((ROI5D) this).getBooleanMask(inclusive));
-                else if ((t == -1) && (z == -1))
-                    result = new ROI4DArea(((ROI5D) this).getBooleanMask4D(c, inclusive));
-                else if (z == -1)
-                    result = new ROI3DArea(((ROI5D) this).getBooleanMask3D(t, c, inclusive));
+                if (z == -1)
+                {
+                    if (t == -1)
+                    {
+                        if (c == -1)
+                            result = new ROI5DArea(((ROI5D) this).getBooleanMask5D(z, t, c, inclusive));
+                        else
+                            result = new ROI4DArea(((ROI5D) this).getBooleanMask4D(z, t, c, inclusive));
+                    }
+                    else
+                    {
+                        if (c == -1)
+                            result = new ROI5DArea(((ROI5D) this).getBooleanMask5D(z, t, c, inclusive));
+                        else
+                            result = new ROI3DArea(((ROI5D) this).getBooleanMask3D(z, t, c, inclusive));
+                    }
+                }
                 else
-                    result = new ROI2DArea(((ROI5D) this).getBooleanMask2D(z, t, c, inclusive));
+                {
+                    if (t == -1)
+                    {
+                        if (c == -1)
+                            result = new ROI5DArea(((ROI5D) this).getBooleanMask5D(z, t, c, inclusive));
+                        else
+                            result = new ROI4DArea(((ROI5D) this).getBooleanMask4D(z, t, c, inclusive));
+                    }
+                    else
+                    {
+                        if (c == -1)
+                            result = new ROI5DArea(((ROI5D) this).getBooleanMask5D(z, t, c, inclusive));
+                        else
+                            result = new ROI2DArea(((ROI5D) this).getBooleanMask2D(z, t, c, inclusive));
+                    }
+                }
                 break;
         }
 
@@ -2671,6 +2713,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             final Point5D pos = result.getPosition5D();
 
+            // set Z, T, C position
             if (z != -1)
                 pos.setZ(z);
             if (t != -1)
@@ -2678,11 +2721,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (c != -1)
                 pos.setC(c);
 
+            result.setPosition5D(pos);
+
             // copy other properties
             result.setColor(getColor());
             result.setName(getName());
+            result.setOpacity(getOpacity());
             result.setStroke(getStroke());
             result.setShowName(getShowName());
+            result.setReadOnly(isReadOnly());
         }
         finally
         {

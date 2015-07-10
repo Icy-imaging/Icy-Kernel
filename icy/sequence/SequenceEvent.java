@@ -170,6 +170,7 @@ public class SequenceEvent implements EventHierarchicalChecker
                 case SEQUENCE_META:
                     if (StringUtil.equals((String) e.getSource(), (String) source))
                         return true;
+                    break;
 
                 case SEQUENCE_COLORMAP:
                 case SEQUENCE_COMPONENTBOUNDS:
@@ -189,14 +190,10 @@ public class SequenceEvent implements EventHierarchicalChecker
                 case SEQUENCE_PAINTER:
                 case SEQUENCE_OVERLAY:
                 case SEQUENCE_ROI:
-                    // same type ?
-                    if (e.getType() == type)
-                    {
-                        // join events in one global event
-                        if (e.getSource() != source)
-                            source = null;
+                    // duplicate event ?
+                    if ((e.getType() == type) && (e.getSource() == source))
+                        // just ignore the new event
                         return true;
-                    }
                     break;
 
                 case SEQUENCE_TYPE:

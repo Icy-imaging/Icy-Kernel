@@ -31,7 +31,6 @@ import icy.util.XMLUtil;
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.event.EventListenerList;
@@ -1034,6 +1033,8 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
                 alpha.copyFrom(srcColorMap.alpha);
             // copy type
             setType(srcColorMap.type);
+            // copy name
+            setName(srcColorMap.getName());
         }
         finally
         {
@@ -1323,7 +1324,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     @Override
     public String toString()
     {
-        return name + " : " + super.toString();
+        return name;
     }
 
     /**
@@ -1342,15 +1343,15 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
             if (colormap.getType() != type)
                 return false;
 
-            if (!Arrays.equals(red.map, colormap.red.map))
+            if (!red.equals(colormap.red))
                 return false;
-            if (!Arrays.equals(green.map, colormap.green.map))
+            if (!green.equals(colormap.green))
                 return false;
-            if (!Arrays.equals(blue.map, colormap.blue.map))
+            if (!blue.equals(colormap.blue))
                 return false;
-            if (!Arrays.equals(gray.map, colormap.gray.map))
+            if (!gray.equals(colormap.gray))
                 return false;
-            if (!Arrays.equals(alpha.map, colormap.alpha.map))
+            if (!alpha.equals(colormap.alpha))
                 return false;
 
             return true;

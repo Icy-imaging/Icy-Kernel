@@ -671,17 +671,18 @@ public abstract class ROI3D extends ROI
 
     /**
      * Returns the {@link BooleanMask3D} object representing the XYZ volume content at specified Z,
-     * T, C position.
+     * T, C position.<br>
+     * It contains the 3D rectangle mask bounds and the associated boolean array mask.
      * 
      * @param z
      *        Z position we want to retrieve the boolean mask or -1 to retrieve the whole Z
      *        dimension
      * @param t
-     *        T position we want to retrieve the boolean mask or -1 to retrieve the whole T
-     *        dimension
+     *        T position we want to retrieve the boolean mask.<br>
+     *        Set it to -1 to retrieve the mask whatever is the T position of this ROI3D.
      * @param c
-     *        C position we want to retrieve the boolean mask or -1 to retrieve the whole C
-     *        dimension
+     *        C position we want to retrieve the boolean mask.<br>
+     *        Set it to -1 to retrieve the mask whatever is the C position of this ROI3D.
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
      */
@@ -742,8 +743,8 @@ public abstract class ROI3D extends ROI
         double numPoints = 0;
 
         // approximation by using number of point of boolean mask with and without border
-        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
-        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(true).getNumberOfPoints();
+        numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
 
         return numPoints / getDimension();

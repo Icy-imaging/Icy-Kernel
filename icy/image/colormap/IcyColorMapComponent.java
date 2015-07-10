@@ -26,7 +26,7 @@ public class IcyColorMapComponent implements XMLPersistent
 
     public class ControlPoint implements Comparable<ControlPoint>, XMLPersistent
     {
-        private int index;
+        int index;
         int value;
         private final boolean fixed;
 
@@ -207,6 +207,24 @@ public class IcyColorMapComponent implements XMLPersistent
             XMLUtil.setElementIntValue(node, ID_VALUE, getValue());
 
             return true;
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof ControlPoint)
+            {
+                final ControlPoint pt = (ControlPoint) obj;
+                return (index == pt.index) && (value == pt.value);
+            }
+
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return index ^ value;
         }
     }
 
@@ -881,5 +899,21 @@ public class IcyColorMapComponent implements XMLPersistent
         }
 
         return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyColorMapComponent)
+            // just compare the map content (we don't care about control point here)
+            return Arrays.equals(map, ((IcyColorMapComponent) obj).map);
+
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return map.hashCode();
     }
 }

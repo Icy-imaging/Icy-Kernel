@@ -13,9 +13,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * Class to define a 4D boolean mask and make basic boolean operation between masks.<br>
- * The bounds property of this object define the area of the mask where the mask contains the
- * boolean mask itself.
+ * Class to define a 4D boolean mask region and make basic boolean operation between masks.<br>
+ * The bounds property of this object represents the region defined by the boolean mask.
  * 
  * @author Stephane
  */
@@ -87,7 +86,7 @@ public class BooleanMask4D
      * 
      * <pre>
      *        mask1          +       mask2        =      result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############     ################
      *     ############             ############     ################
@@ -145,7 +144,7 @@ public class BooleanMask4D
      * 
      * <pre>
      *        mask1     intersect     mask2      =        result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############       ############
      *     ############             ############         ########
@@ -203,7 +202,7 @@ public class BooleanMask4D
      * 
      * <pre>
      *          mask1       xor      mask2        =       result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##            ##
      *     ############             ############     ####        ####
@@ -261,7 +260,7 @@ public class BooleanMask4D
      * 
      * <pre>
      *        mask1          -        mask2       =  result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##
      *     ############             ############     ####
@@ -724,7 +723,7 @@ public class BooleanMask4D
         if (mask.isEmpty())
             return result;
 
-        Rectangle3D.Integer bounds3D = null;//new Rectangle3D.Integer();
+        Rectangle3D.Integer bounds3D = null;// new Rectangle3D.Integer();
 
         for (BooleanMask3D m3d : mask.values())
         {
@@ -893,12 +892,14 @@ public class BooleanMask4D
     }
 
     /**
-     * Return an array of {@link icy.type.point.Point4D.Integer} containing the contour/surface points
+     * Return an array of {@link icy.type.point.Point4D.Integer} containing the contour/surface
+     * points
      * of the 4D mask.<br>
      * Points are returned in ascending XYZT order. <br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last T slices + contour points for intermediate T
+     * It returns all points from the first and the last T slices + contour points for intermediate
+     * T
      * slices.
      * 
      * @see #getContourPointsAsIntArray()
@@ -918,7 +919,8 @@ public class BooleanMask4D
      * Points are returned in ascending XYZT order.<br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last T slices + contour points for intermediate T
+     * It returns all points from the first and the last T slices + contour points for intermediate
+     * T
      * slices.
      * 
      * @see #getContourPoints()
@@ -950,6 +952,19 @@ public class BooleanMask4D
         }
 
         return result.asArray();
+    }
+
+    /**
+     * Return the number of points contained in this boolean mask.
+     */
+    public int getNumberOfPoints()
+    {
+        int result = 0;
+
+        for (BooleanMask3D mask3d : mask.values())
+            result += mask3d.getNumberOfPoints();
+
+        return result;
     }
 
     /**

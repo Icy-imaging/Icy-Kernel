@@ -54,6 +54,7 @@ import icy.sequence.edit.DataSequenceEdit;
 import icy.sequence.edit.DefaultSequenceEdit;
 import icy.sequence.edit.MetadataSequenceEdit;
 import icy.sequence.edit.ROIAddSequenceEdit;
+import icy.sequence.edit.ROIAddsSequenceEdit;
 import icy.sequence.edit.ROIRemoveSequenceEdit;
 import icy.sequence.edit.ROIRemovesSequenceEdit;
 import icy.system.IcyExceptionHandler;
@@ -73,8 +74,10 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -383,27 +386,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 // Sequence persistence enabled --> save XML
                 if (GeneralPreferences.getSequencePersistence())
                     saveXMLData();
-
-                // TODO: normally the GC should be able to release overlay and roi if needed
-                // also that might be a problem for a sequence maintained by code (but not in GUI)
-                // to lost the overlays and the rois.
-
-                // synchronized (overlays)
-                // {
-                // for (Overlay overlay : overlays)
-                // overlay.removeOverlayListener(Sequence.this);
-                //
-                // overlays.clear();
-                // }
-                //
-                // synchronized (rois)
-                // {
-                // // remove all listener on ROI
-                // for (ROI roi : rois)
-                // roi.removeListener(Sequence.this);
-                //
-                // rois.clear();
-                // }
             }
         }))
         {
@@ -754,7 +736,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Origin filename (from/to which the sequence has been loaded/saved)<br>
+     * Origin filename (from/to which the sequence has been loaded/saved).<br>
+     * This filename information is also used to store the XML persistent data.<br/>
      * null --> no file attachment<br>
      * directory or metadata file --> multiples files attachment<br>
      * image file --> single file attachment
@@ -1160,7 +1143,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * @deprecated Use {@link #setAutoUpdateChannelBounds(boolean)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public void setComponentAbsBoundsAutoUpdate(boolean value)
     {
@@ -1900,6 +1882,37 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Add the specified collection of ROI to the sequence.
+     * 
+     * @param rois
+     *        the collection of ROI to attach to the sequence
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if the operation succeed or <code>false</code> if some ROIs could
+     *         not be added (already present)
+     */
+    public boolean addROIs(Collection<ROI> rois, boolean canUndo)
+    {
+        if (!rois.isEmpty())
+        {
+            final List<ROI> addedRois = new ArrayList<ROI>();
+
+            for (ROI roi : rois)
+            {
+                if (addROI(roi, false))
+                    addedRois.add(roi);
+            }
+
+            if (canUndo && !addedRois.isEmpty())
+                addUndoableEdit(new ROIAddsSequenceEdit(this, addedRois));
+
+            return addedRois.size() == rois.size();
+        }
+
+        return true;
+    }
+
+    /**
      * Add the specified ROI to the sequence.
      * 
      * @param roi
@@ -1917,6 +1930,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      *        ROI to attach to the sequence
      * @param canUndo
      *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if the operation succeed or <code>false</code> otherwise (already
+     *         present)
      */
     public boolean addROI(ROI roi, boolean canUndo)
     {
@@ -1986,6 +2001,36 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return false;
+    }
+
+    /**
+     * Remove the specified collection of ROI from the sequence.
+     * 
+     * @param rois
+     *        the collection of ROI to remove from the sequence
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if all ROI from the collection has been correctly removed.
+     */
+    public boolean removeROIs(Collection<ROI> rois, boolean canUndo)
+    {
+        if (!rois.isEmpty())
+        {
+            final List<ROI> removedRois = new ArrayList<ROI>();
+
+            for (ROI roi : rois)
+            {
+                if (removeROI(roi, false))
+                    removedRois.add(roi);
+            }
+
+            if (canUndo && !removedRois.isEmpty())
+                addUndoableEdit(new ROIRemovesSequenceEdit(this, removedRois));
+
+            return removedRois.size() == rois.size();
+        }
+
+        return true;
     }
 
     /**
@@ -2070,35 +2115,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             final List<ROI> allROIs = getROIs();
 
-            synchronized (overlays)
-            {
-                // remove associated painters first
-                for (ROI roi : allROIs)
-                {
-                    final Overlay overlay = roi.getOverlay();
-
-                    // remove listener
-                    overlay.removeOverlayListener(this);
-                    // and remove from list
-                    overlays.remove(overlay);
-                }
-            }
-
-            // notify overlays removed
-            overlayChanged(null, SequenceEventType.REMOVED);
-
-            synchronized (rois)
-            {
-                // clear list
-                rois.clear();
-            }
-
-            // remove listeners
+            // remove all ROI
             for (ROI roi : allROIs)
-                roi.removeListener(this);
-
-            // notify roi removed
-            roiChanged(null, SequenceEventType.REMOVED);
+                removeROI(roi, false);
 
             if (canUndo)
                 addUndoableEdit(new ROIRemovesSequenceEdit(this, allROIs));
@@ -5757,7 +5776,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         System.err.println("Error while saving Sequence XML persistent data :");
         IcyExceptionHandler.showErrorMessage(exc, true);
-        
+
         return false;
     }
 
@@ -6028,19 +6047,21 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * overlay painter has changed (null means all overlays)
+     * overlay painter has changed
      */
-    private void overlayChanged(Overlay overlay, SequenceEventType type)
+    protected void overlayChanged(Overlay overlay, SequenceEventType type)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_OVERLAY, overlay, type));
     }
 
     /**
-     * notify specified painter of overlay has changed (null means all overlays)
+     * Notify specified painter of overlay has changed (the sequence should contains the specified
+     * Overlay)
      */
     public void overlayChanged(Overlay overlay)
     {
-        overlayChanged(overlay, SequenceEventType.CHANGED);
+        if (contains(overlay))
+            overlayChanged(overlay, SequenceEventType.CHANGED);
     }
 
     /**
@@ -6056,17 +6077,31 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * notify roi has changed (global change)
+     * @deprecated Use {@link #roiChanged(ROI)} method instead.
      */
+    @Deprecated
     public void roiChanged()
     {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_ROI));
+        final Iterator<ROI> it = rois.iterator();
+
+        // send a event for all ROI
+        while (it.hasNext())
+            roiChanged(it.next(), SequenceEventType.CHANGED);
     }
 
     /**
-     * notify specified roi has changed (null means all rois)
+     * Notify specified roi has changed (the sequence should contains the specified ROI)
      */
-    private void roiChanged(ROI roi, SequenceEventType type)
+    public void roiChanged(ROI roi)
+    {
+        if (contains(roi))
+            roiChanged(roi, SequenceEventType.CHANGED);
+    }
+
+    /**
+     * Notify specified roi has changed
+     */
+    protected void roiChanged(ROI roi, SequenceEventType type)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_ROI, roi, type));
     }
