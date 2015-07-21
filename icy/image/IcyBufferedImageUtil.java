@@ -28,7 +28,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.util.List;
 
 import javax.media.jai.BorderExtender;

@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import plugins.kernel.roi.descriptor.basic.BasicMeasureROIDescriptorsPlugin;
+import plugins.kernel.roi.descriptor.measure.ROIBasicMeasureDescriptorsPlugin;
 
 /**
  * ROI utilities class.
@@ -98,7 +98,7 @@ public class ROIUtil
      *        the input {@link ROIDescriptor} set (see {@link #getROIDescriptors()} method)
      * @param descriptorId
      *        the id of the descriptor we want to compute (
-     *        {@link BasicMeasureROIDescriptorsPlugin#ID_VOLUME} for
+     *        {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
      *        instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
@@ -136,7 +136,7 @@ public class ROIUtil
      * 
      * @param descriptorId
      *        the id of the descriptor we want to compute (
-     *        {@link BasicMeasureROIDescriptorsPlugin#ID_VOLUME} for
+     *        {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
      *        instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed

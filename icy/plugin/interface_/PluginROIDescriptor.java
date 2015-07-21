@@ -14,7 +14,7 @@ import java.util.Map;
  * Plugin interface providing the basic functionalities to compute various descriptors for regions
  * of interest (ROI)
  * 
- * @author Alexandre Dufour, Stephane Dallongeville
+ * @author Stephane Dallongeville, Alexandre Dufour 
  */
 public interface PluginROIDescriptor extends PluginNoEDTConstructor
 {

@@ -65,7 +65,6 @@ import vtk.vtkActor;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
-import vtk.vtkSphereSource;
 
 /**
  * @author Stephane
@@ -109,7 +108,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
             actor = new vtkActor();
             ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
-            ((vtkActor) actor).GetProperty().SetFrontfaceCulling(1);
         }
 
         /**
@@ -177,12 +175,30 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new double[] {x0, y0, z0});
-                        point3DList.add(new double[] {x1, y1, z0});
-                        point3DList.add(new double[] {x0, y0, z1});
-                        point3DList.add(new double[] {x1, y1, z1});
-                        polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
-                        polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
+                        point3DList.add(new double[]
+                        {
+                                x0, y0, z0
+                        });
+                        point3DList.add(new double[]
+                        {
+                                x1, y1, z0
+                        });
+                        point3DList.add(new double[]
+                        {
+                                x0, y0, z1
+                        });
+                        point3DList.add(new double[]
+                        {
+                                x1, y1, z1
+                        });
+                        polyList.add(new int[]
+                        {
+                                1 + ind, 2 + ind, 0 + ind
+                        });
+                        polyList.add(new int[]
+                        {
+                                3 + ind, 2 + ind, 1 + ind
+                        });
 
                         x0 = x1;
                         y0 = y1;
@@ -194,12 +210,30 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new double[] {x0, y0, z0});
-                        point3DList.add(new double[] {x1, y1, z0});
-                        point3DList.add(new double[] {x0, y0, z1});
-                        point3DList.add(new double[] {x1, y1, z1});
-                        polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
-                        polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
+                        point3DList.add(new double[]
+                        {
+                                x0, y0, z0
+                        });
+                        point3DList.add(new double[]
+                        {
+                                x1, y1, z0
+                        });
+                        point3DList.add(new double[]
+                        {
+                                x0, y0, z1
+                        });
+                        point3DList.add(new double[]
+                        {
+                                x1, y1, z1
+                        });
+                        polyList.add(new int[]
+                        {
+                                1 + ind, 2 + ind, 0 + ind
+                        });
+                        polyList.add(new int[]
+                        {
+                                3 + ind, 2 + ind, 1 + ind
+                        });
 
                         x0 = x1;
                         y0 = y1;
@@ -260,12 +294,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         ROI2DShape.this.beginUpdate();
                         try
                         {
+                            // get control points list
+                            final List<Anchor2D> controlPoints = getControlPoints();
+
                             // send event to controls points first
-                            synchronized (controlPoints)
-                            {
-                                for (Anchor2D pt : controlPoints)
-                                    pt.keyPressed(e, imagePoint, canvas);
-                            }
+                            for (Anchor2D pt : controlPoints)
+                                pt.keyPressed(e, imagePoint, canvas);
 
                             // specific action for ROI2DShape
                             if (!e.isConsumed())
@@ -287,7 +321,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                                             // add undo operation
                                             if (sequence != null)
                                                 sequence.addUndoableEdit(new Point2DRemovedROIEdit(ROI2DShape.this,
-                                                        selectedPoint));
+                                                        controlPoints, selectedPoint));
                                         }
                                         break;
                                 }
@@ -848,7 +882,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (actor == null)
                 initVtkObjects();
 
-            return new vtkProp[] {(vtkProp) actor};
+            return new vtkProp[]
+            {
+                (vtkProp) actor
+            };
         }
 
         @Override
@@ -1584,7 +1621,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      * Called when anchor painter changed, provided only for backward compatibility.<br>
      * Don't use it.
      */
-    @SuppressWarnings({"deprecation", "unused"})
+    @SuppressWarnings(
+    {
+            "deprecation", "unused"
+    })
     public void painterChanged(PainterEvent event)
     {
         // ignore it now

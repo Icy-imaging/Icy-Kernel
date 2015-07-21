@@ -171,7 +171,6 @@ public class ROI2DPoint extends ROI2DShape
 
             actor = new vtkActor();
             ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
-            ((vtkActor) actor).GetProperty().SetFrontfaceCulling(1);
         }
 
         /**

@@ -501,7 +501,7 @@ public class ROI2DPolyLine extends ROI2DShape
             {
                 for (Node n : nodesPoint)
                 {
-                    final Anchor2D pt = new Anchor2D();
+                    final Anchor2D pt = createAnchor(new Point2D.Double());
                     pt.loadPositionFromXML(n);
                     addPoint(pt);
                 }

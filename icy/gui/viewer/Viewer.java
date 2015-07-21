@@ -41,7 +41,6 @@ import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
 import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;
-import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;

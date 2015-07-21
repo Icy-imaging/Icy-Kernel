@@ -19,7 +19,6 @@
 package icy.action;
 
 import icy.file.Saver;
-import icy.gui.dialog.ImageLoaderDialog;
 import icy.gui.dialog.ImageSaverDialog;
 import icy.gui.dialog.LoaderDialog;
 import icy.gui.menu.ApplicationMenu;

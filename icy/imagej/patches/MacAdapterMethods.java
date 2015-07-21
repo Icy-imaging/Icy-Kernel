@@ -18,7 +18,6 @@
  */
 package icy.imagej.patches;
 
-import javax.media.rtp.event.ApplicationEvent;
 
 /**
  * @author Stephane

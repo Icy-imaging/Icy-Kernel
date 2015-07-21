@@ -234,6 +234,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             @Override
             public void skinChanged()
             {
+                // TODO: verify if still needed with JXTreeTable
                 // fix the row height which is not preserved on skin change
                 table.setRowHeight(24);
             }

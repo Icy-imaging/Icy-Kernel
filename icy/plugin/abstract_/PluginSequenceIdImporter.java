@@ -7,7 +7,6 @@ import icy.common.exception.UnsupportedFormatException;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
 import icy.plugin.interface_.PluginNoEDTConstructor;
-import icy.plugin.interface_.PluginThreaded;
 import icy.sequence.SequenceIdImporter;
 
 import java.awt.Rectangle;
