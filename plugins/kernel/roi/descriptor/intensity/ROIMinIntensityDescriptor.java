@@ -28,6 +28,12 @@ public class ROIMinIntensityDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return true;
+    }
+
+    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(computeMinIntensity(roi, sequence));
@@ -48,11 +54,12 @@ public class ROIMinIntensityDescriptor extends ROIDescriptor
     {
         try
         {
-            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence).min;
+            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence, false).min;
         }
         catch (Exception e)
         {
-            return 0d;
+            throw new UnsupportedOperationException(ROIMinIntensityDescriptor.class.getSimpleName() + ": cannot compute descriptors for '"
+                    + roi.getName() + "'", e);
         }
     }
 }

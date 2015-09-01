@@ -144,8 +144,7 @@ public class BooleanMask2D implements Cloneable
      * Build resulting mask from union of the mask1 and mask2.<br>
      * If <code>mask1</code> is <code>null</code> then a copy of <code>mask2</code> is returned.<br>
      * If <code>mask2</code> is <code>null</code> then a copy of <code>mask1</code> is returned.<br>
-     * An empty mask is returned if both <code>mask1</code> and <code>mask2</code> are
-     * <code>null</code>.
+     * An empty mask is returned if both <code>mask1</code> and <code>mask2</code> are <code>null</code>.
      */
     public static BooleanMask2D getUnion(BooleanMask2D mask1, BooleanMask2D mask2)
     {
@@ -323,8 +322,7 @@ public class BooleanMask2D implements Cloneable
      * Build resulting mask from exclusive union of the mask1 and mask2.<br>
      * If <code>mask1</code> is <code>null</code> then a copy of <code>mask2</code> is returned.<br>
      * If <code>mask2</code> is <code>null</code> then a copy of <code>mask1</code> is returned.<br>
-     * <code>null</code> is returned if both <code>mask1</code> and <code>mask2</code> are
-     * <code>null</code>.
+     * <code>null</code> is returned if both <code>mask1</code> and <code>mask2</code> are <code>null</code>.
      */
     public static BooleanMask2D getExclusiveUnion(BooleanMask2D mask1, BooleanMask2D mask2)
     {
@@ -578,9 +576,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * @deprecated Use
-     *             {@link #getIntersectionBooleanMask(Rectangle, boolean[], Rectangle, boolean[])}
-     *             instead.
+     * @deprecated Use {@link #getIntersectionBooleanMask(Rectangle, boolean[], Rectangle, boolean[])} instead.
      */
     @Deprecated
     public static BooleanMask2D getIntersectBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
@@ -633,8 +629,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * @deprecated Use {@link #getExclusiveUnion(Rectangle, boolean[], Rectangle, boolean[])}
-     *             instead.
+     * @deprecated Use {@link #getExclusiveUnion(Rectangle, boolean[], Rectangle, boolean[])} instead.
      */
     @Deprecated
     public static BooleanMask2D getExclusiveUnionBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
@@ -672,9 +667,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * @deprecated Uses
-     *             {@link #getExclusiveUnionBooleanMask(Rectangle, boolean[], Rectangle, boolean[])}
-     *             instead.
+     * @deprecated Uses {@link #getExclusiveUnionBooleanMask(Rectangle, boolean[], Rectangle, boolean[])} instead.
      */
     @Deprecated
     public static BooleanMask2D getXorBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2, boolean[] mask2)
@@ -1553,7 +1546,9 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Compute intersection with specified mask and return result in a new mask
+     * Compute intersection with specified mask and return result in a new mask.
+     * 
+     * @see #intersect(BooleanMask2D)
      */
     public BooleanMask2D getIntersection(BooleanMask2D booleanMask)
     {
@@ -1561,7 +1556,9 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Compute intersection with specified mask and return result in a new mask
+     * Compute intersection with specified mask and return result in a new mask.
+     * 
+     * @see #intersect(Rectangle, boolean[])
      */
     public BooleanMask2D getIntersection(Rectangle bounds, boolean[] mask)
     {
@@ -1587,7 +1584,9 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Compute union with specified mask and return result in a new mask
+     * Compute union with specified mask and return result in a new mask.
+     * 
+     * @see #add(BooleanMask2D)
      */
     public BooleanMask2D getUnion(BooleanMask2D booleanMask)
     {
@@ -1595,7 +1594,9 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Compute union with specified mask and return result in a new mask
+     * Compute union with specified mask and return result in a new mask.
+     * 
+     * @see #add(Rectangle, boolean[])
      */
     public BooleanMask2D getUnion(Rectangle bounds, boolean[] mask)
     {
@@ -1603,7 +1604,9 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Compute exclusive union operation with specified mask and return result in a new mask
+     * Compute exclusive union operation with specified mask and return result in a new mask.
+     * 
+     * @see #exclusiveAdd(BooleanMask2D)
      */
     public BooleanMask2D getExclusiveUnion(BooleanMask2D booleanMask)
     {
@@ -1612,6 +1615,8 @@ public class BooleanMask2D implements Cloneable
 
     /**
      * Compute exclusive union operation with specified mask and return result in a new mask
+     * 
+     * @see #exclusiveAdd(Rectangle, boolean[])
      */
     public BooleanMask2D getExclusiveUnion(Rectangle bounds, boolean[] mask)
     {
@@ -1653,48 +1658,250 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * @deprecated Use {@link #getIntersection(BooleanMask2D)} instead.
+     * Add the specified mask into the current mask (bounds can be enlarged):
+     * 
+     * <pre>
+     *       current mask    +         mask       =       result
+     * 
+     *     ################     ################     ################
+     *     ##############         ##############     ################
+     *     ############             ############     ################
+     *     ##########                 ##########     ################
+     *     ########                     ########     ################
+     *     ######                         ######     ######    ######
+     *     ####                             ####     ####        ####
+     *     ##                                 ##     ##            ##
+     * </pre>
      */
-    @Deprecated
-    public void intersect(BooleanMask2D booleanMask)
+    public void add(BooleanMask2D booleanMask)
     {
-        final BooleanMask2D result = getIntersection(booleanMask);
-
-        bounds = result.bounds;
-        mask = result.mask;
+        add(booleanMask.bounds, booleanMask.mask);
     }
 
     /**
-     * @deprecated Use {@link #getIntersection(Rectangle, boolean[])} instead.
+     * Add the specified mask into the current mask (bounds can be enlarged):
+     * 
+     * <pre>
+     *       current mask    +         mask       =       result
+     * 
+     *     ################     ################     ################
+     *     ##############         ##############     ################
+     *     ############             ############     ################
+     *     ##########                 ##########     ################
+     *     ########                     ########     ################
+     *     ######                         ######     ######    ######
+     *     ####                             ####     ####        ####
+     *     ##                                 ##     ##            ##
+     * </pre>
      */
-    @Deprecated
-    public void intersect(Rectangle bounds, boolean[] mask)
+    public void add(Rectangle boundsToAdd, boolean[] maskToAdd)
     {
-        final BooleanMask2D result = getIntersection(bounds, mask);
+        // don't need to reallocate the mask
+        if (bounds.contains(boundsToAdd))
+        {
+            int offDst, offSrc;
+
+            // calculate offset
+            offDst = ((boundsToAdd.y - bounds.y) * bounds.width) + (boundsToAdd.x - bounds.x);
+            offSrc = 0;
+
+            for (int y = 0; y < boundsToAdd.height; y++)
+            {
+                for (int x = 0; x < boundsToAdd.width; x++)
+                    if (maskToAdd[offSrc++])
+                        mask[offDst + x] = true;
+
+                offDst += bounds.width;
+            }
+        }
+        else
+        {
+            // create a new mask
+            final BooleanMask2D result = getUnion(boundsToAdd, maskToAdd);
+
+            // update bounds and mask
+            this.bounds = result.bounds;
+            this.mask = result.mask;
+        }
+    }
+
+    /**
+     * Set the content of current mask with the result of the intersection with the specified mask:
+     * 
+     * <pre>
+     *     current mask  intersect     newMask       =       result
+     * 
+     *     ################     ################     ################
+     *     ##############         ##############       ############
+     *     ############             ############         ########
+     *     ##########                 ##########           ####
+     *     ########                     ########
+     *     ######                         ######
+     *     ####                             ####
+     *     ##                                 ##
+     * </pre>
+     */
+    public void intersect(BooleanMask2D booleanMask)
+    {
+        intersect(booleanMask.bounds, booleanMask.mask);
+    }
+
+    /**
+     * Set the content of current mask with the result of the intersection with the specified mask:
+     * 
+     * <pre>
+     *     current mask  intersect     newMask       =       result
+     * 
+     *     ################     ################     ################
+     *     ##############         ##############       ############
+     *     ############             ############         ########
+     *     ##########                 ##########           ####
+     *     ########                     ########
+     *     ######                         ######
+     *     ####                             ####
+     *     ##                                 ##
+     * </pre>
+     */
+    public void intersect(Rectangle boundsToIntersect, boolean[] maskToIntersect)
+    {
+        // faster to always create a new mask
+        final BooleanMask2D result = getIntersection(boundsToIntersect, maskToIntersect);
 
         this.bounds = result.bounds;
         this.mask = result.mask;
     }
 
     /**
-     * @deprecated Use {@link #getUnion(BooleanMask2D)} instead.
+     * Exclusively add the specified mask into the current mask (bounds can change):
+     * 
+     * <pre>
+     *          mask1       xor      mask2        =       result
+     * 
+     *     ################     ################
+     *     ##############         ##############     ##            ##
+     *     ############             ############     ####        ####
+     *     ##########                 ##########     ######    ######
+     *     ########                     ########     ################
+     *     ######                         ######     ######    ######
+     *     ####                             ####     ####        ####
+     *     ##                                 ##     ##            ##
+     * </pre>
+     */
+    public void exclusiveAdd(BooleanMask2D booleanMask)
+    {
+        exclusiveAdd(booleanMask.bounds, booleanMask.mask);
+    }
+
+    /**
+     * Exclusively add the specified mask into the current mask (bounds can change):
+     * 
+     * <pre>
+     *          mask1       xor      mask2        =       result
+     * 
+     *     ################     ################
+     *     ##############         ##############     ##            ##
+     *     ############             ############     ####        ####
+     *     ##########                 ##########     ######    ######
+     *     ########                     ########     ################
+     *     ######                         ######     ######    ######
+     *     ####                             ####     ####        ####
+     *     ##                                 ##     ##            ##
+     * </pre>
+     */
+    public void exclusiveAdd(Rectangle boundsToXAdd, boolean[] maskToXAdd)
+    {
+        // don't need to reallocate the mask
+        if (bounds.contains(boundsToXAdd))
+        {
+            int offDst, offSrc;
+
+            // calculate offset
+            offDst = ((boundsToXAdd.y - bounds.y) * bounds.width) + (boundsToXAdd.x - bounds.x);
+            offSrc = 0;
+
+            for (int y = 0; y < boundsToXAdd.height; y++)
+            {
+                for (int x = 0; x < boundsToXAdd.width; x++)
+                    if (maskToXAdd[offSrc++])
+                        mask[offDst + x] = !mask[offDst + x];
+
+                offDst += bounds.width;
+            }
+
+            // bounds may have changed
+            optimizeBounds();
+        }
+        else
+        {
+            // create a new mask
+            final BooleanMask2D result = getExclusiveUnion(boundsToXAdd, maskToXAdd);
+
+            // update bounds and mask
+            this.bounds = result.bounds;
+            this.mask = result.mask;
+        }
+    }
+
+    /**
+     * Subtract the specified mask from the current mask (bounds can change):
+     * 
+     * <pre>
+     *       current mask    -        mask        =  result
+     * 
+     *     ################     ################
+     *     ##############         ##############     ##
+     *     ############             ############     ####
+     *     ##########                 ##########     ######
+     *     ########                     ########     ########
+     *     ######                         ######     ######
+     *     ####                             ####     ####
+     *     ##                                 ##     ##
+     * </pre>
+     */
+    public void subtract(Rectangle boundsToSubtract, boolean[] maskToSubtract)
+    {
+        // compute intersection
+        final Rectangle intersection = bounds.intersection(boundsToSubtract);
+
+        // need to subtract something ?
+        if (!intersection.isEmpty())
+        {
+            // calculate offset
+            int offDst = ((intersection.y - bounds.y) * bounds.width) + (intersection.x - bounds.x);
+            int offSrc = ((intersection.y - boundsToSubtract.y) * boundsToSubtract.width)
+                    + (intersection.x - boundsToSubtract.x);
+
+            for (int y = 0; y < intersection.height; y++)
+            {
+                for (int x = 0; x < intersection.width; x++)
+                    if (maskToSubtract[offSrc + x])
+                        mask[offDst + x] = false;
+
+                offDst += bounds.width;
+                offSrc += boundsToSubtract.width;
+            }
+
+            // optimize bounds
+            optimizeBounds();
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #add(BooleanMask2D)} instead.
      */
     @Deprecated
     public void union(BooleanMask2D booleanMask)
     {
-        union(booleanMask.bounds, booleanMask.mask);
+        add(booleanMask.bounds, booleanMask.mask);
     }
 
     /**
-     * @deprecated Use {@link #getUnion(Rectangle, boolean[])} instead.
+     * @deprecated Use {@link #add(BooleanMask2D)} instead.
      */
     @Deprecated
     public void union(Rectangle bounds, boolean[] mask)
     {
-        final BooleanMask2D result = getUnion(bounds, mask);
-
-        this.bounds = result.bounds;
-        this.mask = result.mask;
+        add(bounds, mask);
     }
 
     /**
@@ -1703,7 +1910,7 @@ public class BooleanMask2D implements Cloneable
     @Deprecated
     public void exclusiveUnion(BooleanMask2D booleanMask)
     {
-        exclusiveUnion(booleanMask.bounds, booleanMask.mask);
+        exclusiveAdd(booleanMask.bounds, booleanMask.mask);
     }
 
     /**
@@ -1712,10 +1919,7 @@ public class BooleanMask2D implements Cloneable
     @Deprecated
     public void exclusiveUnion(Rectangle bounds, boolean[] mask)
     {
-        final BooleanMask2D result = getExclusiveUnion(bounds, mask);
-
-        this.bounds = result.bounds;
-        this.mask = result.mask;
+        exclusiveAdd(bounds, mask);
     }
 
     /**
@@ -1724,7 +1928,7 @@ public class BooleanMask2D implements Cloneable
     @Deprecated
     public void xor(BooleanMask2D booleanMask)
     {
-        exclusiveUnion(booleanMask);
+        exclusiveAdd(booleanMask);
     }
 
     /**
@@ -1733,7 +1937,7 @@ public class BooleanMask2D implements Cloneable
     @Deprecated
     public void xor(Rectangle bounds, boolean[] mask)
     {
-        exclusiveUnion(bounds, mask);
+        exclusiveAdd(bounds, mask);
     }
 
     /**

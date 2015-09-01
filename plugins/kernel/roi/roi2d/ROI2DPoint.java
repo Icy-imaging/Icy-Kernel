@@ -22,6 +22,7 @@ import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
 import icy.resource.ResourceUtil;
+import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
@@ -303,6 +304,36 @@ public class ROI2DPoint extends ROI2DShape
     public Point2D getPoint()
     {
         return position.getPosition();
+    }
+
+    @Override
+    public boolean contains(double x, double y)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Point2D p)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(double x, double y, double w, double h)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Rectangle2D r)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(ROI roi)
+    {
+        return false;
     }
 
     @Override

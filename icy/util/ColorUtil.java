@@ -261,6 +261,25 @@ public class ColorUtil
     }
 
     /**
+     * Mix 2 colors using the following ratio for mixing:<br/>
+     * 0f means 100% of color 1 and 0% of color 2<br/>
+     * 0.5f means 50% of color 1 and 50% of color 2<br/>
+     * 1f means 0% of color 1 and 100% of color 2
+     */
+    public static Color mix(Color c1, Color c2, float ratio)
+    {
+        final int r, g, b;
+        final float r2 = Math.min(1f, Math.max(0f, ratio));
+        final float r1 = 1f - r2;
+
+        r = (int) ((c1.getRed() * r1) + (c2.getRed() * r2));
+        g = (int) ((c1.getGreen() * r1) + (c2.getGreen() * r2));
+        b = (int) ((c1.getBlue() * r1) + (c2.getBlue() * r2));
+
+        return new Color(r, g, b);
+    }
+
+    /**
      * Mix 2 colors without "priority" color
      */
     public static Color mix(Color c1, Color c2, boolean useAlpha)

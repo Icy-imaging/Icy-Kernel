@@ -28,6 +28,12 @@ public class ROIStandardDeviationDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return true;
+    }
+
+    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(computeStandardDeviation(roi, sequence));
@@ -48,11 +54,12 @@ public class ROIStandardDeviationDescriptor extends ROIDescriptor
     {
         try
         {
-            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence).deviation;
+            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence, false).deviation;
         }
         catch (Exception e)
         {
-            return 0d;
+            throw new UnsupportedOperationException(ROIStandardDeviationDescriptor.class.getSimpleName() + ": cannot compute descriptors for '"
+                    + roi.getName() + "'", e);
         }
     }
 }

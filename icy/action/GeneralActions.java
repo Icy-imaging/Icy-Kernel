@@ -35,6 +35,7 @@ import icy.system.SystemUtil;
 import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
+import icy.util.ClassUtil;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -468,9 +469,9 @@ public class GeneralActions
 
             try
             {
-                if (type.isAssignableFrom(IcyAbstractAction[].class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction[].class))
                     result.addAll(Arrays.asList(((IcyAbstractAction[]) field.get(null))));
-                else if (type.isAssignableFrom(IcyAbstractAction.class))
+                else if (ClassUtil.isSubClass(type, IcyAbstractAction.class))
                     result.add((IcyAbstractAction) field.get(null));
             }
             catch (Exception e)

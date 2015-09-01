@@ -51,8 +51,7 @@ public class ROISizeDescriptorsPlugin extends Plugin implements PluginROIDescrip
     }
 
     @Override
-    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException
+    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         final Map<ROIDescriptor, Object> result = new HashMap<ROIDescriptor, Object>();
 
@@ -63,18 +62,9 @@ public class ROISizeDescriptorsPlugin extends Plugin implements PluginROIDescrip
 
             result.put(sizeXDescriptor, Double.valueOf(ROISizeXDescriptor.getSizeX(size)));
             result.put(sizeYDescriptor, Double.valueOf(ROISizeYDescriptor.getSizeY(size)));
-            if (z == -1)
-                result.put(sizeZDescriptor, Double.valueOf(ROISizeZDescriptor.getSizeZ(size)));
-            else
-                result.put(sizeZDescriptor, Double.valueOf(1d));
-            if (t == -1)
-                result.put(sizeTDescriptor, Double.valueOf(ROISizeTDescriptor.getSizeT(size)));
-            else
-                result.put(sizeTDescriptor, Double.valueOf(1d));
-            if (c == -1)
-                result.put(sizeCDescriptor, Double.valueOf(ROISizeCDescriptor.getSizeC(size)));
-            else
-                result.put(sizeCDescriptor, Double.valueOf(1d));
+            result.put(sizeZDescriptor, Double.valueOf(ROISizeZDescriptor.getSizeZ(size)));
+            result.put(sizeTDescriptor, Double.valueOf(ROISizeTDescriptor.getSizeT(size)));
+            result.put(sizeCDescriptor, Double.valueOf(ROISizeCDescriptor.getSizeC(size)));
         }
         catch (Exception e)
         {

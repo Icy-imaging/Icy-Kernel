@@ -22,7 +22,13 @@ public class ROIPositionZDescriptor extends ROIDescriptor
     @Override
     public String getDescription()
     {
-        return "Position Z";
+        return "Position Z (bounding box)";
+    }
+
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
     }
 
     @Override

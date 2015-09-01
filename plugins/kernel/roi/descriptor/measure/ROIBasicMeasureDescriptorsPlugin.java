@@ -120,69 +120,62 @@ public class ROIBasicMeasureDescriptorsPlugin extends Plugin implements PluginRO
     }
 
     @Override
-    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException
+    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         final Map<ROIDescriptor, Object> result = new HashMap<ROIDescriptor, Object>();
-        final ROI r;
-
-        // want a sub part of the ROI ?
-        if ((z != -1) || (t != -1) || (c != -1))
-            r = roi.getSubROI(z, t, c, false);
-        else
-            r = roi;
 
         // use the contour and interior to compute others descriptors
-        final double contour = ROIContourDescriptor.computeContour(r);
-        final double interior = ROIInteriorDescriptor.computeInterior(r);
+        final double contour = ROIContourDescriptor.computeContour(roi);
+        final double interior = ROIInteriorDescriptor.computeInterior(roi);
 
         result.put(contourDescriptor, Double.valueOf(contour));
         result.put(interiorDescriptor, Double.valueOf(interior));
 
+        int notComputed = 0;
+
         try
         {
             result.put(perimeterDescriptor,
-                    Double.valueOf(ROIPerimeterDescriptor.computePerimeter(contour, r, sequence)));
+                    Double.valueOf(ROIPerimeterDescriptor.computePerimeter(contour, roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {
-            // ignore at this point
+            result.put(perimeterDescriptor, null);
+            notComputed++;
         }
         try
         {
-            result.put(areaDescriptor, Double.valueOf(ROIAreaDescriptor.computeArea(interior, r, sequence)));
+            result.put(areaDescriptor, Double.valueOf(ROIAreaDescriptor.computeArea(interior, roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {
-            // ignore at this point
+            result.put(areaDescriptor, null);
+            notComputed++;
         }
         try
         {
             result.put(surfaceAreaDescriptor,
-                    Double.valueOf(ROISurfaceAreaDescriptor.computeSurfaceArea(contour, r, sequence)));
+                    Double.valueOf(ROISurfaceAreaDescriptor.computeSurfaceArea(contour, roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {
-            // ignore at this point
+            result.put(surfaceAreaDescriptor, null);
+            notComputed++;
         }
         try
         {
-            result.put(volumeDescriptor, Double.valueOf(ROIVolumeDescriptor.computeVolume(interior, r, sequence)));
+            result.put(volumeDescriptor, Double.valueOf(ROIVolumeDescriptor.computeVolume(interior, roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {
-            // ignore at this point
+            result.put(volumeDescriptor, null);
+            notComputed++;
         }
 
-        if (result.isEmpty())
+        if (notComputed == 4)
         {
-            String mess = getClass().getSimpleName() + ": cannot compute any of the descriptors for '" + roi.getName()
-                    + "'";
-            // sub part of the ROI ?
-            if (r != roi)
-                mess += " at position [Z=" + z + ",T=" + t + ",C=" + c + "]";
-
-            throw new UnsupportedOperationException(mess);
+            throw new UnsupportedOperationException(getClass().getSimpleName()
+                    + ": cannot compute any of the descriptors for '" + roi.getName() + "'");
         }
 
         return result;

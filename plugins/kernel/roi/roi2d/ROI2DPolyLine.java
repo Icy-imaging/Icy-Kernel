@@ -18,38 +18,27 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
+import icy.roi.Polyline2D;
 import icy.roi.ROI;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import plugins.kernel.canvas.VtkCanvas;
-import vtk.vtkActor;
 
 /**
  * @author Stephane
@@ -86,151 +75,151 @@ public class ROI2DPolyLine extends ROI2DShape
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
 
-    public class ROI2DPolyLinePainter extends ROI2DShapePainter
-    {
-        @Override
-        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
-        {
-            if (canvas instanceof IcyCanvas2D)
-            {
-                final Graphics2D g2 = (Graphics2D) g.create();
-                final Rectangle2D bounds = shape.getBounds2D();
-                // trivial paint optimization
-                final boolean shapeVisible = GraphicsUtil.isVisible(g2, bounds);
-                final boolean small;
-                final boolean tiny;
-
-                // disable LOD when creating the ROI
-                if (isCreating())
-                {
-                    small = false;
-                    tiny = false;
-                }
-                else
-                {
-                    final AffineTransform trans = g.getTransform();
-                    final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
-                    final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
-                    small = size < LOD_SMALL;
-                    tiny = size < LOD_TINY;
-                }
-
-                // simplified draw
-                if (small)
-                {
-                    // trivial paint optimization
-                    if (shapeVisible)
-                    {
-                        // draw shape (simplified version)
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                        g2.setColor(getDisplayColor());
-                        g2.draw(shape);
-
-                        if (!tiny)
-                        {
-                            // draw simplified control points
-                            if (isSelected() && !isReadOnly())
-                            {
-                                final int ray = (int) canvas.canvasToImageDeltaX(2);
-
-                                for (Anchor2D pt : controlPoints)
-                                {
-                                    if (pt.isVisible())
-                                    {
-                                        if (pt.isSelected())
-                                            g2.setColor(pt.getSelectedColor());
-                                        else
-                                            g2.setColor(pt.getColor());
-
-                                        g2.fillRect((int) pt.getPositionX() - ray, (int) pt.getPositionY() - ray,
-                                                ray * 2, ray * 2);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                // normal draw
-                else
-                {
-                    if (shapeVisible)
-                    {
-                        if (isSelected())
-                        {
-                            // just draw plain object shape without border
-                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                            g2.setColor(getDisplayColor());
-                            g2.draw(shape);
-                        }
-                        else
-                        {
-                            // draw border
-                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                            g2.setColor(Color.black);
-                            g2.draw(shape);
-                            // draw shape
-                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                            g2.setColor(getDisplayColor());
-                            g2.draw(shape);
-                        }
-                    }
-
-                    if (isSelected() && !isReadOnly())
-                    {
-                        // draw control point if selected
-                        for (Anchor2D pt : controlPoints)
-                            pt.paint(g2, sequence, canvas);
-                    }
-                }
-
-                g2.dispose();
-            }
-
-            if (canvas instanceof VtkCanvas)
-            {
-                // 3D canvas
-                final VtkCanvas cnv = (VtkCanvas) canvas;
-
-                // FIXME : need a better implementation
-                final double[] s = cnv.getVolumeScale();
-
-                // scaling changed ?
-                if (!Arrays.equals(scaling, s))
-                {
-                    // update scaling
-                    scaling = s;
-                    // need rebuild
-                    needRebuild = true;
-                }
-
-                // need to rebuild 3D data structures ?
-                if (needRebuild)
-                {
-                    // initialize VTK objects if not yet done
-                    if (actor == null)
-                        initVtkObjects();
-
-                    // request rebuild 3D objects
-                    canvas3d = cnv;
-                    ThreadUtil.runSingle(this);
-                    needRebuild = false;
-                }
-
-                // actor can be accessed in canvas3d for rendering so we need to synchronize access
-                cnv.lock();
-                try
-                {
-                    // update visibility
-                    if (actor != null)
-                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
-                }
-                finally
-                {
-                    cnv.unlock();
-                }
-            }
-        }
-    }
+    // public class ROI2DPolyLinePainter extends ROI2DShapePainter
+    // {
+    // @Override
+    // protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+    // {
+    // if (canvas instanceof IcyCanvas2D)
+    // {
+    // final Graphics2D g2 = (Graphics2D) g.create();
+    // final Rectangle2D bounds = shape.getBounds2D();
+    // // trivial paint optimization
+    // final boolean shapeVisible = GraphicsUtil.isVisible(g2, bounds);
+    // final boolean small;
+    // final boolean tiny;
+    //
+    // // disable LOD when creating the ROI
+    // if (isCreating())
+    // {
+    // small = false;
+    // tiny = false;
+    // }
+    // else
+    // {
+    // final AffineTransform trans = g.getTransform();
+    // final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+    // final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
+    // small = size < LOD_SMALL;
+    // tiny = size < LOD_TINY;
+    // }
+    //
+    // // simplified draw
+    // if (small)
+    // {
+    // // trivial paint optimization
+    // if (shapeVisible)
+    // {
+    // // draw shape (simplified version)
+    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+    // g2.setColor(getDisplayColor());
+    // g2.draw(shape);
+    //
+    // if (!tiny)
+    // {
+    // // draw simplified control points
+    // if (isSelected() && !isReadOnly())
+    // {
+    // final int ray = (int) canvas.canvasToImageDeltaX(2);
+    //
+    // for (Anchor2D pt : controlPoints)
+    // {
+    // if (pt.isVisible())
+    // {
+    // if (pt.isSelected())
+    // g2.setColor(pt.getSelectedColor());
+    // else
+    // g2.setColor(pt.getColor());
+    //
+    // g2.fillRect((int) pt.getPositionX() - ray, (int) pt.getPositionY() - ray,
+    // ray * 2, ray * 2);
+    // }
+    // }
+    // }
+    // }
+    // }
+    // }
+    // // normal draw
+    // else
+    // {
+    // if (shapeVisible)
+    // {
+    // if (isSelected())
+    // {
+    // // just draw plain object shape without border
+    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+    // g2.setColor(getDisplayColor());
+    // g2.draw(shape);
+    // }
+    // else
+    // {
+    // // draw border
+    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+    // g2.setColor(Color.black);
+    // g2.draw(shape);
+    // // draw shape
+    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+    // g2.setColor(getDisplayColor());
+    // g2.draw(shape);
+    // }
+    // }
+    //
+    // if (isSelected() && !isReadOnly())
+    // {
+    // // draw control point if selected
+    // for (Anchor2D pt : controlPoints)
+    // pt.paint(g2, sequence, canvas);
+    // }
+    // }
+    //
+    // g2.dispose();
+    // }
+    //
+    // if (canvas instanceof VtkCanvas)
+    // {
+    // // 3D canvas
+    // final VtkCanvas cnv = (VtkCanvas) canvas;
+    //
+    // // FIXME : need a better implementation
+    // final double[] s = cnv.getVolumeScale();
+    //
+    // // scaling changed ?
+    // if (!Arrays.equals(scaling, s))
+    // {
+    // // update scaling
+    // scaling = s;
+    // // need rebuild
+    // needRebuild = true;
+    // }
+    //
+    // // need to rebuild 3D data structures ?
+    // if (needRebuild)
+    // {
+    // // initialize VTK objects if not yet done
+    // if (actor == null)
+    // initVtkObjects();
+    //
+    // // request rebuild 3D objects
+    // canvas3d = cnv;
+    // ThreadUtil.runSingle(this);
+    // needRebuild = false;
+    // }
+    //
+    // // actor can be accessed in canvas3d for rendering so we need to synchronize access
+    // cnv.lock();
+    // try
+    // {
+    // // update visibility
+    // if (actor != null)
+    // ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
+    // }
+    // finally
+    // {
+    // cnv.unlock();
+    // }
+    // }
+    // }
+    // }
 
     /**
      * @deprecated
@@ -246,7 +235,7 @@ public class ROI2DPolyLine extends ROI2DShape
      */
     public ROI2DPolyLine(Point2D pt)
     {
-        super(new Path2D.Double());
+        super(new Polyline2D());
 
         // add points to list
         final Anchor2D anchor = createAnchor(pt);
@@ -298,15 +287,19 @@ public class ROI2DPolyLine extends ROI2DShape
         return new ROI2DPolyLineAnchor2D(pos, getColor(), getFocusedColor());
     }
 
-    @Override
-    protected ROI2DPolyLinePainter createPainter()
-    {
-        return new ROI2DPolyLinePainter();
-    }
+    // @Override
+    // protected ROI2DPolyLinePainter createPainter()
+    // {
+    // return new ROI2DPolyLinePainter();
+    // }
 
+    /**
+     * @deprecated Use {@link #getPolyline2D()} instead
+     */
+    @Deprecated
     protected Path2D getPath()
     {
-        return (Path2D) shape;
+        return new Path2D.Double(shape);
     }
 
     public void setPoints(List<Point2D> pts)
@@ -315,9 +308,8 @@ public class ROI2DPolyLine extends ROI2DShape
         try
         {
             removeAllPoint();
-
             for (Point2D pt : pts)
-                addPoint(new Anchor2D(pt.getX(), pt.getY()));
+                addNewPoint(pt, false);
         }
         finally
         {
@@ -326,7 +318,7 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     /**
-     * @deprecated Use {@link #setPoints(ArrayList)} instead.
+     * @deprecated Use {@link #setPoints(List)} instead.
      */
     @Deprecated
     public void setPoints(ArrayList<Point2D> pts)
@@ -334,14 +326,29 @@ public class ROI2DPolyLine extends ROI2DShape
         setPoints((List<Point2D>) pts);
     }
 
+    public Polyline2D getPolyline2D()
+    {
+        return (Polyline2D) shape;
+    }
+
+    public void setPolyline2D(Polyline2D polygon2D)
+    {
+        beginUpdate();
+        try
+        {
+            removeAllPoint();
+            for (int i = 0; i < polygon2D.npoints; i++)
+                addNewPoint(new Point2D.Double(polygon2D.xpoints[i], polygon2D.ypoints[i]), false);
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
     public Polygon getPolygon()
     {
-        final Polygon result = new Polygon();
-
-        for (Anchor2D point : controlPoints)
-            result.addPoint((int) point.getX(), (int) point.getY());
-
-        return result;
+        return getPolyline2D().getPolygon2D().getPolygon();
     }
 
     public void setPolygon(Polygon polygon)
@@ -350,17 +357,43 @@ public class ROI2DPolyLine extends ROI2DShape
         try
         {
             removeAllPoint();
-
-            final Color color = getColor();
-            final Color focusedColor = getFocusedColor();
-
             for (int i = 0; i < polygon.npoints; i++)
-                addPoint(new Anchor2D(polygon.xpoints[i], polygon.ypoints[i], color, focusedColor));
+                addNewPoint(new Point2D.Double(polygon.xpoints[i], polygon.ypoints[i]), false);
         }
         finally
         {
             endUpdate();
         }
+    }
+
+    @Override
+    public boolean contains(double x, double y)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Point2D p)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(double x, double y, double w, double h)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Rectangle2D r)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(ROI roi)
+    {
+        return false;
     }
 
     @Override
@@ -385,75 +418,31 @@ public class ROI2DPolyLine extends ROI2DShape
     @Override
     protected void updateShape()
     {
-        final Path2D path = getPath();
+        final int len = controlPoints.size();
+        final double ptsX[] = new double[len];
+        final double ptsY[] = new double[len];
 
-        path.reset();
+        for (int i = 0; i < len; i++)
+        {
+            final Anchor2D pt = controlPoints.get(i);
 
-        // initial move
-        if (controlPoints.size() > 0)
-        {
-            final Point2D pos = controlPoints.get(0).getPosition();
-            path.moveTo(pos.getX(), pos.getY());
+            ptsX[i] = pt.getX();
+            ptsY[i] = pt.getY();
         }
-        // special case we have only one point
-        if (controlPoints.size() == 1)
+
+        final Polyline2D polyline2d = getPolyline2D();
+
+        // we can have a problem here if we try to redraw while we are modifying the polygon points
+        synchronized (polyline2d)
         {
-            final Point2D pos = controlPoints.get(0).getPosition();
-            path.lineTo(pos.getX(), pos.getY());
-        }
-        else
-        {
-            // lines
-            for (int i = 1; i < controlPoints.size(); i++)
-            {
-                final Point2D pos = controlPoints.get(i).getPosition();
-                path.lineTo(pos.getX(), pos.getY());
-            }
+            polyline2d.npoints = len;
+            polyline2d.xpoints = ptsX;
+            polyline2d.ypoints = ptsY;
+            polyline2d.calculatePath();
         }
 
         // call super method after shape has been updated
         super.updateShape();
-    }
-
-    @Override
-    public boolean contains(double x, double y, double w, double h)
-    {
-        // this ROI doesn't contains anything
-        return false;
-    }
-
-    @Override
-    public boolean contains(double x, double y)
-    {
-        // this ROI doesn't contains anything
-        return false;
-    }
-
-    @Override
-    public boolean contains(Point2D p)
-    {
-        // this ROI doesn't contains anything
-        return false;
-    }
-
-    @Override
-    public boolean contains(Rectangle2D r)
-    {
-        // this ROI doesn't contains anything
-        return false;
-    }
-
-    @Override
-    public boolean intersects(double x, double y, double w, double h)
-    {
-        return intersects(new Rectangle2D.Double(x, y, w, h));
-    }
-
-    @Override
-    public boolean intersects(Rectangle2D r)
-    {
-        // just take care about path
-        return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), r);
     }
 
     @Override

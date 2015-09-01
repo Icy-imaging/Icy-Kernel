@@ -28,6 +28,12 @@ public class ROIReadOnlyDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return false;
+    }
+
+    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Boolean.valueOf(getReadOnly(roi));

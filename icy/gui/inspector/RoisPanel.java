@@ -22,26 +22,27 @@ import icy.action.RoiActions;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
+import icy.gui.component.button.IcyButton;
 import icy.gui.component.renderer.ImageTableCellRenderer;
 import icy.gui.main.ActiveSequenceListener;
 import icy.gui.util.GuiUtil;
 import icy.gui.util.LookAndFeelUtil;
-import icy.image.IntensityInfo;
 import icy.main.Icy;
 import icy.math.MathUtil;
+import icy.plugin.interface_.PluginROIDescriptor;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
+import icy.roi.ROIDescriptor;
 import icy.roi.ROIEvent;
 import icy.roi.ROIListener;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
-import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.thread.InstanceProcessor;
 import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
-import icy.type.rectangle.Rectangle5D;
+import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -49,14 +50,20 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.ActionMap;
 import javax.swing.Box;
@@ -70,21 +77,54 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 
-import org.jdesktop.swingx.JXTreeTable;
+import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.decorator.HighlighterFactory;
-import org.jdesktop.swingx.table.ColumnControlButton;
+import org.jdesktop.swingx.sort.DefaultSortController;
+import org.jdesktop.swingx.table.DefaultTableColumnModelExt;
 import org.jdesktop.swingx.table.TableColumnExt;
-import org.jdesktop.swingx.table.TableColumnModelExt;
-import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import org.pushingpixels.substance.api.skin.SkinChangeListener;
+
+import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROIMeanIntensityDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROIMinIntensityDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROISumIntensityDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIAreaDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIContourDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIInteriorDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIMassCenterCDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIMassCenterTDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIMassCenterXDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIMassCenterYDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIMassCenterZDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIPerimeterDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROISurfaceAreaDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIIconDescriptor;
+import plugins.kernel.roi.descriptor.property.ROINameDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIOpacityDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIPositionCDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIPositionTDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIPositionXDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIPositionYDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIPositionZDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIReadOnlyDescriptor;
+import plugins.kernel.roi.descriptor.property.ROISizeCDescriptor;
+import plugins.kernel.roi.descriptor.property.ROISizeTDescriptor;
+import plugins.kernel.roi.descriptor.property.ROISizeXDescriptor;
+import plugins.kernel.roi.descriptor.property.ROISizeYDescriptor;
+import plugins.kernel.roi.descriptor.property.ROISizeZDescriptor;
 
 /**
  * @author Stephane
  */
 public class RoisPanel extends ExternalizablePanel implements ActiveSequenceListener, TextChangeListener,
-        ListSelectionListener, Runnable, PropertyChangeListener
+        ListSelectionListener, Runnable
 {
     /**
      * 
@@ -93,108 +133,143 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
     private static final String PREF_ID = "ROIPanel";
 
-    private static final String ID_COLUMN_ICON = "col_icon";
-    private static final String ID_COLUMN_NAME = "col_name";
-    private static final String ID_COLUMN_TYPE = "col_type";
-    private static final String ID_COLUMN_POSITION_X = "position_x";
-    private static final String ID_COLUMN_POSITION_Y = "position_y";
-    private static final String ID_COLUMN_POSITION_Z = "position_z";
-    private static final String ID_COLUMN_POSITION_T = "position_t";
-    private static final String ID_COLUMN_POSITION_C = "position_c";
-    private static final String ID_COLUMN_SIZE_X = "size_x";
-    private static final String ID_COLUMN_SIZE_Y = "size_y";
-    private static final String ID_COLUMN_SIZE_Z = "size_z";
-    private static final String ID_COLUMN_SIZE_T = "size_t";
-    private static final String ID_COLUMN_SIZE_C = "size_c";
-    private static final String ID_COLUMN_CONTOUR = "col_contour";
-    private static final String ID_COLUMN_POINTS = "col_points";
-    private static final String ID_COLUMN_PERIMETER = "col_perimeter";
-    private static final String ID_COLUMN_AREA = "col_area";
-    private static final String ID_COLUMN_SURFACE_AREA = "col_surface_area";
-    private static final String ID_COLUMN_VOLUME = "col_volume";
-    private static final String ID_COLUMN_MIN_INT = "col_min_int";
-    private static final String ID_COLUMN_MEAN_INT = "col_mean_int";
-    private static final String ID_COLUMN_MAX_INT = "col_max_int";
-    private static final String ID_COLUMN_STANDARD_DEV = "col_standard_dev";
+    private static final String ID_VIEW = "view";
+    private static final String ID_EXPORT = "export";
 
-    // table columns informations
-    static final ColumnInfo[] columnInfos = {
-            new ColumnInfo("", ID_COLUMN_ICON, "", Image.class, 26, 26, true, false),
-            new ColumnInfo("Name", ID_COLUMN_NAME, "ROI name (double click in a cell to edit)", String.class, 60, 100,
-                    true, false),
-            new ColumnInfo("Type", ID_COLUMN_TYPE, "ROI type", String.class, 60, 80, false, false),
-            new ColumnInfo("Position X", ID_COLUMN_POSITION_X, "X Position of the ROI", Double.class, 30, 60, false,
-                    false),
-            new ColumnInfo("Position Y", ID_COLUMN_POSITION_Y, "Y Position of the ROI", Double.class, 30, 60, false,
-                    false),
-            new ColumnInfo("Position Z", ID_COLUMN_POSITION_Z, "Z Position of the ROI", Double.class, 30, 60, false,
-                    false),
-            new ColumnInfo("Position T", ID_COLUMN_POSITION_T, "T Position of the ROI", Double.class, 30, 60, false,
-                    false),
-            new ColumnInfo("Position C", ID_COLUMN_POSITION_C, "C Position of the ROI", Double.class, 30, 60, false,
-                    false),
-            new ColumnInfo("Size X", ID_COLUMN_SIZE_X, "X dimension size of the ROI (width)", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Size Y", ID_COLUMN_SIZE_Y, "Y dimension size of the ROI (heigth)", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Size Z", ID_COLUMN_SIZE_Z, "Z dimension size of the ROI (depth)", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Size T", ID_COLUMN_SIZE_T, "T dimension size of the ROI (time)", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Size C", ID_COLUMN_SIZE_C, "C dimension size of the ROI (channel)", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Contour", ID_COLUMN_CONTOUR, "Number of points for the contour", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Interior", ID_COLUMN_POINTS, "Number of points for the interior", Double.class, 30, 60,
-                    false, false),
-            new ColumnInfo("Perimeter", ID_COLUMN_PERIMETER, "Perimeter", String.class, 40, 80, true, false),
-            new ColumnInfo("Area", ID_COLUMN_AREA, "Area", String.class, 40, 80, true, false),
-            new ColumnInfo("Surface Area", ID_COLUMN_SURFACE_AREA, "Surface Area", String.class, 40, 80, false, false),
-            new ColumnInfo("Volume", ID_COLUMN_VOLUME, "Volume", String.class, 40, 80, false, false),
-            new ColumnInfo("Min Intensity", ID_COLUMN_MIN_INT, "Minimum pixel intensity", Double.class, 40, 100, false,
-                    true),
-            new ColumnInfo("Mean Intensity", ID_COLUMN_MEAN_INT, "Mean pixel intensity", Double.class, 40, 100, false,
-                    true),
-            new ColumnInfo("Max Intensity", ID_COLUMN_MAX_INT, "Maximum pixel intensity", Double.class, 40, 100, false,
-                    true),
-            new ColumnInfo("Std Deviation", ID_COLUMN_STANDARD_DEV, "Standard deviation", Double.class, 40, 100, false,
-                    true)};
+    private static final String ID_PROPERTY_MINSIZE = "minSize";
+    private static final String ID_PROPERTY_MAXSIZE = "maxSize";
+    private static final String ID_PROPERTY_DEFAULTSIZE = "defaultSize";
+    private static final String ID_PROPERTY_ORDER = "order";
+    private static final String ID_PROPERTY_VISIBLE = "visible";
+
+    // default row comparator
+    static Comparator<Object> comparator = new Comparator<Object>()
+    {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public int compare(Object o1, Object o2)
+        {
+            if (o1 == null)
+            {
+                if (o2 == null)
+                    return 0;
+                return -1;
+            }
+            if (o2 == null)
+                return 1;
+
+            Object obj1 = o1;
+            Object obj2 = o2;
+
+            if (o1 instanceof String)
+            {
+                if (o1.equals("-" + MathUtil.INFINITE_STRING))
+                    obj1 = Double.valueOf(Double.NEGATIVE_INFINITY);
+                else if (o1.equals(MathUtil.INFINITE_STRING))
+                    obj1 = Double.valueOf(Double.POSITIVE_INFINITY);
+            }
+
+            if (o2 instanceof String)
+            {
+                if (o2.equals("-" + MathUtil.INFINITE_STRING))
+                    obj2 = Double.valueOf(Double.NEGATIVE_INFINITY);
+                else if (o2.equals(MathUtil.INFINITE_STRING))
+                    obj2 = Double.valueOf(Double.POSITIVE_INFINITY);
+            }
+
+            if ((obj1 instanceof Number) && (obj2 instanceof Number))
+            {
+                final double d1 = ((Number) obj1).doubleValue();
+                final double d2 = ((Number) obj2).doubleValue();
+
+                if (Double.isNaN(d1))
+                {
+                    if (Double.isNaN(d2))
+                        return 0;
+                    return -1;
+                }
+                if (Double.isNaN(d2))
+                    return 1;
+
+                if (d1 < d2)
+                    return -1;
+                if (d1 > d2)
+                    return 1;
+
+                return 0;
+            }
+            else if ((obj1 instanceof Comparable) && (obj1.getClass() == obj2.getClass()))
+                return ((Comparable) obj1).compareTo(obj2);
+
+            return o1.toString().compareTo(o2.toString());
+        }
+    };
 
     // GUI
-    AbstractTreeTableModel tableModel;
-    ListSelectionModel tableSelectionModel;
-    JXTreeTable table;
+    ROITableModel roiTableModel;
+    ListSelectionModel roiSelectionModel;
+    JXTable roiTable;
     IcyTextField nameFilter;
     JLabel roiNumberLabel;
+    JLabel selectedRoiNumberLabel;
     RoiControlPanel roiControlPanel;
 
+    // PluginDescriptors / ROIDescriptor map
+    Map<ROIDescriptor, PluginROIDescriptor> descriptorMap;
+    // Descriptor / column info (static to the class)
+    List<ColumnInfo> columnInfoList;
+    // // last visible columns (used to detect change in column configuration)
+    // List<String> lastVisibleColumnIds;
+
     // ROI info list cache
-    List<ROIInfo> rois;
-    List<ROIInfo> filteredRois;
+    Set<ROI> roiSet;
+    Map<ROI, ROIResults> roiResultsMap;
+    List<ROI> filteredRoiList;
+    List<ROIResults> filteredRoiResultsList;
 
     // internals
-    final XMLPreferences preferences;
+    final XMLPreferences basePreferences;
+    final XMLPreferences viewPreferences;
+    final XMLPreferences exportPreferences;
     final Semaphore modifySelection;
-    // complete refresh of the table
+    // complete refresh of the roiTable
     final Runnable roiListRefresher;
+    final Runnable filteredRoiListRefresher;
     final Runnable tableDataStructureRefresher;
     final Runnable tableDataRefresher;
     final Runnable tableSelectionRefresher;
+    final Runnable columnInfoListRefresher;
     final Thread roiInfoComputer;
-    final LinkedBlockingQueue<ROIInfo> roisToCompute;
-    int columnCount;
+    final InstanceProcessor processor;
+
+    final LinkedHashSet<ROIResults> descriptorsToCompute;
 
     public RoisPanel()
     {
         super("ROI", "roiPanel", new Point(100, 100), new Dimension(400, 600));
 
-        preferences = GeneralPreferences.getPreferences().node(PREF_ID);
-        rois = new ArrayList<ROIInfo>();
-        filteredRois = new ArrayList<ROIInfo>();
+        basePreferences = GeneralPreferences.getPreferences().node(PREF_ID);
+        viewPreferences = basePreferences.node(ID_VIEW);
+        exportPreferences = basePreferences.node(ID_EXPORT);
+
+        roiSet = new HashSet<ROI>();
+        roiResultsMap = new HashMap<ROI, ROIResults>();
+        filteredRoiList = new ArrayList<ROI>();
+        filteredRoiResultsList = new ArrayList<ROIResults>();
         modifySelection = new Semaphore(1);
-        columnCount = 0;
+        columnInfoList = new ArrayList<ColumnInfo>();
+
+        initialize();
 
         roiListRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshRoisInternal();
+            }
+        };
+        filteredRoiListRefresher = new Runnable()
         {
             @Override
             public void run()
@@ -226,202 +301,47 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 refreshTableSelectionInternal();
             }
         };
-
-        initialize();
+        columnInfoListRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshColumnInfoListInternal();
+            }
+        };
 
         LookAndFeelUtil.addSkinChangeListener(new SkinChangeListener()
         {
             @Override
             public void skinChanged()
             {
-                // TODO: verify if still needed with JXTreeTable
-                // fix the row height which is not preserved on skin change
-                table.setRowHeight(24);
+                final TableColumnModel columnModel = roiTable.getColumnModel();
+
+                for (int i = 0; i < columnModel.getColumnCount(); i++)
+                {
+                    final TableColumn column = columnModel.getColumn(i);
+
+                    // need to reset specific renderer as background color can be wrong
+                    if (column.getCellRenderer() instanceof ImageTableCellRenderer)
+                        column.setCellRenderer(new ImageTableCellRenderer(18));
+                }
+
+                // modify highlighter
+                roiTable.setHighlighters(HighlighterFactory.createSimpleStriping());
             }
         });
 
-        // build table model
-        tableModel = new AbstractTreeTableModel()
-        {
-            @Override
-            public int getColumnCount()
-            {
-                return ((TableColumnModelExt) table.getColumnModel()).getColumnCount(true);
-            }
+        processor = new InstanceProcessor();
+        processor.setThreadName("ROI panel GUI refresher");
+        processor.setKeepAliveTime(30, TimeUnit.SECONDS);
 
-            @Override
-            public String getColumnName(int column)
-            {
-                final ColumnInfo ci = getTableColumnInfo(column);
-
-                if (ci != null)
-                {
-                    String result = ci.name;
-
-                    if (ci.channelInfo)
-                        result += getTableChannelName(getTableChannelIndex(column));
-
-                    return result;
-                }
-
-                return "";
-            }
-
-            // @Override
-            // public int getRowCount()
-            // {
-            // return filteredRois.size();
-            // }
-            //
-            // @Override
-            // public Object getValueAt(int row, int column)
-            // {
-            // // substance occasionally do not check size before getting value
-            // if (row >= filteredRois.size())
-            // return null;
-            //
-            // final ROIInfo roiInfo = filteredRois.get(row);
-            // final ROI roi = roiInfo.getROI();
-            // final int columnInd = getTableColumnInfoIndex(column);
-            // final int channelInd = getTableChannelIndex(column);
-            //
-            // switch (columnInd)
-            // {
-            // case 0: // icon
-            // return roi.getIcon();
-            // case 1: // name
-            // return roi.getName();
-            // case 2: // type
-            // return roi.getSimpleClassName();
-            // case 3: // position X
-            // return Double.valueOf(roiInfo.getPositionX());
-            // case 4: // position Y
-            // return Double.valueOf(roiInfo.getPositionY());
-            // case 5: // position Z
-            // return Double.valueOf(roiInfo.getPositionZ());
-            // case 6: // position T
-            // return Double.valueOf(roiInfo.getPositionT());
-            // case 7: // position C
-            // return Double.valueOf(roiInfo.getPositionC());
-            // case 8: // size X
-            // return Double.valueOf(roiInfo.getSizeX());
-            // case 9: // size Y
-            // return Double.valueOf(roiInfo.getSizeY());
-            // case 10: // size Z
-            // return Double.valueOf(roiInfo.getSizeZ());
-            // case 11: // size T
-            // return Double.valueOf(roiInfo.getSizeT());
-            // case 12: // size C
-            // return Double.valueOf(roiInfo.getSizeC());
-            // case 13: // contour points
-            // return Double.valueOf(roiInfo.getNumberOfContourPoints());
-            // case 14: // points
-            // return Double.valueOf(roiInfo.getNumberOfPoints());
-            // case 15: // perimeter
-            // return roiInfo.getPerimeter();
-            // case 16: // area
-            // return roiInfo.getArea();
-            // case 17: // surface area
-            // return roiInfo.getSurfaceArea();
-            // case 18: // volume
-            // return roiInfo.getVolume();
-            // case 19: // min intensity
-            // return Double.valueOf(roiInfo.getMinIntensities(channelInd));
-            // case 20: // mean intensity
-            // return Double.valueOf(roiInfo.getMeanIntensities(channelInd));
-            // case 21: // max intensity
-            // return Double.valueOf(roiInfo.getMaxIntensities(channelInd));
-            // case 22: // standard deviation
-            // return Double.valueOf(roiInfo.getStandardDeviation(channelInd));
-            // }
-            //
-            // return "";
-            // }
-            //
-            // @Override
-            // public void setValueAt(Object value, int row, int column)
-            // {
-            // // substance occasionally do not check size before getting value
-            // if (row >= filteredRois.size())
-            // return;
-            //
-            // final ROIInfo roiInfo = filteredRois.get(row);
-            // final ROI roi = roiInfo.getROI();
-            //
-            // switch (column)
-            // {
-            // case 1: // name
-            // roi.setName((String) value);
-            // break;
-            // }
-            // }
-            //
-            // @Override
-            // public boolean isCellEditable(int row, int column)
-            // {
-            // return (column == 1);
-            // }
-
-            @Override
-            public Class<?> getColumnClass(int column)
-            {
-                final ColumnInfo ci = getTableColumnInfo(column);
-
-                if (ci != null)
-                    return ci.type;
-
-                return String.class;
-            }
-
-            @Override
-            public Object getValueAt(Object node, int column)
-            {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Object getChild(Object parent, int index)
-            {
-
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public int getChildCount(Object parent)
-            {
-                // TODO Auto-generated method stub
-                return 0;
-            }
-
-            @Override
-            public int getIndexOfChild(Object parent, Object child)
-            {
-                // TODO Auto-generated method stub
-                return 0;
-            }
-        };
-
-        // set table model
-        table.setTreeTableModel(tableModel);
-        // modify column properties
-        buildTableColumns();
-        // alternate highlight
-        table.setHighlighters(HighlighterFactory.createSimpleStriping());
-        // disable extra actions from column control
-        ((ColumnControlButton) table.getColumnControl()).setAdditionalActionsVisible(false);
-
-        // set selection model
-        tableSelectionModel = table.getSelectionModel();
-        tableSelectionModel.addListSelectionListener(this);
-        tableSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
-        roisToCompute = new LinkedBlockingQueue<ROIInfo>();
-        roiInfoComputer = new Thread(this, "ROI properties calculator");
+        descriptorsToCompute = new LinkedHashSet<ROIResults>(256);
+        roiInfoComputer = new Thread(this, "ROI descriptor calculator");
         roiInfoComputer.setPriority(Thread.MIN_PRIORITY);
         roiInfoComputer.start();
 
+        // update descriptors list (this rebuild the column model of the tree table)
+        refreshDescriptorList();
         // set shortcuts
         buildActionMap();
 
@@ -432,34 +352,56 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     {
         // need filter before load
         nameFilter = new IcyTextField();
-        nameFilter.setToolTipText("Enter a string sequence to filter ROI on name");
+        nameFilter.setToolTipText("Filter ROI by name");
         nameFilter.addTextChangeListener(this);
 
-        roiNumberLabel = new JLabel("No ROI");
+        selectedRoiNumberLabel = new JLabel("0");
+        roiNumberLabel = new JLabel("0");
 
-        // build table
-        table = new JXTreeTable();
-        table.setAutoStartEditOnKeyStroke(false);
-        table.setRowHeight(24);
-        table.setShowVerticalLines(false);
-        table.setColumnControlVisible(true);
-        table.setColumnSelectionAllowed(false);
-        table.setRowSelectionAllowed(true);
-        table.setAutoCreateRowSorter(false);
-        table.setAutoCreateColumnsFromModel(false);
+        // build roiTable model
+        roiTableModel = new ROITableModel();
+
+        // build roiTable
+        roiTable = new JXTable(roiTableModel);
+        roiTable.setAutoStartEditOnKeyStroke(false);
+        roiTable.setAutoCreateRowSorter(false);
+        roiTable.setAutoCreateColumnsFromModel(false);
+        roiTable.setShowVerticalLines(false);
+        roiTable.setColumnControlVisible(false);
+        roiTable.setColumnSelectionAllowed(false);
+        roiTable.setRowSelectionAllowed(true);
+        roiTable.setSortable(true);
+        // set highlight
+        roiTable.setHighlighters(HighlighterFactory.createSimpleStriping());
+
+        // set header settings
+        final JTableHeader tableHeader = roiTable.getTableHeader();
+        tableHeader.setReorderingAllowed(false);
+        tableHeader.setResizingAllowed(true);
+
+        // set selection model
+        roiSelectionModel = roiTable.getSelectionModel();
+        roiSelectionModel.addListSelectionListener(this);
+        roiSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        roiTable.setRowSorter(new ROITableSortController<ROITableModel>());
 
         final JPanel middlePanel = new JPanel(new BorderLayout(0, 0));
 
-        middlePanel.add(table.getTableHeader(), BorderLayout.NORTH);
-        middlePanel.add(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+        middlePanel.add(roiTable.getTableHeader(), BorderLayout.NORTH);
+        middlePanel.add(new JScrollPane(roiTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
         // build control panel
         roiControlPanel = new RoiControlPanel(this);
 
+        final IcyButton settingButton = new IcyButton(RoiActions.settingAction);
+        settingButton.setHideActionText(true);
+        settingButton.setFlat(true);
+
         setLayout(new BorderLayout());
-        add(GuiUtil.createLineBoxPanel(nameFilter, Box.createHorizontalStrut(8), roiNumberLabel,
-                Box.createHorizontalStrut(4)), BorderLayout.NORTH);
+        add(GuiUtil.createLineBoxPanel(nameFilter, Box.createHorizontalStrut(8), selectedRoiNumberLabel, new JLabel(
+                " / "), roiNumberLabel, Box.createHorizontalStrut(4), settingButton), BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
         add(roiControlPanel, BorderLayout.SOUTH);
 
@@ -468,8 +410,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
     void buildActionMap()
     {
-        final InputMap imap = table.getInputMap(JComponent.WHEN_FOCUSED);
-        final ActionMap amap = table.getActionMap();
+        final InputMap imap = roiTable.getInputMap(JComponent.WHEN_FOCUSED);
+        final ActionMap amap = roiTable.getActionMap();
 
         imap.put(RoiActions.unselectAction.getKeyStroke(), RoiActions.unselectAction.getName());
         imap.put(RoiActions.deleteAction.getKeyStroke(), RoiActions.deleteAction.getName());
@@ -490,95 +432,6 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         amap.put(RoiActions.pasteLinkAction.getName(), RoiActions.pasteLinkAction);
     }
 
-    boolean buildTableColumns()
-    {
-        final int newColCount = getTableColumnCount();
-
-        // nothing to change
-        if (columnCount == newColCount)
-            return false;
-        final TableColumnModelExt colModel = (TableColumnModelExt) table.getColumnModel();
-        final List<TableColumn> columns = colModel.getColumns(true);
-
-        // remove row sorter the time we update columns
-        table.setRowSorter(null);
-
-        // TODO: try to find a way to disable table refresh while modifying column
-
-        // and regenerate them
-        for (int i = 0; i < newColCount; i++)
-        {
-            final ColumnInfo ci = getTableColumnInfo(i);
-
-            // can't retrieve column informations --> pass to the next
-            if (ci == null)
-                continue;
-
-            final TableColumnExt col;
-
-            if (i >= columns.size())
-                col = new TableColumnExt(i);
-            else
-                col = (TableColumnExt) columns.get(i);
-
-            // build column name & tool tip
-            String name = ci.name;
-            String toolTip = ci.toolTip;
-
-            if (ci.channelInfo)
-            {
-                name += getTableChannelName(getTableChannelIndex(i));
-                toolTip += getTableChannelName(getTableChannelIndex(i));
-            }
-
-            // column changed ?
-            if ((!name.equals(col.getHeaderValue())) || (!ci.id.equals(col.getIdentifier())))
-            {
-                col.setIdentifier(ci.id);
-                col.setMinWidth(ci.minSize);
-                col.setPreferredWidth(ci.preferredSize);
-                col.setHeaderValue(name);
-                col.setToolTipText(toolTip);
-                col.setVisible(preferences.getBoolean(ci.id, ci.defVisible));
-                col.setModelIndex(i);
-
-                // special icon index
-                if (i == 0)
-                {
-                    col.setMaxWidth(ci.preferredSize);
-                    col.setCellRenderer(new ImageTableCellRenderer(ci.preferredSize - 2));
-                    col.setResizable(false);
-                }
-
-                // need to add this column ?
-                if (i >= columns.size())
-                {
-                    col.addPropertyChangeListener(this);
-                    // add the column
-                    colModel.addColumn(col);
-                }
-            }
-        }
-
-        // remove old columns no more in use
-        for (int i = newColCount; i < columns.size(); i++)
-        {
-            final TableColumn col = columns.get(i);
-
-            // remove listener
-            col.removePropertyChangeListener(this);
-            // then remove column
-            colModel.removeColumn(col);
-        }
-
-        // set row sorter back
-        // table.setRowSorter(new TableSortController<TableModel>(tableModel));
-        // and store new number of column
-        columnCount = newColCount;
-
-        return true;
-    }
-
     /**
      * Returns number of channel of current sequence
      */
@@ -593,136 +446,64 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     }
 
     /**
-     * Returns table column suffix for the specified channel
+     * Returns roiTable column suffix for the specified channel
      */
-    String getTableChannelName(int ind)
+    String getChannelNameSuffix(int ch)
     {
         final Sequence sequence = getSequence();
 
-        if ((sequence != null) && (ind < sequence.getSizeC()))
-            return " (" + sequence.getChannelName(ind) + ")";
+        if ((sequence != null) && (ch < getChannelCount()))
+            return " (" + sequence.getChannelName(ch) + ")";
 
         return "";
     }
 
     /**
-     * Returns the minimum width for the specified column index
+     * Returns ROI descriptor given its id.
      */
-    public int getMinColumnWidth(int ind)
+    ROIDescriptor getROIDescriptor(String descriptorId)
     {
-        return getDefaultColumnWidth(ind) / 2;
-    }
-
-    /**
-     * Returns the default width for the specified column index
-     */
-    public int getDefaultColumnWidth(int ind)
-    {
-//        final Class<?> type = getColumnType(ind);
-//
-//        if (type == Integer.class)
-//            return 60;
-//        if (type == Double.class)
-//            return 80;
-//        if (type == String.class)
-//            return 100;
-
-        return 80;
-    }
-
-    /**
-     * Get number of column in the table.
-     */
-    int getTableColumnCount()
-    {
-        final int channelCnt = getChannelCount();
-
-        int res = 0;
-        for (int i = 0; i < columnInfos.length; i++)
+        synchronized (descriptorMap)
         {
-            final ColumnInfo ci = columnInfos[i];
-
-            if (ci.channelInfo)
-                res += channelCnt;
-            else
-                res++;
+            for (ROIDescriptor descriptor : descriptorMap.keySet())
+                if (descriptor.getId().equals(descriptorId))
+                    return descriptor;
         }
-
-        return res;
-    }
-
-    /**
-     * Get column info index for specified column index.
-     */
-    int getTableColumnInfoIndex(int index)
-    {
-        final int channelCnt = getChannelCount();
-
-        int ind = 0;
-        for (int i = 0; i < columnInfos.length; i++)
-        {
-            final ColumnInfo ci = columnInfos[i];
-
-            if (ind == index)
-                return i;
-
-            if (ci.channelInfo)
-            {
-                ind += channelCnt;
-                if (ind > index)
-                    return i;
-            }
-            else
-                ind++;
-        }
-
-        return -1;
-    }
-
-    /**
-     * Get column info for specified column index.
-     */
-    ColumnInfo getTableColumnInfo(int index)
-    {
-        final int ind = getTableColumnInfoIndex(index);
-
-        if (ind != -1)
-            return columnInfos[ind];
 
         return null;
     }
 
     /**
-     * Get the channel index represented by the specified column index.
+     * Get column info for specified column index.
      */
-    int getTableChannelIndex(int index)
+    ColumnInfo getColumnInfo(List<ColumnInfo> columns, int column)
     {
-        final int channelCnt = getChannelCount();
+        if (column < columns.size())
+            return columns.get(column);
 
-        int ind = 0;
-        for (int i = 0; i < columnInfos.length; i++)
-        {
-            final ColumnInfo ci = columnInfos[i];
-
-            if (ind == index)
-                return 0;
-
-            if (ci.channelInfo)
-            {
-                ind += channelCnt;
-                if (ind > index)
-                    return channelCnt - (ind - index);
-            }
-            else
-                ind++;
-        }
-
-        return 0;
+        return null;
     }
 
-    private XMLPreferences getPreferences()
+    /**
+     * Get column info for specified column index.
+     */
+    ColumnInfo getColumnInfo(int column)
     {
-        return GeneralPreferences.getPreferences().node(PREF_ID);
+        return getColumnInfo(columnInfoList, column);
+    }
+
+    ColumnInfo getColumnInfo(List<ColumnInfo> columns, ROIDescriptor descriptor, int channel)
+    {
+        for (ColumnInfo ci : columns)
+            if (ci.descriptor.equals(descriptor) && (ci.channel == channel))
+                return ci;
+
+        return null;
+    }
+
+    ColumnInfo getColumnInfo(ROIDescriptor descriptor, int channel)
+    {
+        return getColumnInfo(columnInfoList, descriptor, channel);
     }
 
     Sequence getSequence()
@@ -735,19 +516,125 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         nameFilter.setText(name);
     }
 
-    ROIInfo getRoiInfoToCompute()
-    {
-        return null;
-    }
-
     @Override
     public void run()
     {
-        while (true)
+        while (!Thread.interrupted())
         {
             try
             {
-                roisToCompute.take().compute();
+                final Object[] roiResultsList;
+                final Sequence seq = getSequence();
+
+                synchronized (descriptorsToCompute)
+                {
+                    while (descriptorsToCompute.isEmpty())
+                        descriptorsToCompute.wait();
+
+                    // get results to compute
+                    roiResultsList = descriptorsToCompute.toArray();
+                    // and remove them
+                    descriptorsToCompute.clear();
+                }
+
+                for (Object object : roiResultsList)
+                {
+                    final ROIResults roiResults = (ROIResults) object;
+                    final Map<ColumnInfo, DescriptorResult> results = roiResults.descriptorResults;
+                    final Object[] keys;
+
+                    synchronized (results)
+                    {
+                        keys = results.keySet().toArray();
+                    }
+
+                    for (Object key : keys)
+                    {
+                        final ColumnInfo columnInfo = (ColumnInfo) key;
+                        final ROIDescriptor descriptor = columnInfo.descriptor;
+                        final DescriptorResult result;
+
+                        synchronized (results)
+                        {
+                            // get result
+                            result = results.get(key);
+                        }
+
+                        // need to refresh this column result
+                        if ((result != null) && result.isOutdated())
+                        {
+                            // get the corresponding plugin
+                            final PluginROIDescriptor plugin;
+
+                            synchronized (descriptorMap)
+                            {
+                                plugin = descriptorMap.get(descriptor);
+                            }
+
+                            if (plugin != null)
+                            {
+                                final Map<ROIDescriptor, Object> newResults;
+
+                                try
+                                {
+                                    // need computation per channel ?
+                                    if (descriptor.useSequenceData())
+                                        newResults = plugin.compute(roiResults.getRoiForChannel(columnInfo.channel),
+                                                seq);
+                                    else
+                                        newResults = plugin.compute(roiResults.roi, seq);
+
+                                    for (Entry<ROIDescriptor, Object> entryNewResult : newResults.entrySet())
+                                    {
+                                        // get the column for this result
+                                        final ColumnInfo resultColumnInfo = getColumnInfo(entryNewResult.getKey(),
+                                                columnInfo.channel);
+                                        final DescriptorResult oResult;
+
+                                        synchronized (results)
+                                        {
+                                            // get corresponding result
+                                            oResult = results.get(resultColumnInfo);
+                                        }
+
+                                        if (oResult != null)
+                                        {
+                                            // set the result value
+                                            oResult.setValue(entryNewResult.getValue());
+                                            // result is up to date
+                                            oResult.setOutdated(false);
+                                        }
+                                    }
+                                }
+                                catch (UnsupportedOperationException e)
+                                {
+                                    // not supported --> clear associated results and set them as computed
+                                    for (ROIDescriptor desc : plugin.getDescriptors())
+                                    {
+                                        // get the column for this result
+                                        final ColumnInfo resultColumnInfo = getColumnInfo(desc, columnInfo.channel);
+                                        final DescriptorResult oResult;
+
+                                        synchronized (results)
+                                        {
+                                            // get corresponding result
+                                            oResult = results.get(resultColumnInfo);
+                                        }
+
+                                        if (oResult != null)
+                                        {
+                                            oResult.setValue(null);
+                                            oResult.setOutdated(false);
+                                        }
+                                    }
+                                }
+
+                                // refresh table
+                                refreshTableData();
+                            }
+                        }
+                    }
+                }
             }
             catch (InterruptedException e)
             {
@@ -757,13 +644,14 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     }
 
     /**
-     * Return index of specified ROI in the ROI list
+     * Return index of specified ROI in the filtered ROI list
      */
     private int getRoiIndex(ROI roi)
     {
-        for (int i = 0; i < filteredRois.size(); i++)
-            if (filteredRois.get(i).getROI() == roi)
-                return i;
+        final int result = Collections.binarySearch(filteredRoiList, roi, ROI.idComparator);
+
+        if (result >= 0)
+            return result;
 
         return -1;
     }
@@ -777,9 +665,9 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     }
 
     /**
-     * Return index of specified ROI in the table
+     * Return index of specified ROI in the table (view)
      */
-    int getRoiTableIndex(ROI roi)
+    int getRoiViewIndex(ROI roi)
     {
         final int ind = getRoiModelIndex(roi);
 
@@ -788,7 +676,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
         try
         {
-            return table.convertRowIndexToView(ind);
+            return roiTable.convertRowIndexToView(ind);
         }
         catch (IndexOutOfBoundsException e)
         {
@@ -796,74 +684,88 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         }
     }
 
-    /**
-     * Returns the visible ROI in the ROI control panel.
-     */
-    public List<ROI> getVisibleRois()
+    ROIResults getRoiResults(int rowModelIndex)
     {
-        final List<ROIInfo> roisInfo = filteredRois;
-        final List<ROI> result = new ArrayList<ROI>(roisInfo.size());
+        final List<ROIResults> entries = filteredRoiResultsList;
 
-        for (ROIInfo roiInfo : roisInfo)
-            result.add(roiInfo.getROI());
-
-        return result;
-    }
-
-    /**
-     * Returns the ROI informations for the specified ROI.
-     */
-    public ROIInfo getROIInfo(ROI roi)
-    {
-        final int index = getRoiIndex(roi);
-
-        if (index != -1)
-            return filteredRois.get(index);
+        if ((rowModelIndex >= 0) && (rowModelIndex < entries.size()))
+            return entries.get(rowModelIndex);
 
         return null;
     }
 
     /**
-     * Returns the selected ROI in the ROI control panel.
+     * Returns the visible ROI in the ROI control panel.
      */
-    public List<ROIInfo> getSelectedRoisInfo()
+    public List<ROI> getVisibleRois()
     {
-        final List<ROIInfo> result = new ArrayList<ROIInfo>(table.getRowCount());
+        return new ArrayList<ROI>(filteredRoiList);
+    }
 
-        for (int rowIndex : table.getSelectedRows())
+    // /**
+    // * Returns the ROI informations for the specified ROI.
+    // */
+    // public ROIInfo getROIInfo(ROI roi)
+    // {
+    // final int index = getRoiIndex(roi);
+    //
+    // if (index != -1)
+    // return filteredRois.get(index);
+    //
+    // return null;
+    // }
+
+    /**
+     * Returns the number of selected ROI from the table.
+     */
+    public int getSelectedRoisCount()
+    {
+        int result = 0;
+
+        synchronized (roiSelectionModel)
         {
-            int index = -1;
-
-            if (rowIndex != -1)
+            if (!roiSelectionModel.isSelectionEmpty())
             {
-                try
-                {
-                    index = table.convertRowIndexToModel(rowIndex);
-                }
-                catch (IndexOutOfBoundsException e)
-                {
-                    // ignore
-                }
+                for (int i = roiSelectionModel.getMinSelectionIndex(); i <= roiSelectionModel.getMaxSelectionIndex(); i++)
+                    if (roiSelectionModel.isSelectedIndex(i))
+                        result++;
             }
-
-            if ((index >= 0) && (index < filteredRois.size()))
-                result.add(filteredRois.get(index));
         }
 
         return result;
     }
 
     /**
-     * Get the selected ROI in the ROI control panel.<br>
-     * This actually returns selected ROI from the ROI table in ROI panel (cached).
+     * Returns the selected ROI from the table.
      */
     public List<ROI> getSelectedRois()
     {
-        final List<ROIInfo> roisInfo = getSelectedRoisInfo();
-        final List<ROI> result = new ArrayList<ROI>(roisInfo.size());
+        final List<ROIResults> roiResults = filteredRoiResultsList;
+        final List<ROI> result = new ArrayList<ROI>(roiResults.size());
 
-        for (ROIInfo roiInfo : roisInfo)
-            result.add(roiInfo.getROI());
+        synchronized (roiSelectionModel)
+        {
+            if (!roiSelectionModel.isSelectionEmpty())
+            {
+                for (int i = roiSelectionModel.getMinSelectionIndex(); i <= roiSelectionModel.getMaxSelectionIndex(); i++)
+                {
+                    if (roiSelectionModel.isSelectedIndex(i))
+                    {
+                        try
+                        {
+                            final int index = roiTable.convertRowIndexToModel(i);
+
+                            if ((index >= 0) && (index < roiResults.size()))
+                                result.add(roiResults.get(index).roi);
+                        }
+                        catch (IndexOutOfBoundsException e)
+                        {
+                            // ignore
+                        }
+                    }
+                }
+            }
+        }
 
         return result;
     }
@@ -871,53 +773,60 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     /**
      * Select the specified list of ROI in the ROI Table
      */
-    protected void setSelectedRoisInternal(HashSet<ROI> newSelected)
+    protected void setSelectedRoisInternal(Set<ROI> newSelected)
     {
-        final List<ROIInfo> modelRois = filteredRois;
+        final List<Integer> selectedIndexes = new ArrayList<Integer>();
+        final List<ROI> roiList = filteredRoiList;
 
-        // start selection change
-        tableSelectionModel.setValueIsAdjusting(true);
-        try
+        for (int i = 0; i < roiList.size(); i++)
         {
-            // start by clearing selection
-            tableSelectionModel.clearSelection();
+            final ROI roi = roiList.get(i);
 
-            for (int i = 0; i < modelRois.size(); i++)
+            // HashSet provides fast "contains"
+            if (newSelected.contains(roi))
             {
-                final ROI roi = modelRois.get(i).getROI();
+                int ind;
 
-                // HashSet provide fast "contains"
-                if (newSelected.contains(roi))
+                try
                 {
-                    int ind;
-
-                    try
-                    {
-                        // convert model index to view index
-                        ind = table.convertRowIndexToView(i);
-                    }
-                    catch (IndexOutOfBoundsException e)
-                    {
-                        ind = -1;
-                    }
-
-                    if (ind > -1)
-                        tableSelectionModel.addSelectionInterval(ind, ind);
+                    // convert model index to view index
+                    ind = roiTable.convertRowIndexToView(i);
                 }
+                catch (IndexOutOfBoundsException e)
+                {
+                    ind = -1;
+                }
+
+                if (ind > -1)
+                    selectedIndexes.add(Integer.valueOf(ind));
             }
         }
-        finally
+
+        synchronized (roiSelectionModel)
         {
-            // end selection change
-            tableSelectionModel.setValueIsAdjusting(false);
+            // start selection change
+            roiSelectionModel.setValueIsAdjusting(true);
+            try
+            {
+                // start by clearing selection
+                roiSelectionModel.clearSelection();
+
+                for (Integer index : selectedIndexes)
+                    roiSelectionModel.addSelectionInterval(index.intValue(), index.intValue());
+            }
+            finally
+            {
+                // end selection change
+                roiSelectionModel.setValueIsAdjusting(false);
+            }
         }
     }
 
-    protected List<ROIInfo> getFilteredList(String filter)
+    protected Set<ROI> getFilteredSet(String filter)
     {
-        final List<ROIInfo> result = new ArrayList<ROIInfo>();
+        final Set<ROI> rois = roiSet;
+        final Set<ROI> result = new HashSet<ROI>();
 
-        // no need to synchronize on 'rois' as it can be only modified prior to this call
         if (StringUtil.isEmpty(filter, true))
             result.addAll(rois);
         else
@@ -925,110 +834,162 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             final String text = filter.trim().toLowerCase();
 
             // filter on name
-            for (ROIInfo roi : rois)
-                if (roi.getROI().getName().toLowerCase().indexOf(text) != -1)
+            for (ROI roi : rois)
+                if (roi.getName().toLowerCase().indexOf(text) != -1)
                     result.add(roi);
         }
 
         return result;
     }
 
-    void refreshRoiNumber()
+    void refreshRoiNumbers()
     {
-        final int rowCount = table.getRowCount();
+        final int selectedCount = getSelectedRoisCount();
+        final int roisCount = roiTable.getRowCount();
 
-        if (rowCount == 0)
-            roiNumberLabel.setText("No ROI");
-        else if (rowCount == 1)
-            roiNumberLabel.setText("1 ROI");
+        selectedRoiNumberLabel.setText(Integer.toString(selectedCount));
+        roiNumberLabel.setText(Integer.toString(roisCount));
+
+        if (selectedCount == 0)
+            selectedRoiNumberLabel.setToolTipText("No selected ROI");
+        else if (selectedCount == 1)
+            selectedRoiNumberLabel.setToolTipText("1 selected ROI");
         else
-            roiNumberLabel.setText(rowCount + " ROIs");
+            selectedRoiNumberLabel.setToolTipText(selectedCount + " selected ROIs");
+
+        if (roisCount == 0)
+            roiNumberLabel.setToolTipText("No ROI");
+        else if (roisCount == 1)
+            roiNumberLabel.setToolTipText("1 ROI");
+        else
+            roiNumberLabel.setToolTipText(roisCount + " ROIs");
     }
 
     /**
-     * refresh ROI list
+     * refresh whole ROI list
      */
     protected void refreshRois()
     {
-        ThreadUtil.runSingle(roiListRefresher);
+        processor.submit(true, roiListRefresher);
     }
 
     /**
-     * refresh ROI list
+     * refresh whole ROI list (internal)
      */
     protected void refreshRoisInternal()
     {
+        final Set<ROI> currentRoiSet = roiSet;
+        final Set<ROI> newRoiSet;
         final Sequence sequence = getSequence();
 
         if (sequence != null)
-        {
-            final List<ROI> newRois = sequence.getROIs();
-            final List<ROI> oldRois = new ArrayList<ROI>();
-
-            // build old ROI list
-            for (int i = 0; i < rois.size(); i++)
-                oldRois.add(rois.get(i).getROI());
-
-            // remove ROI which are no more in the list (use HashSet for fast contains())
-            final Set<ROI> newRoiSet = new HashSet<ROI>(newRois);
-            for (int i = oldRois.size() - 1; i >= 0; i--)
-                if (!newRoiSet.contains(oldRois.get(i)))
-                    roisToCompute.remove(rois.remove(i));
-
-            // add ROI which has been added (use HashSet for fast contains())
-            final Set<ROI> oldRoiSet = new HashSet<ROI>(oldRois);
-            for (ROI roi : newRois)
-                if (!oldRoiSet.contains(roi))
-                    rois.add(new ROIInfo(roi));
-        }
+            newRoiSet = sequence.getROISet();
         else
-        {
-            // no change --> exit
-            if (rois.isEmpty())
-                return;
+            newRoiSet = new HashSet<ROI>();
 
-            // clear ROI list
-            rois.clear();
-        }
-
-        // need to refresh the filtered list
-        final List<ROIInfo> newFilteredRois = getFilteredList(nameFilter.getText());
-        final int newSize = newFilteredRois.size();
-        final int oldSize = filteredRois.size();
-
-        // easy optimization
-        if ((newSize == 0) && (oldSize == 0))
+        // no change --> exit
+        if (newRoiSet.equals(currentRoiSet))
             return;
 
-        // same size
-        if (newSize == oldSize)
+        final Set<ROI> removedSet = new HashSet<ROI>();
+
+        // build removed set
+        for (ROI roi : currentRoiSet)
+            if (!newRoiSet.contains(roi))
+                removedSet.add(roi);
+
+        // remove from ROI entry map
+        for (ROI roi : removedSet)
         {
-            // same values, don't need to update it
-            if (new HashSet<ROIInfo>(newFilteredRois).containsAll(filteredRois))
-                return;
+            final ROIResults roiResults;
+
+            // must be synchronized
+            synchronized (roiResultsMap)
+            {
+                roiResults = roiResultsMap.remove(roi);
+            }
+
+            // cancel results computation
+            if (roiResults != null)
+                cancelDescriptorComputation(roiResults);
         }
 
-        // update filtered ROI list
-        filteredRois = newFilteredRois;
-        // refresh whole table
-        refreshTableDataStructure();
+        // set new ROI set
+        roiSet = newRoiSet;
+
+        // refresh filtered list now
+        refreshFilteredRoisInternal();
+    }
+
+    /**
+     * refresh filtered ROI list
+     */
+    protected void refreshFilteredRois()
+    {
+        processor.submit(true, filteredRoiListRefresher);
+    }
+
+    /**
+     * refresh filtered ROI list (internal)
+     */
+    protected void refreshFilteredRoisInternal()
+    {
+        // get new filtered list
+        final List<ROI> currentFilteredRoiList = filteredRoiList;
+        final Set<ROI> newFilteredRoiSet = getFilteredSet(nameFilter.getText());
+
+        // no change --> exit
+        if (newFilteredRoiSet.equals(currentFilteredRoiList))
+            return;
+
+        // update filtered lists
+        final List<ROI> newFilteredRoiList = new ArrayList<ROI>(newFilteredRoiSet);
+        final List<ROIResults> newFilteredResultsList = new ArrayList<ROIResults>(newFilteredRoiList.size());
+
+        // sort on id
+        Collections.sort(newFilteredRoiList, ROI.idComparator);
+        // then build filtered results list
+        for (ROI roi : newFilteredRoiList)
+        {
+            ROIResults roiResults;
+
+            synchronized (roiResultsMap)
+            {
+                // try to get the ROI results from the map first
+                roiResults = roiResultsMap.get(roi);
+                // and create it if needed
+                if (roiResults == null)
+                {
+                    roiResults = new ROIResults(roi);
+                    roiResultsMap.put(roi, roiResults);
+                }
+            }
+
+            newFilteredResultsList.add(roiResults);
+        }
+
+        filteredRoiList = newFilteredRoiList;
+        filteredRoiResultsList = newFilteredResultsList;
+
+        // update the table model (should always correspond to the filtered roi results list)
+        refreshTableDataStructureInternal();
     }
 
     public void refreshTableDataStructure()
     {
-        ThreadUtil.runSingle(tableDataStructureRefresher);
+        processor.submit(true, tableDataStructureRefresher);
     }
 
-    void refreshTableDataStructureInternal()
+    protected void refreshTableDataStructureInternal()
     {
         // don't eat too much time on data structure refresh
         ThreadUtil.sleep(1);
 
-        final HashSet<ROI> newSelectedRois;
+        final Set<ROI> newSelectedRois;
         final Sequence sequence = getSequence();
 
         if (sequence != null)
-            newSelectedRois = new HashSet<ROI>(sequence.getSelectedROIs());
+            newSelectedRois = sequence.getSelectedROISet();
         else
             newSelectedRois = new HashSet<ROI>();
 
@@ -1040,20 +1001,15 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 modifySelection.acquireUninterruptibly();
                 try
                 {
-                    // rebuild columns
-                    if (!buildTableColumns())
+                    synchronized (roiTableModel)
+                    {
                         // notify table data changed
-                        // tableModel.fireTableDataChanged();
-                        ;
+                        roiTableModel.fireTableDataChanged();
+                    }
+
                     // selection to restore ?
                     if (!newSelectedRois.isEmpty())
                         setSelectedRoisInternal(newSelectedRois);
-
-                    refreshRoiNumber();
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
                 }
                 finally
                 {
@@ -1062,13 +1018,14 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             }
         });
 
+        refreshRoiNumbers();
         // notify the ROI control panel that selection changed
         roiControlPanel.selectionChanged();
     }
 
     public void refreshTableData()
     {
-        ThreadUtil.runSingle(tableDataRefresher);
+        processor.submit(true, tableDataRefresher);
     }
 
     void refreshTableDataInternal()
@@ -1083,76 +1040,183 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             {
                 try
                 {
-                    final int rowCount = table.getRowCount();
+                    final int rowCount = roiTable.getRowCount();
 
                     // we use RowsUpdated event to keep selection (DataChanged remove selection)
-                    // if (rowCount > 0)
-                    // tableModel.fireTableRowsUpdated(0, rowCount - 1);
-
-                    refreshRoiNumber();
+                    if (rowCount > 0)
+                    {
+                        synchronized (roiTableModel)
+                        {
+                            roiTableModel.fireTableRowsUpdated(0, rowCount - 1);
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
                     // ignore possible exception here
                 }
             }
-
         });
 
+        refreshRoiNumbers();
         // notify the ROI control panel that selection changed (force data refresh)
         roiControlPanel.selectionChanged();
     }
 
     public void refreshTableSelection()
     {
-        ThreadUtil.runSingle(tableSelectionRefresher);
+        processor.submit(true, tableSelectionRefresher);
     }
 
-    void refreshTableSelectionInternal()
+    protected void refreshTableSelectionInternal()
     {
         // don't eat too much time on selection refresh
         ThreadUtil.sleep(1);
 
-        final HashSet<ROI> newSelectedRois;
-        final List<ROI> currentSelectedRois = getSelectedRois();
+        final Set<ROI> newSelectedRois;
         final Sequence sequence = getSequence();
 
         if (sequence != null)
-            newSelectedRois = new HashSet<ROI>(sequence.getSelectedROIs());
+            newSelectedRois = sequence.getSelectedROISet();
         else
             newSelectedRois = new HashSet<ROI>();
 
-        // selection changed ?
-        if (!CollectionUtil.equals(currentSelectedRois, newSelectedRois))
+        ThreadUtil.invokeNow(new Runnable()
         {
-            ThreadUtil.invokeNow(new Runnable()
+            @Override
+            public void run()
             {
-                @Override
-                public void run()
+                modifySelection.acquireUninterruptibly();
+                try
                 {
-                    modifySelection.acquireUninterruptibly();
-                    tableSelectionModel.setValueIsAdjusting(true);
-                    try
-                    {
-                        // set new selection
-                        setSelectedRoisInternal(newSelectedRois);
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                    finally
-                    {
-                        tableSelectionModel.setValueIsAdjusting(false);
-                        // important to release it after the valueIsAdjusting
-                        modifySelection.release();
-                    }
+                    // set selection
+                    setSelectedRoisInternal(newSelectedRois);
                 }
-            });
+                finally
+                {
+                    modifySelection.release();
+                }
+            }
+        });
 
-            // notify the ROI control panel that selection changed
-            roiControlPanel.selectionChanged();
+        refreshRoiNumbers();
+        // notify the ROI control panel that selection changed
+        roiControlPanel.selectionChanged();
+    }
+
+    protected void refreshDescriptorList()
+    {
+        descriptorMap = ROIUtil.getROIDescriptors();
+        refreshColumnInfoList();
+    }
+
+    public void refreshColumnInfoList()
+    {
+        processor.submit(true, columnInfoListRefresher);
+    }
+
+    protected void refreshColumnInfoListInternal()
+    {
+        // rebuild the column property list
+        final List<ColumnInfo> newColumnInfos = new ArrayList<ColumnInfo>();
+        final int numChannel = getChannelCount();
+
+        for (ROIDescriptor descriptor : descriptorMap.keySet())
+        {
+            for (int ch = 0; ch < (descriptor.useSequenceData() ? numChannel : 1); ch++)
+                newColumnInfos.add(new ColumnInfo(descriptor, ch, viewPreferences, false));
         }
+
+        // sort the list on order
+        Collections.sort(newColumnInfos);
+        // set new column info
+        columnInfoList = newColumnInfos;
+        // rebuild table columns
+        ThreadUtil.invokeNow(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // regenerate column model
+                roiTable.setColumnModel(new ROITableColumnModel(columnInfoList));
+            }
+        });
+    }
+
+    boolean hasPendingComputation(ROIResults results)
+    {
+        synchronized (descriptorsToCompute)
+        {
+            return descriptorsToCompute.contains(results);
+        }
+    }
+
+    void requestDescriptorComputation(ROIResults results)
+    {
+        synchronized (descriptorsToCompute)
+        {
+            descriptorsToCompute.add(results);
+            descriptorsToCompute.notifyAll();
+        }
+    }
+
+    void cancelDescriptorComputation(ROIResults roiResults)
+    {
+        synchronized (descriptorsToCompute)
+        {
+            descriptorsToCompute.remove(roiResults);
+            descriptorsToCompute.notifyAll();
+        }
+    }
+
+    void cancelDescriptorComputation(ROI roi)
+    {
+        synchronized (descriptorsToCompute)
+        {
+            final Iterator<ROIResults> it = descriptorsToCompute.iterator();
+
+            while (it.hasNext())
+            {
+                final ROIResults roiResults = it.next();
+
+                // remove all results for this ROI
+                if (roiResults.roi == roi)
+                    it.remove();
+            }
+
+            descriptorsToCompute.notifyAll();
+        }
+    }
+
+    void cancelAllDescriptorComputation()
+    {
+        synchronized (descriptorsToCompute)
+        {
+            descriptorsToCompute.clear();
+            descriptorsToCompute.notifyAll();
+        }
+    }
+
+    protected void sequenceDataChanged()
+    {
+        final Object[] allRoiResults;
+
+        // get all ROI results
+        synchronized (roiResultsMap)
+        {
+            allRoiResults = roiResultsMap.values().toArray();
+        }
+
+        // notify ROI results that sequence data has changed
+        for (Object roiResults : allRoiResults)
+            ((ROIResults) roiResults).dataChanged(false, true);
+
+        // refresh table data
+        refreshTableData();
+
+        // if data changed (more Z or T) we need to refresh action
+        // so we can change ROI position correctly
+        roiControlPanel.refreshROIActions();
     }
 
     /**
@@ -1162,20 +1226,20 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     public String getCSVFormattedInfosOfSelectedRois()
     {
         // Check to ensure we have selected only a contiguous block of cells
-        final int numcols = table.getColumnCount(true);
-        final int numrows = table.getSelectedRowCount();
+        final int numcols = roiTable.getColumnCount();
+        final int numrows = roiTable.getSelectedRowCount();
 
-        // table is empty --> returns empty string
+        // roiTable is empty --> returns empty string
         if (numrows == 0)
             return "";
 
         final StringBuffer sbf = new StringBuffer();
-        final int[] rowsselected = table.getSelectedRows();
+        final int[] rowsselected = roiTable.getSelectedRows();
 
         // column name
         for (int j = 1; j < numcols; j++)
         {
-            sbf.append(table.getModel().getColumnName(j));
+            sbf.append(roiTable.getModel().getColumnName(j));
             if (j < numcols - 1)
                 sbf.append("\t");
         }
@@ -1186,7 +1250,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         {
             for (int j = 1; j < numcols; j++)
             {
-                final Object value = table.getModel().getValueAt(table.convertRowIndexToModel(rowsselected[i]), j);
+                final Object value = roiTable.getModel()
+                        .getValueAt(roiTable.convertRowIndexToModel(rowsselected[i]), j);
 
                 // special case of double array
                 if (value instanceof double[])
@@ -1217,37 +1282,113 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
      */
     public String getCSVFormattedInfos()
     {
-        // Check to ensure we have selected only a contiguous block of cells
-        final int numcols = tableModel.getColumnCount();
-        // final int numrows = tableModel.getRowCount();
-        final int numrows = tableModel.getChildCount(tableModel.getRoot());
+        final List<ColumnInfo> exportColumnInfos = new ArrayList<ColumnInfo>();
+        final Sequence seq = getSequence();
+        final int numChannel = getChannelCount();
 
-        // table is empty --> returns empty string
-        if (numrows == 0)
-            return "";
+        // get export column informations
+        for (ROIDescriptor descriptor : descriptorMap.keySet())
+        {
+            for (int ch = 0; ch < (descriptor.useSequenceData() ? numChannel : 1); ch++)
+                exportColumnInfos.add(new ColumnInfo(descriptor, ch, exportPreferences, true));
+        }
+
+        // sort the list on order
+        Collections.sort(exportColumnInfos);
 
         final StringBuffer sbf = new StringBuffer();
 
-        // column name
-        for (int j = 1; j < numcols; j++)
+        // column title
+        for (ColumnInfo columnInfo : exportColumnInfos)
         {
-            sbf.append(tableModel.getColumnName(j));
-            if (j < numcols - 1)
+            if (columnInfo.visible)
+            {
+                sbf.append(columnInfo.name);
                 sbf.append("\t");
+            }
         }
         sbf.append("\r\n");
 
-        // then content
-        for (int i = 0; i < numrows; i++)
+        final List<ROI> rois = filteredRoiList;
+
+        // content
+        for (ROI roi : rois)
         {
-            for (int j = 1; j < numcols; j++)
+            final ROIResults results = new ROIResults(roi);
+            final Map<ColumnInfo, DescriptorResult> descriptorResults = results.descriptorResults;
+
+            // compute results
+            for (ColumnInfo columnInfo : exportColumnInfos)
             {
-                final Object value = tableModel.getValueAt(i, j);
+                if (columnInfo.visible)
+                {
+                    // try to retrieve result for this column
+                    DescriptorResult result = descriptorResults.get(columnInfo);
 
-                sbf.append(value);
+                    // not yet computed --> do it now
+                    if (result == null)
+                    {
+                        final ROIDescriptor descriptor = columnInfo.descriptor;
+                        final PluginROIDescriptor plugin;
 
-                if (j < numcols - 1)
+                        // get the corresponding plugin
+                        synchronized (descriptorMap)
+                        {
+                            plugin = descriptorMap.get(descriptor);
+                        }
+
+                        if (plugin != null)
+                        {
+                            final Map<ROIDescriptor, Object> newResults;
+
+                            try
+                            {
+                                // need computation per channel ?
+                                if (descriptor.useSequenceData())
+                                    newResults = plugin.compute(results.getRoiForChannel(columnInfo.channel), seq);
+                                else
+                                    newResults = plugin.compute(results.roi, seq);
+
+                                for (Entry<ROIDescriptor, Object> entryNewResult : newResults.entrySet())
+                                {
+                                    // get the column for this result
+                                    final ColumnInfo resultColumnInfo = getColumnInfo(exportColumnInfos,
+                                            entryNewResult.getKey(), columnInfo.channel);
+                                    // create result
+                                    result = new DescriptorResult(resultColumnInfo);
+                                    // and put it in map
+                                    descriptorResults.put(resultColumnInfo, result);
+                                    // and set result value
+                                    result.setValue(entryNewResult.getValue());
+                                }
+                            }
+                            catch (UnsupportedOperationException e)
+                            {
+                                // ignore
+                            }
+                        }
+                    }
+                }
+            }
+
+            // display results
+            for (ColumnInfo columnInfo : exportColumnInfos)
+            {
+                if (columnInfo.visible)
+                {
+                    final DescriptorResult result = descriptorResults.get(columnInfo);
+                    final Object value;
+
+                    if (result != null)
+                        value = results.formatValue(result.getValue(), columnInfo.descriptor.getId());
+                    else
+                        value = null;
+
+                    if (value != null)
+                        sbf.append(value);
+
                     sbf.append("\t");
+                }
             }
             sbf.append("\r\n");
         }
@@ -1255,31 +1396,36 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         return sbf.toString();
     }
 
-    @Override
-    public void propertyChange(PropertyChangeEvent evt)
+    public void showSettingPanel()
     {
-        // column visibility changed ?
-        if ("visible".equals(evt.getPropertyName()))
+        // create and display the setting frame
+        new RoiSettingFrame(viewPreferences, exportPreferences, new Runnable()
         {
-            // store column visibility in preferences
-            final TableColumnExt column = (TableColumnExt) evt.getSource();
-            getPreferences().putBoolean((String) column.getIdentifier(), column.isVisible());
-        }
+            @Override
+            public void run()
+            {
+                // refresh table columns
+                refreshColumnInfoListInternal();
+            }
+        });
     }
 
     @Override
     public void textChanged(IcyTextField source, boolean validate)
     {
         if (source == nameFilter)
-            refreshRois();
+            refreshFilteredRois();
     }
 
-    // called when selection changed in the ROI table
+    // called when selection changed in the ROI roiTable
     @Override
     public void valueChanged(ListSelectionEvent e)
     {
         // currently changing the selection ? --> exit
-        if (e.getValueIsAdjusting() || !modifySelection.tryAcquire())
+        if (roiSelectionModel.getValueIsAdjusting())
+            return;
+        // currently changing the selection ? --> exit
+        if (!modifySelection.tryAcquire())
             return;
 
         // semaphore acquired here
@@ -1292,22 +1438,24 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             if (sequence != null)
                 sequence.setSelectedROIs(selectedRois);
 
-            // notify the ROI control panel that selection changed
-            roiControlPanel.selectionChanged();
         }
         finally
         {
             modifySelection.release();
         }
+
+        refreshRoiNumbers();
+        // notify the ROI control panel that selection changed
+        roiControlPanel.selectionChanged();
     }
 
     @Override
     public void sequenceActivated(Sequence value)
     {
-        // force column rebuild
-        columnCount = 0;
         // refresh ROI list
         refreshRois();
+        // refresh table columns
+        refreshColumnInfoList();
     }
 
     @Override
@@ -1328,25 +1476,26 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         switch (sourceType)
         {
             case SEQUENCE_ROI:
-                final SequenceEventType type = event.getType();
+                switch (event.getType())
+                {
+                    case ADDED:
+                    case REMOVED:
+                        refreshRois();
+                        break;
 
-                // changed event already handled by ROIInfo
-                if ((type == SequenceEventType.ADDED) || (type == SequenceEventType.REMOVED))
-                    // refresh the ROI list
-                    refreshRois();
+                    case CHANGED:
+                        // already handled by ROIResults directly
+                        break;
+                }
                 break;
 
             case SEQUENCE_DATA:
-                // notify ROI info that sequence data changed
-                for (ROIInfo roiInfo : filteredRois)
-                    roiInfo.sequenceDataChanged();
-
-                // if data changed (more Z or T) we need to refresh action
-                // so we can change ROI position correctly
-                roiControlPanel.refreshROIActions();
+                sequenceDataChanged();
                 break;
 
             case SEQUENCE_TYPE:
+                // number of channel can have changed
+                refreshColumnInfoList();
                 // if type changed (number of channel) we need to refresh action
                 // so we change change ROI position correctly
                 roiControlPanel.refreshROIActions();
@@ -1354,568 +1503,929 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         }
     }
 
-    public class ROIInfo implements ROIListener
+    private class ROITableModel extends AbstractTableModel
     {
-        private ROI roi;
-        private double[] standardDeviation;
-        private IntensityInfo[] intensityInfos;
-
-        // cached
-        private double numberContourPoints;
-        private double numberPoints;
-        private boolean sequenceInfInvalid;
-        private boolean roiInfInvalid;
-
-        public ROIInfo(ROI roi)
+        public ROITableModel()
         {
+            super();
+        }
+
+        @Override
+        public int getColumnCount()
+        {
+            return columnInfoList.size();
+        }
+
+        @Override
+        public String getColumnName(int column)
+        {
+            final ColumnInfo ci = getColumnInfo(column);
+
+            if (ci != null)
+                return ci.name;
+
+            return "";
+        }
+
+        @Override
+        public Class<?> getColumnClass(int column)
+        {
+            final ColumnInfo ci = getColumnInfo(column);
+
+            if (ci != null)
+                return ci.descriptor.getType();
+
+            return String.class;
+        }
+
+        @Override
+        public int getRowCount()
+        {
+            return filteredRoiResultsList.size();
+        }
+
+        @Override
+        public Object getValueAt(int row, int column)
+        {
+            final ROIResults roiResults = getRoiResults(row);
+
+            if (roiResults != null)
+                return roiResults.getValueAt(column);
+
+            return null;
+        }
+
+        @Override
+        public void setValueAt(Object value, int row, int column)
+        {
+            final ROIResults roiResults = getRoiResults(row);
+
+            if (roiResults != null)
+                roiResults.setValueAt(value, column);
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column)
+        {
+            final ROIResults roiResults = getRoiResults(row);
+
+            if (roiResults != null)
+                return roiResults.isEditable(column);
+
+            return false;
+        }
+    }
+
+    private class ROIResults implements ROIListener
+    {
+        public final Map<ColumnInfo, DescriptorResult> descriptorResults;
+        public final ROI roi;
+        private final Map<Integer, WeakReference<ROI>> channelRois;
+
+        ROIResults(ROI roi)
+        {
+            super();
+
             this.roi = roi;
+            descriptorResults = new HashMap<ColumnInfo, DescriptorResult>();
+            channelRois = new HashMap<Integer, WeakReference<ROI>>();
 
-            numberContourPoints = 0d;
-            numberPoints = 0d;
-            standardDeviation = new double[0];
-            intensityInfos = new IntensityInfo[0];
-            sequenceInfInvalid = true;
-            roiInfInvalid = true;
-
-            requestCompute();
-
+            // listen for ROI change event
             roi.addListener(this);
         }
 
-        public void dispose()
+        // boolean areResultsUpToDate()
+        // {
+        // for (DescriptorResult result : descriptorResults.values())
+        // if (result.isOutdated())
+        // return false;
+        //
+        // return true;
+        // }
+
+        private void clearChannelRois()
         {
-            roi.removeListener(this);
-            roi = null;
+            synchronized (channelRois)
+            {
+                channelRois.clear();
+            }
+        }
+
+        public ROI getRoiForChannel(int channel)
+        {
+            final Integer key = Integer.valueOf(channel);
+            WeakReference<ROI> reference;
+            ROI result;
+
+            synchronized (channelRois)
+            {
+                reference = channelRois.get(key);
+            }
+
+            if (reference != null)
+                result = reference.get();
+            else
+                result = null;
+
+            // channel ROI does not exist ?
+            if (result == null)
+            {
+                // create it
+                result = roi.getSubROI(-1, -1, channel);
+                // and put it in map
+                synchronized (channelRois)
+                {
+                    // we use WeakReference to not waste memory
+                    channelRois.put(key, new WeakReference<ROI>(result));
+                }
+            }
+
+            return result;
         }
 
         /**
-         * Recompute ROI informations
+         * Called when data from ROI or/and sequence changed, in which case we need to invalidate results.
+         * 
+         * @param roiData
+         *        <code>true</code> if ROI data changed
+         * @param sequenceData
+         *        <code>true</code> if sequence data changed
          */
-        public void compute()
+        public void dataChanged(boolean roiData, boolean sequenceData)
         {
-            try
+            if (roiData)
             {
-                if (roiInfInvalid)
+                synchronized (descriptorResults)
                 {
-                    // refresh points number calculation
-                    numberContourPoints = MathUtil.roundSignificant(roi.getNumberOfContourPoints(), 5, true);
-                    numberPoints = MathUtil.roundSignificant(roi.getNumberOfPoints(), 5, true);
-
-                    roiInfInvalid = false;
+                    // mark all descriptor results as outdated
+                    for (DescriptorResult result : descriptorResults.values())
+                        result.setOutdated(true);
                 }
 
-                if (sequenceInfInvalid)
+                // need to recompute channel rois
+                clearChannelRois();
+            }
+            else if (sequenceData)
+            {
+                final Object[] keys;
+
+                synchronized (descriptorResults)
                 {
-                    final Sequence sequence = getSequence();
+                    keys = descriptorResults.keySet().toArray();
+                }
 
-                    if (sequence != null)
+                for (Object key : keys)
+                {
+                    // need to recompute this descriptor ?
+                    if (((ROIDescriptor) key).useSequenceData())
                     {
-                        // calculate intensity infos
-                        final Rectangle5D roiBounds = roi.getBounds5D();
-                        final int sizeC = sequence.getSizeC();
+                        final DescriptorResult result;
 
-                        final double[] sd = new double[sizeC];
-                        final IntensityInfo[] iis = new IntensityInfo[sizeC];
-
-                        for (int c = 0; c < sizeC; c++)
+                        synchronized (descriptorResults)
                         {
-                            iis[c] = new IntensityInfo();
-                            sd[c] = 0d;
-
-                            if ((c >= roiBounds.getMinC()) && (c < roiBounds.getMaxC()))
-                            {
-                                final IntensityInfo ii = ROIUtil.getIntensityInfo(sequence, roi, -1, -1, c);
-
-                                if (ii != null)
-                                {
-                                    // round values
-                                    ii.minIntensity = MathUtil.roundSignificant(ii.minIntensity, 5, true);
-                                    ii.meanIntensity = MathUtil.roundSignificant(ii.meanIntensity, 5, true);
-                                    ii.maxIntensity = MathUtil.roundSignificant(ii.maxIntensity, 5, true);
-
-                                    iis[c] = ii;
-                                }
-
-                                sd[c] = MathUtil.roundSignificant(
-                                        ROIUtil.getStandardDeviation(sequence, roi, -1, -1, c), 5, true);
-                            }
+                            result = descriptorResults.get(key);
                         }
 
-                        intensityInfos = iis;
-                        standardDeviation = sd;
+                        // mark as outdated
+                        if (result != null)
+                            result.setOutdated(true);
                     }
-                    else
+                }
+            }
+        }
+
+        String getROIPropertyDescriptorId(String propertyName)
+        {
+            if (propertyName.equals(ROI.PROPERTY_NAME))
+                return ROINameDescriptor.ID;
+            if (propertyName.equals(ROI.PROPERTY_ICON))
+                return ROIIconDescriptor.ID;
+
+            if (propertyName.equals(ROI.PROPERTY_OPACITY))
+                return ROIOpacityDescriptor.ID;
+            if (propertyName.equals(ROI.PROPERTY_READONLY))
+                return ROIReadOnlyDescriptor.ID;
+
+            return "";
+        }
+
+        /**
+         * Called when ROI property changed (base ROI only)
+         */
+        void propertyChanged(String propertyName)
+        {
+            final String descriptorId = getROIPropertyDescriptorId(propertyName);
+            final Object[] keys;
+
+            synchronized (descriptorResults)
+            {
+                keys = descriptorResults.keySet().toArray();
+            }
+
+            for (Object key : keys)
+            {
+                // found the corresponding descriptor result ?
+                if (((ColumnInfo) key).descriptor.getId().equals(descriptorId))
+                {
+                    final DescriptorResult result;
+
+                    synchronized (descriptorResults)
                     {
-                        intensityInfos = new IntensityInfo[0];
-                        standardDeviation = new double[0];
+                        result = descriptorResults.get(key);
                     }
 
-                    sequenceInfInvalid = false;
+                    // mark as outdated
+                    if (result != null)
+                        result.setOutdated(true);
+
+                    // done
+                    break;
                 }
             }
-            catch (Throwable e)
+        }
+
+        public boolean isEditable(int column)
+        {
+            final ColumnInfo ci = getColumnInfo(column);
+
+            if (ci != null)
             {
-                // we can have some exception here as this is an asynch process (just ignore)
-                if (e instanceof OutOfMemoryError)
-                    System.err.println("Cannot compute ROI infos: Not enought memory !");
+                final ROIDescriptor descriptor = ci.descriptor;
+
+                // only name descriptor is editable (a bit hacky)
+                return descriptor.getId().equals(ROINameDescriptor.ID);
             }
 
-            refreshTableData();
+            return false;
         }
 
-        void requestCompute()
+        public Object formatValue(Object value, String id)
         {
-            if (!roisToCompute.contains(this))
+            Object result = value;
+
+            // format result if needed
+            if (result instanceof Double)
             {
-                try
+                final double doubleValue = ((Double) result).doubleValue();
+
+                // replace 'infinity' by infinite symbol
+                if (doubleValue == Double.POSITIVE_INFINITY)
+                    result = MathUtil.INFINITE_STRING;
+                else if (doubleValue == Double.NEGATIVE_INFINITY)
                 {
-                    roisToCompute.put(this);
+                    // position descriptor ? negative infinite means 'ALL' here
+                    if (id.equals(ROIPositionXDescriptor.ID) || id.equals(ROIPositionYDescriptor.ID)
+                            || id.equals(ROIPositionZDescriptor.ID) || id.equals(ROIPositionTDescriptor.ID)
+                            || id.equals(ROIPositionCDescriptor.ID) || id.equals(ROIMassCenterXDescriptor.ID)
+                            || id.equals(ROIMassCenterYDescriptor.ID) || id.equals(ROIMassCenterZDescriptor.ID)
+                            || id.equals(ROIMassCenterTDescriptor.ID) || id.equals(ROIMassCenterCDescriptor.ID))
+                        result = "ALL";
+                    else
+                        result = "-" + MathUtil.INFINITE_STRING;
                 }
-                catch (InterruptedException e)
+                else if (doubleValue == -1d)
                 {
-                    // ignore
+                    // position descriptor ? -1 means 'ALL' here
+                    if (id.equals(ROIPositionXDescriptor.ID) || id.equals(ROIPositionYDescriptor.ID)
+                            || id.equals(ROIPositionZDescriptor.ID) || id.equals(ROIPositionTDescriptor.ID)
+                            || id.equals(ROIPositionCDescriptor.ID) || id.equals(ROIMassCenterXDescriptor.ID)
+                            || id.equals(ROIMassCenterYDescriptor.ID) || id.equals(ROIMassCenterZDescriptor.ID)
+                            || id.equals(ROIMassCenterTDescriptor.ID) || id.equals(ROIMassCenterCDescriptor.ID))
+                        result = "ALL";
+                }
+                else
+                {
+                    // format double value
+                    final double roundedValue = MathUtil.roundSignificant(doubleValue, 5);
+
+                    // simple integer ? -> show it as integer
+                    if ((roundedValue == (int) roundedValue) && (Math.abs(roundedValue) < 10000000))
+                        result = Integer.valueOf((int) roundedValue);
+                    else
+                        result = Double.valueOf(roundedValue);
                 }
             }
+
+            return result;
         }
 
-        public ROI getROI()
+        /**
+         * Retrieve the value for the specified descriptor
+         */
+        public Object getValue(ColumnInfo column)
         {
-            return roi;
+            // get result for this descriptor
+            DescriptorResult result;
+
+            synchronized (descriptorResults)
+            {
+                result = descriptorResults.get(column);
+
+                // no result --> create it and request computation
+                if (result == null)
+                {
+                    // create descriptor result
+                    result = new DescriptorResult(column);
+                    // and put it in results map
+                    descriptorResults.put(column, result);
+                }
+            }
+
+            // mark it as requested
+            result.setRequested();
+
+            // out dated result ? --> request for descriptor computation
+            if (result.isOutdated())
+                requestDescriptorComputation(this);
+
+            return formatValue(result.getValue(), column.descriptor.getId());
         }
 
-        public String getName()
+        public Object getValueAt(int column)
         {
-            return roi.getName();
+            final ColumnInfo ci = getColumnInfo(column);
+
+            if (ci != null)
+                return getValue(ci);
+
+            return null;
         }
 
-        public boolean isRoiInfOutdated()
+        public void setValueAt(Object aValue, int column)
         {
-            return roiInfInvalid;
-        }
-
-        public boolean isSequenceInfOutdated()
-        {
-            return sequenceInfInvalid;
-        }
-
-        public double getNumberOfContourPoints()
-        {
-            // need to recompute
-            if (roiInfInvalid)
-                requestCompute();
-
-            return numberContourPoints;
-        }
-
-        public double getNumberOfPoints()
-        {
-            // need to recompute
-            if (roiInfInvalid)
-                requestCompute();
-
-            return numberPoints;
-        }
-
-        public String getPerimeter()
-        {
-            final Sequence seq = getSequence();
-            if (seq == null)
-                return "";
-
-            return ROIUtil.getContourSize(seq, getNumberOfContourPoints(), roi, 2, 5);
-        }
-
-        public String getArea()
-        {
-            final Sequence seq = getSequence();
-            if (seq == null)
-                return "";
-
-            return ROIUtil.getInteriorSize(seq, getNumberOfPoints(), roi, 2, 5);
-        }
-
-        public String getSurfaceArea()
-        {
-            final Sequence seq = getSequence();
-            if (seq == null)
-                return "";
-
-            return ROIUtil.getContourSize(seq, getNumberOfContourPoints(), roi, 3, 5);
-        }
-
-        public String getVolume()
-        {
-            final Sequence seq = getSequence();
-            if (seq == null)
-                return "";
-
-            return ROIUtil.getInteriorSize(seq, getNumberOfPoints(), roi, 3, 5);
-        }
-
-        public double getMinIntensities(int channel)
-        {
-            // need to recompute
-            if (sequenceInfInvalid)
-                requestCompute();
-
-            final IntensityInfo[] infos = intensityInfos;
-            if (channel < infos.length)
-                return infos[channel].minIntensity;
-
-            return 0d;
-        }
-
-        public double getMeanIntensities(int channel)
-        {
-            // need to recompute
-            if (sequenceInfInvalid)
-                requestCompute();
-
-            final IntensityInfo[] infos = intensityInfos;
-            if (channel < infos.length)
-                return infos[channel].meanIntensity;
-
-            return 0d;
-        }
-
-        public double getMaxIntensities(int channel)
-        {
-            // need to recompute
-            if (sequenceInfInvalid)
-                requestCompute();
-
-            final IntensityInfo[] infos = intensityInfos;
-            if (channel < infos.length)
-                return infos[channel].maxIntensity;
-
-            return 0d;
-        }
-
-        public double getStandardDeviation(int channel)
-        {
-            // need to recompute
-            if (sequenceInfInvalid)
-                requestCompute();
-
-            final double[] stdDev = standardDeviation;
-            if (channel < stdDev.length)
-                return stdDev[channel];
-
-            return 0d;
-        }
-
-        // public IntensityInfo[] getIntensities()
-        // {
-        // // need to recompute
-        // if (sequenceInfInvalid)
-        // requestCompute();
-        //
-        // return intensityInfos;
-        // }
-
-        public double getPositionX()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeX() == Double.POSITIVE_INFINITY)
-                return -1d;
-
-            return MathUtil.roundSignificant(bounds.getX(), 5, true);
-        }
-
-        public double getPositionY()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeY() == Double.POSITIVE_INFINITY)
-                return -1d;
-
-            return MathUtil.roundSignificant(bounds.getY(), 5, true);
-        }
-
-        public double getPositionZ()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeZ() == Double.POSITIVE_INFINITY)
-                return -1d;
-
-            return MathUtil.roundSignificant(bounds.getZ(), 5, true);
-        }
-
-        public double getPositionT()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
-                return -1d;
-
-            return MathUtil.roundSignificant(bounds.getT(), 5, true);
-        }
-
-        public double getPositionC()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
-                return -1d;
-
-            return MathUtil.roundSignificant(bounds.getC(), 5, true);
-        }
-
-        public double getSizeX()
-        {
-            final double v = roi.getBounds5D().getSizeX();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return v;
-
-            return MathUtil.roundSignificant(v, 5, true);
-        }
-
-        public double getSizeY()
-        {
-            final double v = roi.getBounds5D().getSizeY();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return v;
-
-            return MathUtil.roundSignificant(v, 5, true);
-        }
-
-        public double getSizeZ()
-        {
-            final double v = roi.getBounds5D().getSizeZ();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return v;
-
-            return MathUtil.roundSignificant(v, 5, true);
-        }
-
-        public double getSizeT()
-        {
-            final double v = roi.getBounds5D().getSizeT();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return v;
-
-            return MathUtil.roundSignificant(v, 5, true);
-        }
-
-        public double getSizeC()
-        {
-            final double v = roi.getBounds5D().getSizeC();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return v;
-
-            return MathUtil.roundSignificant(v, 5, true);
-        }
-
-        public String getPositionXAsString()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeX() == Double.POSITIVE_INFINITY)
-                return "all";
-
-            return StringUtil.toString(MathUtil.roundSignificant(bounds.getX(), 5, true));
-        }
-
-        public String getPositionYAsString()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeY() == Double.POSITIVE_INFINITY)
-                return "all";
-
-            return StringUtil.toString(MathUtil.roundSignificant(bounds.getY(), 5, true));
-        }
-
-        public String getPositionZAsString()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeZ() == Double.POSITIVE_INFINITY)
-                return "all";
-
-            return StringUtil.toString(MathUtil.roundSignificant(bounds.getZ(), 5, true));
-        }
-
-        public String getPositionTAsString()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
-                return "all";
-
-            return StringUtil.toString(MathUtil.roundSignificant(bounds.getT(), 5, true));
-        }
-
-        public String getPositionCAsString()
-        {
-            final Rectangle5D bounds = roi.getBounds5D();
-
-            // special case of infinite dimension
-            if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
-                return "all";
-
-            return StringUtil.toString(MathUtil.roundSignificant(bounds.getC(), 5, true));
-        }
-
-        public String getSizeXAsString()
-        {
-            final double v = roi.getBounds5D().getSizeX();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return MathUtil.INFINITE_STRING;
-
-            return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
-        }
-
-        public String getSizeYAsString()
-        {
-            final double v = roi.getBounds5D().getSizeY();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return MathUtil.INFINITE_STRING;
-
-            return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
-        }
-
-        public String getSizeZAsString()
-        {
-            final double v = roi.getBounds5D().getSizeZ();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return MathUtil.INFINITE_STRING;
-
-            return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
-        }
-
-        public String getSizeTAsString()
-        {
-            final double v = roi.getBounds5D().getSizeT();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return MathUtil.INFINITE_STRING;
-
-            return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
-        }
-
-        public String getSizeCAsString()
-        {
-            final double v = roi.getBounds5D().getSizeC();
-
-            // special case of infinite dimension
-            if (v == Double.POSITIVE_INFINITY)
-                return MathUtil.INFINITE_STRING;
-
-            return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
+            final ColumnInfo ci = getColumnInfo(column);
+
+            if (ci != null)
+            {
+                final ROIDescriptor descriptor = ci.descriptor;
+
+                // only name descriptor is editable (a bit hacky)
+                if (descriptor.getId().equals(ROINameDescriptor.ID))
+                    roi.setName((String) aValue);
+            }
         }
 
         @Override
         public void roiChanged(ROIEvent event)
         {
+            final ROI roi = event.getSource();
+
+            // ROI selected ? --> propagate event to control panel
+            if (roi.isSelected())
+                roiControlPanel.roiChanged(event);
+
             switch (event.getType())
             {
-                default:
-                    // ROI selected ? --> propagate event control panel
-                    if (roi.isSelected())
-                        roiControlPanel.roiChanged(event);
-                    break;
-
                 case ROI_CHANGED:
-                    // notify control panel that ROI changed
-                    if (roi.isSelected())
-                        roiControlPanel.roiChanged(event);
-
-                    sequenceInfInvalid = true;
-                    roiInfInvalid = true;
-                    requestCompute();
+                    // handle ROI data change
+                    dataChanged(true, false);
+                    // and refresh table data
+                    refreshTableData();
                     break;
 
                 case SELECTION_CHANGED:
-                    // update ROI selection
-                    refreshTableSelection();
+                    // not modifying selection from panel ?
+                    if (modifySelection.availablePermits() > 0)
+                        // update ROI selection
+                        refreshTableSelection();
                     break;
 
                 case PROPERTY_CHANGED:
-                    final String property = event.getPropertyName();
-
-                    if (ROI.PROPERTY_NAME.equals(property) || ROI.PROPERTY_ICON.equals(property))
-                        refreshTableData();
+                    // handle ROI property change
+                    propertyChanged(event.getPropertyName());
+                    // and refresh table data
+                    refreshTableData();
                     break;
             }
         }
+    }
 
-        public void sequenceDataChanged()
+    class DescriptorResult
+    {
+        private Object value;
+        private boolean outdated;
+        private boolean requested;
+
+        public DescriptorResult(ColumnInfo column)
         {
-            sequenceInfInvalid = true;
-            requestCompute();
+            super();
+
+            value = null;
+
+            // by default we consider it as out dated
+            outdated = true;
+            requested = false;
+        }
+
+        public Object getValue()
+        {
+            return value;
+        }
+
+        public void setValue(Object value)
+        {
+            this.value = value;
+        }
+
+        public boolean isOutdated()
+        {
+            return outdated;
+        }
+
+        public void setOutdated(boolean value)
+        {
+            outdated = value;
+        }
+
+        public boolean isRequested()
+        {
+            return requested;
+        }
+
+        public void setRequested()
+        {
+            requested = true;
+        }
+    }
+
+    public static class BaseColumnInfo implements Comparable<BaseColumnInfo>
+    {
+        final ROIDescriptor descriptor;
+        int minSize;
+        int maxSize;
+        int defaultSize;
+        int order;
+        boolean visible;
+
+        public BaseColumnInfo(ROIDescriptor descriptor, XMLPreferences preferences, boolean export)
+        {
+            super();
+
+            this.descriptor = descriptor;
+
+            load(preferences, export);
+        }
+
+        public boolean load(XMLPreferences preferences, boolean export)
+        {
+            final XMLPreferences p = preferences.node(descriptor.getId());
+
+            if (p != null)
+            {
+                minSize = p.getInt(ID_PROPERTY_MINSIZE, getDefaultMinSize());
+                maxSize = p.getInt(ID_PROPERTY_MAXSIZE, getDefaultMaxSize());
+                defaultSize = p.getInt(ID_PROPERTY_DEFAULTSIZE, getDefaultDefaultSize());
+                order = p.getInt(ID_PROPERTY_ORDER, getDefaultOrder());
+                visible = p.getBoolean(ID_PROPERTY_VISIBLE, getDefaultVisible(export));
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public boolean save(XMLPreferences preferences)
+        {
+            final XMLPreferences p = preferences.node(descriptor.getId());
+
+            if (p != null)
+            {
+                // p.putInt(ID_PROPERTY_MINSIZE, minSize);
+                // p.putInt(ID_PROPERTY_MAXSIZE, maxSize);
+                // p.putInt(ID_PROPERTY_DEFAULTSIZE, defaultSize);
+                p.putInt(ID_PROPERTY_ORDER, order);
+                p.putBoolean(ID_PROPERTY_VISIBLE, visible);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        protected boolean getDefaultVisible(boolean export)
+        {
+            if (descriptor == null)
+                return false;
+
+            if (export)
+            {
+                final Class<?> type = descriptor.getType();
+                return ClassUtil.isSubClass(type, String.class) || ClassUtil.isSubClass(type, Number.class);
+            }
+
+            final String id = descriptor.getId();
+
+            if (StringUtil.equals(id, ROIIconDescriptor.ID))
+                return true;
+            if (StringUtil.equals(id, ROINameDescriptor.ID))
+                return true;
+
+            if (StringUtil.equals(id, ROIContourDescriptor.ID))
+                return true;
+            if (StringUtil.equals(id, ROIInteriorDescriptor.ID))
+                return true;
+
+            return false;
+        }
+
+        protected int getDefaultOrder()
+        {
+            if (descriptor == null)
+                return Integer.MAX_VALUE;
+
+            final String id = descriptor.getId();
+            int order = -1;
+
+            order++;
+            if (StringUtil.equals(id, ROIIconDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROINameDescriptor.ID))
+                return order;
+
+            order++;
+            if (StringUtil.equals(id, ROIPositionXDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIPositionYDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIPositionZDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIPositionTDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIPositionCDescriptor.ID))
+                return order;
+
+            order++;
+            if (StringUtil.equals(id, ROISizeXDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROISizeYDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROISizeZDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROISizeTDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROISizeCDescriptor.ID))
+                return order;
+
+            order++;
+            if (StringUtil.equals(id, ROIMassCenterXDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIMassCenterYDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIMassCenterZDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIMassCenterTDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIMassCenterCDescriptor.ID))
+                return order;
+
+            order++;
+            if (StringUtil.equals(id, ROIContourDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIInteriorDescriptor.ID))
+                return order;
+
+            order++;
+            if (StringUtil.equals(id, ROIPerimeterDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIAreaDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROISurfaceAreaDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIVolumeDescriptor.ID))
+                return order;
+
+            order++;
+            if (StringUtil.equals(id, ROIMinIntensityDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIMeanIntensityDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROIMaxIntensityDescriptor.ID))
+                return order;
+            order++;
+            if (StringUtil.equals(id, ROISumIntensityDescriptor.ID))
+                return order;
+
+            return Integer.MAX_VALUE;
+        }
+
+        protected int getDefaultMinSize()
+        {
+            if (descriptor == null)
+                return Integer.MAX_VALUE;
+
+            final String id = descriptor.getId();
+
+            if (StringUtil.equals(id, ROIIconDescriptor.ID))
+                return 22;
+            if (StringUtil.equals(id, ROINameDescriptor.ID))
+                return 60;
+
+            final Class<?> type = descriptor.getType();
+
+            if (type == Integer.class)
+                return 30;
+            if (type == Double.class)
+                return 40;
+            if (type == String.class)
+                return 50;
+
+            return 40;
+        }
+
+        protected int getDefaultMaxSize()
+        {
+            if (descriptor == null)
+                return Integer.MAX_VALUE;
+
+            final String id = descriptor.getId();
+
+            if (StringUtil.equals(id, ROIIconDescriptor.ID))
+                return 22;
+
+            return Integer.MAX_VALUE;
+        }
+
+        protected int getDefaultDefaultSize()
+        {
+            final int maxSize = getDefaultMaxSize();
+            final int minSize = getDefaultMinSize();
+
+            if (maxSize == Integer.MAX_VALUE)
+                return minSize * 2;
+
+            return (minSize + maxSize) / 2;
+        }
+
+        @Override
+        public int compareTo(BaseColumnInfo obj)
+        {
+            return Integer.valueOf(order).compareTo(Integer.valueOf(obj.order));
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return descriptor.hashCode();
         }
 
         @Override
         public boolean equals(Object obj)
         {
-            // consider same ROIInfo if the inner ROI is the same
-            if (obj instanceof ROIInfo)
-                return ((ROIInfo) obj).getROI() == getROI();
+            if (obj instanceof BaseColumnInfo)
+                // equality on descriptor
+                return ((BaseColumnInfo) obj).descriptor.equals(descriptor);
 
             return super.equals(obj);
         }
     }
 
-    public static class ColumnInfo
+    public class ColumnInfo extends BaseColumnInfo
     {
-        final String id;
         final String name;
-        final String toolTip;
-        final Class<?> type;
-        final int minSize;
-        final int preferredSize;
-        final boolean defVisible;
-        final boolean channelInfo;
+        final int channel;
 
-        public ColumnInfo(String name, String id, String toolTip, Class<?> type, int minSize, int preferredSize,
-                boolean defVisible, boolean channelInfo)
+        public ColumnInfo(ROIDescriptor descriptor, int channel, XMLPreferences prefs, boolean export)
+        {
+            super(descriptor, prefs, export);
+
+            this.channel = channel;
+            name = getColumnName();
+        }
+
+        protected String getSuffix()
+        {
+            String result = "";
+
+            final String unit = descriptor.getUnit(getSequence());
+
+            if (!StringUtil.isEmpty(unit))
+                result += " (" + unit + ")";
+
+            // separate channel
+            if (descriptor.useSequenceData())
+                result += getChannelNameSuffix(channel);
+
+            return result;
+        }
+
+        protected String getColumnName()
+        {
+            final String id = descriptor.getId();
+
+            // we don't want to display name for these descriptors
+            if (id.equals(ROIIconDescriptor.ID))
+                return "";
+
+            return descriptor.getName() + getSuffix();
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return descriptor.hashCode() ^ channel;
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof ColumnInfo)
+            {
+                final ColumnInfo ci = (ColumnInfo) obj;
+
+                // equality on descriptor and channel number
+                return (ci.descriptor.equals(descriptor) && (ci.channel == ci.channel));
+            }
+
+            return super.equals(obj);
+        }
+    }
+
+    class ROITableColumnModel extends DefaultTableColumnModelExt
+    {
+        public ROITableColumnModel(List<ColumnInfo> columnInfos)
         {
             super();
 
-            this.name = name;
-            this.id = id;
-            this.toolTip = toolTip;
-            this.type = type;
-            this.minSize = minSize;
-            this.preferredSize = preferredSize;
-            this.defVisible = defVisible;
-            this.channelInfo = channelInfo;
-        }
+            // column info are sorted on their order
+            int index = 0;
+            for (ColumnInfo cp : columnInfos)
+            {
+                final ROIDescriptor descriptor = cp.descriptor;
+                final TableColumnExt column = new TableColumnExt(index++);
 
-        public ColumnInfo(ColumnInfo info)
+                column.setIdentifier(descriptor.getId());
+                column.setMinWidth(cp.minSize);
+                column.setPreferredWidth(cp.defaultSize);
+                if (cp.maxSize != Integer.MAX_VALUE)
+                    column.setMaxWidth(cp.maxSize);
+                if (cp.minSize == cp.maxSize)
+                    column.setResizable(false);
+                column.setHeaderValue(cp.name);
+                column.setToolTipText(descriptor.getDescription() + cp.getSuffix());
+                column.setVisible(cp.visible);
+                column.setSortable(true);
+
+                // image class type column --> use a special renderer
+                if (descriptor.getType() == Image.class)
+                    column.setCellRenderer(new ImageTableCellRenderer(18));
+
+                // and finally add to the model
+                addColumn(column);
+            }
+
+            setColumnSelectionAllowed(false);
+        }
+    }
+
+    // class CustomTableCellRenderer extends DefaultTableCellRenderer
+    // {
+    // @Override
+    // public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+    // boolean hasFocus, int row, int column)
+    // {
+    // super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    //
+    // ROIResults roiResults;
+    // try
+    // {
+    // roiResults = getROIResults(roiTable.convertRowIndexToModel(row));
+    //
+    // }
+    // catch (IndexOutOfBoundsException e)
+    // {
+    // roiResults = null;
+    // }
+    //
+    // final Color defaultColor;
+    // final Color computeColor;
+    //
+    // if (isSelected)
+    // defaultColor = UIManager.getColor("Table.selectionBackground");
+    // else
+    // defaultColor = UIManager.getColor("Table.background");
+    // if (roiResults == null)
+    // computeColor = Color.green;
+    // else if (roiResults.areResultsUpToDate())
+    // computeColor = Color.green;
+    // else if (hasPendingComputation(roiResults))
+    // computeColor = Color.orange;
+    // else
+    // computeColor = Color.red;
+    //
+    // // define background color
+    // setBackground(ColorUtil.mix(defaultColor, computeColor, 0.15f));
+    //
+    // return this;
+    // }
+    // }
+
+    public class ROITableSortController<M extends TableModel> extends DefaultSortController<M>
+    {
+        public ROITableSortController()
         {
-            this(info.name, info.id, info.toolTip, info.type, info.minSize, info.preferredSize, info.defVisible,
-                    info.channelInfo);
+            super();
+
+            cachedModelRowCount = roiTableModel.getRowCount();
+            setModelWrapper(new TableRowSorterModelWrapper());
         }
 
+        /**
+         * Returns the <code>Comparator</code> for the specified
+         * column. If a <code>Comparator</code> has not been specified using
+         * the <code>setComparator</code> method a <code>Comparator</code> will be returned based on the column class
+         * (<code>TableModel.getColumnClass</code>) of the specified column.
+         *
+         * @throws IndexOutOfBoundsException
+         *         {@inheritDoc}
+         */
+        @Override
+        public Comparator<?> getComparator(int column)
+        {
+            return comparator;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Note: must implement same logic as the overridden comparator lookup, otherwise will throw ClassCastException
+         * because here the comparator is never null.
+         * <p>
+         * PENDING JW: think about implications to string value lookup!
+         * 
+         * @throws IndexOutOfBoundsException
+         *         {@inheritDoc}
+         */
+        @Override
+        protected boolean useToString(int column)
+        {
+            return false;
+        }
+
+        /**
+         * Implementation of DefaultRowSorter.ModelWrapper that delegates to a
+         * TableModel.
+         */
+        private class TableRowSorterModelWrapper extends ModelWrapper<M, Integer>
+        {
+            public TableRowSorterModelWrapper()
+            {
+                super();
+            }
+
+            @Override
+            public M getModel()
+            {
+                return (M) roiTableModel;
+            }
+
+            @Override
+            public int getColumnCount()
+            {
+                return roiTableModel.getColumnCount();
+            }
+
+            @Override
+            public int getRowCount()
+            {
+                return roiTableModel.getRowCount();
+            }
+
+            @Override
+            public Object getValueAt(int row, int column)
+            {
+                return roiTableModel.getValueAt(row, column);
+            }
+
+            @Override
+            public String getStringValueAt(int row, int column)
+            {
+                return getStringValueProvider().getStringValue(row, column).getString(getValueAt(row, column));
+            }
+
+            @Override
+            public Integer getIdentifier(int index)
+            {
+                return Integer.valueOf(index);
+            }
+        }
     }
 }

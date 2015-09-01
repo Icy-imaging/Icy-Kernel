@@ -28,8 +28,8 @@ import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.model.SpecialValueSpinnerModel;
-import icy.gui.inspector.RoisPanel.ROIInfo;
 import icy.main.Icy;
+import icy.math.MathUtil;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
 import icy.roi.edit.BoundsROIEdit;
@@ -622,7 +622,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     }
 
     /**
-     * Get the selected ROI in the ROI control panel
+     * Get all selected ROIs
      */
     List<ROI> getSelectedRois()
     {
@@ -642,13 +642,53 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         if (wantReadOnly)
             return selected;
 
-        final List<ROI> result = new ArrayList<ROI>();
+        final List<ROI> result = new ArrayList<ROI>(selected.size());
 
         for (ROI roi : selected)
             if (!roi.isReadOnly())
                 result.add(roi);
 
         return result;
+    }
+
+    static double formatPosition(double pos, double size)
+    {
+        // special case of infinite dimension
+        if (size == Double.POSITIVE_INFINITY)
+            return -1d;
+
+        return MathUtil.roundSignificant(pos, 5, true);
+    }
+
+    static double formatSize(double value)
+    {
+        // special case of infinite dimension
+        if (value == Double.POSITIVE_INFINITY)
+            return value;
+
+        return MathUtil.roundSignificant(value, 5, true);
+    }
+
+    static String getPositionAsString(double pos, double size)
+    {
+        final double v = formatPosition(pos, size);
+
+        // special case of infinite dimension
+        if (v == -1d)
+            return "all";
+
+        return StringUtil.toString(v);
+    }
+
+    static String getSizeAsString(double value)
+    {
+        final double v = formatSize(value);
+
+        // special case of infinite dimension
+        if (v == Double.POSITIVE_INFINITY)
+            return MathUtil.INFINITE_STRING;
+
+        return StringUtil.toString(v);
     }
 
     /**
@@ -678,12 +718,12 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final boolean twoSelected = (selectedRois.size() == 2);
         final boolean multiSelect = (selectedRois.size() > 1);
         final boolean singleSelect = hasSelected && !multiSelect;
-        final boolean canSetBounds = hasSelected ? roi.canSetBounds() : false;
-        final boolean canSetPosition = hasSelected ? roi.canSetPosition() : false;
+        final boolean canSetBounds = (roi != null) ? roi.canSetBounds() : false;
+        final boolean canSetPosition = (roi != null) ? roi.canSetPosition() : false;
         final boolean hasROIinClipboard = Clipboard.isType(Clipboard.TYPE_ROILIST);
         final boolean hasROILinkinClipboard = Clipboard.isType(Clipboard.TYPE_ROILINKLIST);
         final boolean editable = !readOnly;
-        final int dim = hasSelected ? roi.getDimension() : 0;
+        final int dim = (roi != null) ? roi.getDimension() : 0;
 
         // wait a bit to avoid eating too much time with refresh
         ThreadUtil.sleep(1);
@@ -696,7 +736,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 modifyingRoi.acquireUninterruptibly();
                 try
                 {
-                    if (hasSequence)
+                    if (sequence != null)
                     {
                         ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(sequence
                                 .getSizeZ() - 1));
@@ -817,7 +857,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     {
         final List<ROI> rois = getSelectedRois();
         final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
-        final ROIInfo roiInfo = (roi != null) ? roisPanel.getROIInfo(roi) : null;
+        final Rectangle5D bounds = (roi != null) ? roi.getBounds5D() : null;
 
         // wait a bit to avoid eating too much time with refresh
         ThreadUtil.sleep(1);
@@ -846,27 +886,24 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                         displayNameCheckBox.setSelected(false);
                     }
 
-                    if (roiInfo != null)
+                    if (bounds != null)
                     {
                         double value;
 
-                        posXField.setText(StringUtil.toString(roiInfo.getPositionX()));
-                        posYField.setText(StringUtil.toString(roiInfo.getPositionY()));
-                        value = roiInfo.getPositionZ();
-                        posZSpinner.setValue(Integer.valueOf((int) value));
-                        posZField.setText(StringUtil.toString(value));
-                        value = roiInfo.getPositionT();
-                        posTSpinner.setValue(Integer.valueOf((int) value));
-                        posTField.setText(StringUtil.toString(value));
-                        value = roiInfo.getPositionC();
-                        posCSpinner.setValue(Integer.valueOf((int) value));
-                        posCField.setText(StringUtil.toString(value));
+                        posXField.setText(getPositionAsString(bounds.getX(), bounds.getSizeX()));
+                        posYField.setText(getPositionAsString(bounds.getY(), bounds.getSizeY()));
+                        posZSpinner.setValue(Integer.valueOf((int) formatPosition(bounds.getZ(), bounds.getSizeZ())));
+                        posZField.setText(getPositionAsString(bounds.getZ(), bounds.getSizeZ()));
+                        posTSpinner.setValue(Integer.valueOf((int) formatPosition(bounds.getT(), bounds.getSizeT())));
+                        posTField.setText(getPositionAsString(bounds.getT(), bounds.getSizeT()));
+                        posCSpinner.setValue(Integer.valueOf((int) formatPosition(bounds.getC(), bounds.getSizeC())));
+                        posCField.setText(getPositionAsString(bounds.getC(), bounds.getSizeC()));
 
-                        sizeXField.setText(roiInfo.getSizeXAsString());
-                        sizeYField.setText(roiInfo.getSizeYAsString());
-                        sizeZField.setText(roiInfo.getSizeZAsString());
-                        sizeTField.setText(roiInfo.getSizeTAsString());
-                        sizeCField.setText(roiInfo.getSizeCAsString());
+                        sizeXField.setText(getSizeAsString(bounds.getSizeX()));
+                        sizeYField.setText(getSizeAsString(bounds.getSizeY()));
+                        sizeZField.setText(getSizeAsString(bounds.getSizeZ()));
+                        sizeTField.setText(getSizeAsString(bounds.getSizeT()));
+                        sizeCField.setText(getSizeAsString(bounds.getSizeC()));
                     }
                     else
                     {

@@ -557,8 +557,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Called by the viewer when canvas is closed to release some resources.<br/>
-     * Be careful to not restore previous state here (as the colormap) because generally
-     * <code>shutdown</code> is called <b>after</b> the creation of the other canvas.
+     * Be careful to not restore previous state here (as the colormap) because generally <code>shutdown</code> is called
+     * <b>after</b> the creation of the other canvas.
      */
     public void shutDown()
     {
@@ -4058,6 +4058,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     public boolean hasLayer(Layer layer)
     {
+        final Overlay overlay = layer.getOverlay();
+
+        // faster to test from overlay
+        if (overlay != null)
+            return hasLayer(overlay);
+
         synchronized (layers)
         {
             return layers.containsValue(layer);

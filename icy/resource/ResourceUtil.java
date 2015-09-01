@@ -202,6 +202,9 @@ public class ResourceUtil
     public static final Image ICON_PANEL_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
     public static final Image ICON_PANEL_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
     public static final Image ICON_PIN = ResourceUtil.getAlphaIconAsImage("pin.png");
+    
+    public static final Image ICON_NODE_EXPANDED = ResourceUtil.getAlphaIconAsImage("node_expanded.png");
+    public static final Image ICON_NODE_COLLAPSED = ResourceUtil.getAlphaIconAsImage("node_collapsed.png");
 
     public static final Image ICON_BAND_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_r.png");
     public static final Image ICON_BAND_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_l.png");

@@ -103,9 +103,9 @@ public class Anchor2D extends Overlay implements XMLPersistent
     protected static final String ID_RAY = "ray";
     protected static final String ID_VISIBLE = "visible";
 
-    protected static final int DEFAULT_RAY = 6;
-    protected static final Color DEFAULT_NORMAL_COLOR = Color.YELLOW;
-    protected static final Color DEFAULT_SELECTED_COLOR = Color.WHITE;
+    public static final int DEFAULT_RAY = 6;
+    public static final Color DEFAULT_NORMAL_COLOR = Color.YELLOW;
+    public static final Color DEFAULT_SELECTED_COLOR = Color.WHITE;
 
     /**
      * position (canvas)

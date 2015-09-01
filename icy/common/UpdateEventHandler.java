@@ -135,6 +135,7 @@ public class UpdateEventHandler
 
     protected void addPendingChange(EventHierarchicalChecker include)
     {
+        // TODO: can take sometime (select all on many ROI)
         synchronized (pendingChanges)
         {
             // test if we already have an including object in the list

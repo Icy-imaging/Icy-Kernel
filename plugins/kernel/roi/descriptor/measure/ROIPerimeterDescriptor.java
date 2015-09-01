@@ -30,10 +30,16 @@ public class ROIPerimeterDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return false;
+    }
+
+    @Override
     public String getUnit(Sequence sequence)
     {
         if (sequence != null)
-            return sequence.getBestPixelSizeUnit(2, 1).toString();
+            return sequence.getBestPixelSizeUnit(2, 1).toString() + "m";
 
         return UnitPrefix.MICRO.toString() + "m";
     }

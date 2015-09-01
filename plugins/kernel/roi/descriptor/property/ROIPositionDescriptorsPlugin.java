@@ -54,8 +54,7 @@ public class ROIPositionDescriptorsPlugin extends Plugin implements PluginROIDes
     }
 
     @Override
-    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException
+    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         final Map<ROIDescriptor, Object> result = new HashMap<ROIDescriptor, Object>();
 
@@ -66,18 +65,9 @@ public class ROIPositionDescriptorsPlugin extends Plugin implements PluginROIDes
 
             result.put(positionXDescriptor, Double.valueOf(ROIPositionXDescriptor.getPositionX(position)));
             result.put(positionYDescriptor, Double.valueOf(ROIPositionYDescriptor.getPositionY(position)));
-            if (z == -1)
-                result.put(positionZDescriptor, Double.valueOf(ROIPositionZDescriptor.getPositionZ(position)));
-            else
-                result.put(positionZDescriptor, Double.valueOf(z));
-            if (t == -1)
-                result.put(positionTDescriptor, Double.valueOf(ROIPositionTDescriptor.getPositionT(position)));
-            else
-                result.put(positionTDescriptor, Double.valueOf(t));
-            if (c == -1)
-                result.put(positionCDescriptor, Double.valueOf(ROIPositionCDescriptor.getPositionC(position)));
-            else
-                result.put(positionCDescriptor, Double.valueOf(c));
+            result.put(positionZDescriptor, Double.valueOf(ROIPositionZDescriptor.getPositionZ(position)));
+            result.put(positionTDescriptor, Double.valueOf(ROIPositionTDescriptor.getPositionT(position)));
+            result.put(positionCDescriptor, Double.valueOf(ROIPositionCDescriptor.getPositionC(position)));
         }
         catch (Exception e)
         {

@@ -2874,9 +2874,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeArray(long[], int, Object, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #longArrayToSafeArray(long[], int, Object, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static Object longArrayToSafeArray(long[] in, int inOffset, Object out, int outOffset, int length,
@@ -2923,8 +2921,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use {@link #intArrayToSafeArray(int[], int, Object, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #intArrayToSafeArray(int[], int, Object, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static Object intArrayToSafeArray(int[] in, int inOffset, Object out, int outOffset, int length,
@@ -2970,9 +2967,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #shortArrayToSafeArray(short[], int, Object, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #shortArrayToSafeArray(short[], int, Object, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static Object shortArrayToSafeArray(short[] in, int inOffset, Object out, int outOffset, int length,
@@ -3046,9 +3041,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeLongArray(Object, int, long[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #arrayToSafeLongArray(Object, int, long[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static long[] arrayToSafeLongArray(Object in, int inOffset, long[] out, int outOffset, int length,
@@ -3094,8 +3087,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use {@link #arrayToSafeIntArray(Object, int, int[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #arrayToSafeIntArray(Object, int, int[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static int[] arrayToSafeIntArray(Object in, int inOffset, int[] out, int outOffset, int length,
@@ -3141,9 +3133,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeShortArray(Object, int, short[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #arrayToSafeShortArray(Object, int, short[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static short[] arrayToSafeShortArray(Object in, int inOffset, short[] out, int outOffset, int length,
@@ -3189,9 +3179,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeByteArray(Object, int, byte[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #arrayToSafeByteArray(Object, int, byte[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static byte[] arrayToSafeByteArray(Object in, int inOffset, byte[] out, int outOffset, int length,
@@ -3712,9 +3700,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeIntArray(long[], int, int[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #longArrayToSafeIntArray(long[], int, int[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static int[] longArrayToSafeIntArray(long[] in, int inOffset, int[] out, int outOffset, int length,
@@ -3724,9 +3710,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeShortArray(long[], int, short[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #longArrayToSafeShortArray(long[], int, short[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static short[] longArrayToSafeShortArray(long[] in, int inOffset, short[] out, int outOffset, int length,
@@ -3736,9 +3720,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeByteArray(long[], int, byte[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #longArrayToSafeByteArray(long[], int, byte[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static byte[] longArrayToSafeByteArray(long[] in, int inOffset, byte[] out, int outOffset, int length,
@@ -3864,9 +3846,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #intArrayToSafeShortArray(int[], int, short[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #intArrayToSafeShortArray(int[], int, short[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static short[] intArrayToSafeShortArray(int[] in, int inOffset, short[] out, int outOffset, int length,
@@ -3877,9 +3857,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #intArrayToSafeByteArray(int[], int, byte[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #intArrayToSafeByteArray(int[], int, byte[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static byte[] intArrayToSafeByteArray(int[] in, int inOffset, byte[] out, int outOffset, int length,
@@ -3962,9 +3940,7 @@ public class Array1DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #shortArrayToSafeByteArray(short[], int, byte[], int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #shortArrayToSafeByteArray(short[], int, byte[], int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static byte[] shortArrayToSafeByteArray(short[] in, int inOffset, byte[] out, int outOffset, int length,
@@ -4487,4 +4463,80 @@ public class Array1DUtil
         return result;
     }
 
+    /**
+     * Retrieve interleaved byte data from 'in' array and return the result in the 'out' array.
+     * 
+     * @param in
+     *        input byte array containing interleaved data
+     * @param inOffset
+     *        input array offset
+     * @param step
+     *        interleave step
+     * @param out
+     *        output result array. If set to <code>null</code> then a new array is allocated.
+     * @param outOffset
+     *        output array offset
+     * @param size
+     *        number of byte to retrieve
+     * @return byte array containing de-interleaved data.
+     */
+    public static byte[] getInterleavedData(byte[] in, int inOffset, int step, byte[] out, int outOffset, int size)
+    {
+        final byte[] result = allocIfNull(out, outOffset + size);
+
+        int inOff = inOffset;
+        int outOff = outOffset;
+        
+        for (int i = 0; i < size; i++)
+        {
+            out[outOff] = in[inOff];
+            inOff += step;
+            outOff++;
+        }
+
+        return result;
+    }
+
+    /**
+     * De interleave data from 'in' array and return the result in the 'out' array.
+     * 
+     * @param in
+     *        input byte array containing interleaved data
+     * @param inOffset
+     *        input array offset
+     * @param step
+     *        interleave step
+     * @param out
+     *        output result array. If set to <code>null</code> then a new array is allocated
+     * @param outOffset
+     *        output array offset
+     * @param size
+     *        number of element to de-interleave
+     * @return byte array containing de-interleaved data.
+     */
+    public static byte[] deInterleave(byte[] in, int inOffset, int step, byte[] out, int outOffset, int size)
+    {
+        final byte[] result = allocIfNull(out, outOffset + (size * step));
+
+        int inOff1 = inOffset;
+        int outOff1 = outOffset;
+        
+        for (int j = 0; j < step; j++)
+        {
+            int inOff2 = inOff1;
+            int outOff2 = outOff1;
+
+            for (int i = 0; i < size; i++)
+            {
+                out[outOff2] = in[inOff2];
+                inOff2 += step;
+                outOff2++;
+            }
+
+            inOff1++;
+            outOff1 += size;
+        }
+
+        return result;
+    }
 }

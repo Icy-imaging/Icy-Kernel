@@ -28,6 +28,12 @@ public class ROIMaxIntensityDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return true;
+    }
+
+    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(computeMaxIntensity(roi, sequence));
@@ -48,11 +54,12 @@ public class ROIMaxIntensityDescriptor extends ROIDescriptor
     {
         try
         {
-            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence).max;
+            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence, false).max;
         }
         catch (Exception e)
         {
-            return 0d;
+            throw new UnsupportedOperationException(ROIMaxIntensityDescriptor.class.getSimpleName()
+                    + ": cannot compute descriptors for '" + roi.getName() + "'", e);
         }
     }
 }

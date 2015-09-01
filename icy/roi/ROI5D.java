@@ -473,7 +473,7 @@ public abstract class ROI5D extends ROI
         numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
 
-        return numPoints / getDimension();
+        return numPoints;
     }
 
 }

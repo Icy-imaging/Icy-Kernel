@@ -98,8 +98,8 @@ import org.w3c.dom.Node;
  * Z dimension = depth<br>
  * T dimension = time<br>
  * <br>
- * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code>
- * define a list of {@link IcyBufferedImage} where each image is associated to a Z and T
+ * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code> define a list of
+ * {@link IcyBufferedImage} where each image is associated to a Z and T
  * information.
  * 
  * @author Fabrice de Chaumont & Stephane
@@ -884,8 +884,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns the pixel size scaling factor to convert a number of pixel/voxel unit into
-     * <code>µm</code><br/>
+     * Returns the pixel size scaling factor to convert a number of pixel/voxel unit into <code>µm</code><br/>
      * <br>
      * For instance to get the scale ration for 2D distance or 2D surface:<br>
      * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(2)</code><br>
@@ -1162,8 +1161,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
      * when sequence data is modified.<br>
      * This can consume a lot of time if you make many updates on large sequence.<br>
-     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
-     * block to avoid severals recalculation.
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()} block to avoid
+     * severals recalculation.
      */
     public void setAutoUpdateChannelBounds(boolean value)
     {
@@ -1370,12 +1369,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             {
                 if (overlay instanceof OverlayWrapper)
                 {
-                    if (((OverlayWrapper) overlay).getPainter().getClass().isAssignableFrom(painterClass))
+                    if (painterClass.isInstance(((OverlayWrapper) overlay).getPainter()))
                         result.add(overlay);
                 }
                 else
                 {
-                    if (overlay.getClass().isAssignableFrom(painterClass))
+                    if (painterClass.isInstance(overlay))
                         result.add(overlay);
                 }
             }
@@ -1422,7 +1421,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (overlays)
         {
             for (Overlay overlay : overlays)
-                if (overlay.getClass().isAssignableFrom(overlayClass))
+                if (overlayClass.isInstance(overlay))
                     return true;
         }
 
@@ -1439,7 +1438,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (overlays)
         {
             for (Overlay overlay : overlays)
-                if (overlay.getClass().isAssignableFrom(overlayClass))
+                if (overlayClass.isInstance(overlay))
                     result.add(overlay);
         }
 
@@ -1567,7 +1566,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.getClass().isAssignableFrom(roiClass))
+                if (roiClass.isInstance(roi))
                     return true;
         }
 
@@ -1584,7 +1583,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.getClass().isAssignableFrom(roiClass))
+                if (roiClass.isInstance(roi))
                     result.add(roi);
         }
 
@@ -1601,7 +1600,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.getClass().isAssignableFrom(roiClass))
+                if (roiClass.isInstance(roi))
                     result++;
         }
 
@@ -1654,6 +1653,46 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns all selected ROI of given class (Set format).
+     * 
+     * @param roiClass
+     *        ROI class restriction
+     * @param wantReadOnly
+     *        also return ROI with read only state
+     */
+    public Set<ROI> getSelectedROISet(Class<? extends ROI> roiClass, boolean wantReadOnly)
+    {
+        final Set<ROI> result = new HashSet<ROI>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected() && roiClass.isInstance(roi))
+                    if (wantReadOnly || !roi.isReadOnly())
+                        result.add(roi);
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns all selected ROI (Set format).
+     */
+    public Set<ROI> getSelectedROISet()
+    {
+        final Set<ROI> result = new HashSet<ROI>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected())
+                    result.add(roi);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns all selected ROI of given class.
      * 
      * @param roiClass
@@ -1668,7 +1707,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.isSelected() && roi.getClass().isAssignableFrom(roiClass))
+                if (roi.isSelected() && roiClass.isInstance(roi))
                     if (wantReadOnly || !roi.isReadOnly())
                         result.add(roi);
         }
@@ -2397,8 +2436,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * This actually create a new image which share its data with internal image
      * so any modifications to one affect the other.<br>
      * if <code>(c == -1)</code> then this method is equivalent to {@link #getImage(int, int)}<br>
-     * if <code>((c == 0) || (sizeC == 1))</code> then this method is equivalent to
-     * {@link #getImage(int, int)}<br>
+     * if <code>((c == 0) || (sizeC == 1))</code> then this method is equivalent to {@link #getImage(int, int)}<br>
      * if <code>((c < 0) || (c >= sizeC))</code> then it returns <code>null</code>
      * 
      * @see IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)
@@ -2443,7 +2481,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns all images of sequence
+     * Returns all images of sequence in [ZT] order:<br>
+     * 
+     * <pre>
+     * T=0 Z=0
+     * T=0 Z=1
+     * T=0 Z=2
+     * ...
+     * T=1 Z=0
+     * ...
+     * </pre>
      */
     public ArrayList<IcyBufferedImage> getAllImage()
     {
@@ -2545,8 +2592,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Add an image (image is added in Z dimension).<br>
-     * This method is equivalent to
-     * <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
+     * This method is equivalent to <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
      */
     public void addImage(BufferedImage image) throws IllegalArgumentException
     {
@@ -5691,9 +5737,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses
-     *             {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)}
-     *             instead.
+     * @deprecated Uses {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)} instead.
      */
     @Deprecated
     public Sequence getSubSequence(int startX, int startY, int startZ, int startT, int sizeX, int sizeY, int sizeZ,
@@ -5732,8 +5776,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Note that it internally uses {@link #getFilename()} to define the XML filename so be sure it
      * is correctly filled before calling this method.<br>
      * 
-     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code>
-     *         otherwise.
+     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code> otherwise.
      */
     public boolean loadXMLData()
     {

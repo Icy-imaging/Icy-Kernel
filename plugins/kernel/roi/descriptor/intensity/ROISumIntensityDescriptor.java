@@ -28,6 +28,12 @@ public class ROISumIntensityDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return true;
+    }
+
+    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(computeSumIntensity(roi, sequence));
@@ -48,11 +54,12 @@ public class ROISumIntensityDescriptor extends ROIDescriptor
     {
         try
         {
-            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence).sum;
+            return ROIIntensityDescriptorsPlugin.computeIntensityDescriptors(roi, sequence, false).sum;
         }
         catch (Exception e)
         {
-            return 0d;
+            throw new UnsupportedOperationException(ROISumIntensityDescriptor.class.getSimpleName()
+                    + ": cannot compute descriptors for '" + roi.getName() + "'", e);
         }
     }
 }

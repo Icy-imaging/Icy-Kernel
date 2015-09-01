@@ -747,7 +747,7 @@ public abstract class ROI3D extends ROI
         numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
 
-        return numPoints / getDimension();
+        return numPoints;
     }
 
     /**

@@ -30,10 +30,16 @@ public class ROIVolumeDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return false;
+    }
+
+    @Override
     public String getUnit(Sequence sequence)
     {
         if (sequence != null)
-            return sequence.getBestPixelSizeUnit(3, 3).toString();
+            return sequence.getBestPixelSizeUnit(3, 3).toString() + "m3";
 
         return UnitPrefix.MICRO.toString() + "m3";
     }

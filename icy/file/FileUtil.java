@@ -952,8 +952,8 @@ public class FileUtil
      * @param filter
      *        A file filter.<br>
      *        If the given <code>filter</code> is <code>null</code> then all pathnames are accepted.
-     *        Otherwise, a pathname satisfies the filter if and only if the value <code>true</code>
-     *        results when the <code>{@link FileFilter#accept(java.io.File)}</code> method of the
+     *        Otherwise, a pathname satisfies the filter if and only if the value <code>true</code> results when the
+     *        <code>{@link FileFilter#accept(java.io.File)}</code> method of the
      *        filter is invoked on the pathname.
      * @param recursive
      *        If <code>true</code> then content from sub folder is also returned.
@@ -983,8 +983,8 @@ public class FileUtil
      * @param filter
      *        A file filter.<br>
      *        If the given <code>filter</code> is <code>null</code> then all files are accepted.
-     *        Otherwise, a file satisfies the filter if and only if the value <code>true</code>
-     *        results when the <code>{@link FileFilter#accept(java.io.File)}</code> method of the
+     *        Otherwise, a file satisfies the filter if and only if the value <code>true</code> results when the
+     *        <code>{@link FileFilter#accept(java.io.File)}</code> method of the
      *        filter is invoked on the pathname.
      * @param recursive
      *        If <code>true</code> then content from sub folder is also returned.
@@ -1152,6 +1152,20 @@ public class FileUtil
         return new File(getGenericPath(path)).exists();
     }
 
+    /**
+     * Return true if the specified file is a directory
+     */
+    public static boolean isDirectory(String path)
+    {
+        return new File(getGenericPath(path)).isDirectory();
+    }
+
+    /**
+     * Return true if the specified file is a link<br>
+     * Be careful, it does work in almost case, but not all
+     * 
+     * @throws IOException
+     */
     public static boolean isLink(String path) throws IOException
     {
         return isLink(new File(getGenericPath(path)));

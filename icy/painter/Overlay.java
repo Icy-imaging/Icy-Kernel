@@ -22,6 +22,7 @@ import icy.canvas.IcyCanvas;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
+import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.sequence.Sequence;
@@ -32,6 +33,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -327,12 +329,14 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Remove the Overlay from all sequences where it is currently attached.
+     * Remove the Overlay from all sequences and canvas where it is currently attached.
      */
     public void remove()
     {
         for (Sequence sequence : getSequences())
             sequence.removeOverlay(this);
+        for (IcyCanvas canvas : getAttachedCanvas())
+            canvas.removeLayer(this);
     }
 
     /**
@@ -341,6 +345,24 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public List<Sequence> getSequences()
     {
         return Icy.getMainInterface().getSequencesContaining(this);
+    }
+
+    /**
+     * Returns all canvas where the overlay is currently present as a layer.
+     */
+    public List<IcyCanvas> getAttachedCanvas()
+    {
+        final List<IcyCanvas> result = new ArrayList<IcyCanvas>();
+
+        for (Viewer viewer : Icy.getMainInterface().getViewers())
+        {
+            final IcyCanvas canvas = viewer.getCanvas();
+
+            if ((canvas != null) && canvas.hasLayer(this))
+                result.add(canvas);
+        }
+
+        return result;
     }
 
     public void beginUpdate()

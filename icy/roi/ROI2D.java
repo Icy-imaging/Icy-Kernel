@@ -663,8 +663,8 @@ public abstract class ROI2D extends ROI
      * 
      * @param p
      *        the specified <code>Point2D</code> to be tested
-     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the
-     *         <code>ROI</code>; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the <code>ROI</code>;
+     *         <code>false</code> otherwise.
      */
     public boolean contains(Point2D p)
     {
@@ -672,23 +672,23 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Tests if the interior of the <code>ROI</code> entirely contains the specified
-     * <code>Rectangle2D</code>. The {@code ROI.contains()} method allows a implementation to
+     * Tests if the interior of the <code>ROI</code> entirely contains the specified <code>Rectangle2D</code>. The
+     * {@code ROI.contains()} method allows a implementation to
      * conservatively return {@code false} when:
      * <ul>
      * <li>the <code>intersect</code> method returns <code>true</code> and
      * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the
      * <code>Rectangle2D</code> are prohibitively expensive.
      * </ul>
-     * This means that for some ROIs this method might return {@code false} even though the
-     * {@code ROI} contains the {@code Rectangle2D}.
+     * This means that for some ROIs this method might return {@code false} even though the {@code ROI} contains the
+     * {@code Rectangle2D}.
      * 
      * @param r
      *        The specified <code>Rectangle2D</code>
-     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
-     *         <code>Rectangle2D</code>; <code>false</code> otherwise or, if the <code>ROI</code>
-     *         contains the <code>Rectangle2D</code> and the <code>intersects</code> method returns
-     *         <code>true</code> and the containment calculations would be too expensive to perform.
+     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the <code>Rectangle2D</code>;
+     *         <code>false</code> otherwise or, if the <code>ROI</code> contains the <code>Rectangle2D</code> and the
+     *         <code>intersects</code> method returns <code>true</code> and the containment calculations would be too
+     *         expensive to perform.
      * @see #contains(double, double, double, double)
      */
     public boolean contains(Rectangle2D r)
@@ -703,8 +703,8 @@ public abstract class ROI2D extends ROI
      *        the specified X coordinate to be tested
      * @param y
      *        the specified Y coordinate to be tested
-     * @return <code>true</code> if the specified coordinates are inside the <code>ROI</code>
-     *         boundary; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified coordinates are inside the <code>ROI</code> boundary;
+     *         <code>false</code> otherwise.
      */
     public abstract boolean contains(double x, double y);
 
@@ -713,15 +713,15 @@ public abstract class ROI2D extends ROI
      * coordinates that lie inside the rectangular area must lie within the <code>ROI</code> for the
      * entire rectangular area to be considered contained within the <code>ROI</code>.
      * <p>
-     * The {@code ROI.contains()} method allows a {@code ROI} implementation to conservatively
-     * return {@code false} when:
+     * The {@code ROI.contains()} method allows a {@code ROI} implementation to conservatively return {@code false}
+     * when:
      * <ul>
      * <li>the <code>intersect</code> method returns <code>true</code> and
-     * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the
-     * rectangular area are prohibitively expensive.
+     * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the rectangular area are
+     * prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code false} even though the
-     * {@code ROI} contains the rectangular area.
+     * This means that for some {@code ROIs} this method might return {@code false} even though the {@code ROI} contains
+     * the rectangular area.
      * 
      * @param x
      *        the X coordinate of the upper-left corner of the specified rectangular area
@@ -732,9 +732,9 @@ public abstract class ROI2D extends ROI
      * @param h
      *        the height of the specified rectangular area
      * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
-     *         specified rectangular area; <code>false</code> otherwise or, if the <code>ROI</code>
-     *         contains the rectangular area and the <code>intersects</code> method returns
-     *         <code>true</code> and the containment calculations would be too expensive to perform.
+     *         specified rectangular area; <code>false</code> otherwise or, if the <code>ROI</code> contains the
+     *         rectangular area and the <code>intersects</code> method returns <code>true</code> and the containment
+     *         calculations would be too expensive to perform.
      */
     public abstract boolean contains(double x, double y, double w, double h);
 
@@ -785,53 +785,22 @@ public abstract class ROI2D extends ROI
         return zok && tok && cok && contains(x, y, sizeX, sizeY);
     }
 
-    /*
-     * Generic implementation using the BooleanMask which is not accurate and slow. Override this
-     * for specific ROI type.
-     */
-    @Override
-    public boolean contains(ROI roi)
-    {
-        if (roi instanceof ROI2D)
-        {
-            final ROI2D roi2d = (ROI2D) roi;
-            final int z = getZ();
-            final int t = getT();
-            final int c = getC();
-            final boolean zok;
-            final boolean tok;
-            final boolean cok;
-
-            // same position ?
-            zok = (z == -1) || (z == roi2d.getZ());
-            tok = (t == -1) || (t == roi2d.getT());
-            cok = (c == -1) || (c == roi2d.getC());
-
-            return zok && tok && cok && getBooleanMask(false).contains(roi2d.getBooleanMask(false));
-        }
-
-        // use default implementation
-        return super.contains(roi);
-    }
-
     /**
-     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
-     * <code>Rectangle2D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
-     * implementation to conservatively return {@code true} when:
+     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified <code>Rectangle2D</code>.
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the <code>Rectangle2D</code> and the <code>ROI</code>
-     * intersect, but
+     * <li>there is a high probability that the <code>Rectangle2D</code> and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * {@code Rectangle2D} does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the {@code Rectangle2D}
+     * does not intersect the {@code ROI}.
      * 
      * @param r
      *        the specified <code>Rectangle2D</code>
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         specified <code>Rectangle2D</code> intersect, or are both highly likely to intersect
-     *         and intersection calculations would be too expensive to perform; <code>false</code>
-     *         otherwise.
+     *         and intersection calculations would be too expensive to perform; <code>false</code> otherwise.
      * @see #intersects(double, double, double, double)
      */
     public boolean intersects(Rectangle2D r)
@@ -845,15 +814,14 @@ public abstract class ROI2D extends ROI
      * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
      * area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
-     * return {@code true} when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
-     * but
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * rectangular area does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the rectangular area does
+     * not intersect the {@code ROI}.
      * 
      * @param x
      *        the X coordinate of the upper-left corner of the specified rectangular area
@@ -895,36 +863,6 @@ public abstract class ROI2D extends ROI
             cok = ((c + sizeC) > getC()) && (c < (getC() + 1d));
 
         return intersects(x, y, sizeX, sizeY) && zok && tok && cok;
-    }
-
-    /*
-     * Generic implementation using the BooleanMask which is not accurate and slow. Override this
-     * for specific ROI type.
-     */
-    @Override
-    public boolean intersects(ROI roi)
-    {
-        if (roi instanceof ROI2D)
-        {
-            final ROI2D roi2d = (ROI2D) roi;
-            final int z = getZ();
-            final int t = getT();
-            final int c = getC();
-            final boolean cok;
-            final boolean zok;
-            final boolean tok;
-
-            // can intersect ?
-            zok = (z == -1) || (z == roi2d.getZ()) || (roi2d.getZ() == -1);
-            tok = (t == -1) || (t == roi2d.getT()) || (roi2d.getT() == -1);
-            cok = (c == -1) || (c == roi2d.getC()) || (roi2d.getC() == -1);
-
-            // same position ?
-            return zok && tok && cok && getBooleanMask(true).intersects(roi2d.getBooleanMask(true));
-        }
-
-        // use default implementation
-        return super.intersects(roi);
     }
 
     /**
@@ -995,17 +933,16 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Returns a high precision and more accurate bounding box of the <code>ROI</code> than the
-     * <code>getBounds</code> method. Note that there is no guarantee that the returned
-     * {@link Rectangle2D} is the smallest bounding box that encloses the <code>ROI</code>, only
+     * Returns a high precision and more accurate bounding box of the <code>ROI</code> than the <code>getBounds</code>
+     * method. Note that there is no guarantee that the returned {@link Rectangle2D} is the smallest bounding box that
+     * encloses the <code>ROI</code>, only
      * that the <code>ROI</code> lies entirely within the indicated <code>Rectangle2D</code>. The
-     * bounding box returned by this method is usually tighter than that returned by the
-     * <code>getBounds</code> method and never fails due to overflow problems since the return value
+     * bounding box returned by this method is usually tighter than that returned by the <code>getBounds</code> method
+     * and never fails due to overflow problems since the return value
      * can be an instance of the <code>Rectangle2D</code> that uses double precision values to store
      * the dimensions.
      * 
-     * @return an instance of <code>Rectangle2D</code> that is a high-precision bounding box of the
-     *         <code>ROI</code>.
+     * @return an instance of <code>Rectangle2D</code> that is a high-precision bounding box of the <code>ROI</code>.
      */
     public Rectangle2D getBounds2D()
     {
@@ -1046,8 +983,8 @@ public abstract class ROI2D extends ROI
 
     /**
      * Set the <code>ROI</code> 2D bounds.<br>
-     * Note that not all ROI supports bounds modification and you should call
-     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * Note that not all ROI supports bounds modification and you should call {@link #canSetBounds()} first to test if
+     * the operation is supported.<br>
      * 
      * @param bounds
      *        new ROI 2D bounds
@@ -1105,8 +1042,8 @@ public abstract class ROI2D extends ROI
 
     /**
      * Set the <code>ROI</code> 2D position.<br>
-     * Note that not all ROI supports position modification and you should call
-     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * Note that not all ROI supports position modification and you should call {@link #canSetPosition()} first to test
+     * if the operation is supported.<br>
      * 
      * @param position
      *        new ROI 2D position
@@ -1151,8 +1088,7 @@ public abstract class ROI2D extends ROI
 
     /**
      * Translate the ROI position by the specified delta X/Y.<br>
-     * Note that not all ROI support this operation so you should test it by calling
-     * {@link #canTranslate()} first.
+     * Note that not all ROI support this operation so you should test it by calling {@link #canTranslate()} first.
      * 
      * @param dx
      *        translation value to apply on X dimension
@@ -1366,7 +1302,7 @@ public abstract class ROI2D extends ROI
         numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
 
-        return numPoints / getDimension();
+        return numPoints;
     }
 
     /**
@@ -1396,6 +1332,42 @@ public abstract class ROI2D extends ROI
     public double getArea()
     {
         return getNumberOfPoints();
+    }
+
+    /**
+     * Returns a sub part of the ROI.<br/>
+     * <code>null</code> can be returned if result is empty.
+     * 
+     * @param z
+     *        the specific Z position (slice) we want to retrieve (<code>-1</code> to retrieve the
+     *        whole ROI Z dimension)
+     * @param t
+     *        the specific T position (frame) we want to retrieve (<code>-1</code> to retrieve the
+     *        whole ROI T dimension)
+     * @param c
+     *        the specific C position (channel) we want to retrieve (<code>-1</code> to retrieve the
+     *        whole ROI C dimension)
+     */
+    @Override
+    public ROI getSubROI(int z, int t, int c)
+    {
+        if (!isActiveFor(z, t, c))
+            return null;
+
+        final ROI2D result = (ROI2D) getCopy();
+
+        // set Z, T, C position
+        if (z != -1)
+            result.setZ(z);
+        if (t != -1)
+            result.setT(t);
+        if (c != -1)
+            result.setC(c);
+
+        // set name
+        result.setName(getName() + getNameSuffix(z, t, c));
+
+        return result;
     }
 
     @Override

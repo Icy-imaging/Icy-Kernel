@@ -57,11 +57,10 @@ public class ROIUtil
     /**
      * Returns all available ROI descriptors (see {@link ROIDescriptor}) and their attached plugin
      * (see {@link PluginROIDescriptor}).<br/>
-     * This list can be extended by installing new plugin(s) implementing the
-     * {@link PluginROIDescriptor} interface.
+     * This list can be extended by installing new plugin(s) implementing the {@link PluginROIDescriptor} interface.
      * 
-     * @see ROIDescriptor#compute(ROI, Sequence, int, int, int)
-     * @see PluginROIDescriptor#compute(ROI, Sequence, int, int, int)
+     * @see ROIDescriptor#compute(ROI, Sequence)
+     * @see PluginROIDescriptor#compute(ROI, Sequence)
      */
     public static Map<ROIDescriptor, PluginROIDescriptor> getROIDescriptors()
     {
@@ -73,7 +72,7 @@ public class ROIUtil
         {
             try
             {
-                final PluginROIDescriptor plugin = (PluginROIDescriptor) PluginLauncher.startSafe(pluginDescriptor);
+                final PluginROIDescriptor plugin = (PluginROIDescriptor) PluginLauncher.create(pluginDescriptor);
 
                 for (ROIDescriptor roiDescriptor : plugin.getDescriptors())
                     result.put(roiDescriptor, plugin);
@@ -97,70 +96,50 @@ public class ROIUtil
      * @param roiDescriptors
      *        the input {@link ROIDescriptor} set (see {@link #getROIDescriptors()} method)
      * @param descriptorId
-     *        the id of the descriptor we want to compute (
-     *        {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
+     *        the id of the descriptor we want to compute ( {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
      *        instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
      *        an optional sequence where the pixel size can be retrieved
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
      * @return the computed descriptor or <code>null</code> if the descriptor if not found in the
      *         specified set
      * @throws UnsupportedOperationException
-     *         if the type of the given ROI is not supported by this descriptor, or if
-     *         <code>sequence</code> is <code>null</code> while the calculation requires it, or if
+     *         if the type of the given ROI is not supported by this descriptor, or if <code>sequence</code> is
+     *         <code>null</code> while the calculation requires it, or if
      *         the specified Z, T or C position are not supported by the descriptor
      */
     public static Object computeDescriptor(Set<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
-            Sequence sequence, int z, int t, int c)
+            Sequence sequence)
     {
         for (ROIDescriptor roiDescriptor : roiDescriptors)
             if (StringUtil.equals(roiDescriptor.getId(), descriptorId))
-                return roiDescriptor.compute(roi, sequence, z, t, c);
+                return roiDescriptor.compute(roi, sequence);
 
         return null;
     }
 
     /**
-     * Computes the specified descriptor on given ROI and returns the result (or <code>null</code>
-     * if the descriptor is not found).
+     * Computes the specified descriptor on given ROI and returns the result (or <code>null</code> if the descriptor is
+     * not found).
      * 
      * @param descriptorId
-     *        the id of the descriptor we want to compute (
-     *        {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
+     *        the id of the descriptor we want to compute ( {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
      *        instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
      *        an optional sequence where the pixel size can be retrieved
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
      * @return the computed descriptor or <code>null</code> if the descriptor if not found in the
      *         specified set
      * @throws UnsupportedOperationException
-     *         if the type of the given ROI is not supported by this descriptor, or if
-     *         <code>sequence</code> is <code>null</code> while the calculation requires it, or if
+     *         if the type of the given ROI is not supported by this descriptor, or if <code>sequence</code> is
+     *         <code>null</code> while the calculation requires it, or if
      *         the specified Z, T or C position are not supported by the descriptor
      */
-    public static Object computeDescriptor(String descriptorId, ROI roi, Sequence sequence, int z, int t, int c)
+    public static Object computeDescriptor(String descriptorId, ROI roi, Sequence sequence)
     {
-        return computeDescriptor(getROIDescriptors().keySet(), descriptorId, roi, sequence, z, t, c);
+        return computeDescriptor(getROIDescriptors().keySet(), descriptorId, roi, sequence);
     }
 
     /**
@@ -171,14 +150,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute the standard deviation.
      * @param z
-     *        The specific Z position (slice) where we want to compute the standard deviation or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute the standard deviation or <code>-1</code> to use
+     *        the ROI Z dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute the standard deviation or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute the standard deviation or <code>-1</code> to use
+     *        the ROI T dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute the standard deviation or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute the standard deviation or <code>-1</code> to
+     *        use the ROI C dimension information.
      */
     public static double getStandardDeviation(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -229,14 +208,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute intensity information.
      * @param z
-     *        The specific Z position (slice) where we want to compute intensity information or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute intensity information or <code>-1</code> to use
+     *        the ROI Z dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute intensity information or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute intensity information or <code>-1</code> to use
+     *        the ROI T dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute intensity information or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute intensity information or <code>-1</code> to use
+     *        the ROI C dimension information.
      */
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -296,14 +275,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute the number of pixel.
      * @param z
-     *        The specific Z position (slice) where we want to compute the number of pixel or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute the number of pixel or <code>-1</code> to use the
+     *        ROI Z dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute the number of pixel or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute the number of pixel or <code>-1</code> to use the
+     *        ROI T dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute the number of pixel or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute the number of pixel or <code>-1</code> to use
+     *        the ROI C dimension information.
      */
     public static long getNumPixel(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -318,14 +297,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute min intensity.
      * @param z
-     *        The specific Z position (slice) where we want to compute min intensity or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute min intensity or <code>-1</code> to use the ROI Z
+     *        dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute min intensity or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute min intensity or <code>-1</code> to use the ROI T
+     *        dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute min intensity or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute min intensity or <code>-1</code> to use the ROI
+     *        C dimension information.
      */
     public static double getMinIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -340,14 +319,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute max intensity.
      * @param z
-     *        The specific Z position (slice) where we want to compute max intensity or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute max intensity or <code>-1</code> to use the ROI Z
+     *        dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute max intensity or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute max intensity or <code>-1</code> to use the ROI T
+     *        dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute max intensity or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute max intensity or <code>-1</code> to use the ROI
+     *        C dimension information.
      */
     public static double getMaxIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -362,14 +341,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute mean intensity.
      * @param z
-     *        The specific Z position (slice) where we want to compute mean intensity or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute mean intensity or <code>-1</code> to use the ROI
+     *        Z dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute mean intensity or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute mean intensity or <code>-1</code> to use the ROI
+     *        T dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute mean intensity or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute mean intensity or <code>-1</code> to use the
+     *        ROI C dimension information.
      */
     public static double getMeanIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -384,14 +363,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute intensity sum.
      * @param z
-     *        The specific Z position (slice) where we want to compute intensity sum or
-     *        <code>-1</code> to use the ROI Z dimension information.
+     *        The specific Z position (slice) where we want to compute intensity sum or <code>-1</code> to use the ROI Z
+     *        dimension information.
      * @param t
-     *        The specific T position (frame) where we want to compute intensity sum or
-     *        <code>-1</code> to use the ROI T dimension information.
+     *        The specific T position (frame) where we want to compute intensity sum or <code>-1</code> to use the ROI T
+     *        dimension information.
      * @param c
-     *        The specific C position (channel) where we want to compute intensity sum or
-     *        <code>-1</code> to use the ROI C dimension information.
+     *        The specific C position (channel) where we want to compute intensity sum or <code>-1</code> to use the ROI
+     *        C dimension information.
      */
     public static double getSumIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -710,25 +689,41 @@ public class ROIUtil
         if (rois.size() == 0)
             return null;
 
-        ROI result = rois.get(0);
+        ROI result = rois.get(0).getCopy();
 
-        for (int i = 1; i < rois.size(); i++)
+        switch (operator)
         {
-            final ROI roi = rois.get(i);
-
-            switch (operator)
-            {
-                case AND:
-                    result = result.getIntersection(roi);
-                    break;
-                case OR:
-                    result = result.getUnion(roi);
-                    break;
-                case XOR:
-                    result = result.getExclusiveUnion(roi);
-                    break;
-            }
+            case AND:
+                for (int i = 1; i < rois.size(); i++)
+                    result = result.intersect(rois.get(i), true);
+                break;
+            case OR:
+                for (int i = 1; i < rois.size(); i++)
+                    result = result.add(rois.get(i), true);
+                break;
+            case XOR:
+                for (int i = 1; i < rois.size(); i++)
+                    result = result.exclusiveAdd(rois.get(i), true);
+                break;
         }
+
+        // for (int i = 1; i < rois.size(); i++)
+        // {
+        // final ROI roi = rois.get(i);
+        //
+        // switch (operator)
+        // {
+        // case AND:
+        // result = result.getIntersection(roi);
+        // break;
+        // case OR:
+        // result = result.getUnion(roi);
+        // break;
+        // case XOR:
+        // result = result.getExclusiveUnion(roi);
+        // break;
+        // }
+        // }
 
         return result;
     }

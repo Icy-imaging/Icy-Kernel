@@ -42,7 +42,7 @@ public class ROIMassCenterDescriptorsPlugin extends Plugin implements PluginROID
      */
     public static Point5D computeMassCenter(ROI roi)
     {
-        final ROIIterator it = new ROIIterator(roi, false);
+        final ROIIterator it = new ROIIterator(roi, true);
         double x, y, z, t, c;
         long numPts;
 
@@ -59,6 +59,8 @@ public class ROIMassCenterDescriptorsPlugin extends Plugin implements PluginROID
             z += it.getZ();
             t += it.getT();
             c += it.getC();
+
+            it.next();
             numPts++;
         }
 
@@ -83,8 +85,7 @@ public class ROIMassCenterDescriptorsPlugin extends Plugin implements PluginROID
     }
 
     @Override
-    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException
+    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         final Map<ROIDescriptor, Object> result = new HashMap<ROIDescriptor, Object>();
 
@@ -95,18 +96,9 @@ public class ROIMassCenterDescriptorsPlugin extends Plugin implements PluginROID
 
             result.put(massCenterXDescriptor, Double.valueOf(ROIMassCenterXDescriptor.getMassCenterX(massCenter)));
             result.put(massCenterYDescriptor, Double.valueOf(ROIMassCenterYDescriptor.getMassCenterY(massCenter)));
-            if (z == -1)
-                result.put(massCenterZDescriptor, Double.valueOf(ROIMassCenterZDescriptor.getMassCenterZ(massCenter)));
-            else
-                result.put(massCenterZDescriptor, Double.valueOf(z));
-            if (t == -1)
-                result.put(massCenterTDescriptor, Double.valueOf(ROIMassCenterTDescriptor.getMassCenterT(massCenter)));
-            else
-                result.put(massCenterTDescriptor, Double.valueOf(t));
-            if (c == -1)
-                result.put(massCenterCDescriptor, Double.valueOf(ROIMassCenterCDescriptor.getMassCenterC(massCenter)));
-            else
-                result.put(massCenterCDescriptor, Double.valueOf(c));
+            result.put(massCenterZDescriptor, Double.valueOf(ROIMassCenterZDescriptor.getMassCenterZ(massCenter)));
+            result.put(massCenterTDescriptor, Double.valueOf(ROIMassCenterTDescriptor.getMassCenterT(massCenter)));
+            result.put(massCenterCDescriptor, Double.valueOf(ROIMassCenterCDescriptor.getMassCenterC(massCenter)));
         }
         catch (Exception e)
         {

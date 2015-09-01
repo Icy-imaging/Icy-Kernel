@@ -22,7 +22,13 @@ public class ROIPositionYDescriptor extends ROIDescriptor
     @Override
     public String getDescription()
     {
-        return "Position Y";
+        return "Position Y (bounding box)";
+    }
+
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
     }
 
     @Override

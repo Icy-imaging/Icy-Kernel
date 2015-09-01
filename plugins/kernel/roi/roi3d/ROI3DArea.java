@@ -317,8 +317,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * @param roiSlice
      *        the 2D ROI to set
      * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or
-     *        <code>false</code> to replace the existing slice.
+     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
+     *        replace the existing slice.
      */
     public void setSlice(int z, ROI2D roiSlice, boolean merge)
     {
@@ -364,8 +364,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()}
-     *             instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()} instead.
      */
     @Deprecated
     public Point3D[] getEdgePoints()
@@ -374,8 +373,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()}
-     *             instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()} instead.
      */
     @Deprecated
     public Point3D[] getPoints()
@@ -477,7 +475,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 if (roi.isEmpty())
                     removeSlice(z);
                 else
-                    roi.optimizeBounds();
+                {
+                    if (roi.optimizeBounds())
+                        roi.roiChanged();
+                }
             }
         }
         finally

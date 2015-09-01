@@ -21,6 +21,7 @@ package plugins.kernel.roi.roi2d;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
+import icy.roi.Polygon2D;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -82,8 +83,7 @@ public class ROI2DPolygon extends ROI2DShape
 
     public ROI2DPolygon(Point2D pt)
     {
-        // use Path2D shape which allow double coordinates
-        super(new Path2D.Double());
+        super(new Polygon2D());
 
         // add points to list
         final Anchor2D anchor = createAnchor(pt);
@@ -135,9 +135,13 @@ public class ROI2DPolygon extends ROI2DShape
         return new ROI2DPolygonAnchor2D(pos, getColor(), getFocusedColor());
     }
 
+    /**
+     * @deprecated Use {@link #getPolygon2D()} instead
+     */
+    @Deprecated
     protected Path2D getPath()
     {
-        return (Path2D) shape;
+        return new Path2D.Double(shape);
     }
 
     public void setPoints(List<Point2D> pts)
@@ -146,9 +150,8 @@ public class ROI2DPolygon extends ROI2DShape
         try
         {
             removeAllPoint();
-
             for (Point2D pt : pts)
-                addPoint(new Anchor2D(pt.getX(), pt.getY()));
+                addNewPoint(pt, false);
         }
         finally
         {
@@ -165,14 +168,29 @@ public class ROI2DPolygon extends ROI2DShape
         setPoints((List<Point2D>) pts);
     }
 
+    public Polygon2D getPolygon2D()
+    {
+        return (Polygon2D) shape;
+    }
+
+    public void setPolygon2D(Polygon2D polygon2D)
+    {
+        beginUpdate();
+        try
+        {
+            removeAllPoint();
+            for (int i = 0; i < polygon2D.npoints; i++)
+                addNewPoint(new Point2D.Double(polygon2D.xpoints[i], polygon2D.ypoints[i]), false);
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
     public Polygon getPolygon()
     {
-        final Polygon result = new Polygon();
-
-        for (Anchor2D point : controlPoints)
-            result.addPoint((int) point.getX(), (int) point.getY());
-
-        return result;
+        return getPolygon2D().getPolygon();
     }
 
     public void setPolygon(Polygon polygon)
@@ -181,12 +199,8 @@ public class ROI2DPolygon extends ROI2DShape
         try
         {
             removeAllPoint();
-
-            final Color color = getColor();
-            final Color focusedColor = getFocusedColor();
-
             for (int i = 0; i < polygon.npoints; i++)
-                addPoint(new Anchor2D(polygon.xpoints[i], polygon.ypoints[i], color, focusedColor));
+                addNewPoint(new Point2D.Double(polygon.xpoints[i], polygon.ypoints[i]), false);
         }
         finally
         {
@@ -197,34 +211,27 @@ public class ROI2DPolygon extends ROI2DShape
     @Override
     protected void updateShape()
     {
-        final Path2D path = getPath();
-        Point2D pos;
+        final int len = controlPoints.size();
+        final double ptsX[] = new double[len];
+        final double ptsY[] = new double[len];
 
-        path.reset();
-
-        // initial move
-        if (controlPoints.size() > 0)
+        for (int i = 0; i < len; i++)
         {
-            pos = controlPoints.get(0).getPosition();
-            path.moveTo(pos.getX(), pos.getY());
+            final Anchor2D pt = controlPoints.get(i);
 
-            // special case we have only one point
-            if (controlPoints.size() == 1)
-            {
-                pos = controlPoints.get(0).getPosition();
-                path.lineTo(pos.getX(), pos.getY());
-            }
-            else
-            {
-                // lines
-                for (int i = 1; i < controlPoints.size(); i++)
-                {
-                    pos = controlPoints.get(i).getPosition();
-                    path.lineTo(pos.getX(), pos.getY());
-                }
+            ptsX[i] = pt.getX();
+            ptsY[i] = pt.getY();
+        }
 
-                path.closePath();
-            }
+        final Polygon2D polygon2d = getPolygon2D();
+
+        // we can have a problem here if we try to redraw while we are modifying the polygon points
+        synchronized (polygon2d)
+        {
+            polygon2d.npoints = len;
+            polygon2d.xpoints = ptsX;
+            polygon2d.ypoints = ptsY;
+            polygon2d.calculatePath();
         }
 
         // call super method after shape has been updated

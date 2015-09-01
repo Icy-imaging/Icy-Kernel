@@ -22,7 +22,13 @@ public class ROISizeTDescriptor extends ROIDescriptor
     @Override
     public String getDescription()
     {
-        return "Size T";
+        return "Size in T dimension";
+    }
+
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
     }
 
     @Override

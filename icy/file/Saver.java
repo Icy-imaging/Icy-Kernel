@@ -60,8 +60,7 @@ import loci.formats.out.TiffWriter;
 public class Saver
 {
     /**
-     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
-     *             instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
@@ -71,8 +70,7 @@ public class Saver
     }
 
     /**
-     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
-     *             instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
@@ -282,8 +280,8 @@ public class Saver
     /**
      * Return the closest compatible {@link IcyColorModel} supported by writer
      * from the specified image description.<br>
-     * That means the writer is able to save the data described by the returned
-     * {@link IcyColorModel} without any loss or conversion.<br>
+     * That means the writer is able to save the data described by the returned {@link IcyColorModel} without any loss
+     * or conversion.<br>
      * 
      * @param writer
      *        IFormatWriter we want to test compatibility
@@ -342,8 +340,8 @@ public class Saver
     /**
      * Return the closest compatible {@link IcyColorModel} supported by writer
      * from the specified {@link IcyColorModel}.<br>
-     * That means the writer is able to save the data described by the returned
-     * {@link IcyColorModel} without any loss or conversion.<br>
+     * That means the writer is able to save the data described by the returned {@link IcyColorModel} without any loss
+     * or conversion.<br>
      * 
      * @param writer
      *        IFormatWriter we want to test compatibility
@@ -446,8 +444,7 @@ public class Saver
     }
 
     /**
-     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
@@ -488,8 +485,7 @@ public class Saver
     }
 
     /**
-     * @deprecated Use
-     *             {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
+     * @deprecated Use {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
      *             instead.
      */
     @Deprecated
@@ -510,8 +506,7 @@ public class Saver
      *        writer used to save sequence (define the image format).<br>
      *        If set to <code>null</code> then writer is determined from the file extension.<br>
      *        If destination file does not have a valid extension (for folder for instance) then you
-     *        have to specify a valid Writer to write the image file (see
-     *        {@link #getWriter(ImageFileFormat)})
+     *        have to specify a valid Writer to write the image file (see {@link #getWriter(ImageFileFormat)})
      * @param sequence
      *        sequence to save
      * @param file
@@ -714,9 +709,8 @@ public class Saver
             // ready to use writer (metadata already prepared)
             writer = formatWriter;
 
-        // we always save in interleaved as some image viewer need it to correctly read image
-        // (ex: win XP system viewer)
-        writer.setInterleaved(true);
+        // we never interleaved data even if some image viewer need it to correctly read image (win XP viewer)
+        writer.setInterleaved(false);
         writer.setId(file.getAbsolutePath());
         writer.setSeries(0);
         try
@@ -777,8 +771,8 @@ public class Saver
 
         // get byte order
         final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();
-        // then save the image (always use interleaved data to save)
-        saveImage(writer, image.getRawData(littleEndian, true), image.getSizeX(), image.getSizeY(), image.getSizeC(),
+        // then save the image
+        saveImage(writer, image.getRawData(littleEndian), image.getSizeX(), image.getSizeY(), image.getSizeC(),
                 image.getDataType_(), file, force);
     }
 
@@ -844,10 +838,6 @@ public class Saver
         FileUtil.ensureParentDirExist(file);
 
         final int sizeC = sequence.getSizeC();
-
-        // Some image viewer needs interleaved channel data to correctly read image.
-        // win XP system viewer for instance
-        final boolean interleaved = true;
         final boolean separateChannel = getSeparateChannelFlag(writer, sequence.getColorModel());
 
         // set settings
@@ -855,8 +845,9 @@ public class Saver
         // generate metadata
         writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
                 separateChannel));
-        // interleaved flag
-        writer.setInterleaved(interleaved);
+        // no interleave (even if some image viewer needs interleaved channel data to correctly read image as XP default
+        // viewer)
+        writer.setInterleaved(false);
         // set id
         writer.setId(filePath);
         // init
@@ -901,7 +892,7 @@ public class Saver
                         if (image != null)
                         {
                             // avoid multiple allocation
-                            data = image.getRawData(data, 0, littleEndian, interleaved);
+                            data = image.getRawData(data, 0, littleEndian);
                             writer.saveBytes(imageIndex, data);
                         }
 

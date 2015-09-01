@@ -16,7 +16,7 @@ public class ROIMassCenterTDescriptor extends ROIDescriptor
 
     public ROIMassCenterTDescriptor()
     {
-        super(ID, "Mass Center T", Double.class);
+        super(ID, "Center T", Double.class);
     }
 
     @Override
@@ -25,6 +25,11 @@ public class ROIMassCenterTDescriptor extends ROIDescriptor
         return "Mass center T";
     }
 
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
+    }
     @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {

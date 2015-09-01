@@ -16,13 +16,19 @@ public class ROIMassCenterXDescriptor extends ROIDescriptor
 
     public ROIMassCenterXDescriptor()
     {
-        super(ID, "Mass Center X", Double.class);
+        super(ID, "Center X", Double.class);
     }
 
     @Override
     public String getDescription()
     {
         return "Mass center X";
+    }
+
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
     }
 
     @Override

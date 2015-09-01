@@ -81,7 +81,7 @@ public abstract class ROIDescriptor
     /**
      * Returns the type of result for this descriptor
      * 
-     * @see #compute(ROI, Sequence, int, int, int)
+     * @see #compute(ROI, Sequence)
      */
     public Class<?> getType()
     {
@@ -89,39 +89,12 @@ public abstract class ROIDescriptor
     };
 
     /**
-     * Computes the descriptor on the specified ROI and return the result.
+     * Returns <code>true</code> if this descriptor require to access the Sequence pixel information to compute its
+     * result.
      * 
-     * @param roi
-     *        the ROI on which the descriptor(s) should be computed
-     * @param sequence
-     *        an optional sequence where the pixel informations can be retrieved
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
-     * @return the result of this descriptor computed from the specified parameters.
-     * @throws UnsupportedOperationException
-     *         if the specified ROI is not supported by this descriptor, or if <code>sequence</code>
-     *         is <code>null</code> while the operation requires it, or if the specified Z, T or C
-     *         position are not supported for this descriptor
+     * @see #compute(ROI, Sequence)
      */
-    public Object compute(ROI roi, Sequence sequence, int z, int t, int c)
-    {
-        final Object result;
-
-        // want a sub part of the ROI ?
-        if ((z != -1) || (t != -1) || (c != -1))
-            result = compute(roi.getSubROI(z, t, c, false), sequence);
-        else
-            result = compute(roi, sequence);
-
-        return result;
-    }
+    public abstract boolean useSequenceData();
 
     /**
      * Computes the descriptor on the specified ROI and return the result.
@@ -129,11 +102,11 @@ public abstract class ROIDescriptor
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
-     *        an optional sequence where the pixel informations can be retrieved
+     *        an optional sequence where the pixel informations can be retrieved (see {@link #useSequenceData()})
      * @return the result of this descriptor computed from the specified parameters.
      * @throws UnsupportedOperationException
-     *         if the type of the given ROI is not supported by this descriptor, or if
-     *         <code>sequence</code> is <code>null</code> while the calculation requires it
+     *         if the type of the given ROI is not supported by this descriptor, or if <code>sequence</code> is
+     *         <code>null</code> while the calculation requires it
      */
     public abstract Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException;
 

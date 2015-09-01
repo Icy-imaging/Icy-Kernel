@@ -22,7 +22,13 @@ public class ROIPositionCDescriptor extends ROIDescriptor
     @Override
     public String getDescription()
     {
-        return "Position C";
+        return "Position C (bounding box)";
+    }
+
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
     }
 
     @Override

@@ -88,8 +88,8 @@ public class PluginLauncher
      * Executes the specified plugin.<br>
      * If the specified plugin implements {@link PluginThreaded} then the plugin will be executed in
      * a separate thread and the method will return before completion.<br>
-     * In other case the plugin is executed on the EDT by using
-     * {@link ThreadUtil#invokeNow(Callable)} and so method return after completion.
+     * In other case the plugin is executed on the EDT by using {@link ThreadUtil#invokeNow(Callable)} and so method
+     * return after completion.
      * 
      * @throws InterruptedException
      *         if the current thread was interrupted while waiting for execution on EDT.
@@ -122,7 +122,15 @@ public class PluginLauncher
         }
     }
 
-    private static Plugin internalCreate(final PluginDescriptor plugin) throws Exception
+    /**
+     * Creates a new instance of the specified plugin and returns it.<br>
+     * 
+     * @param plugin
+     *        descriptor of the plugin we want to create an instance for
+     * @see #startSafe(PluginDescriptor)
+     */
+
+    public static Plugin create(final PluginDescriptor plugin) throws Exception
     {
         final Class<? extends Plugin> clazz = plugin.getPluginClass();
 
@@ -143,8 +151,8 @@ public class PluginLauncher
 
     /**
      * Starts the specified plugin (catched exception version).<br>
-     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
-     * <code>null</code> if an error occurred.
+     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or <code>null</code> if an error
+     * occurred.
      * 
      * @param plugin
      *        descriptor of the plugin we want to start
@@ -159,7 +167,7 @@ public class PluginLauncher
             try
             {
                 // create plugin instance
-                result = internalCreate(plugin);
+                result = create(plugin);
             }
             catch (IllegalAccessException e)
             {
@@ -198,8 +206,8 @@ public class PluginLauncher
 
     /**
      * Start the specified plugin.<br>
-     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
-     * <code>null</code> if an error occurred or if the specified class name is not a valid plugin
+     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or <code>null</code> if an error
+     * occurred or if the specified class name is not a valid plugin
      * class name.
      * 
      * @param pluginClassName
@@ -232,7 +240,7 @@ public class PluginLauncher
         final Plugin result;
 
         // create plugin instance
-        result = internalCreate(plugin);
+        result = create(plugin);
 
         // register plugin
         Icy.getMainInterface().registerPlugin(result);

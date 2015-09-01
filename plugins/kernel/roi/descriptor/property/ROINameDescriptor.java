@@ -24,7 +24,13 @@ public class ROINameDescriptor extends ROIDescriptor
     @Override
     public String getDescription()
     {
-        return "Name";
+        return "Name of the ROI";
+    }
+
+    @Override
+    public boolean useSequenceData()
+    {
+        return false;
     }
 
     @Override

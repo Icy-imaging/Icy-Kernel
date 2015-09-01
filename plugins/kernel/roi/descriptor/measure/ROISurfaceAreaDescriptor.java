@@ -30,10 +30,16 @@ public class ROISurfaceAreaDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean useSequenceData()
+    {
+        return false;
+    }
+
+    @Override
     public String getUnit(Sequence sequence)
     {
         if (sequence != null)
-            return sequence.getBestPixelSizeUnit(3, 2).toString();
+            return sequence.getBestPixelSizeUnit(3, 2).toString() + "m2";
 
         return UnitPrefix.MICRO.toString() + "m2";
     }

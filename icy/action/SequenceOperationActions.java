@@ -41,6 +41,7 @@ import icy.system.thread.ThreadUtil;
 import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 import icy.undo.IcyUndoManager;
+import icy.util.ClassUtil;
 
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -1233,9 +1234,9 @@ public class SequenceOperationActions
 
             try
             {
-                if (type.isAssignableFrom(IcyAbstractAction[].class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction[].class))
                     result.addAll(Arrays.asList(((IcyAbstractAction[]) field.get(null))));
-                else if (type.isAssignableFrom(IcyAbstractAction.class))
+                else if (ClassUtil.isSubClass(type, IcyAbstractAction.class))
                     result.add((IcyAbstractAction) field.get(null));
             }
             catch (Exception e)

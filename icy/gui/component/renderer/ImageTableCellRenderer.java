@@ -7,15 +7,12 @@ import icy.resource.ResourceUtil;
 
 import java.awt.Image;
 
-import javax.swing.Icon;
-import javax.swing.SwingConstants;
-
-import org.pushingpixels.substance.api.renderers.SubstanceDefaultTableCellRenderer;
+import org.pushingpixels.substance.api.renderers.SubstanceDefaultTableCellRenderer.IconRenderer;
 
 /**
  * @author Stephane
  */
-public class ImageTableCellRenderer extends SubstanceDefaultTableCellRenderer
+public class ImageTableCellRenderer extends IconRenderer
 {
     /**
      * 
@@ -30,7 +27,6 @@ public class ImageTableCellRenderer extends SubstanceDefaultTableCellRenderer
 
         this.size = size;
         setIconTextGap(0);
-        setHorizontalAlignment(SwingConstants.CENTER);
     }
 
     public ImageTableCellRenderer()
@@ -39,12 +35,10 @@ public class ImageTableCellRenderer extends SubstanceDefaultTableCellRenderer
     }
 
     @Override
-    protected void setValue(Object value)
+    public void setValue(Object value)
     {
         if (value instanceof Image)
             setIcon(ResourceUtil.getImageIcon((Image) value, size));
-        else if (value instanceof Icon)
-            setIcon((Icon) value);
         else
             super.setValue(value);
     }

@@ -49,25 +49,41 @@ public class ROIIntensityDescriptorsPlugin extends Plugin implements PluginROIDe
     };
 
     /**
-     * Returns the pixel intensity information for the specified ROI and Sequence
+     * Returns the pixel intensity information for the specified ROI and Sequence.<br>
+     * Be careful: the returned result may be incorrect or exception may be thrown if the ROI change while the
+     * descriptor is being computed.
      * 
      * @param roi
      *        the ROI on which we want to compute the intensity descriptors
      * @param sequence
      *        the Sequence used to compute the intensity descriptors
+     * @param allowMultiChannel
+     *        Allow multi channel intensity computation. If this parameter is set to <code>false</code> and the ROI
+     *        number of channel
+     *        is > 1 then a {@link UnsupportedOperationException} is launch.
      * @throws Exception
-     *         If the ROI changed during the descriptor computation
+     *         If the ROI dimension changed during the descriptor computation.
+     * @throws UnsupportedOperationException
+     *         If the C dimension of the ROI is > 1 while allowMultiChannel parameter is set to <code>false</code>
      */
-    public static IntensityDescriptorInfos computeIntensityDescriptors(ROI roi, Sequence sequence) throws Exception
+    public static IntensityDescriptorInfos computeIntensityDescriptors(ROI roi, Sequence sequence,
+            boolean allowMultiChannel) throws Exception, UnsupportedOperationException
     {
+        if (!allowMultiChannel && (roi.getBounds5D().getSizeC() > 1d))
+            throw new UnsupportedOperationException(
+                    "Not allowed to cannot compute intensity descriptor on a multi channel ROI (sizeC > 1).");
+
         final IntensityDescriptorInfos result = new IntensityDescriptorInfos();
-        final SequenceDataIterator it = new SequenceDataIterator(sequence, roi, false);
 
         long numPixels = 0;
         double min = Double.MAX_VALUE;
         double max = -Double.MAX_VALUE;
         double sum = 0;
         double sum2 = 0;
+
+        // TODO: we were using interior pixels only, now we also use edge pixels so we can have intensities info
+        // for intersection only ROI --> see if that is a good idea...
+        final SequenceDataIterator it = new SequenceDataIterator(sequence, roi, true);
 
         while (!it.done())
         {
@@ -124,22 +140,13 @@ public class ROIIntensityDescriptorsPlugin extends Plugin implements PluginROIDe
     }
 
     @Override
-    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException
+    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         final Map<ROIDescriptor, Object> result = new HashMap<ROIDescriptor, Object>();
-        final ROI r;
-
-        // want a sub part of the ROI ?
-        if ((z != -1) || (t != -1) || (c != -1))
-            r = roi.getSubROI(z, t, c, false);
-        else
-            r = roi;
-
         try
         {
             // compute intensity descriptors
-            final IntensityDescriptorInfos intensityInfos = computeIntensityDescriptors(r, sequence);
+            final IntensityDescriptorInfos intensityInfos = computeIntensityDescriptors(roi, sequence, false);
 
             result.put(minIntensityDescriptor, Double.valueOf(intensityInfos.min));
             result.put(meanIntensityDescriptor, Double.valueOf(intensityInfos.mean));
@@ -149,12 +156,8 @@ public class ROIIntensityDescriptorsPlugin extends Plugin implements PluginROIDe
         }
         catch (Exception e)
         {
-            String mess = getClass().getSimpleName() + ": cannot compute descriptors for '" + roi.getName() + "'";
-            // sub part of the ROI ?
-            if (r != roi)
-                mess += " at position [Z=" + z + ",T=" + t + ",C=" + c + "]";
-
-            throw new UnsupportedOperationException(mess, e);
+            throw new UnsupportedOperationException(getClass().getSimpleName() + ": cannot compute descriptors for '"
+                    + roi.getName() + "'", e);
         }
 
         return result;

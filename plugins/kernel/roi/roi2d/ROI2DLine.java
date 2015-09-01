@@ -22,6 +22,7 @@ import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
+import icy.roi.ROI;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -198,7 +199,7 @@ public class ROI2DLine extends ROI2DShape
         // this ROI doesn't support point add
         return false;
     }
-    
+
     @Override
     public boolean canRemovePoint()
     {
@@ -230,6 +231,36 @@ public class ROI2DLine extends ROI2DShape
     public double computeNumberOfPoints()
     {
         return 0d;
+    }
+
+    @Override
+    public boolean contains(double x, double y)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Point2D p)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(double x, double y, double w, double h)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Rectangle2D r)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean contains(ROI roi)
+    {
+        return false;
     }
 
     @Override

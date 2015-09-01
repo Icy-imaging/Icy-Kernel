@@ -314,8 +314,7 @@ public class Loader
         }
 
         /**
-         * @deprecated Use {@link FilePosition#FilePosition(String, String, int, int, int, int)}
-         *             instead.
+         * @deprecated Use {@link FilePosition#FilePosition(String, String, int, int, int, int)} instead.
          */
         @Deprecated
         public FilePosition(String path, int t, int z, int c)
@@ -398,7 +397,7 @@ public class Loader
             try
             {
                 // add the importer
-                result.add((Importer) PluginLauncher.startSafe(plugin));
+                result.add((Importer) PluginLauncher.create(plugin));
             }
             catch (Exception e)
             {
@@ -425,7 +424,7 @@ public class Loader
             try
             {
                 // add the importer
-                result.add((FileImporter) PluginLauncher.startSafe(plugin));
+                result.add((FileImporter) PluginLauncher.create(plugin));
             }
             catch (Exception e)
             {
@@ -628,7 +627,7 @@ public class Loader
             try
             {
                 // add the importer
-                result.add((SequenceImporter) PluginLauncher.startSafe(plugin));
+                result.add((SequenceImporter) PluginLauncher.create(plugin));
             }
             catch (Exception e)
             {
@@ -655,7 +654,7 @@ public class Loader
             try
             {
                 // add the importer
-                result.add((SequenceIdImporter) PluginLauncher.startSafe(plugin));
+                result.add((SequenceIdImporter) PluginLauncher.create(plugin));
             }
             catch (Exception e)
             {
@@ -682,7 +681,7 @@ public class Loader
             try
             {
                 // add the importer
-                result.add((SequenceFileImporter) PluginLauncher.startSafe(plugin));
+                result.add((SequenceFileImporter) PluginLauncher.create(plugin));
             }
             catch (Exception e)
             {
@@ -1211,8 +1210,7 @@ public class Loader
 
     /**
      * Load and return the image at given position from the specified file path.<br>
-     * For lower image level access, you can use {@link #getSequenceFileImporter(String, boolean)}
-     * method and
+     * For lower image level access, you can use {@link #getSequenceFileImporter(String, boolean)} method and
      * directly work through the returned {@link ImageProvider} interface.
      * 
      * @param path
@@ -1414,8 +1412,8 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #loadSequence(File[], int, boolean)} instead or
-     *             {@link #load(File, boolean)} if you want to display the resulting sequence.
+     * @deprecated Use {@link #loadSequence(File[], int, boolean)} instead or {@link #load(File, boolean)} if you want
+     *             to display the resulting sequence.
      */
     @Deprecated
     public static Sequence loadSequence(List<File> files, boolean display, boolean addToRecent)
@@ -1442,8 +1440,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)} instead.
      */
     @Deprecated
     public static Sequence[] loadSequences(File[] files, int serie, boolean separate, boolean autoOrder,
@@ -1487,8 +1484,8 @@ public class Loader
     }
 
     /**
-     * Load a list of sequence from the specified list of file with the given
-     * {@link SequenceFileImporter} and returns them.<br>
+     * Load a list of sequence from the specified list of file with the given {@link SequenceFileImporter} and returns
+     * them.<br>
      * As the function can take sometime you should not call it from the AWT EDT.<br>
      * The method returns an empty array if an error occurred or if no file could be opened (not
      * supported).<br>
@@ -1949,8 +1946,8 @@ public class Loader
     }
 
     /**
-     * Load the specified files (asynchronous process) by using automatically the appropriate
-     * {@link FileImporter} or {@link SequenceFileImporter}. If several importers match to open the
+     * Load the specified files (asynchronous process) by using automatically the appropriate {@link FileImporter} or
+     * {@link SequenceFileImporter}. If several importers match to open the
      * file the user will have to select the appropriate one from a selection dialog.<br>
      * <br>
      * If the specified files are image files:<br>
@@ -2046,8 +2043,8 @@ public class Loader
     }
 
     /**
-     * Load the specified file (asynchronous process) by using automatically the appropriate
-     * {@link FileImporter} or {@link SequenceFileImporter}. If several importers match to open the
+     * Load the specified file (asynchronous process) by using automatically the appropriate {@link FileImporter} or
+     * {@link SequenceFileImporter}. If several importers match to open the
      * file the user will have to select the appropriate one from a selection dialog.<br>
      * <br>
      * If the specified file is an image file, the resulting sequence is automatically displayed
@@ -2064,8 +2061,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)} instead.
      */
     @Deprecated
     static Sequence[] loadSequences(SequenceFileImporter importer, File[] files, int serie, boolean separate,
@@ -2168,10 +2164,7 @@ public class Loader
             {
                 final TreeMap<Integer, Sequence> map = new TreeMap<Integer, Sequence>();
 
-                if (loadingFrame != null)
-                    loadingFrame.setAction("Extracting position from filename");
-
-                final List<FilePosition> filePositions = getFilePositions(paths, autoOrder);
+                final List<FilePosition> filePositions = getFilePositions(paths, autoOrder, loadingFrame);
                 int lastS = 0;
 
                 if (loadingFrame != null)
@@ -2423,7 +2416,6 @@ public class Loader
         if (loadingFrame != null)
         {
             loadingFrame.setFilename(path);
-
             // 100 step reserved to load this image
             endStep = loadingFrame.getPosition() + 100d;
         }
@@ -2670,17 +2662,24 @@ public class Loader
      * @param dimOrder
      *        if true we try to determine the Z, T and C image position as well else
      *        only simple T ordering is done.
+     * @param loadingFrame
+     *        Loading dialog if any to show progress
      */
-    public static List<FilePosition> getFilePositions(List<String> paths, boolean dimOrder)
+    public static List<FilePosition> getFilePositions(List<String> paths, boolean dimOrder, FileFrame loadingFrame)
     {
+        if (loadingFrame != null)
+            loadingFrame.setAction("Extracting position from filename...");
+
         final List<String> filenames = new ArrayList<String>(paths);
         final List<Position> positions = new ArrayList<Position>(paths.size());
         final List<FilePosition> result = new ArrayList<FilePosition>(paths.size());
 
         // smart sort on name
-        Collections.sort(filenames, new AlphanumComparator());
+        if (paths.size() > 1)
+            Collections.sort(filenames, new AlphanumComparator());
 
-        if (dimOrder)
+        // need to use advanced sort ?
+        if (dimOrder && (paths.size() > 1))
         {
             // build position for each file
             for (String filename : filenames)
@@ -2723,11 +2722,23 @@ public class Loader
             }
 
             // Z and T position are not fixed, try to open 1 image to get its size information
-            if (tCanChange && zCanChange && (filenames.size() > 0))
+            if (tCanChange && zCanChange)
             {
                 try
                 {
+                    if (loadingFrame != null)
+                    {
+                        loadingFrame.setFilename(filenames.get(0));
+                        loadingFrame.setAction("Reading metadata");
+                    }
+
                     final OMEXMLMetadataImpl metadata = getMetaData(filenames.get(0));
+
+                    if (loadingFrame != null)
+                    {
+                        loadingFrame.setFilename(null);
+                        loadingFrame.setAction("Extracting position from filename...");
+                    }
 
                     final boolean tMulti = MetaDataUtil.getSizeT(metadata, 0) > 1;
                     final boolean zMulti = MetaDataUtil.getSizeZ(metadata, 0) > 1;
@@ -2858,6 +2869,21 @@ public class Loader
         }
 
         return result;
+    }
+
+    /**
+     * Sort the specified image files from their name and return their corresponding Sequence
+     * position information.<br>
+     * 
+     * @param paths
+     *        image files we want to sort
+     * @param dimOrder
+     *        if true we try to determine the Z, T and C image position as well else
+     *        only simple T ordering is done.
+     */
+    public static List<FilePosition> getFilePositions(List<String> paths, boolean dimOrder)
+    {
+        return getFilePositions(paths, dimOrder, null);
     }
 
     private static String getBaseName(String text)

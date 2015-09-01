@@ -293,12 +293,12 @@ public class ClassUtil
     /**
      * Return true if clazz extends baseClass
      */
-    public static boolean isSubClass(Class<?> c, Class<?> baseClass)
+    public static boolean isSubClass(Class<?> clazz, Class<?> baseClass)
     {
-        if ((c == null) || (baseClass == null))
+        if ((clazz == null) || (baseClass == null))
             return false;
 
-        return baseClass.isAssignableFrom(c);
+        return baseClass.isAssignableFrom(clazz);
     }
 
     /**

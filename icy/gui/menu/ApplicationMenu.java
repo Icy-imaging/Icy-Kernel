@@ -207,7 +207,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                                 try
                                 {
                                     final SequenceImporter importer = (SequenceImporter) PluginLauncher
-                                            .startSafe(pluginDescriptor);
+                                            .create(pluginDescriptor);
 
                                     // asynchronous loading
                                     ThreadUtil.bgRun(new Runnable()
@@ -262,7 +262,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                             {
                                 try
                                 {
-                                    final Importer importer = (Importer) PluginLauncher.startSafe(pluginDescriptor);
+                                    final Importer importer = (Importer) PluginLauncher.create(pluginDescriptor);
 
                                     // asynchronous loading
                                     ThreadUtil.bgRun(new Runnable()

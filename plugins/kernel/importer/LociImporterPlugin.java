@@ -487,8 +487,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T) position from the specified
-     * {@link IFormatReader} and returns it as an IcyBufferedImage.<br>
+     * Load a thumbnail version of the image located at (Z, T) position from the specified {@link IFormatReader} and
+     * returns it as an IcyBufferedImage.<br>
      * <i>Compatible version (load the original image and resize it)</i>
      * 
      * @param reader
@@ -506,8 +506,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T) position from the specified
-     * {@link IFormatReader} and returns it as an IcyBufferedImage.
+     * Load a thumbnail version of the image located at (Z, T) position from the specified {@link IFormatReader} and
+     * returns it as an IcyBufferedImage.
      * 
      * @param reader
      *        {@link IFormatReader}
@@ -531,8 +531,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T, C) position from the specified
-     * {@link IFormatReader} and returns it as an IcyBufferedImage.<br>
+     * Load a thumbnail version of the image located at (Z, T, C) position from the specified {@link IFormatReader} and
+     * returns it as an IcyBufferedImage.<br>
      * <i>Compatible version (load the original image and resize it)</i>
      * 
      * @param reader
@@ -553,8 +553,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T, C) position from the specified
-     * {@link IFormatReader} and returns it as an IcyBufferedImage.
+     * Load a thumbnail version of the image located at (Z, T, C) position from the specified {@link IFormatReader} and
+     * returns it as an IcyBufferedImage.
      * 
      * @param reader
      *        {@link IFormatReader}
@@ -581,8 +581,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a single channel sub image at (Z, T, C) position from the specified
-     * {@link IFormatReader}<br>
+     * Load a single channel sub image at (Z, T, C) position from the specified {@link IFormatReader}<br>
      * and returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -709,17 +708,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
         // build data array
         if (interleaved)
-            ByteArrayConvert.byteArrayTo(byteData, subC, rgbChanCount, result, 0, 1, componentByteLen, little);
+        {
+            // get channel interleaved data
+            final byte[] tmp = Array1DUtil.getInterleavedData(byteData, subC, rgbChanCount, null, 0, componentByteLen);
+            ByteArrayConvert.byteArrayTo(tmp, 0, result, 0, componentByteLen, little);
+        }
         else
-            ByteArrayConvert.byteArrayTo(byteData, subC * componentByteLen, 1, result, 0, 1, componentByteLen, little);
+            ByteArrayConvert.byteArrayTo(byteData, subC * componentByteLen, result, 0, componentByteLen, little);
 
         // return raw pixels data
         return result;
     }
 
     /**
-     * Load a single channel sub image at (Z, T, C) position from the specified
-     * {@link IFormatReader}<br>
+     * Load a single channel sub image at (Z, T, C) position from the specified {@link IFormatReader}<br>
      * and returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -734,8 +736,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param c
      *        Channel index to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code>
-     *        parameter is then ignored)
+     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code> parameter is then ignored)
      * @return {@link IcyBufferedImage}
      */
     static IcyBufferedImage getImage(IFormatReader reader, Rectangle rect, int z, int t, int c, boolean thumbnail)
@@ -783,11 +784,15 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
         // build data array
         if (interleaved)
-            ByteArrayConvert.byteArrayTo(byteData, subC, rgbChanCount, data, 0, 1, componentByteLen, little);
+        {
+            // get channel interleaved data
+            final byte[] tmp = Array1DUtil.getInterleavedData(byteData, subC, rgbChanCount, null, 0, componentByteLen);
+            ByteArrayConvert.byteArrayTo(tmp, 0, data, 0, componentByteLen, little);
+        }
         else
-            ByteArrayConvert.byteArrayTo(byteData, subC * componentByteLen, 1, data, 0, 1, componentByteLen, little);
+            ByteArrayConvert.byteArrayTo(byteData, subC * componentByteLen, data, 0, componentByteLen, little);
 
-        final IcyBufferedImage result = new IcyBufferedImage(rect.width, rect.height, data, dataType.isSigned());
+        final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
 
         // indexed color ?
         if (indexed)
@@ -846,8 +851,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param t
      *        T position of the image to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code>
-     *        parameter is then ignored)
+     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code> parameter is then ignored)
      * @return {@link IcyBufferedImage}
      */
     static IcyBufferedImage getImage(IFormatReader reader, Rectangle rect, int z, int t, boolean thumbnail)
@@ -904,10 +908,13 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             int inOffset = 0;
             if (reader.isInterleaved())
             {
+                // allocate temp buffer for de-interleave process
+                final byte[] tmp = new byte[componentByteLen];
+
                 for (int sc = 0; sc < rgbChanCount; sc++)
                 {
-                    ByteArrayConvert.byteArrayTo(byteData, inOffset, rgbChanCount, data[c + sc], 0, 1,
-                            componentByteLen, little);
+                    Array1DUtil.getInterleavedData(byteData, inOffset, rgbChanCount, tmp, 0, componentByteLen);
+                    ByteArrayConvert.byteArrayTo(tmp, 0, data[c + sc], 0, componentByteLen, little);
                     inOffset++;
                 }
             }
@@ -915,7 +922,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             {
                 for (int sc = 0; sc < rgbChanCount; sc++)
                 {
-                    ByteArrayConvert.byteArrayTo(byteData, inOffset, 1, data[c + sc], 0, 1, componentByteLen, little);
+                    ByteArrayConvert.byteArrayTo(byteData, inOffset, data[c + sc], 0, componentByteLen, little);
                     inOffset += componentByteLen;
                 }
             }

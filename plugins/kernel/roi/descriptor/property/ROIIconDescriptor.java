@@ -7,24 +7,27 @@ import icy.roi.ROI;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
 
+import java.awt.Image;
+
 /**
- * Opacity descriptor class (see {@link ROIDescriptor})
+ * Icon descriptor class (see {@link ROIDescriptor}).<br>
+ * Return the ROI icon a 20 pixels side icon
  * 
  * @author Stephane
  */
-public class ROIOpacityDescriptor extends ROIDescriptor
+public class ROIIconDescriptor extends ROIDescriptor
 {
-    public static final String ID = "Opacity";
+    public static final String ID = "Icon";
 
-    public ROIOpacityDescriptor()
+    public ROIIconDescriptor()
     {
-        super(ID, "Opacity", Float.class);
+        super(ID, "Icon", Image.class);
     }
 
     @Override
     public String getDescription()
     {
-        return "Opacity factor to display ROI content";
+        return "Icon";
     }
 
     @Override
@@ -36,17 +39,17 @@ public class ROIOpacityDescriptor extends ROIDescriptor
     @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        return Float.valueOf(getOpacity(roi));
+        return getIcon(roi);
     }
 
     /**
-     * Returns ROI opacity
+     * Returns ROI icon
      */
-    public static float getOpacity(ROI roi)
+    public static Image getIcon(ROI roi)
     {
         if (roi == null)
-            return 1f;
+            return null;
 
-        return roi.getOpacity();
+        return roi.getIcon();
     }
 }

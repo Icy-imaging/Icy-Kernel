@@ -55,64 +55,80 @@ public class PathAnchor2D extends Anchor2D
     private int type;
 
     public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color,
-            Color selectedColor)
+            Color selectedColor, int type)
     {
         super(x3, y3, ray, color, selectedColor);
 
         posCExt = new Point2D.Double(x1, y1);
         posQExt = new Point2D.Double(x2, y2);
-        // no type by default
-        type = -1;
+        this.type = type;
+    }
+
+    public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color,
+            Color selectedColor)
+    {
+        this(x1, y1, x2, y2, x3, y3, ray, color, selectedColor, -1);
     }
 
     /**
-     * @deprecated Uses
-     *             {@link #PathAnchor2D(double, double, double, double, double, double, int, Color, Color)}
+     * @deprecated Uses {@link #PathAnchor2D(double, double, double, double, double, double, int, Color, Color)}
      *             instead.
      */
     @Deprecated
     public PathAnchor2D(Sequence sequence, double x1, double y1, double x2, double y2, double x3, double y3, int ray,
             Color color, Color selectedColor)
     {
-        this(x1, y1, x2, y2, x3, y3, ray, color, selectedColor);
+        this(x1, y1, x2, y2, x3, y3, ray, color, selectedColor, -1);
 
         if (sequence != null)
             sequence.addOverlay(this);
     }
 
-    public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color)
+    public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, Color color,
+            Color selectedColor)
     {
-        this(x1, y1, x2, y2, x3, y3, ray, color, DEFAULT_SELECTED_COLOR);
+        this(x1, y1, x2, y2, x3, y3, DEFAULT_RAY, color, selectedColor, PathIterator.SEG_CUBICTO);
     }
 
     public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3)
     {
-        this(x1, y1, x2, y2, x3, y3, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(x1, y1, x2, y2, x3, y3, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR,
+                PathIterator.SEG_CUBICTO);
+    }
+
+    public PathAnchor2D(double x1, double y1, double x2, double y2, Color color, Color selectedColor)
+    {
+        this(0d, 0d, x1, y1, x2, y2, DEFAULT_RAY, color, selectedColor, PathIterator.SEG_QUADTO);
     }
 
     public PathAnchor2D(double x1, double y1, double x2, double y2)
     {
-        this(0d, 0d, x1, y1, x2, y2, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, x1, y1, x2, y2, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR, PathIterator.SEG_QUADTO);
     }
 
-    public PathAnchor2D(double x1, double y1, int ray, Color color, Color selectedColor)
+    public PathAnchor2D(double x1, double y1, Color color, Color selectedColor, int type)
     {
-        this(0d, 0d, 0d, 0d, x1, y1, ray, color, selectedColor);
+        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, color, selectedColor, type);
     }
 
     public PathAnchor2D(double x1, double y1, Color color, Color selectedColor)
     {
-        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, color, selectedColor);
+        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, color, selectedColor, PathIterator.SEG_LINETO);
+    }
+
+    public PathAnchor2D(double x1, double y1, int type)
+    {
+        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR, type);
     }
 
     public PathAnchor2D(double x1, double y1)
     {
-        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR, PathIterator.SEG_MOVETO);
     }
 
     public PathAnchor2D()
     {
-        this(0d, 0d, 0d, 0d, 0, 0, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, 0d, 0d, 0, 0, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR, PathIterator.SEG_MOVETO);
     }
 
     /**

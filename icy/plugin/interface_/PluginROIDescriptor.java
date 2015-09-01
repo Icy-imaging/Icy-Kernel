@@ -14,7 +14,7 @@ import java.util.Map;
  * Plugin interface providing the basic functionalities to compute various descriptors for regions
  * of interest (ROI)
  * 
- * @author Stephane Dallongeville, Alexandre Dufour 
+ * @author Stephane Dallongeville, Alexandre Dufour
  */
 public interface PluginROIDescriptor extends PluginNoEDTConstructor
 {
@@ -37,31 +37,21 @@ public interface PluginROIDescriptor extends PluginNoEDTConstructor
     public List<ROIDescriptor> getDescriptors();
 
     /**
-     * Computes the descriptor(s) (declared in the {@link #getDescriptors()}) on the
-     * specified ROI. Depending on the type of descriptor and ROI, this method may compute (and
-     * populate the map with) only a subset of the declared descriptors.<br/>
+     * Computes the descriptor(s) (declared in the {@link #getDescriptors()}) on the specified ROI.<br/>
+     * Depending on the type of descriptor and ROI, this method can return <code>null</code> for some of the
+     * descriptor results.<br/>
      * Note that using this method may be faster than calling the <code>compute</code> method for
-     * each descriptor separately as some descriptor may group their calculation.
+     * each descriptor separately as some descriptor can group their calculation.
      * 
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
      *        an optional sequence where the pixel informations can be retrieved
-     * @param z
-     *        the specific Z position (slice) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI Z dimension.
-     * @param t
-     *        the specific T position (frame) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI T dimension.
-     * @param c
-     *        the specific C position (channel) where we want to compute the descriptor or
-     *        <code>-1</code> to compute it over the whole ROI C dimension.
-     * @return a map where each entry associates the a descriptor to its value.
+     * @return a map where each entry associates a descriptor to its value (which can be <code>null</code> if the
+     *         descriptor cannot be computed).
      * @throws UnsupportedOperationException
-     *         if the type of the given ROI is not supported by this descriptor, or if
-     *         <code>sequence</code> is <code>null</code> while the calculation requires it, or if
-     *         the specified Z, T or C position are not supported for this descriptor
+     *         if the type of the given ROI is not supported by this descriptor or if <code>sequence</code> is
+     *         <code>null</code> while the calculation requires it.
      */
-    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence, int z, int t, int c)
-            throws UnsupportedOperationException;
+    public Map<ROIDescriptor, Object> compute(ROI roi, Sequence sequence) throws UnsupportedOperationException;
 }

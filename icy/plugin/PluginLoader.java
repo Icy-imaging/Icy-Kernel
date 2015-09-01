@@ -322,12 +322,10 @@ public class PluginLoader
         {
             for (PluginDescriptor pluginDescriptor : instance.plugins)
             {
-                final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
-
-                if ((classPlug != null) && PluginDaemon.class.isAssignableFrom(classPlug))
+                if (pluginDescriptor.isInstanceOf(PluginDaemon.class))
                 {
                     // accept class ?
-                    if (!ClassUtil.isAbstract(classPlug) && !classPlug.isInterface())
+                    if (!pluginDescriptor.isAbstract() && !pluginDescriptor.isInterface())
                         result.add(pluginDescriptor);
                 }
             }
@@ -576,13 +574,11 @@ public class PluginLoader
             {
                 for (PluginDescriptor pluginDescriptor : instance.plugins)
                 {
-                    final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
-
-                    if ((classPlug != null) && clazz.isAssignableFrom(classPlug))
+                    if (pluginDescriptor.isInstanceOf(clazz))
                     {
                         // accept class ?
-                        if ((wantAbstract || !ClassUtil.isAbstract(classPlug))
-                                && (wantInterface || !classPlug.isInterface())
+                        if ((wantAbstract || !pluginDescriptor.isAbstract())
+                                && (wantInterface || !pluginDescriptor.isInterface())
                                 && (wantBundled || !pluginDescriptor.isBundled()))
                             result.add(pluginDescriptor);
                     }
@@ -724,8 +720,7 @@ public class PluginLoader
 
     /**
      * Try to load and returns the specified class from the {@link PluginLoader}.<br>
-     * This method is equivalent to call {@link #getLoader()} then call
-     * <code>loadClass(String)</code> method from it.
+     * This method is equivalent to call {@link #getLoader()} then call <code>loadClass(String)</code> method from it.
      * 
      * @param className
      *        class name of the class we want to load.

@@ -41,21 +41,23 @@ import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
-import icy.util.ShapeUtil.BooleanOperator;
 import icy.vtk.VtkUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -175,30 +177,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new double[]
-                        {
-                                x0, y0, z0
-                        });
-                        point3DList.add(new double[]
-                        {
-                                x1, y1, z0
-                        });
-                        point3DList.add(new double[]
-                        {
-                                x0, y0, z1
-                        });
-                        point3DList.add(new double[]
-                        {
-                                x1, y1, z1
-                        });
-                        polyList.add(new int[]
-                        {
-                                1 + ind, 2 + ind, 0 + ind
-                        });
-                        polyList.add(new int[]
-                        {
-                                3 + ind, 2 + ind, 1 + ind
-                        });
+                        point3DList.add(new double[] {x0, y0, z0});
+                        point3DList.add(new double[] {x1, y1, z0});
+                        point3DList.add(new double[] {x0, y0, z1});
+                        point3DList.add(new double[] {x1, y1, z1});
+                        polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
+                        polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
 
                         x0 = x1;
                         y0 = y1;
@@ -210,30 +194,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new double[]
-                        {
-                                x0, y0, z0
-                        });
-                        point3DList.add(new double[]
-                        {
-                                x1, y1, z0
-                        });
-                        point3DList.add(new double[]
-                        {
-                                x0, y0, z1
-                        });
-                        point3DList.add(new double[]
-                        {
-                                x1, y1, z1
-                        });
-                        polyList.add(new int[]
-                        {
-                                1 + ind, 2 + ind, 0 + ind
-                        });
-                        polyList.add(new int[]
-                        {
-                                3 + ind, 2 + ind, 1 + ind
-                        });
+                        point3DList.add(new double[] {x0, y0, z0});
+                        point3DList.add(new double[] {x1, y1, z0});
+                        point3DList.add(new double[] {x0, y0, z1});
+                        point3DList.add(new double[] {x1, y1, z1});
+                        polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
+                        polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
 
                         x0 = x1;
                         y0 = y1;
@@ -571,7 +537,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                                     pt.mouseDrag(e, imagePoint, canvas);
 
                                     // position changed and undo supported --> add undo operation
-                                    if ((savedPosition != null) && !savedPosition.equals(pt.getPosition()))
+                                    if ((sequence != null) && (savedPosition != null)
+                                            && !savedPosition.equals(pt.getPosition()))
                                         sequence.addUndoableEdit(new Point2DMovedROIEdit(ROI2DShape.this, pt,
                                                 savedPosition));
                                 }
@@ -691,7 +658,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 // normal draw
                 else
                 {
-                    // ROI selected ?
+                    // ROI selected and has content to draw ?
                     if (shapeVisible && isSelected())
                     {
                         final Graphics2D g2 = (Graphics2D) g.create();
@@ -704,7 +671,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         // show content with an alpha factor
                         g2.setComposite(prevAlpha.derive(newAlpha));
                         g2.setColor(getDisplayColor());
-                        g2.fill(shape);
+
+                        // only fill closed shape
+                        g2.fill(ShapeUtil.getClosedPath(shape));
 
                         g2.dispose();
                     }
@@ -882,10 +851,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (actor == null)
                 initVtkObjects();
 
-            return new vtkProp[]
-            {
-                (vtkProp) actor
-            };
+            return new vtkProp[] {(vtkProp) actor};
         }
 
         @Override
@@ -1103,8 +1069,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      *        if set to <code>true</code> the new point will be inserted between the 2 closest
      *        points (in pixels distance) else the new point is inserted at the end of the point
      *        list
-     * @return the new created Anchor2D point if the operation succeed or <code>null</code>
-     *         otherwise (if the ROI does not support this operation for instance)
+     * @return the new created Anchor2D point if the operation succeed or <code>null</code> otherwise (if the ROI does
+     *         not support this operation for instance)
      */
     public Anchor2D addNewPoint(Point2D pos, boolean insert)
     {
@@ -1129,7 +1095,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     /**
      * internal use only
      */
-    @SuppressWarnings("unused")
     protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
         boolean empty;
@@ -1204,7 +1169,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      * @deprecated Use {@link #removeSelectedPoint(IcyCanvas)} instead.
      */
     @Deprecated
-    protected boolean removeSelectedPoint(IcyCanvas canvas, @SuppressWarnings("unused") Point2D imagePoint)
+    protected boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint)
     {
         return removeSelectedPoint(canvas);
     }
@@ -1470,6 +1435,61 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     }
 
     @Override
+    public boolean[] getBooleanMask(int x, int y, int width, int height, boolean inclusive)
+    {
+        final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+        final Graphics2D g = img.createGraphics();
+        final DataBuffer dataBuffer = img.getRaster().getDataBuffer();
+        final byte[] buffer = ((DataBufferByte) dataBuffer).getData();
+
+        // we want accurate rendering as we use the image for the mask
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+        // translate back to origin and pixel center
+        g.translate(-x, -y);
+
+        // fill content
+        g.setColor(Color.white);
+        // only fill closed shapes
+        g.fill(ShapeUtil.getClosedPath(shape));
+        // we want edge as well
+        if (inclusive)
+            g.draw(shape);
+        // TODO: do we really need that ??
+        else
+        {
+            // remove edge from content as fill operation may be a bit off
+            g.setColor(Color.black);
+            g.draw(shape);
+        }
+
+        g.dispose();
+
+        final boolean[] result = new boolean[width * height];
+
+        // compute mask from image
+        for (int i = 0; i < result.length; i++)
+            result[i] = (buffer[i] != 0);
+
+        // // simple and basic implementation, override it to have better performance
+        // int offset = 0;
+        // for (int j = 0; j < height; j++)
+        // {
+        // for (int i = 0; i < width; i++)
+        // {
+        // if (inclusive)
+        // result[offset] = intersects(x + i, y + j, 1d, 1d);
+        // else
+        // result[offset] = contains(x + i, y + j, 1d, 1d);
+        // offset++;
+        // }
+        // }
+
+        return result;
+    }
+
+    @Override
     public boolean contains(Point2D p)
     {
         return shape.contains(p);
@@ -1494,16 +1514,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     }
 
     @Override
-    public boolean contains(ROI roi)
-    {
-        if (roi instanceof ROI2DShape)
-            // if the union of both ROI equals base ROI then base ROI contains the other one
-            return ShapeUtil.union(shape, ((ROI2DShape) roi).shape).equals(new Area(shape));
-
-        return super.contains(roi);
-    }
-
-    @Override
     public boolean intersects(Rectangle2D r)
     {
         return shape.intersects(r);
@@ -1516,45 +1526,23 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     }
 
     @Override
-    public boolean intersects(ROI roi)
-    {
-        if (roi instanceof ROI2DShape)
-            // if the intersection of both ROI is not empty
-            return !ShapeUtil.intersect(shape, ((ROI2DShape) roi).shape).isEmpty();
-
-        return super.intersects(roi);
-    }
-
-    @Override
     public Rectangle2D computeBounds2D()
     {
         return shape.getBounds2D();
     }
 
     @Override
-    protected ROI computeOperation(ROI roi, BooleanOperator op) throws UnsupportedOperationException
+    public ROI getUnion(ROI roi) throws UnsupportedOperationException
     {
         if (roi instanceof ROI2DShape)
         {
             final ROI2DShape roiShape = (ROI2DShape) roi;
-            ROI2DPath result = null;
 
             // only if on same position
             if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
             {
-                // special case for subtraction
-                if (op == null)
-                    result = new ROI2DPath(ShapeUtil.subtract(this, roiShape));
-                else if (op == BooleanOperator.AND)
-                    result = new ROI2DPath(ShapeUtil.intersect(this, roiShape));
-                else if (op == BooleanOperator.OR)
-                    result = new ROI2DPath(ShapeUtil.union(this, roiShape));
-                else if (op == BooleanOperator.XOR)
-                    result = new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
-            }
+                final ROI2DPath result = new ROI2DPath(ShapeUtil.union(this, roiShape));
 
-            if (result != null)
-            {
                 // don't forget to restore 5D position
                 result.setZ(getZ());
                 result.setT(getT());
@@ -1564,7 +1552,79 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             }
         }
 
-        return super.computeOperation(roi, op);
+        return super.getUnion(roi);
+    }
+
+    @Override
+    public ROI getIntersection(ROI roi) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final ROI2DPath result = new ROI2DPath(ShapeUtil.intersect(this, roiShape));
+
+                // don't forget to restore 5D position
+                result.setZ(getZ());
+                result.setT(getT());
+                result.setC(getC());
+
+                return result;
+            }
+        }
+
+        return super.getIntersection(roi);
+    }
+
+    @Override
+    public ROI getExclusiveUnion(ROI roi) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final ROI2DPath result = new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
+
+                // don't forget to restore 5D position
+                result.setZ(getZ());
+                result.setT(getT());
+                result.setC(getC());
+
+                return result;
+            }
+        }
+
+        return super.getExclusiveUnion(roi);
+    }
+
+    @Override
+    public ROI getSubtraction(ROI roi) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final ROI2DPath result = new ROI2DPath(ShapeUtil.subtract(this, roiShape));
+
+                // don't forget to restore 5D position
+                result.setZ(getZ());
+                result.setT(getT());
+                result.setC(getC());
+
+                return result;
+            }
+        }
+
+        return super.getSubtraction(roi);
     }
 
     @Override
@@ -1621,10 +1681,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      * Called when anchor painter changed, provided only for backward compatibility.<br>
      * Don't use it.
      */
-    @SuppressWarnings(
-    {
-            "deprecation", "unused"
-    })
+    @SuppressWarnings({"deprecation"})
     public void painterChanged(PainterEvent event)
     {
         // ignore it now
