@@ -624,6 +624,10 @@ public class PluginInstaller implements Runnable
             if ((taskFrame != null) && taskFrame.isCancelRequested())
                 return false;
 
+            // should not happen but...
+            if (ident == null)
+                continue;
+
             // already in our dependencies ? --> pass to the next one
             if (PluginDescriptor.getPlugin(pluginsToInstall, ident, true) != null)
                 continue;

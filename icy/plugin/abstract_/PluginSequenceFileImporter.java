@@ -8,7 +8,6 @@ import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
 import icy.plugin.interface_.PluginNoEDTConstructor;
-import icy.plugin.interface_.PluginThreaded;
 
 import java.awt.Rectangle;
 import java.io.IOException;

@@ -589,10 +589,11 @@ public class IcyBufferedImageUtil
                 break;
         }
 
+        
         // use JAI scaler (use a copy to avoid source alteration)
         final RenderedOp renderedOp = RotateDescriptor.create(getCopy(source), Float.valueOf((float) xOrigin), Float
                 .valueOf((float) yOrigin), Float.valueOf((float) angle), interpolation, null, new RenderingHints(
-                JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+                JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_ZERO)));
 
         return IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
     }
@@ -895,5 +896,4 @@ public class IcyBufferedImageUtil
             }
         }
     }
-
 }

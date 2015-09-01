@@ -7,6 +7,8 @@ import icy.roi.ROI;
 import icy.sequence.Sequence;
 
 import java.awt.Image;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,28 +18,28 @@ import java.util.List;
  */
 public class AbstractROIsSequenceEdit extends AbstractSequenceEdit
 {
-    List<ROI> rois;
+    Collection<ROI> rois;
 
-    public AbstractROIsSequenceEdit(Sequence sequence, List<ROI> rois, String name, Image icon)
+    public AbstractROIsSequenceEdit(Sequence sequence, Collection<ROI> rois, String name, Image icon)
     {
         super(sequence, name, icon);
 
         this.rois = rois;
     }
 
-    public AbstractROIsSequenceEdit(Sequence sequence, List<ROI> rois, String name)
+    public AbstractROIsSequenceEdit(Sequence sequence, Collection<ROI> rois, String name)
     {
         this(sequence, rois, name, null);
     }
 
-    public AbstractROIsSequenceEdit(Sequence sequence, List<ROI> rois)
+    public AbstractROIsSequenceEdit(Sequence sequence, Collection<ROI> rois)
     {
         this(sequence, rois, (rois.size() > 1) ? "ROIs changed" : "ROI changed", null);
     }
 
     public List<ROI> getROIs()
     {
-        return rois;
+        return new ArrayList<ROI>(rois);
     }
 
     @Override

@@ -14,6 +14,7 @@ import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.util.ClassUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -227,29 +228,38 @@ public class CanvasActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-            final LayersPanel layersPanel = Icy.getMainInterface().getLayersPanel();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
-            if ((sequence != null) && (layersPanel != null))
+            if (viewer != null)
             {
-                final List<Layer> layers = layersPanel.getSelectedLayers();
+                final Sequence sequence = viewer.getSequence();
+                final LayersPanel layersPanel = Icy.getMainInterface().getLayersPanel();
 
-                if (layers.size() > 0)
+                if ((sequence != null) && (layersPanel != null))
                 {
-                    sequence.beginUpdate();
-                    try
-                    {
-                        // delete selected layer
-                        for (Layer layer : layers)
-                            if (layer.getCanBeRemoved())
-                                sequence.removeOverlay(layer.getOverlay());
-                    }
-                    finally
-                    {
-                        sequence.endUpdate();
-                    }
+                    final List<Layer> layers = layersPanel.getSelectedLayers();
 
-                    return true;
+                    if (layers.size() > 0)
+                    {
+                        sequence.beginUpdate();
+                        try
+                        {
+                            // delete selected layer
+                            for (Layer layer : layers)
+                                if (layer.getCanBeRemoved())
+                                    // we try first to remove the overlay from Sequence
+                                    if (!sequence.removeOverlay(layer.getOverlay()))
+                                        // the overlay is just present on the canvas so we remove from it only
+                                        viewer.getCanvas().removeLayer(layer);
+                        }
+                        finally
+                        {
+                            sequence.endUpdate();
+                        }
+
+                        return true;
+
+                    }
                 }
             }
 
@@ -574,9 +584,9 @@ public class CanvasActions
 
             try
             {
-                if (type.isAssignableFrom(IcyAbstractAction[].class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction[].class))
                     result.addAll(Arrays.asList(((IcyAbstractAction[]) field.get(null))));
-                else if (type.isAssignableFrom(IcyAbstractAction.class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction.class))
                     result.add((IcyAbstractAction) field.get(null));
             }
             catch (Exception e)

@@ -42,7 +42,10 @@ import javax.swing.JOptionPane;
  */
 public class IdConfirmDialog
 {
-    private static class Confirmer implements Runnable
+    /**
+     * Keep it public in case we want custom IdConfirmDialog :)
+     */
+    public static class Confirmer implements Runnable
     {
         private final String title;
         private final String message;
@@ -91,7 +94,8 @@ public class IdConfirmDialog
                     null);
 
             pane.setInitialValue(null);
-            pane.setComponentOrientation(parent.getComponentOrientation());
+            if (parent != null)
+                pane.setComponentOrientation(parent.getComponentOrientation());
 
             final JDialog dialog = pane.createDialog(parent, title);
 
@@ -121,6 +125,11 @@ public class IdConfirmDialog
                 else
                     result = false;
             }
+        }
+
+        public boolean getResult()
+        {
+            return result;
         }
     }
 

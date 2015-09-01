@@ -24,7 +24,6 @@ import icy.gui.util.ComponentUtil;
 import icy.sequence.AbstractSequenceModel;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
@@ -153,40 +152,54 @@ public class SequenceDimensionAdjustFrame extends ActionDialog
                             pf = new ProgressFrame("Removing frames...");
 
                         final Sequence seq = SequenceDimensionAdjustFrame.this.sequence;
+                        final Sequence tmp = new Sequence();
 
+                        int sizeT = seq.getSizeT();
+                        int sizeZ = seq.getSizeZ();
+
+                        tmp.beginUpdate();
                         seq.beginUpdate();
                         try
                         {
-                            int i;
+                            int i = 0;
 
-                            if (dim == DimensionId.Z)
+                            // create a temporary sequence containing resulting images
+                            for (int t = 0; t < sizeT; t++)
                             {
-                                i = seq.getSizeZ() - 1;
+                                if (dim == DimensionId.Z)
+                                    i = 0;
 
-                                for (; i > rangePanel.getRangeHigh(); i--)
-                                    SequenceUtil.removeZAndShift(seq, i);
-                                for (; i >= rangePanel.getRangeLow(); i--)
-                                    if (!rangePanel.isIndexSelected(i))
-                                        SequenceUtil.removeZAndShift(seq, i);
-                                for (; i >= 0; i--)
-                                    SequenceUtil.removeZAndShift(seq, i);
-                            }
-                            else
-                            {
-                                i = seq.getSizeT() - 1;
+                                for (int z = 0; z < sizeZ; z++)
+                                {
+                                    if (dim == DimensionId.Z)
+                                    {
+                                        if (rangePanel.isIndexSelected(z))
+                                            tmp.setImage(t, i++, seq.getImage(t, z));
+                                    }
+                                    else
+                                    {
+                                        if (rangePanel.isIndexSelected(t))
+                                            tmp.setImage(i, z, seq.getImage(t, z));
+                                    }
+                                }
 
-                                for (; i > rangePanel.getRangeHigh(); i--)
-                                    SequenceUtil.removeTAndShift(seq, i);
-                                for (; i >= rangePanel.getRangeLow(); i--)
-                                    if (!rangePanel.isIndexSelected(i))
-                                        SequenceUtil.removeTAndShift(seq, i);
-                                for (; i >= 0; i--)
-                                    SequenceUtil.removeTAndShift(seq, i);
+                                if ((dim == DimensionId.T) && (rangePanel.isIndexSelected(t)))
+                                    i++;
                             }
+
+                            sizeT = tmp.getSizeT();
+                            sizeZ = tmp.getSizeZ();
+
+                            // then copy back tmp images in seq
+                            seq.removeAllImages();
+                            for (int t = 0; t < sizeT; t++)
+                                for (int z = 0; z < sizeZ; z++)
+                                    seq.setImage(t, z, tmp.getImage(t, z));
                         }
                         finally
                         {
                             seq.endUpdate();
+                            tmp.endUpdate();
                             pf.close();
                         }
                     }

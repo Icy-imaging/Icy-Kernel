@@ -8,7 +8,7 @@ package icy.plugin.interface_;
  * (Event Dispatch Thread).<br>
  * We need it as by default Plugin instance are created in the EDT (for historical reasons then to
  * preserve backward compatibility) and sometime we really want to avoid it as plugin using many
- * others class make lock the EDT for severals second just with some heavy ClassLoader work.
+ * others classes make lock the EDT for severals second just with some heavy class loading work.
  * 
  * @author Stephane
  */

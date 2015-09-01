@@ -90,7 +90,7 @@ public class SequencePanel extends JPanel implements ActiveSequenceListener, Act
         gbc_canvasPopupPanel.gridy = 0;
         add(canvasPopupPanel, gbc_canvasPopupPanel);
 
-        lutPopupPanel = new PopupPanel("Lookup Table");
+        lutPopupPanel = new PopupPanel("Histogram and colormap");
         lutPanel = lutPopupPanel.getMainPanel();
         lutPanel.setLayout(new BorderLayout());
         lutPopupPanel.expand();

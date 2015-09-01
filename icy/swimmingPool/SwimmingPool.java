@@ -147,7 +147,7 @@ public class SwimmingPool
                 {
                     final Object obj = so.getObject();
 
-                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    if ((obj != null) && objectType.isInstance(obj))
                     {
                         objects.remove(i);
                         b = true;
@@ -210,7 +210,7 @@ public class SwimmingPool
                 {
                     final Object obj = so.getObject();
 
-                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    if ((obj != null) && objectType.isInstance(obj))
                         result.add(so);
                 }
             }
@@ -271,7 +271,7 @@ public class SwimmingPool
                 {
                     final Object obj = so.getObject();
 
-                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    if ((obj != null) && objectType.isInstance(obj))
                     {
                         result.add(so);
                         objects.remove(i);
@@ -322,7 +322,7 @@ public class SwimmingPool
                 {
                     final Object obj = so.getObject();
 
-                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    if ((obj != null) && objectType.isInstance(obj))
                         return true;
                 }
             }
@@ -374,7 +374,7 @@ public class SwimmingPool
                 {
                     final Object obj = so.getObject();
 
-                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    if ((obj != null) && objectType.isInstance(obj))
                         result++;
                 }
             }

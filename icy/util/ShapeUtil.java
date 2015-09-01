@@ -18,8 +18,10 @@
  */
 package icy.util;
 
+import icy.painter.Anchor2D;
 import icy.painter.PathAnchor2D;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Shape;
@@ -40,8 +42,21 @@ import java.util.List;
  */
 public class ShapeUtil
 {
+    public static interface PathConsumer
+    {
+        /**
+         * Consume the specified path.<br>
+         * Return false to interrupt consumption.
+         */
+        public boolean consumePath(Path2D path, boolean closed);
+    }
+
     public static interface ShapeConsumer
     {
+        /**
+         * Consume the specified Shape.<br>
+         * Return false to interrupt consumption.
+         */
         public boolean consume(Shape shape);
     }
 
@@ -97,6 +112,26 @@ public class ShapeUtil
     }
 
     /**
+     * Returns <code>true</code> if the specified Shape define a closed Shape (Area).<br>
+     * Returns <code>false</code> if the specified Shape define a open Shape (Path).<br>
+     */
+    public static boolean isClosed(Shape shape)
+    {
+        final PathIterator path = shape.getPathIterator(null);
+        final double crd[] = new double[6];
+
+        while (!path.isDone())
+        {
+            if (path.currentSegment(crd) == PathIterator.SEG_CLOSE)
+                return true;
+
+            path.next();
+        }
+
+        return false;
+    }
+
+    /**
      * Merge the specified list of {@link Shape} with the given {@link BooleanOperator}.<br>
      * 
      * @param shapes
@@ -105,9 +140,9 @@ public class ShapeUtil
      *        {@link BooleanOperator} to apply.
      * @return {@link Area} shape representing the result of the merge operation.
      */
-    public static Area merge(List<Shape> shapes, BooleanOperator operator)
+    public static Shape merge(List<Shape> shapes, BooleanOperator operator)
     {
-        final Area result = new Area();
+        Shape result = new Area();
 
         // merge shapes
         for (Shape shape : shapes)
@@ -115,15 +150,15 @@ public class ShapeUtil
             switch (operator)
             {
                 case OR:
-                    result.add(new Area(shape));
+                    result = union(result, shape);
                     break;
 
                 case AND:
-                    result.intersect(new Area(shape));
+                    result = intersect(result, shape);
                     break;
 
                 case XOR:
-                    result.exclusiveOr(new Area(shape));
+                    result = exclusiveUnion(result, shape);
                     break;
             }
         }
@@ -135,19 +170,24 @@ public class ShapeUtil
      * @deprecated Use {@link #merge(List, BooleanOperator)} instead.
      */
     @Deprecated
-    public static Area merge(Shape[] shapes, ShapeOperation operation)
+    public static Shape merge(Shape[] shapes, ShapeOperation operation)
     {
         return merge(Arrays.asList(shapes), operation.getBooleanOperator());
     }
 
     /**
-     * Do union between the 2 shapes and return result in an {@link Area} type shape.
+     * Process union between the 2 shapes and return result in a new Shape.
      */
-    public static Area union(Shape shape1, Shape shape2)
+    public static Shape union(Shape shape1, Shape shape2)
     {
-        final Area result = new Area(shape1);
-
-        result.add(new Area(shape2));
+        // first compute closed area union
+        final Area area = new Area(getClosedPath(shape1));
+        area.add(new Area(getClosedPath(shape2)));
+        // then compute open path (polyline) union
+        final Path2D result = new Path2D.Double(getOpenPath(shape1));
+        result.append(getOpenPath(shape2), false);
+        // then append result
+        result.append(area, false);
 
         return result;
     }
@@ -156,31 +196,51 @@ public class ShapeUtil
      * @deprecated Use {@link #union(Shape, Shape)} instead
      */
     @Deprecated
-    public static Area add(Shape shape1, Shape shape2)
+    public static Shape add(Shape shape1, Shape shape2)
     {
         return union(shape1, shape2);
     }
 
     /**
-     * Intersect 2 shapes and return result in an {@link Area} type shape.
+     * Intersects 2 shapes and return result in an {@link Area} type shape.<br>
+     * If one of the specified Shape is not an Area (do not contains any pixel) then an empty Area is returned.
      */
     public static Area intersect(Shape shape1, Shape shape2)
     {
-        final Area result = new Area(shape1);
+        // trivial optimization
+        if (!isClosed(shape1) || !isClosed(shape2))
+            return new Area();
 
-        result.intersect(new Area(shape2));
+        final Area result = new Area(getClosedPath(shape1));
+
+        result.intersect(new Area(getClosedPath(shape2)));
 
         return result;
     }
 
     /**
-     * Do exclusive union between the 2 shapes and return result in an {@link Area} type shape.
+     * Do exclusive union between the 2 shapes and return result in an {@link Area} type shape.<br>
+     * If one of the specified Shape is not an Area (do not contains any pixel) then it just return the other Shape in
+     * Area format. If both Shape are not Area then an empty Area is returned.
      */
     public static Area exclusiveUnion(Shape shape1, Shape shape2)
     {
-        final Area result = new Area(shape1);
+        // trivial optimization
+        if (!isClosed(shape1))
+        {
+            if (!isClosed(shape2))
+                return new Area();
 
-        result.exclusiveOr(new Area(shape2));
+            return new Area(shape2);
+        }
+
+        // trivial optimization
+        if (!isClosed(shape2))
+            return new Area(shape1);
+
+        final Area result = new Area(getClosedPath(shape1));
+
+        result.exclusiveOr(new Area(getClosedPath(shape2)));
 
         return result;
     }
@@ -199,9 +259,15 @@ public class ShapeUtil
      */
     public static Area subtract(Shape shape1, Shape shape2)
     {
-        final Area result = new Area(shape1);
+        // trivial optimization
+        if (!isClosed(shape1))
+            return new Area();
+        if (!isClosed(shape2))
+            return new Area(shape1);
 
-        result.subtract(new Area(shape2));
+        final Area result = new Area(getClosedPath(shape1));
+
+        result.subtract(new Area(getClosedPath(shape2)));
 
         return result;
     }
@@ -351,9 +417,123 @@ public class ShapeUtil
     }
 
     /**
+     * Consume all sub path of the specified {@link PathIterator}.<br>
+     * We consider a new sub path when we meet both a {@link PathIterator#SEG_MOVETO} segment or after a
+     * {@link PathIterator#SEG_CLOSE} segment (except the ending one).
+     */
+    public static void consumeSubPath(PathIterator pathIt, PathConsumer consumer)
+    {
+        final double crd[] = new double[6];
+        Path2D current = null;
+
+        while (!pathIt.isDone())
+        {
+            switch (pathIt.currentSegment(crd))
+            {
+                case PathIterator.SEG_MOVETO:
+                    // had a previous not closed path ? --> consume it
+                    if (current != null)
+                        consumer.consumePath(current, false);
+
+                    // create new path
+                    current = new Path2D.Double(pathIt.getWindingRule());
+                    current.moveTo(crd[0], crd[1]);
+                    break;
+
+                case PathIterator.SEG_LINETO:
+                    current.lineTo(crd[0], crd[1]);
+                    break;
+
+                case PathIterator.SEG_QUADTO:
+                    current.quadTo(crd[0], crd[1], crd[2], crd[3]);
+                    break;
+
+                case PathIterator.SEG_CUBICTO:
+                    current.curveTo(crd[0], crd[1], crd[2], crd[3], crd[4], crd[5]);
+                    break;
+
+                case PathIterator.SEG_CLOSE:
+                    // close path and consume it
+                    current.closePath();
+                    consumer.consumePath(current, true);
+
+                    // clear path
+                    current = null;
+                    break;
+            }
+
+            pathIt.next();
+        }
+
+        // have a last not closed path ? --> consume it
+        if (current != null)
+            consumer.consumePath(current, false);
+    }
+
+    /**
+     * Consume all sub path of the specified {@link Shape}.<br>
+     * We consider a new sub path when we meet both a {@link PathIterator#SEG_MOVETO} segment or after a
+     * {@link PathIterator#SEG_CLOSE} segment (except the ending one).
+     */
+    public static void consumeSubPath(Shape shape, PathConsumer consumer)
+    {
+        consumeSubPath(shape.getPathIterator(null), consumer);
+    }
+
+    /**
+     * Returns only the open path part of the specified Shape.<br>
+     * By default all sub path inside a Shape are considered closed which can be a problem when drawing or using
+     * {@link Path2D#contains(double, double)} method.
+     */
+    public static Path2D getOpenPath(Shape shape)
+    {
+        final PathIterator pathIt = shape.getPathIterator(null);
+        final Path2D result = new Path2D.Double(pathIt.getWindingRule());
+
+        consumeSubPath(pathIt, new PathConsumer()
+        {
+            @Override
+            public boolean consumePath(Path2D path, boolean closed)
+            {
+                if (!closed)
+                    result.append(path, false);
+
+                return true;
+            }
+        });
+
+        return result;
+    }
+
+    /**
+     * Returns only the closed path part of the specified Shape.<br>
+     * By default all sub path inside a Shape are considered closed which can be a problem when drawing or using
+     * {@link Path2D#contains(double, double)} method.
+     */
+    public static Path2D getClosedPath(Shape shape)
+    {
+        final PathIterator pathIt = shape.getPathIterator(null);
+        final Path2D result = new Path2D.Double(pathIt.getWindingRule());
+
+        consumeSubPath(pathIt, new PathConsumer()
+        {
+            @Override
+            public boolean consumePath(Path2D path, boolean closed)
+            {
+                if (closed)
+                    result.append(path, false);
+
+                return true;
+            }
+        });
+
+        return result;
+    }
+
+    /**
      * Return all PathAnchor points from the specified shape
      */
-    public static ArrayList<PathAnchor2D> getAnchorsFromShape(Shape shape)
+    public static ArrayList<PathAnchor2D> getAnchorsFromShape(Shape shape, Color color, Color selectedColor)
     {
         final PathIterator pathIt = shape.getPathIterator(null);
         final ArrayList<PathAnchor2D> result = new ArrayList<PathAnchor2D>();
@@ -372,29 +552,26 @@ public class ShapeUtil
                     mov[1] = crd[1];
 
                 case PathIterator.SEG_LINETO:
-                    pt = new PathAnchor2D(crd[0], crd[1]);
+                    pt = new PathAnchor2D(crd[0], crd[1], color, selectedColor, segType);
                     break;
 
                 case PathIterator.SEG_QUADTO:
-                    pt = new PathAnchor2D(crd[0], crd[1], crd[2], crd[3]);
+                    pt = new PathAnchor2D(crd[0], crd[1], crd[2], crd[3], color, selectedColor);
                     break;
 
                 case PathIterator.SEG_CUBICTO:
-                    pt = new PathAnchor2D(crd[0], crd[1], crd[2], crd[3], crd[4], crd[5]);
+                    pt = new PathAnchor2D(crd[0], crd[1], crd[2], crd[3], crd[4], crd[5], color, selectedColor);
                     break;
 
                 case PathIterator.SEG_CLOSE:
-                    pt = new PathAnchor2D(mov[0], mov[1]);
+                    pt = new PathAnchor2D(mov[0], mov[1], color, selectedColor, segType);
                     // CLOSE points aren't visible
                     pt.setVisible(false);
                     break;
             }
 
             if (pt != null)
-            {
-                pt.setType(segType);
                 result.add(pt);
-            }
 
             pathIt.next();
         }
@@ -403,9 +580,17 @@ public class ShapeUtil
     }
 
     /**
+     * Return all PathAnchor points from the specified shape
+     */
+    public static ArrayList<PathAnchor2D> getAnchorsFromShape(Shape shape)
+    {
+        return getAnchorsFromShape(shape, Anchor2D.DEFAULT_NORMAL_COLOR, Anchor2D.DEFAULT_SELECTED_COLOR);
+    }
+
+    /**
      * Update specified path from the specified list of PathAnchor2D
      */
-    public static Path2D buildPathFromAnchors(Path2D path, List<PathAnchor2D> points)
+    public static Path2D buildPathFromAnchors(Path2D path, List<PathAnchor2D> points, boolean closePath)
     {
         path.reset();
 
@@ -436,10 +621,26 @@ public class ShapeUtil
             }
         }
 
-        if (points.size() > 1)
+        if ((points.size() > 1) && closePath)
             path.closePath();
 
         return path;
+    }
+
+    /**
+     * Update specified path from the specified list of PathAnchor2D
+     */
+    public static Path2D buildPathFromAnchors(Path2D path, List<PathAnchor2D> points)
+    {
+        return buildPathFromAnchors(path, points, true);
+    }
+
+    /**
+     * Create and return a path from the specified list of PathAnchor2D
+     */
+    public static Path2D getPathFromAnchors(List<PathAnchor2D> points, boolean closePath)
+    {
+        return buildPathFromAnchors(new Path2D.Double(), points, closePath);
     }
 
     /**
@@ -447,7 +648,7 @@ public class ShapeUtil
      */
     public static Path2D getPathFromAnchors(List<PathAnchor2D> points)
     {
-        return buildPathFromAnchors(new Path2D.Double(), points);
+        return buildPathFromAnchors(new Path2D.Double(), points, true);
     }
 
     /**

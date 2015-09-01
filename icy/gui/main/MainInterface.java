@@ -293,12 +293,12 @@ public interface MainInterface
     public abstract boolean isUniqueViewer(Viewer viewer);
 
     /**
-     * Returns list of active sequence (displayed in a viewer)
+     * Returns the list of opened sequence (sequence actually displayed in a viewer)
      */
     public abstract ArrayList<Sequence> getSequences();
 
     /**
-     * Returns list of active sequence (displayed in a viewer) matching the specified name.
+     * Returns the list of opened sequence (sequence actually displayed in a viewer) matching the specified name.
      */
     public abstract ArrayList<Sequence> getSequences(String name);
 

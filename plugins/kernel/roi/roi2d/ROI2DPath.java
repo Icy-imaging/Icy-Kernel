@@ -20,13 +20,17 @@ package plugins.kernel.roi.roi2d;
 
 import icy.painter.Anchor2D;
 import icy.painter.PathAnchor2D;
+import icy.roi.ROI;
 import icy.type.point.Point5D;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
+import java.awt.Color;
 import java.awt.Shape;
+import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +50,9 @@ public class ROI2DPath extends ROI2DShape
     public static final String ID_POINT = "point";
     public static final String ID_WINDING = "winding";
 
+    protected Area closedArea;
+    protected Path2D openPath;
+
     static Path2D initPath(Point2D position)
     {
         final Path2D result = new Path2D.Double();
@@ -57,30 +64,43 @@ public class ROI2DPath extends ROI2DShape
         return result;
     }
 
-    public ROI2DPath(Path2D path)
+    /**
+     * Build a new ROI2DPath from the specified path.
+     */
+    public ROI2DPath(Path2D path, Area closedArea, Path2D openPath)
     {
         super(path);
 
-        synchronized (controlPoints)
-        {
-            // add path points to the control point list
-            controlPoints.addAll(ShapeUtil.getAnchorsFromShape(path));
+        rebuildControlPointsFromPath();
 
-            // add listeners
-            for (Anchor2D pt : controlPoints)
-            {
-                pt.addOverlayListener(anchor2DOverlayListener);
-                pt.addPositionListener(anchor2DPositionListener);
-            }
-        }
+        if (closedArea == null)
+            this.closedArea = new Area(ShapeUtil.getClosedPath(path));
+        else
+            this.closedArea = closedArea;
+        if (openPath == null)
+            this.openPath = ShapeUtil.getOpenPath(path);
+        else
+            this.openPath = openPath;
 
         // set name
         setName("Path2D");
     }
 
+    /**
+     * Build a new ROI2DPath from the specified path.
+     */
+    public ROI2DPath(Path2D path)
+    {
+        this(path, null, null);
+
+    }
+
+    /**
+     * Build a new ROI2DPath from the specified path.
+     */
     public ROI2DPath(Shape shape)
     {
-        this(new Path2D.Double(shape));
+        this(new Path2D.Double(shape), (shape instanceof Area) ? (Area) shape : null, null);
     }
 
     /**
@@ -103,12 +123,11 @@ public class ROI2DPath extends ROI2DShape
     public ROI2DPath(Point5D pt)
     {
         this(pt.toPoint2D());
-        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DPath()
     {
-        this(new Path2D.Double());
+        this(new Path2D.Double(Path2D.WIND_NON_ZERO));
     }
 
     @Override
@@ -117,9 +136,49 @@ public class ROI2DPath extends ROI2DShape
         return new PathAnchor2D(pos.getX(), pos.getY(), getColor(), getFocusedColor());
     }
 
+    protected void rebuildControlPointsFromPath()
+    {
+        final Color color = getColor();
+        final Color focusedColor = getFocusedColor();
+
+        // remove listeners
+        for (Anchor2D pt : controlPoints)
+        {
+            pt.removeOverlayListener(anchor2DOverlayListener);
+            pt.removePositionListener(anchor2DPositionListener);
+        }
+
+        controlPoints.clear();
+        // add path points to the control point list
+        controlPoints.addAll(ShapeUtil.getAnchorsFromShape(getPath(), color, focusedColor));
+
+        // add listeners
+        for (Anchor2D pt : controlPoints)
+        {
+            pt.addOverlayListener(anchor2DOverlayListener);
+            pt.addPositionListener(anchor2DPositionListener);
+        }
+    }
+
     protected Path2D getPath()
     {
         return (Path2D) shape;
+    }
+
+    /**
+     * Returns the closed area part of the ROI2DPath in {@link Area} shape format
+     */
+    public Area getClosedArea()
+    {
+        return closedArea;
+    }
+
+    /**
+     * Returns the open path part of the ROI2DPath in {@link Path2D} shape format
+     */
+    public Path2D getOpenPath()
+    {
+        return openPath;
     }
 
     @Override
@@ -127,6 +186,230 @@ public class ROI2DPath extends ROI2DShape
     {
         // this ROI doesn't support point add
         return false;
+    }
+
+    @Override
+    public boolean contains(double x, double y)
+    {
+        // only consider closed path
+        return ShapeUtil.getClosedPath(getPath()).contains(x, y);
+    }
+
+    @Override
+    public boolean contains(Point2D p)
+    {
+        // only consider closed path
+        return ShapeUtil.getClosedPath(getPath()).contains(p);
+    }
+
+    @Override
+    public boolean contains(double x, double y, double w, double h)
+    {
+        // only consider closed path
+        return ShapeUtil.getClosedPath(getPath()).contains(x, y, w, h);
+    }
+
+    @Override
+    public boolean contains(Rectangle2D r)
+    {
+        // only consider closed path
+        return ShapeUtil.getClosedPath(getPath()).contains(r);
+    }
+
+    @Override
+    public boolean contains(ROI roi)
+    {
+        // not closed --> do not contains anything
+        if (!ShapeUtil.isClosed(shape))
+            return false;
+
+        return super.contains(roi);
+    }
+
+    @Override
+    public ROI add(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final Path2D path = getPath();
+
+                if (roi instanceof ROI2DPath)
+                {
+                    final ROI2DPath roiPath = (ROI2DPath) roi;
+
+                    // compute closed area and open path parts
+                    closedArea.add(roiPath.closedArea);
+                    openPath.append(roiPath.openPath, false);
+                }
+                else
+                {
+                    // compute closed area and open path parts
+                    if (roiShape.getShape() instanceof Area)
+                        closedArea.add((Area) roiShape.getShape());
+                    else
+                        closedArea.add(new Area(ShapeUtil.getClosedPath(roiShape)));
+                    openPath.append(ShapeUtil.getOpenPath(roiShape), false);
+                }
+
+                // then rebuild path from closed and open parts
+                path.reset();
+                path.append(closedArea, false);
+                path.append(openPath, false);
+
+                rebuildControlPointsFromPath();
+                roiChanged();
+
+                return this;
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI intersect(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final Path2D path = getPath();
+
+                if (roi instanceof ROI2DPath)
+                {
+                    final ROI2DPath roiPath = (ROI2DPath) roi;
+
+                    // compute closed area intersection and clear open path
+                    closedArea.intersect(roiPath.closedArea);
+                    openPath.reset();
+                }
+                else
+                {
+                    // compute closed area intersection and clear open path
+                    if (roiShape.getShape() instanceof Area)
+                        closedArea.intersect((Area) roiShape.getShape());
+                    else
+                        closedArea.intersect(new Area(ShapeUtil.getClosedPath(roiShape)));
+                    openPath.reset();
+                }
+
+                // then rebuild path from closed area (open part is empty)
+                path.reset();
+                path.append(closedArea, false);
+
+                rebuildControlPointsFromPath();
+                roiChanged();
+
+                return this;
+            }
+        }
+
+        return super.intersect(roi, allowCreate);
+    }
+
+    @Override
+    public ROI exclusiveAdd(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final Path2D path = getPath();
+
+                if (roi instanceof ROI2DPath)
+                {
+                    final ROI2DPath roiPath = (ROI2DPath) roi;
+
+                    // compute exclusive union on closed area and simple append for open path
+                    closedArea.exclusiveOr(roiPath.closedArea);
+                    openPath.append(roiPath.openPath, false);
+                }
+                else
+                {
+                    // compute exclusive union on closed area and simple append for open path
+                    if (roiShape.getShape() instanceof Area)
+                        closedArea.exclusiveOr((Area) roiShape.getShape());
+                    else
+                        closedArea.exclusiveOr(new Area(ShapeUtil.getClosedPath(roiShape)));
+                    openPath.append(ShapeUtil.getOpenPath(roiShape), false);
+                }
+
+                // then rebuild path from closed and open parts
+                path.reset();
+                path.append(closedArea, false);
+                path.append(openPath, false);
+
+                rebuildControlPointsFromPath();
+                roiChanged();
+
+                return this;
+            }
+        }
+
+        return super.exclusiveAdd(roi, allowCreate);
+    }
+
+    @Override
+    public ROI subtract(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                final Path2D path = getPath();
+
+                if (roi instanceof ROI2DPath)
+                {
+                    final ROI2DPath roiPath = (ROI2DPath) roi;
+
+                    // compute closed area intersection and clear open path parts
+                    closedArea.exclusiveOr(roiPath.closedArea);
+                    if (!roiPath.closedArea.isEmpty())
+                        openPath.reset();
+                }
+                else
+                {
+                    final Area area;
+
+                    // compute closed area and open path parts
+                    if (roiShape.getShape() instanceof Area)
+                        area = (Area) roiShape.getShape();
+                    else
+                        area = new Area(ShapeUtil.getClosedPath(roiShape));
+                    if (!area.isEmpty())
+                    {
+                        closedArea.exclusiveOr(area);
+                        openPath.reset();
+                    }
+                }
+
+                // then rebuild path from closed and open parts
+                path.reset();
+                path.append(closedArea, false);
+                path.append(openPath, false);
+
+                rebuildControlPointsFromPath();
+                roiChanged();
+
+                return this;
+            }
+        }
+
+        return super.subtract(roi, allowCreate);
     }
 
     /**
@@ -145,10 +428,18 @@ public class ROI2DPath extends ROI2DShape
         return result;
     }
 
+    protected void updateCachedStructures()
+    {
+        closedArea = new Area(ShapeUtil.getClosedPath(getPath()));
+        openPath = ShapeUtil.getOpenPath(getPath());
+    }
+
     @Override
     protected void updateShape()
     {
-        ShapeUtil.buildPathFromAnchors(getPath(), getPathAnchors());
+        ShapeUtil.buildPathFromAnchors(getPath(), getPathAnchors(), false);
+        // update internal closed area and open path
+        updateCachedStructures();
 
         // call super method after shape has been updated
         super.updateShape();

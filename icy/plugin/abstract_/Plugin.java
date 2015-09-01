@@ -309,7 +309,7 @@ public abstract class Plugin
      */
     protected String getResourceLibraryPath()
     {
-        return "lib" + ResourceUtil.separator + SystemUtil.getOSArchIdString();
+        return "lib" + FileUtil.separator + SystemUtil.getOSArchIdString();
     }
 
     /**
@@ -348,7 +348,7 @@ public abstract class Plugin
             // get mapped library name
             String mappedlibName = System.mapLibraryName(libName);
             // get base resource path for native library
-            final String basePath = getResourceLibraryPath() + ResourceUtil.separator;
+            final String basePath = getResourceLibraryPath() + FileUtil.separator;
 
             // search for library in resource
             URL libUrl = getResource(basePath + mappedlibName);

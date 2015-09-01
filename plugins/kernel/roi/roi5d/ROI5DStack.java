@@ -383,6 +383,9 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
      */
     public void setSlice(int c, R roi4d)
     {
+        if (roi4d == null)
+            throw new IllegalArgumentException("Cannot set an empty slice in a 5D ROI");
+
         // set C position
         roi4d.setC(c);
         // listen events from this ROI and its overlay

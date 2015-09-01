@@ -24,6 +24,7 @@ import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.IdConfirmDialog;
+import icy.gui.dialog.IdConfirmDialog.Confirmer;
 import icy.gui.frame.ExitFrame;
 import icy.gui.frame.IcyExternalFrame;
 import icy.gui.frame.SplashScreenFrame;
@@ -94,7 +95,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.6.1.1");
+    public static Version version = new Version("1.6.1.2");
 
     /**
      * Main interface
@@ -164,6 +165,9 @@ public class Icy
             if (!headless && SystemUtil.isHeadLess())
                 headless = true;
 
+            // initialize preferences
+            IcyPreferences.init();
+
             // check if Icy is already running.
             lock = SingleInstanceCheck.lock("icy");
             if (lock == null)
@@ -171,13 +175,20 @@ public class Icy
                 // we always accept multi instance in headless mode
                 if (!headless)
                 {
-                    // don't use the ConfirmDialog as headless is still false here
-                    if (!ConfirmDialog.getBooleanReturnValue(JOptionPane.showConfirmDialog(null,
-                            "Icy is already running on this computer. Start anyway ?", "Confirmation",
-                            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)))
-                    {
+                    // we need to use our custom ConfirmDialog as
+                    // Icy.getMainInterface().isHeadless() will return false here
+                    final Confirmer confirmer = new Confirmer("Confirmation",
+                            "Icy is already running on this computer. Start anyway ?", JOptionPane.YES_NO_OPTION,
+                            ApplicationPreferences.ID_SINGLE_INSTANCE);
 
+                    ThreadUtil.invokeNow(confirmer);
+
+                    if (!confirmer.getResult())
+                    {
                         System.out.println("Exiting...");
+                        // save preferences
+                        IcyPreferences.save();
+                        // and quit
                         System.exit(0);
                         return;
                     }
@@ -205,8 +216,6 @@ public class Icy
                 });
             }
 
-            // initialize preferences
-            IcyPreferences.init();
             // initialize network (need preferences)
             NetworkUtil.init();
 
@@ -299,6 +308,33 @@ public class Icy
         // prepare native library files (need preferences init)
         nativeLibrariesInit();
 
+        // changed version ?
+        if (!ApplicationPreferences.getVersion().equals(Icy.version))
+        {
+            // not headless ?
+            if (!headless)
+            {
+                // display the new version information
+                final String changeLog = Icy.getChangeLog();
+
+                // show the new version frame
+                if (!StringUtil.isEmpty(changeLog))
+                {
+                    ThreadUtil.invokeNow(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            new NewVersionFrame(Icy.getChangeLog());
+                        }
+                    });
+                }
+            }
+            
+            // force check update for the new version
+            GeneralPreferences.setLastUpdateCheckTime(0);
+        }
+
         final long currentTime = System.currentTimeMillis();
         final long halfDayInterval = 1000 * 60 * 60 * 12;
 
@@ -316,26 +352,6 @@ public class Icy
             GeneralPreferences.setLastUpdateCheckTime(currentTime);
         }
 
-        // changed version and not headless ?
-        if (!headless && !ApplicationPreferences.getVersion().equals(Icy.version))
-        {
-            // display the new version information
-            final String changeLog = Icy.getChangeLog();
-
-            // show the new version frame
-            if (!StringUtil.isEmpty(changeLog))
-            {
-                ThreadUtil.invokeNow(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        new NewVersionFrame(Icy.getChangeLog());
-                    }
-                });
-            }
-        }
-
         // update version info
         ApplicationPreferences.setVersion(Icy.version);
         // set LOCI debug level
@@ -350,22 +366,20 @@ public class Icy
         // handle startup arguments
         if (startupImage != null)
             Icy.getMainInterface().addSequence(Loader.loadSequence(FileUtil.getGenericPath(startupImage), 0, false));
+
+        // wait while updates are occurring before starting command line plugin...
+        while (PluginInstaller.isProcessing() || WorkspaceInstaller.isProcessing())
+            ThreadUtil.sleep(1);
+
         if (startupPlugin != null)
         {
             PluginLoader.waitWhileLoading();
             PluginLauncher.start(startupPlugin);
         }
 
-        // headless mode ?
+        // headless mode ? we can exit now...
         if (headless)
-        {
-            // wait while updates are occurring...
-            while (PluginInstaller.isProcessing() || WorkspaceInstaller.isProcessing())
-                ThreadUtil.sleep(1);
-
-            // now we can exit
             exit(false);
-        }
     }
 
     private static boolean handleAppArgs(String[] args)

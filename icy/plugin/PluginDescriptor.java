@@ -481,13 +481,13 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Check if the given class is a subclass of the class contained in this descriptor.
+     * Check if the plugin class is an instance of (or subclass of) the specified class.
      * 
-     * @param containedClass
+     * @param clazz
      */
-    public boolean isInstanceOf(Class<?> containedClass)
+    public boolean isInstanceOf(Class<?> baseClazz)
     {
-        return ClassUtil.isSubClass(pluginClass, containedClass);
+        return ClassUtil.isSubClass(pluginClass, baseClazz);
     }
 
     /**

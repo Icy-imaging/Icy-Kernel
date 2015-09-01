@@ -37,8 +37,8 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{RepositoryPreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{GeneralPreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{CanvasPreferences.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{WorkspaceOnlinePreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{ApplicationPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{WorkspaceOnlinePreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{ChatPreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update{ElementDescriptor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin{PluginDescriptor.java"/>

@@ -848,7 +848,8 @@ public class StringUtil
      */
     public static String htmlBoldSubstring(String text, String keyword, boolean ignoreCase)
     {
-        if (!isEmpty(text) && !isEmpty(keyword))
+        // right now we just ignore 'b' keyword with produce error because of the <b> sequence.
+        if (!isEmpty(text) && !isEmpty(keyword) && !keyword.toLowerCase().equals("b"))
         {
             final int keywordLen = keyword.length();
             final String key;

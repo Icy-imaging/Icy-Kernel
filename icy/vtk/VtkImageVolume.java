@@ -700,8 +700,7 @@ public class VtkImageVolume
     }
 
     /**
-     * Sets the current volume mapper type used to render the volume (see
-     * {@link VtkVolumeMapperType}).
+     * Sets the current volume mapper type used to render the volume (see {@link VtkVolumeMapperType}).
      */
     public boolean setVolumeMapperType(VtkVolumeMapperType value)
     {
@@ -768,8 +767,7 @@ public class VtkImageVolume
     }
 
     /**
-     * Returns <code>true</code> if the current selected volume mapper is supported in the specified
-     * {@link vtkRenderer}
+     * Returns <code>true</code> if the current selected volume mapper is supported in the specified {@link vtkRenderer}
      */
     public boolean isMapperSupported(vtkRenderer renderer)
     {
@@ -812,6 +810,16 @@ public class VtkImageVolume
     public void setBlendingMode(VtkVolumeBlendType value)
     {
         volumeMapper.SetBlendMode(value.ordinal());
+    }
+
+    /**
+     * Get the current volume image data object.
+     * 
+     * @see VtkUtil#getImageData(Object, DataType, int, int, int, int)
+     */
+    public vtkImageData getVolumeData()
+    {
+        return imageData;
     }
 
     /**

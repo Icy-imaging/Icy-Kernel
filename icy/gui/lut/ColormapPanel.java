@@ -19,7 +19,6 @@
 package icy.gui.lut;
 
 import icy.canvas.IcyCanvas3D;
-import icy.file.FileUtil;
 import icy.file.xml.XMLPersistentHelper;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
@@ -29,26 +28,19 @@ import icy.gui.dialog.SaveDialog;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
-import icy.image.colormap.FireColorMap;
-import icy.image.colormap.GlowColorMap;
-import icy.image.colormap.HSVColorMap;
-import icy.image.colormap.IceColorMap;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
 import icy.image.colormap.IcyColorMapEvent;
 import icy.image.colormap.IcyColorMapListener;
-import icy.image.colormap.JETColorMap;
-import icy.image.colormap.LinearColorMap;
 import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.sequence.Sequence;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -69,10 +61,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
      */
     private static final long serialVersionUID = -4042084504553770641L;
 
-    private static final String DEFAULT_COLORMAP_DIR = "colormap";
+    private static final String DEFAULT_COLORMAP_DIR = IcyColorMap.DEFAULT_COLORMAP_DIR;
     private static final String DEFAULT_COLORMAP_NAME = "colormap.xml";
-
-    private static List<IcyColorMap> customMaps = null;
 
     /**
      * gui
@@ -95,12 +85,15 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
      */
     final IcyColorMap colormap;
 
+    private boolean modifyingColormap;
+
     public ColormapPanel(final Viewer viewer, final LUTChannel lutChannel)
     {
         super();
 
         this.viewer = viewer;
         this.lutChannel = lutChannel;
+        modifyingColormap = false;
 
         colormap = lutChannel.getColorMap();
         colormap.setName("Custom");
@@ -186,62 +179,25 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             defaultColormap.copyFrom(colormap);
         }
 
-        // build colormap list
-        final List<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();
+        // copy it in the sequence user colormap
+        updateSequenceColormap();
 
-        colormaps.add(defaultColormap);
+        // get colormap list
+        final List<IcyColorMap> colormaps = IcyColorMap.getAllColorMaps(true, true);
 
-        if (!defaultColormap.equals(LinearColorMap.gray_))
-            colormaps.add(LinearColorMap.gray_);
-        if (!defaultColormap.equals(LinearColorMap.gray_inv_))
-            colormaps.add(LinearColorMap.gray_inv_);
-        if (!defaultColormap.equals(LinearColorMap.red_))
-            colormaps.add(LinearColorMap.red_);
-        if (!defaultColormap.equals(LinearColorMap.green_))
-            colormaps.add(LinearColorMap.green_);
-        if (!defaultColormap.equals(LinearColorMap.blue_))
-            colormaps.add(LinearColorMap.blue_);
-        if (!defaultColormap.equals(LinearColorMap.magenta_))
-            colormaps.add(LinearColorMap.magenta_);
-        if (!defaultColormap.equals(LinearColorMap.yellow_))
-            colormaps.add(LinearColorMap.yellow_);
-        if (!defaultColormap.equals(LinearColorMap.cyan_))
-            colormaps.add(LinearColorMap.cyan_);
-        if (!defaultColormap.equals(LinearColorMap.alpha_))
-            colormaps.add(LinearColorMap.alpha_);
-
-        colormaps.add(new IceColorMap());
-        colormaps.add(new FireColorMap());
-        colormaps.add(new HSVColorMap());
-        colormaps.add(new JETColorMap());
-        colormaps.add(new GlowColorMap(true));
-
-        if (customMaps == null)
-        {
-            // load custom maps
-            customMaps = new ArrayList<IcyColorMap>();
-
-            // add saved colormap
-            for (File f : FileUtil.getFiles(new File(DEFAULT_COLORMAP_DIR), null, false, false, false))
-            {
-                final IcyColorMap map = new IcyColorMap();
-                if (XMLPersistentHelper.loadFromXML(map, f))
-                    customMaps.add(map);
-            }
-        }
-
-        // add custom maps
-        for (IcyColorMap map : customMaps)
-            colormaps.add(map);
+        // remove the default colormap if already present in the list
+        colormaps.remove(defaultColormap);
+        // and set it at position 0
+        colormaps.add(0, defaultColormap);
 
         // this is the user customized colormap
         colormaps.add(colormap);
 
         // build colormap selector
         colormapComboBox = new JComboBox(colormaps.toArray());
-        colormapComboBox.setRenderer(new ColormapComboBoxRenderer(colormapComboBox, 64, 16));
+        colormapComboBox.setRenderer(new ColormapComboBoxRenderer(colormapComboBox));
         // limit size
-        ComponentUtil.setFixedWidth(colormapComboBox, 64 + 30);
+        ComponentUtil.setFixedWidth(colormapComboBox, 96);
         colormapComboBox.setToolTipText("Select colormap model");
         // don't want focusable here
         colormapComboBox.setFocusable(false);
@@ -372,28 +328,47 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         if (colormap == src)
             return;
 
-        // we want to preserve the "custom" colormap name
-        // colormap.setName(src.getName());
-
-        if (viewer.getCanvas() instanceof IcyCanvas3D)
+        modifyingColormap = true;
+        try
         {
-            // copy alpha component only if we have specific alpha info
-            // copyAlpha = !src.alpha.isAllSame();
-            colormap.beginUpdate();
-            try
+            if (viewer.getCanvas() instanceof IcyCanvas3D)
             {
-                colormap.copyFrom(src, false);
-                colormap.setDefaultAlphaFor3D();
+                // copy alpha component only if we have specific alpha info
+                // copyAlpha = !src.alpha.isAllSame();
+                colormap.beginUpdate();
+                try
+                {
+                    colormap.copyFrom(src, false);
+                    colormap.setAlphaToLinear3D();
+                }
+                finally
+                {
+                    colormap.endUpdate();
+                }
             }
-            finally
-            {
-                colormap.endUpdate();
-            }
+            else
+                colormap.copyFrom(src, true);
         }
-        else
-            colormap.copyFrom(src, true);
+        finally
+        {
+            modifyingColormap = false;
+        }
 
         colormapComboBox.setSelectedItem(colormap);
+    }
+
+    void updateSequenceColormap()
+    {
+        // set the current colormap in the sequence
+        final Sequence seq = viewer.getSequence();
+
+        if (seq != null)
+        {
+            final int ch = lutChannel.getChannel();
+
+            if (ch < seq.getSizeC())
+                seq.setColormap(ch, colormap, true);
+        }
     }
 
     /**
@@ -416,10 +391,15 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
                 break;
 
             case MAP_CHANGED:
+                // colormap has been manually changed, set name to custom
+                if (!modifyingColormap)
+                    colormap.setName("Custom");
                 // update the combo box colormap representation
                 colormapComboBox.setSelectedItem(colormap);
                 colormapComboBox.repaint();
                 break;
         }
+
+        updateSequenceColormap();
     }
 }

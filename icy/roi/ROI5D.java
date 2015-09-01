@@ -200,8 +200,49 @@ public abstract class ROI5D extends ROI
         return roi.intersects(this);
     }
 
+    @Override
+    public BooleanMask2D getBooleanMask2D(int z, int t, int c, boolean inclusive)
+    {
+        final BooleanMask2D result = super.getBooleanMask2D(z, t, c, inclusive);
+
+        // optimized bounds to optimize memory usage for this specific Z, T, C slice mask
+        result.optimizeBounds();
+
+        return result;
+    }
+
     /**
-     * Get the {@link BooleanMask3D} object representing the roi for specified T,C position.<br>
+     * Returns the {@link BooleanMask3D} object representing the XYZ volume content at specified Z,
+     * T, C position.<br>
+     * It contains the 3D rectangle mask bounds and the associated boolean array mask.<br>
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask or -1 to retrieve the whole Z
+     *        dimension
+     * @param t
+     *        T position we want to retrieve the boolean mask.
+     * @param c
+     *        C position we want to retrieve the boolean mask.
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask3D getBooleanMask3D(int z, int t, int c, boolean inclusive)
+    {
+        // whole Z dimension
+        if (z == -1)
+            return getBooleanMask3D(t, c, inclusive);
+
+        // define bounds
+        final Rectangle3D.Integer bounds = getBounds5D().toRectangle3D().toInteger();
+        bounds.setZ(z);
+        bounds.setSizeZ(1);
+
+        return new BooleanMask3D(bounds, new BooleanMask2D[] {getBooleanMask2D(z, t, c, inclusive)});
+    }
+
+    /**
+     * Returns the {@link BooleanMask3D} object representing the XYZ volume content at specified T,
+     * C position.<br>
      * It contains the 3D rectangle mask bounds and the associated boolean array mask.<br>
      * 
      * @param inclusive
@@ -216,6 +257,62 @@ public abstract class ROI5D extends ROI
             masks[z] = getBooleanMask2D(bounds.z + z, t, c, inclusive);
 
         return new BooleanMask3D(bounds, masks);
+    }
+
+    /**
+     * Returns the {@link BooleanMask4D} object representing the XYZT space content at specified Z
+     * and C position.
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask or -1 to retrieve the whole Z
+     *        dimension
+     * @param t
+     *        T position we want to retrieve the boolean mask or -1 to retrieve the whole T
+     *        dimension
+     * @param c
+     *        C position we want to retrieve the boolean mask.
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask4D getBooleanMask4D(int z, int t, int c, boolean inclusive)
+    {
+        // whole Z dimension
+        if (z == -1)
+        {
+            // whole Z and T dimension
+            if (t == -1)
+                return getBooleanMask4D(c, inclusive);
+
+            // define bounds
+            final Rectangle4D.Integer bounds = getBounds5D().toRectangle4D().toInteger();
+            bounds.setT(t);
+            bounds.setSizeT(1);
+
+            // whole Z dimension but specific T
+            return new BooleanMask4D(bounds, new BooleanMask3D[] {getBooleanMask3D(t, c, inclusive)});
+        }
+
+        final Rectangle4D.Integer bounds4d = getBounds5D().toRectangle4D().toInteger();
+
+        // specific Z
+        bounds4d.setZ(z);
+        bounds4d.setSizeZ(1);
+
+        // specific T dimension ?
+        if (t != -1)
+        {
+            bounds4d.setT(t);
+            bounds4d.setSizeT(1);
+        }
+
+        final Rectangle3D.Integer bounds3d = (Rectangle3D.Integer) bounds4d.toRectangle3D();
+        final BooleanMask3D masks[] = new BooleanMask3D[bounds4d.sizeT];
+
+        for (int i = 0; i < bounds4d.sizeT; i++)
+            masks[i] = new BooleanMask3D((Rectangle3D.Integer) bounds3d.clone(), new BooleanMask2D[] {getBooleanMask2D(
+                    z, bounds4d.t + i, c, inclusive)});
+
+        return new BooleanMask4D(bounds4d, masks);
     }
 
     /**
@@ -234,6 +331,101 @@ public abstract class ROI5D extends ROI
             masks[t] = getBooleanMask3D(bounds.t + t, c, inclusive);
 
         return new BooleanMask4D(bounds, masks);
+    }
+
+    /**
+     * Returns the {@link BooleanMask5D} object representing the XYZTC space content at specified Z,
+     * T, C position.
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask or -1 to retrieve the whole Z
+     *        dimension
+     * @param t
+     *        T position we want to retrieve the boolean mask or -1 to retrieve the whole T
+     *        dimension
+     * @param c
+     *        C position we want to retrieve the boolean mask or -1 to retrieve the whole C
+     *        dimension
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask5D getBooleanMask5D(int z, int t, int c, boolean inclusive)
+    {
+        // whole Z dimension
+        if (z == -1)
+        {
+            // whole Z and T dimension
+            if (t == -1)
+            {
+                // whole Z, T and C dimension
+                if (c == -1)
+                    return getBooleanMask(inclusive);
+
+                // define bounds
+                final Rectangle5D.Integer bounds = getBounds5D().toInteger();
+                bounds.setC(c);
+                bounds.setSizeC(1);
+
+                // whole Z and T dimension but specific C
+                return new BooleanMask5D(bounds, new BooleanMask4D[] {getBooleanMask4D(c, inclusive)});
+            }
+
+            final Rectangle5D.Integer bounds5d = getBounds();
+
+            // specific T
+            bounds5d.setT(t);
+            bounds5d.setSizeT(1);
+            // specific C dimension ?
+            if (c != -1)
+            {
+                bounds5d.setC(c);
+                bounds5d.setSizeC(1);
+            }
+
+            final Rectangle4D.Integer bounds4d = (Rectangle4D.Integer) bounds5d.toRectangle4D();
+            final BooleanMask4D masks[] = new BooleanMask4D[bounds5d.sizeC];
+
+            for (int i = 0; i < bounds5d.sizeC; i++)
+                masks[i] = new BooleanMask4D((Rectangle4D.Integer) bounds4d.clone(),
+                        new BooleanMask3D[] {getBooleanMask3D(t, bounds5d.c + i, inclusive)});
+
+            return new BooleanMask5D(bounds5d, masks);
+        }
+
+        final Rectangle5D.Integer bounds5d = getBounds();
+
+        // specific Z
+        bounds5d.setZ(z);
+        bounds5d.setSizeZ(1);
+        // specific T dimension ?
+        if (t != -1)
+        {
+            bounds5d.setT(t);
+            bounds5d.setSizeT(1);
+        }
+        // specific C dimension ?
+        if (c != -1)
+        {
+            bounds5d.setC(c);
+            bounds5d.setSizeC(1);
+        }
+
+        final Rectangle4D.Integer bounds4d = (Rectangle4D.Integer) bounds5d.toRectangle4D();
+        final Rectangle3D.Integer bounds3d = (Rectangle3D.Integer) bounds4d.toRectangle3D();
+        final BooleanMask4D masks[] = new BooleanMask4D[bounds5d.sizeC];
+
+        for (int i = 0; i < bounds5d.sizeC; i++)
+        {
+            final BooleanMask3D masks3d[] = new BooleanMask3D[bounds4d.sizeT];
+
+            for (int j = 0; j < bounds5d.sizeT; j++)
+                masks3d[i] = new BooleanMask3D((Rectangle3D.Integer) bounds3d.clone(),
+                        new BooleanMask2D[] {getBooleanMask2D(z, bounds5d.t + j, bounds5d.c + i, inclusive)});
+
+            masks[i] = new BooleanMask4D((Rectangle4D.Integer) bounds4d.clone(), masks3d);
+        }
+
+        return new BooleanMask5D(bounds5d, masks);
     }
 
     /**
@@ -275,13 +467,13 @@ public abstract class ROI5D extends ROI
     public double computeNumberOfPoints()
     {
         double numPoints = 0;
-        
+
         // approximation by using number of point of boolean mask with and without border
-        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
-        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(true).getNumberOfPoints();
+        numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
-        
-        return numPoints / getDimension();
+
+        return numPoints;
     }
 
 }

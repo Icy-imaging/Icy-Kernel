@@ -44,15 +44,6 @@ public class ROI2DPolyLine extends plugins.kernel.roi.roi2d.ROI2DPolyLine
     }
 
     /**
-     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPolyLine.ROI2DPolyLinePainter} instead.
-     */
-    @Deprecated
-    protected class ROI2DPolyLinePainter extends plugins.kernel.roi.roi2d.ROI2DPolyLine.ROI2DPolyLinePainter
-    {
-
-    }
-
-    /**
      * @deprecated
      */
     @Deprecated
@@ -90,11 +81,5 @@ public class ROI2DPolyLine extends plugins.kernel.roi.roi2d.ROI2DPolyLine
     protected Anchor2D createAnchor(Point2D pos)
     {
         return new ROI2DPolyLineAnchor2D(pos, getColor(), getFocusedColor());
-    }
-
-    @Override
-    protected ROI2DPolyLinePainter createPainter()
-    {
-        return new ROI2DPolyLinePainter();
     }
 }

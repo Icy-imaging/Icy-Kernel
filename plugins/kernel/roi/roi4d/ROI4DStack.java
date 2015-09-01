@@ -408,6 +408,9 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
      */
     public void setSlice(int t, R roi3d)
     {
+        if (roi3d == null)
+            throw new IllegalArgumentException("Cannot set an empty slice in a 4D ROI");
+
         // set T and C position
         roi3d.setT(t);
         roi3d.setC(getC());

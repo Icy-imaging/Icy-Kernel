@@ -3,18 +3,14 @@
  * 
  * This file is part of Icy.
  * 
- * Icy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Icy is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * 
- * Icy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * Icy is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with Icy. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with Icy. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 package icy.action;
 
@@ -39,6 +35,7 @@ import icy.system.SystemUtil;
 import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
+import icy.util.ClassUtil;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -233,7 +230,7 @@ public class GeneralActions
 
             if (seq != null)
             {
-                final ImagePlus ip = ImageJUtil.convertToImageJImage(seq, progressFrame);
+                final ImagePlus ip = ImageJUtil.convertToImageJImage(seq, true, progressFrame);
 
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -472,9 +469,9 @@ public class GeneralActions
 
             try
             {
-                if (type.isAssignableFrom(IcyAbstractAction[].class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction[].class))
                     result.addAll(Arrays.asList(((IcyAbstractAction[]) field.get(null))));
-                else if (type.isAssignableFrom(IcyAbstractAction.class))
+                else if (ClassUtil.isSubClass(type, IcyAbstractAction.class))
                     result.add((IcyAbstractAction) field.get(null));
             }
             catch (Exception e)

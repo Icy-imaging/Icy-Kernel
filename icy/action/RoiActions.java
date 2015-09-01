@@ -29,11 +29,15 @@ import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROI3D;
+import icy.roi.ROI4D;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.sequence.edit.ROIAddSequenceEdit;
 import icy.sequence.edit.ROIAddsSequenceEdit;
 import icy.system.SystemUtil;
+import icy.util.ClassUtil;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
 import icy.util.XMLUtil;
@@ -525,41 +529,57 @@ public class RoiActions
                 {
                     final List<ROI> selectedROI = roisPanel.getSelectedRois();
 
-                    // NOT work only on single ROI
+                    // work only on single ROI
                     if (selectedROI.size() != 1)
                         return false;
 
                     final ROI roi = selectedROI.get(0);
-                    final ROI seqROI;
+                    final ROI seqRoi;
 
                     switch (roi.getDimension())
                     {
                         case 2:
-                            seqROI = new ROI2DRectangle(sequence.getBounds2D());
+                            final ROI2D roi2d = (ROI2D) roi;
+                            final ROI2DRectangle seqRoi2d = new ROI2DRectangle(sequence.getBounds2D());
+                            // set on same position
+                            seqRoi2d.setZ(roi2d.getZ());
+                            seqRoi2d.setT(roi2d.getT());
+                            seqRoi2d.setC(roi2d.getC());
+                            seqRoi = seqRoi2d;
                             break;
 
                         case 3:
-                            seqROI = new ROI3DStackRectangle(sequence.getBounds5D().toRectangle3D());
+                            final ROI3D roi3d = (ROI3D) roi;
+                            final ROI3DStackRectangle seqRoi3d = new ROI3DStackRectangle(sequence.getBounds5D()
+                                    .toRectangle3D());
+                            // set on same position
+                            seqRoi3d.setT(roi3d.getT());
+                            seqRoi3d.setC(roi3d.getC());
+                            seqRoi = seqRoi3d;
                             break;
 
                         case 4:
-                            seqROI = new ROI4DStackRectangle(sequence.getBounds5D().toRectangle4D());
+                            final ROI4D roi4d = (ROI4D) roi;
+                            final ROI4DStackRectangle seqRoi4d = new ROI4DStackRectangle(sequence.getBounds5D()
+                                    .toRectangle4D());
+                            // set on same position
+                            seqRoi4d.setC(roi4d.getC());
+                            seqRoi = seqRoi4d;
                             break;
 
                         case 5:
-                            seqROI = new ROI5DStackRectangle(sequence.getBounds5D());
+                            seqRoi = new ROI5DStackRectangle(sequence.getBounds5D());
                             break;
 
                         default:
-                            seqROI = null;
+                            seqRoi = null;
                             break;
-
                     }
 
-                    if (seqROI != null)
+                    if (seqRoi != null)
                     {
                         // we do the NOT operation by subtracting current ROI to sequence bounds ROI
-                        final ROI mergeROI = ROIUtil.subtract(seqROI, roi);
+                        final ROI mergeROI = ROIUtil.subtract(seqRoi, roi);
 
                         if (mergeROI != null)
                         {
@@ -600,7 +620,8 @@ public class RoiActions
     };
 
     public static IcyAbstractAction boolOrAction = new IcyAbstractAction("OR", new IcyIcon(ResourceUtil.ICON_ROI_OR),
-            "Boolean OR operation", "Create a new ROI representing the union of selected ROIs", true, "Computing union...")
+            "Boolean OR operation", "Create a new ROI representing the union of selected ROIs", true,
+            "Computing union...")
     {
         /**
          * 
@@ -849,7 +870,8 @@ public class RoiActions
     };
 
     public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export", new IcyIcon(
-            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export all ROI informations in XLS file")
+            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export all ROI informations in XLS file", true,
+            "Exporting ROI informations...")
     {
         /**
          * 
@@ -946,6 +968,25 @@ public class RoiActions
         }
     };
 
+    public static IcyAbstractAction settingAction = new IcyAbstractAction("Preferences", new IcyIcon(
+            ResourceUtil.ICON_COG), "ROI table preferences")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
+
+            if (roisPanel != null)
+            {
+                roisPanel.showSettingPanel();
+
+                return true;
+            }
+
+            return false;
+        }
+    };
+
     /**
      * Return all actions of this class
      */
@@ -959,9 +1000,9 @@ public class RoiActions
 
             try
             {
-                if (type.isAssignableFrom(IcyAbstractAction[].class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction[].class))
                     result.addAll(Arrays.asList(((IcyAbstractAction[]) field.get(null))));
-                else if (type.isAssignableFrom(IcyAbstractAction.class))
+                else if (ClassUtil.isSubClass(type, IcyAbstractAction.class))
                     result.add((IcyAbstractAction) field.get(null));
             }
             catch (Exception e)

@@ -311,7 +311,7 @@ public abstract class ROI4D extends ROI
         else
             cok = ((c + sizeC) > getC()) && (c < (getC() + 1d));
 
-        return intersects(x, y, z, t, sizeX, sizeY, sizeZ, sizeT) && cok;
+        return cok && intersects(x, y, z, t, sizeX, sizeY, sizeZ, sizeT);
     }
 
     /*
@@ -628,6 +628,8 @@ public abstract class ROI4D extends ROI
      * 
      * @param z
      *        Z position we want to retrieve the boolean mask
+     * @param t
+     *        T position we want to retrieve the boolean mask
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
      */
@@ -641,15 +643,49 @@ public abstract class ROI4D extends ROI
 
         final BooleanMask2D result = new BooleanMask2D(bounds, getBooleanMask2D(bounds, z, t, inclusive));
 
-        // optimized bounds to optimize memory usage for this specific Z slice mask
+        // optimized bounds to optimize memory usage for this specific Z, T slice mask
         result.optimizeBounds();
 
         return result;
     }
 
     /**
+     * Returns the {@link BooleanMask3D} object representing the XYZ volume content at specified Z,
+     * T, C position.<br>
+     * It contains the 3D rectangle mask bounds and the associated boolean array mask.
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask or -1 to retrieve the whole Z
+     *        dimension
+     * @param t
+     *        T position we want to retrieve the boolean mask.
+     * @param c
+     *        C position we want to retrieve the boolean mask.<br>
+     *        Set it to -1 to retrieve the mask whatever is the C position of this ROI4D.
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask3D getBooleanMask3D(int z, int t, int c, boolean inclusive)
+    {
+        // not on the correct C position --> return empty mask
+        if (!isActiveFor(c))
+            return new BooleanMask3D();
+
+        // whole Z dimension
+        if (z == -1)
+            return getBooleanMask3D(t, inclusive);
+
+        // define bounds
+        final Rectangle3D.Integer bounds = getBounds4D().toRectangle3D().toInteger();
+        bounds.setZ(z);
+        bounds.setSizeZ(1);
+
+        return new BooleanMask3D(bounds, new BooleanMask2D[] {getBooleanMask2D(z, t, inclusive)});
+    }
+
+    /**
      * Get the {@link BooleanMask3D} object representing the roi for specified T position.<br>
-     * It contains the 3D rectangle mask bounds and the associated boolean array mask.<br>
+     * It contains the 3D rectangle mask bounds and the associated boolean array mask.
      * 
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
@@ -663,6 +699,66 @@ public abstract class ROI4D extends ROI
             masks[z] = getBooleanMask2D(bounds.z + z, t, inclusive);
 
         return new BooleanMask3D(bounds, masks);
+    }
+
+    /**
+     * Returns the {@link BooleanMask4D} object representing the XYZT space content at specified Z,
+     * T, C position.
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask or -1 to retrieve the whole Z
+     *        dimension
+     * @param t
+     *        T position we want to retrieve the boolean mask or -1 to retrieve the whole T
+     *        dimension
+     * @param c
+     *        C position we want to retrieve the boolean mask.<br>
+     *        Set it to -1 to retrieve the mask whatever is the C position of this ROI4D.
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask4D getBooleanMask4D(int z, int t, int c, boolean inclusive)
+    {
+        // not on the correct C position --> return empty mask
+        if (!isActiveFor(c))
+            return new BooleanMask4D();
+
+        // whole Z dimension
+        if (z == -1)
+        {
+            // whole Z and T dimension
+            if (t == -1)
+                return getBooleanMask(inclusive);
+
+            // define bounds
+            final Rectangle4D.Integer bounds = getBounds4D().toInteger();
+            bounds.setT(t);
+            bounds.setSizeT(1);
+
+            // whole Z dimension but specific T
+            return new BooleanMask4D(bounds, new BooleanMask3D[] {getBooleanMask3D(t, inclusive)});
+        }
+
+        final Rectangle4D.Integer bounds4d = getBounds4D().toInteger();
+
+        // specific Z
+        bounds4d.setZ(z);
+        bounds4d.setSizeZ(1);
+        // specific T dimension ?
+        if (t != -1)
+        {
+            bounds4d.setT(t);
+            bounds4d.setSizeT(1);
+        }
+
+        final Rectangle3D.Integer bounds3d = (Rectangle3D.Integer) bounds4d.toRectangle3D();
+        final BooleanMask3D masks[] = new BooleanMask3D[bounds4d.sizeT];
+
+        for (int i = 0; i < bounds4d.sizeT; i++)
+            masks[i] = new BooleanMask3D((Rectangle3D.Integer) bounds3d.clone(), new BooleanMask2D[] {getBooleanMask2D(
+                    z, bounds4d.t + i, inclusive)});
+
+        return new BooleanMask4D(bounds4d, masks);
     }
 
     /**
@@ -704,13 +800,13 @@ public abstract class ROI4D extends ROI
     public double computeNumberOfPoints()
     {
         double numPoints = 0;
-        
+
         // approximation by using number of point of boolean mask with and without border
-        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
-        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(true).getNumberOfPoints();
+        numPoints += getBooleanMask(false).getNumberOfPoints();
         numPoints /= 2d;
-        
-        return numPoints / getDimension();
+
+        return numPoints;
     }
 
     /**

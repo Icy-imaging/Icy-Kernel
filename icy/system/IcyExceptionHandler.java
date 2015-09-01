@@ -19,6 +19,7 @@
 package icy.system;
 
 import icy.gui.dialog.MessageDialog;
+import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.plugin.PluginErrorReport;
 import icy.main.Icy;
 import icy.math.UnitUtil;
@@ -163,9 +164,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 }
                 else
                 {
-                    message = "Not enough memory !\n"
-                            + "Try to increase the Maximum Memory parameter in Preferences.\n"
-                            + "You can also report the error if you think it is not due to a memory problem.";
+                    message = "The task could not be completed because there is not enough memory !\n"
+                            + "Try to increase the Maximum Memory parameter in Preferences.";
                 }
             }
 
@@ -190,7 +190,18 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             {
                 final String title = t.toString();
 
-                PluginErrorReport.report(plugin, devId, title, message);
+                // handle the specific "not enough memory" differently
+                if ((t instanceof OutOfMemoryError) && (!errMess.contains("Thread")))
+                {
+                    if (!Icy.getMainInterface().isHeadLess())
+                        new FailedAnnounceFrame(
+                                "Not enough memory to complete the process ! Try to increase the 'Max Memory' parameter in Preferences.",
+                                30);
+                }
+                else
+                    // just report the error
+                    PluginErrorReport.report(plugin, devId, title, message);
+
                 // update last error dialog time
                 lastErrorDialog = System.currentTimeMillis();
             }

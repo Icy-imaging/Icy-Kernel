@@ -54,8 +54,10 @@ import icy.sequence.edit.DataSequenceEdit;
 import icy.sequence.edit.DefaultSequenceEdit;
 import icy.sequence.edit.MetadataSequenceEdit;
 import icy.sequence.edit.ROIAddSequenceEdit;
+import icy.sequence.edit.ROIAddsSequenceEdit;
 import icy.sequence.edit.ROIRemoveSequenceEdit;
 import icy.sequence.edit.ROIRemovesSequenceEdit;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
@@ -72,8 +74,10 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -94,8 +98,8 @@ import org.w3c.dom.Node;
  * Z dimension = depth<br>
  * T dimension = time<br>
  * <br>
- * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code>
- * define a list of {@link IcyBufferedImage} where each image is associated to a Z and T
+ * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code> define a list of
+ * {@link IcyBufferedImage} where each image is associated to a Z and T
  * information.
  * 
  * @author Fabrice de Chaumont & Stephane
@@ -382,27 +386,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 // Sequence persistence enabled --> save XML
                 if (GeneralPreferences.getSequencePersistence())
                     saveXMLData();
-
-                // TODO: normally the GC should be able to release overlay and roi if needed
-                // also that might be a problem for a sequence maintained by code (but not in GUI)
-                // to lost the overlays and the rois.
-
-                // synchronized (overlays)
-                // {
-                // for (Overlay overlay : overlays)
-                // overlay.removeOverlayListener(Sequence.this);
-                //
-                // overlays.clear();
-                // }
-                //
-                // synchronized (rois)
-                // {
-                // // remove all listener on ROI
-                // for (ROI roi : rois)
-                // roi.removeListener(Sequence.this);
-                //
-                // rois.clear();
-                // }
             }
         }))
         {
@@ -753,7 +736,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Origin filename (from/to which the sequence has been loaded/saved)<br>
+     * Origin filename (from/to which the sequence has been loaded/saved).<br>
+     * This filename information is also used to store the XML persistent data.<br/>
      * null --> no file attachment<br>
      * directory or metadata file --> multiples files attachment<br>
      * image file --> single file attachment
@@ -852,65 +836,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Return the size and appropriate unit in form of String for specified amount of sample/pixel
-     * value in the specified dimension order.<br>
-     * <br>
-     * For instance if you want to retrieve the distance:<br>
-     * <code>distanceStr = calculateSize(distance, 1)</code><br>
-     * For a 2D surface:<br>
-     * <code>surfaceStr = calculateSize(surface, 2)</code><br>
-     * 
-     * @param pixelNumber
-     *        number of pixel
-     * @param dimension
-     *        dimension order<br>
-     *        dimension order = 1 --> pixel size X used for conversion<br>
-     *        dimension order = 2 --> (pixel size X * pixel size Y) used for conversion<br>
-     *        dimension order >= 3 --> (pixel size X * pixel size Y * pixel size Z) used for
-     *        conversion<br>
-     * @param significantDigit
-     *        wanted significant digit for the result (0 for all)
-     */
-    public String calculateSize(double pixelNumber, int dimension, int significantDigit)
-    {
-        final double mul;
-
-        switch (dimension)
-        {
-            case 0:
-                // incorrect
-                return null;
-
-            case 1:
-                mul = getPixelSizeX();
-                break;
-
-            case 2:
-                mul = getPixelSizeX() * getPixelSizeY();
-                break;
-
-            default:
-                mul = getPixelSizeX() * getPixelSizeY() * getPixelSizeZ();
-                break;
-        }
-
-        final String postFix;
-
-        if (dimension > 1)
-            postFix = StringUtil.toString(dimension);
-        else
-            postFix = "";
-
-        double value = pixelNumber * mul;
-        final UnitPrefix unit = UnitUtil.getBestUnit(value, UnitPrefix.MICRO, dimension);
-        value = UnitUtil.getValueInUnit(value, UnitPrefix.MICRO, unit, dimension);
-        if (significantDigit != 0)
-            value = MathUtil.roundSignificant(value, significantDigit);
-
-        return StringUtil.toString(value) + " " + unit.toString() + "m" + postFix;
-    }
-
-    /**
      * Set X pixel size (in µm to be OME compatible)
      */
     public void setPixelSizeX(double value)
@@ -959,6 +884,225 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns the pixel size scaling factor to convert a number of pixel/voxel unit into <code>µm</code><br/>
+     * <br>
+     * For instance to get the scale ration for 2D distance or 2D surface:<br>
+     * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(2)</code><br>
+     * For a 3D volume:<br>
+     * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(3)</code><br>
+     * 
+     * @param dimension
+     *        dimension order<br>
+     *        <li>1 --> pixel size X used for conversion</li><br/>
+     *        <li>2 --> (pixel size X * pixel size Y) used for conversion</li><br/>
+     *        <li>3 --> (pixel size X * pixel size Y * pixel size Z) used for conversion</li><br/>
+     */
+    public double getPixelSizeScaling(int dimension)
+    {
+        switch (dimension)
+        {
+            case 0:
+                // incorrect
+                return 0d;
+
+            case 1:
+                return getPixelSizeX();
+
+            case 2:
+                return getPixelSizeX() * getPixelSizeY();
+
+            default:
+                return getPixelSizeX() * getPixelSizeY() * getPixelSizeZ();
+        }
+    }
+
+    /**
+     * Returns the best pixel size unit for the specified dimension order given the sequence's pixel
+     * size informations.<br/>
+     * <li>Compute a 2D distance:</li>
+     * 
+     * <pre>
+     * dimCompute = 2;
+     * dimUnit = 1;
+     * valueMicroMeter = pixelNum * getPixelSizeScaling(dimCompute);
+     * bestUnit = getBestPixelSizeUnit(dimCompute, dimUnit);
+     * finalValue = UnitUtil.getValueInUnit(valueMicroMeter, UnitPrefix.MICRO, bestUnit);
+     * valueString = Double.toString(finalValue) + &quot; &quot; + bestUnit.toString() + &quot;m&quot;;
+     * </pre>
+     * 
+     * <li>Compute a 2D surface:</li>
+     * 
+     * <pre>
+     * dimCompute = 2;
+     * dimUnit = 2;
+     * valueMicroMeter = pixelNum * getPixelSizeScaling(dimCompute);
+     * bestUnit = getBestPixelSizeUnit(dimCompute, dimUnit);
+     * finalValue = UnitUtil.getValueInUnit(valueMicroMeter, UnitPrefix.MICRO, bestUnit);
+     * valueString = Double.toString(finalValue) + &quot; &quot; + bestUnit.toString() + &quot;m2&quot;;
+     * </pre>
+     * 
+     * <li>Compute a 3D volume:</li>
+     * 
+     * <pre>
+     * dimCompute = 3;
+     * dimUnit = 3;
+     * valueMicroMeter = pixelNum * getPixelSizeScaling(dimCompute);
+     * bestUnit = getBestPixelSizeUnit(dimCompute, dimUnit);
+     * finalValue = UnitUtil.getValueInUnit(valueMicroMeter, UnitPrefix.MICRO, bestUnit);
+     * valueString = Double.toString(finalValue) + &quot; &quot; + bestUnit.toString() + &quot;m3&quot;;
+     * </pre>
+     * 
+     * @param dimCompute
+     *        dimension order for the calculation
+     * @param dimResult
+     *        dimension order for the result (unit)
+     * @see #calculateSizeBestUnit(double, int, int)
+     */
+    public UnitPrefix getBestPixelSizeUnit(int dimCompute, int dimResult)
+    {
+        // we want best unit for 1/10 the image size
+        final double div = 10d;
+
+        switch (dimResult)
+        {
+            case 0:
+                // keep original
+                return UnitPrefix.MICRO;
+
+            case 1:
+                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute) * getSizeX()) / div, UnitPrefix.MICRO,
+                        dimResult);
+
+            case 2:
+                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute) * getSizeX() * getSizeY()) / div,
+                        UnitPrefix.MICRO, dimResult);
+
+            default:
+                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute) * getSizeX() * getSizeY() * getSizeZ())
+                        / div, UnitPrefix.MICRO, dimResult);
+        }
+    }
+
+    /**
+     * Returns the size in µm for the specified amount of sample/pixel value in the specified
+     * dimension order.<br>
+     * <br>
+     * For instance if you want to retrieve the distance in µm:<br>
+     * <code>distance = calculateSize(distanceInPixel, 1)</code><br>
+     * For a 2D surface in µm2:<br>
+     * <code>surface = calculateSize(surfaceInPixel, 2)</code><br>
+     * For a 3D volume in µm3:<br>
+     * <code>volume = calculateSize(volumeInPixel, 3)</code><br>
+     * 
+     * @param pixelNumber
+     *        number of pixel
+     * @param dimension
+     *        dimension order for size calculation<br>
+     *        dimension order = 1 --> pixel size X used for conversion<br>
+     *        dimension order = 2 --> (pixel size X * pixel size Y) used for conversion<br>
+     *        dimension order >= 3 --> (pixel size X * pixel size Y * pixel size Z) used for
+     *        conversion<br>
+     * @see #calculateSizeBestUnit(double, int, int)
+     */
+    public double calculateSize(double pixelNumber, int dimension)
+    {
+        return pixelNumber * getPixelSizeScaling(dimension);
+    }
+
+    /**
+     * Returns the size converted in the best unit (see {@link #getBestPixelSizeUnit(int, int)} for
+     * the specified amount of sample/pixel value in the specified dimension order.<br/>
+     * <li>Compute a 2D distance:</li>
+     * 
+     * <pre>
+     * dimCompute = 2;
+     * dimUnit = 1;
+     * valueBestUnit = calculateSizeBestUnit(pixelNum, dimCompute, dimUnit);
+     * bestUnit = getBestPixelSizeUnit(dimCompute, dimUnit);
+     * valueString = Double.toString(valueBestUnit) + &quot; &quot; + bestUnit.toString() + &quot;m&quot;;
+     * </pre>
+     * 
+     * <li>Compute a 2D surface:</li>
+     * 
+     * <pre>
+     * dimCompute = 2;
+     * dimUnit = 2;
+     * valueBestUnit = calculateSizeBestUnit(pixelNum, dimCompute, dimUnit);
+     * bestUnit = getBestPixelSizeUnit(dimCompute, dimUnit);
+     * valueString = Double.toString(valueBestUnit) + &quot; &quot; + bestUnit.toString() + &quot;m2&quot;;
+     * </pre>
+     * 
+     * <li>Compute a 3D volume:</li>
+     * 
+     * <pre>
+     * dimCompute = 3;
+     * dimUnit = 3;
+     * valueBestUnit = calculateSizeBestUnit(pixelNum, dimCompute, dimUnit);
+     * bestUnit = getBestPixelSizeUnit(dimCompute, dimUnit);
+     * valueString = Double.toString(valueBestUnit) + &quot; &quot; + bestUnit.toString() + &quot;m3&quot;;
+     * </pre>
+     * 
+     * @param pixelNumber
+     *        number of pixel
+     * @param dimCompute
+     *        dimension order for the calculation
+     * @param dimResult
+     *        dimension order for the result (unit)
+     * @see #calculateSize(double, int)
+     * @see #getBestPixelSizeUnit(int, int)
+     */
+    public double calculateSizeBestUnit(double pixelNumber, int dimCompute, int dimResult)
+    {
+        final double value = calculateSize(pixelNumber, dimCompute);
+        final UnitPrefix unit = getBestPixelSizeUnit(dimCompute, dimResult);
+        return UnitUtil.getValueInUnit(value, UnitPrefix.MICRO, unit, dimResult);
+    }
+
+    /**
+     * @deprecated Use {@link #calculateSize(double, int, int, int)} instead.
+     */
+    @Deprecated
+    public String calculateSize(double pixelNumber, int dimension, int significantDigit)
+    {
+        return calculateSize(pixelNumber, dimension, dimension, significantDigit);
+    }
+
+    /**
+     * Returns the size and appropriate unit in form of String for specified amount of sample/pixel
+     * value in the specified dimension order.<br>
+     * <br>
+     * For instance if you want to retrieve the 2D distance:<br>
+     * <code>distanceStr = calculateSize(distanceInPixel, 2, 1, 5)</code><br>
+     * For a 2D surface:<br>
+     * <code>surfaceStr = calculateSize(surfaceInPixel, 2, 2, 5)</code><br>
+     * For a 3D volume:<br>
+     * <code>volumeStr = calculateSize(volumeInPixel, 3, 3, 5)</code><br>
+     * 
+     * @param pixelNumber
+     *        number of pixel
+     * @param dimCompute
+     *        dimension order for the calculation
+     * @param dimResult
+     *        dimension order for the result (unit)
+     * @param significantDigit
+     *        wanted significant digit for the result (0 for all)
+     * @see #calculateSize(double, int)
+     */
+    public String calculateSize(double pixelNumber, int dimCompute, int dimResult, int significantDigit)
+    {
+        double value = calculateSize(pixelNumber, dimCompute);
+        final String postFix = (dimResult > 1) ? StringUtil.toString(dimResult) : "";
+        final UnitPrefix unit = UnitUtil.getBestUnit(value, UnitPrefix.MICRO, dimResult);
+        // final UnitPrefix unit = getBestPixelSizeUnit(dimCompute, dimResult);
+
+        value = UnitUtil.getValueInUnit(value, UnitPrefix.MICRO, unit, dimResult);
+        if (significantDigit != 0)
+            value = MathUtil.roundSignificant(value, significantDigit);
+
+        return StringUtil.toString(value) + " " + unit.toString() + "m" + postFix;
+    }
+
+    /**
      * Get default name for specified channel
      */
     public String getDefaultChannelName(int index)
@@ -998,7 +1142,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * @deprecated Use {@link #setAutoUpdateChannelBounds(boolean)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public void setComponentAbsBoundsAutoUpdate(boolean value)
     {
@@ -1018,8 +1161,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
      * when sequence data is modified.<br>
      * This can consume a lot of time if you make many updates on large sequence.<br>
-     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
-     * block to avoid severals recalculation.
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()} block to avoid
+     * severals recalculation.
      */
     public void setAutoUpdateChannelBounds(boolean value)
     {
@@ -1226,12 +1369,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             {
                 if (overlay instanceof OverlayWrapper)
                 {
-                    if (((OverlayWrapper) overlay).getPainter().getClass().isAssignableFrom(painterClass))
+                    if (painterClass.isInstance(((OverlayWrapper) overlay).getPainter()))
                         result.add(overlay);
                 }
                 else
                 {
-                    if (overlay.getClass().isAssignableFrom(painterClass))
+                    if (painterClass.isInstance(overlay))
                         result.add(overlay);
                 }
             }
@@ -1278,7 +1421,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (overlays)
         {
             for (Overlay overlay : overlays)
-                if (overlay.getClass().isAssignableFrom(overlayClass))
+                if (overlayClass.isInstance(overlay))
                     return true;
         }
 
@@ -1295,7 +1438,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (overlays)
         {
             for (Overlay overlay : overlays)
-                if (overlay.getClass().isAssignableFrom(overlayClass))
+                if (overlayClass.isInstance(overlay))
                     result.add(overlay);
         }
 
@@ -1423,7 +1566,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.getClass().isAssignableFrom(roiClass))
+                if (roiClass.isInstance(roi))
                     return true;
         }
 
@@ -1440,7 +1583,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.getClass().isAssignableFrom(roiClass))
+                if (roiClass.isInstance(roi))
                     result.add(roi);
         }
 
@@ -1457,7 +1600,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.getClass().isAssignableFrom(roiClass))
+                if (roiClass.isInstance(roi))
                     result++;
         }
 
@@ -1510,6 +1653,46 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns all selected ROI of given class (Set format).
+     * 
+     * @param roiClass
+     *        ROI class restriction
+     * @param wantReadOnly
+     *        also return ROI with read only state
+     */
+    public Set<ROI> getSelectedROISet(Class<? extends ROI> roiClass, boolean wantReadOnly)
+    {
+        final Set<ROI> result = new HashSet<ROI>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected() && roiClass.isInstance(roi))
+                    if (wantReadOnly || !roi.isReadOnly())
+                        result.add(roi);
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns all selected ROI (Set format).
+     */
+    public Set<ROI> getSelectedROISet()
+    {
+        final Set<ROI> result = new HashSet<ROI>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected())
+                    result.add(roi);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns all selected ROI of given class.
      * 
      * @param roiClass
@@ -1524,7 +1707,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (rois)
         {
             for (ROI roi : rois)
-                if (roi.isSelected() && roi.getClass().isAssignableFrom(roiClass))
+                if (roi.isSelected() && roiClass.isInstance(roi))
                     if (wantReadOnly || !roi.isReadOnly())
                         result.add(roi);
         }
@@ -1738,6 +1921,37 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Add the specified collection of ROI to the sequence.
+     * 
+     * @param rois
+     *        the collection of ROI to attach to the sequence
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if the operation succeed or <code>false</code> if some ROIs could
+     *         not be added (already present)
+     */
+    public boolean addROIs(Collection<ROI> rois, boolean canUndo)
+    {
+        if (!rois.isEmpty())
+        {
+            final List<ROI> addedRois = new ArrayList<ROI>();
+
+            for (ROI roi : rois)
+            {
+                if (addROI(roi, false))
+                    addedRois.add(roi);
+            }
+
+            if (canUndo && !addedRois.isEmpty())
+                addUndoableEdit(new ROIAddsSequenceEdit(this, addedRois));
+
+            return addedRois.size() == rois.size();
+        }
+
+        return true;
+    }
+
+    /**
      * Add the specified ROI to the sequence.
      * 
      * @param roi
@@ -1755,6 +1969,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      *        ROI to attach to the sequence
      * @param canUndo
      *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if the operation succeed or <code>false</code> otherwise (already
+     *         present)
      */
     public boolean addROI(ROI roi, boolean canUndo)
     {
@@ -1824,6 +2040,36 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return false;
+    }
+
+    /**
+     * Remove the specified collection of ROI from the sequence.
+     * 
+     * @param rois
+     *        the collection of ROI to remove from the sequence
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if all ROI from the collection has been correctly removed.
+     */
+    public boolean removeROIs(Collection<ROI> rois, boolean canUndo)
+    {
+        if (!rois.isEmpty())
+        {
+            final List<ROI> removedRois = new ArrayList<ROI>();
+
+            for (ROI roi : rois)
+            {
+                if (removeROI(roi, false))
+                    removedRois.add(roi);
+            }
+
+            if (canUndo && !removedRois.isEmpty())
+                addUndoableEdit(new ROIRemovesSequenceEdit(this, removedRois));
+
+            return removedRois.size() == rois.size();
+        }
+
+        return true;
     }
 
     /**
@@ -1908,35 +2154,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             final List<ROI> allROIs = getROIs();
 
-            synchronized (overlays)
-            {
-                // remove associated painters first
-                for (ROI roi : allROIs)
-                {
-                    final Overlay overlay = roi.getOverlay();
-
-                    // remove listener
-                    overlay.removeOverlayListener(this);
-                    // and remove from list
-                    overlays.remove(overlay);
-                }
-            }
-
-            // notify overlays removed
-            overlayChanged(null, SequenceEventType.REMOVED);
-
-            synchronized (rois)
-            {
-                // clear list
-                rois.clear();
-            }
-
-            // remove listeners
+            // remove all ROI
             for (ROI roi : allROIs)
-                roi.removeListener(this);
-
-            // notify roi removed
-            roiChanged(null, SequenceEventType.REMOVED);
+                removeROI(roi, false);
 
             if (canUndo)
                 addUndoableEdit(new ROIRemovesSequenceEdit(this, allROIs));
@@ -2216,8 +2436,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * This actually create a new image which share its data with internal image
      * so any modifications to one affect the other.<br>
      * if <code>(c == -1)</code> then this method is equivalent to {@link #getImage(int, int)}<br>
-     * if <code>((c == 0) || (sizeC == 1))</code> then this method is equivalent to
-     * {@link #getImage(int, int)}<br>
+     * if <code>((c == 0) || (sizeC == 1))</code> then this method is equivalent to {@link #getImage(int, int)}<br>
      * if <code>((c < 0) || (c >= sizeC))</code> then it returns <code>null</code>
      * 
      * @see IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)
@@ -2262,7 +2481,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns all images of sequence
+     * Returns all images of sequence in [ZT] order:<br>
+     * 
+     * <pre>
+     * T=0 Z=0
+     * T=0 Z=1
+     * T=0 Z=2
+     * ...
+     * T=1 Z=0
+     * ...
+     * </pre>
      */
     public ArrayList<IcyBufferedImage> getAllImage()
     {
@@ -2364,8 +2592,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Add an image (image is added in Z dimension).<br>
-     * This method is equivalent to
-     * <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
+     * This method is equivalent to <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
      */
     public void addImage(BufferedImage image) throws IllegalArgumentException
     {
@@ -5510,9 +5737,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses
-     *             {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)}
-     *             instead.
+     * @deprecated Uses {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)} instead.
      */
     @Deprecated
     public Sequence getSubSequence(int startX, int startY, int startZ, int startT, int sizeX, int sizeY, int sizeZ,
@@ -5551,8 +5776,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Note that it internally uses {@link #getFilename()} to define the XML filename so be sure it
      * is correctly filled before calling this method.<br>
      * 
-     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code>
-     *         otherwise.
+     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code> otherwise.
      */
     public boolean loadXMLData()
     {
@@ -5574,7 +5798,29 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public boolean saveXMLData()
     {
-        return persistent.saveXMLData();
+        Exception exc = null;
+        int retry = 0;
+
+        // definitely ugly but the XML parser may throw some exception in multi thread environnement
+        // and we really don't want to lost the sequence metadata !
+        while (retry < 5)
+        {
+            try
+            {
+                return persistent.saveXMLData();
+            }
+            catch (Exception e)
+            {
+                exc = e;
+            }
+
+            retry++;
+        }
+
+        System.err.println("Error while saving Sequence XML persistent data :");
+        IcyExceptionHandler.showErrorMessage(exc, true);
+
+        return false;
     }
 
     /**
@@ -5844,19 +6090,21 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * overlay painter has changed (null means all overlays)
+     * overlay painter has changed
      */
-    private void overlayChanged(Overlay overlay, SequenceEventType type)
+    protected void overlayChanged(Overlay overlay, SequenceEventType type)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_OVERLAY, overlay, type));
     }
 
     /**
-     * notify specified painter of overlay has changed (null means all overlays)
+     * Notify specified painter of overlay has changed (the sequence should contains the specified
+     * Overlay)
      */
     public void overlayChanged(Overlay overlay)
     {
-        overlayChanged(overlay, SequenceEventType.CHANGED);
+        if (contains(overlay))
+            overlayChanged(overlay, SequenceEventType.CHANGED);
     }
 
     /**
@@ -5872,17 +6120,31 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * notify roi has changed (global change)
+     * @deprecated Use {@link #roiChanged(ROI)} method instead.
      */
+    @Deprecated
     public void roiChanged()
     {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_ROI));
+        final Iterator<ROI> it = rois.iterator();
+
+        // send a event for all ROI
+        while (it.hasNext())
+            roiChanged(it.next(), SequenceEventType.CHANGED);
     }
 
     /**
-     * notify specified roi has changed (null means all rois)
+     * Notify specified roi has changed (the sequence should contains the specified ROI)
      */
-    private void roiChanged(ROI roi, SequenceEventType type)
+    public void roiChanged(ROI roi)
+    {
+        if (contains(roi))
+            roiChanged(roi, SequenceEventType.CHANGED);
+    }
+
+    /**
+     * Notify specified roi has changed
+     */
+    protected void roiChanged(ROI roi, SequenceEventType type)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_ROI, roi, type));
     }

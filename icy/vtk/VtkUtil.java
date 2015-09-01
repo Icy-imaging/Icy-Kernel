@@ -21,7 +21,6 @@ package icy.vtk;
 import icy.image.colormap.IcyColorMap;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
-import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;

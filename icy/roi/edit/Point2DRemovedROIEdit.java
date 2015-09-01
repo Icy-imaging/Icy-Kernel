@@ -6,6 +6,7 @@ package icy.roi.edit;
 import icy.painter.Anchor2D;
 
 import java.awt.geom.Point2D;
+import java.util.List;
 
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -23,12 +24,23 @@ public class Point2DRemovedROIEdit extends AbstractPoint2DROIEdit
     Point2D position;
     final int index;
 
-    public Point2DRemovedROIEdit(ROI2DShape roi, Anchor2D point)
+    public Point2DRemovedROIEdit(ROI2DShape roi, List<Anchor2D> previousPoints, Anchor2D point)
     {
         super(roi, point, "ROI point removed");
 
         position = point.getPosition();
-        index = roi.getControlPoints().indexOf(point);
+        
+        // we need to save the index in old points list
+        int i = 0;
+        for(Anchor2D p: previousPoints)
+        {
+            if (p.getPosition().equals(position))
+                break;
+            
+            i++;
+        }
+        
+        index = i;
     }
 
     @Override

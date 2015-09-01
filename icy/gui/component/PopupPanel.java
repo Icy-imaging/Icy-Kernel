@@ -274,16 +274,16 @@ public class PopupPanel extends JPanel
         if (subPopupPanel)
         {
             if (topPanel.isSelected())
-                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_COLLAPSE, 10));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_NODE_EXPANDED, 10));
             else
-                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_EXPAND, 10));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_NODE_COLLAPSED, 10));
         }
         else
         {
             if (topPanel.isSelected())
-                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_COLLAPSE, 14));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_NODE_EXPANDED, 14));
             else
-                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_EXPAND, 14));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_NODE_COLLAPSED, 14));
         }
 
         mainPanel.setVisible(topPanel.isSelected());

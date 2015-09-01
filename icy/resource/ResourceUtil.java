@@ -31,16 +31,19 @@ import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 
+/**
+ * Resources (images, icons...) utilities class.
+ * 
+ * @author Stephane
+ */
 public class ResourceUtil
 {
-    public static final String separator = "/";
-
     // image and icon path
-    private static final String ICON_PATH = "res/icon/";
-    private static final String IMAGE_PATH = "res/image/";
+    public static final String ICON_PATH = "res/icon/";
+    public static final String IMAGE_PATH = "res/image/";
 
-    private static final String ALPHA_ICON_PATH = "alpha/";
-    private static final String COLOR_ICON_PATH = "color/";
+    public static final String ALPHA_ICON_PATH = "alpha/";
+    public static final String COLOR_ICON_PATH = "color/";
 
     // default icon size
     public static final int DEFAULT_ICON_SIZE = IcyIcon.DEFAULT_SIZE;
@@ -199,6 +202,9 @@ public class ResourceUtil
     public static final Image ICON_PANEL_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
     public static final Image ICON_PANEL_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
     public static final Image ICON_PIN = ResourceUtil.getAlphaIconAsImage("pin.png");
+    
+    public static final Image ICON_NODE_EXPANDED = ResourceUtil.getAlphaIconAsImage("node_expanded.png");
+    public static final Image ICON_NODE_COLLAPSED = ResourceUtil.getAlphaIconAsImage("node_collapsed.png");
 
     public static final Image ICON_BAND_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_r.png");
     public static final Image ICON_BAND_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_l.png");

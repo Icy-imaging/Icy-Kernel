@@ -231,11 +231,17 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
             getScaler().setAbsRightIn(value);
         }
 
+        /**
+         * Returns the <i>enabled</i> state of this channel LUT
+         */
         public boolean isEnabled()
         {
             return getColorMap().isEnabled();
         }
 
+        /**
+         * Enable/disable specified channel LUT
+         */
         public void setEnabled(boolean value)
         {
             getColorMap().setEnabled(value);
@@ -499,6 +505,58 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     public void copyColormaps(LUT lut)
     {
         setColorMaps(lut, true);
+    }
+
+    /**
+     * Set the alpha channel to full opaque for all LUT channel
+     */
+    public void setAlphaToOpaque()
+    {
+        beginUpdate();
+        try
+        {
+            for (LUTChannel lutChannel : getLutChannels())
+                lutChannel.getColorMap().setAlphaToOpaque();
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Set the alpha channel to linear opacity (0 to 1) for all LUT channel
+     */
+    public void setAlphaToLinear()
+    {
+        beginUpdate();
+        try
+        {
+            for (LUTChannel lutChannel : getLutChannels())
+                lutChannel.getColorMap().setAlphaToLinear();
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Set the alpha channel to an optimized linear transparency for 3D volume display on all LUT
+     * channel
+     */
+    public void setAlphaToLinear3D()
+    {
+        beginUpdate();
+        try
+        {
+            for (LUTChannel lutChannel : getLutChannels())
+                lutChannel.getColorMap().setAlphaToLinear3D();
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**

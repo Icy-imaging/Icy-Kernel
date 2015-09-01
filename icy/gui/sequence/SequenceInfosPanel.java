@@ -18,6 +18,7 @@
  */
 package icy.gui.sequence;
 
+import icy.file.FileUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
 import icy.gui.main.ActiveSequenceListener;
@@ -28,7 +29,10 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
+import icy.util.EventUtil;
 import icy.util.StringUtil;
 
 import java.awt.Dimension;
@@ -37,6 +41,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -65,7 +72,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
     private IcyButton detailBtn;
 
     private JLabel pathLabel;
-    private JTextField pathField;
+    JTextField pathField;
     private JTextField nameField;
 
     // internals
@@ -195,6 +202,29 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
         pathField.setOpaque(false);
         pathField.setBorder(null);
         pathField.setEditable(false);
+        pathField.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                if (e.isConsumed())
+                    return;
+
+                if (EventUtil.isLeftMouseButton(e) && (e.getClickCount() == 2))
+                {
+                    try
+                    {
+                        SystemUtil.openFolder(FileUtil.getDirectory(pathField.getText()));
+                    }
+                    catch (IOException e1)
+                    {
+                        IcyExceptionHandler.showErrorMessage(e1, false, false);
+                    }
+
+                    e.consume();
+                }
+            }
+        });
 
         GridBagConstraints gbc_scrollPane_1 = new GridBagConstraints();
         gbc_scrollPane_1.fill = GridBagConstraints.BOTH;
@@ -395,7 +425,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
             resTLabel.setText(UnitUtil.displayTimeAsStringWithUnits(sequence.getTimeInterval() * 1000d, false));
 
             nameField.setToolTipText(sequence.getName());
-            pathField.setToolTipText(path);
+            pathField.setToolTipText(path + "    (double click to see file location)");
             dimensionLabel.setToolTipText("Size X : " + sizeX + "   Size Y : " + sizeY + "   Size Z : " + sizeZ
                     + "   Size T : " + sizeT);
             if (sizeC > 1)

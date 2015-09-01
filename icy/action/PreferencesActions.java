@@ -33,6 +33,7 @@ import icy.gui.preferences.WorkspaceOnlinePreferencePanel;
 import icy.gui.preferences.WorkspacePreferencePanel;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.util.ClassUtil;
 
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
@@ -277,9 +278,9 @@ public class PreferencesActions
 
             try
             {
-                if (type.isAssignableFrom(IcyAbstractAction[].class))
+                if (ClassUtil.isSubClass(type, IcyAbstractAction[].class))
                     result.addAll(Arrays.asList(((IcyAbstractAction[]) field.get(null))));
-                else if (type.isAssignableFrom(IcyAbstractAction.class))
+                else if (ClassUtil.isSubClass(type, IcyAbstractAction.class))
                     result.add((IcyAbstractAction) field.get(null));
             }
             catch (Exception e)

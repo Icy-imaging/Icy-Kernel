@@ -317,8 +317,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)}
-     *             instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
@@ -338,8 +337,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)}
-     *             instead.
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int z, int t, int c)
@@ -349,8 +347,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)}
-     *             instead.
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
@@ -523,8 +520,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        use signed data for data type
      * @param autoUpdateChannelBounds
      *        If true then channel bounds are automatically calculated.<br>
-     *        When set to false, you have to set bounds manually by calling
-     *        {@link #updateChannelsBounds()} or #setC
+     *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
      */
     public IcyBufferedImage(int width, int height, Object[] data, boolean signed, boolean autoUpdateChannelBounds)
     {
@@ -587,8 +583,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        use signed data for data type
      * @param autoUpdateChannelBounds
      *        If true then channel bounds are automatically calculated.<br>
-     *        When set to false, you have to set bounds manually by calling
-     *        {@link #updateChannelsBounds()} or #setC
+     *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
      * @see #IcyBufferedImage(int, int, Object[], boolean, boolean)
      */
     public IcyBufferedImage(int width, int height, Object data, boolean signed, boolean autoUpdateChannelBounds)
@@ -686,8 +681,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
      * when image data is modified.<br>
      * This can consume some time if you make many updates on a large image.<br>
-     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
-     * block to avoid severals recalculation.
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()} block to avoid
+     * severals recalculation.
      */
     public void setAutoUpdateChannelBounds(boolean value)
     {
@@ -701,9 +696,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
-     *             instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} instead.
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(BufferedImage out, LUT lut)
@@ -712,9 +705,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage)}
-     *             instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage)} instead.
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(BufferedImage out)
@@ -723,9 +714,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, LUT, BufferedImage)}
-     *             instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, LUT, BufferedImage)} instead.
      */
     @Deprecated
     public BufferedImage getARGBImage(LUT lut, BufferedImage out)
@@ -734,8 +723,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, BufferedImage)}
-     *             instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, BufferedImage)} instead.
      */
     @Deprecated
     public BufferedImage getARGBImage(BufferedImage out)
@@ -762,9 +750,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, Scaler)}
-     *             instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, Scaler)} instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(DataType dataType, Scaler scaler)
@@ -773,9 +759,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, Scaler)}
-     *             instead
+     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, Scaler)} instead
      */
     @Deprecated
     public IcyBufferedImage convertToType(int dataType, boolean signed, Scaler scaler)
@@ -784,9 +768,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, boolean)}
-     *             instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, boolean)} instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(DataType dataType, boolean rescale)
@@ -795,9 +777,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, boolean)}
-     *             instead
+     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, boolean)} instead
      */
     @Deprecated
     public IcyBufferedImage convertToType(int dataType, boolean signed, boolean rescale)
@@ -806,8 +786,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
-     *             instead
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)} instead
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(LUT lut, int imageType)
@@ -816,8 +795,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
-     *             instead
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)} instead
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(int imageType, LUT lut)
@@ -835,9 +813,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#getSubImage(IcyBufferedImage, int, int, int, int)}
-     *             instead
+     * @deprecated Uses {@link IcyBufferedImageUtil#getSubImage(IcyBufferedImage, int, int, int, int)} instead
      */
     @Deprecated
     public IcyBufferedImage getSubImageCopy(int x, int y, int w, int h)
@@ -936,9 +912,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, boolean, int, int)}
-     *             instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, boolean, int, int)} instead.
      */
     @Deprecated
     public IcyBufferedImage getScaledCopy(int width, int height, boolean resizeContent, int xAlign, int yAlign)
@@ -947,8 +921,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses
-     *             {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, IcyBufferedImageUtil.FilterType)}
+     * @deprecated Uses {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, IcyBufferedImageUtil.FilterType)}
      *             instead.
      */
     @Deprecated
@@ -967,8 +940,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int, int)}
-     *             instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int, int)} instead.
      */
     @Deprecated
     public void translate(int dx, int dy, int channel)
@@ -3222,35 +3194,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        output array (can be null)
      * @param offset
      *        output offset
-     * @param step
-     *        output step
-     * @param little
-     *        little endian order
-     */
-    public byte[] getRawData(int c, byte[] out, int offset, int step, boolean little)
-    {
-        // alloc output array if needed
-        final byte[] result = Array1DUtil.allocIfNull(out, offset
-                + (getSizeX() * getSizeY() * getDataType_().getSize()));
-
-        return ByteArrayConvert.toByteArray(getDataXY(c), result, offset, step, little);
-    }
-
-    /**
-     * Return raw data component as an array of byte
-     * 
-     * @param c
-     *        component index
-     * @param out
-     *        output array (can be null)
-     * @param offset
-     *        output offset
      * @param little
      *        little endian order
      */
     public byte[] getRawData(int c, byte[] out, int offset, boolean little)
     {
-        return getRawData(c, out, offset, 1, little);
+        // alloc output array if needed
+        final byte[] result = Array1DUtil.allocIfNull(out, offset
+                + (getSizeX() * getSizeY() * getDataType_().getSize()));
+
+        return ByteArrayConvert.toByteArray(getDataXY(c), 0, result, offset, little);
     }
 
     /**
@@ -3275,10 +3228,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        output offset
      * @param little
      *        little endian order
-     * @param interleaved
-     *        interleave component data
      */
-    public byte[] getRawData(byte[] out, int offset, boolean little, boolean interleaved)
+    public byte[] getRawData(byte[] out, int offset, boolean little)
     {
         final int sizeXY = getSizeX() * getSizeY();
         final int sizeC = getSizeC();
@@ -3288,22 +3239,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final byte[] result = Array1DUtil.allocIfNull(out, offset + (sizeC * sizeXY * sizeType));
 
         int outOff = offset;
-        if (interleaved)
+        for (int c = 0; c < sizeC; c++)
         {
-            // interleave channel data
-            for (int c = 0; c < sizeC; c++)
-            {
-                getRawData(c, result, outOff, sizeC, little);
-                outOff += sizeType;
-            }
-        }
-        else
-        {
-            for (int c = 0; c < sizeC; c++)
-            {
-                getRawData(c, result, outOff, 1, little);
-                outOff += sizeXY * sizeType;
-            }
+            getRawData(c, result, outOff, little);
+            outOff += sizeXY * sizeType;
         }
 
         return result;
@@ -3314,37 +3253,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * 
      * @param little
      *        little endian order
-     * @param interleaved
-     *        interleave component data
      */
-    public byte[] getRawData(boolean little, boolean interleaved)
+    public byte[] getRawData(boolean little)
     {
-        return getRawData(null, 0, little, interleaved);
-    }
-
-    /**
-     * Set raw data component from an array of byte (notify data changed)
-     * 
-     * @param c
-     *        component index
-     * @param data
-     *        data as byte array
-     * @param offset
-     *        input offset
-     * @param step
-     *        input step
-     * @param little
-     *        little endian order
-     */
-    public void setRawData(int c, byte[] data, int offset, int step, boolean little)
-    {
-        if (data == null)
-            return;
-
-        ByteArrayConvert.byteArrayTo(data, offset, step, getDataXY(c), little);
-
-        // notify data changed
-        dataChanged();
+        return getRawData(null, 0, little);
     }
 
     /**
@@ -3361,7 +3273,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void setRawData(int c, byte[] data, int offset, boolean little)
     {
-        setRawData(c, data, offset, 1, little);
+        if (data == null)
+            return;
+
+        ByteArrayConvert.byteArrayTo(data, offset, getDataXY(c), 0, -1, little);
+
+        // notify data changed
+        dataChanged();
     }
 
     /**
@@ -3376,11 +3294,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void setRawData(int c, byte[] data, boolean little)
     {
-        setRawData(c, data, 0, 1, little);
+        setRawData(c, data, 0, little);
     }
 
     /**
-     * Set raw data for all components from an array of byte (notify data changed)
+     * Set raw data for all components from an array of byte (notify data changed).<br/>
+     * Data are arranged in the following dimension order: XYC
      * 
      * @param data
      *        data as byte array
@@ -3388,10 +3307,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        input offset
      * @param little
      *        little endian order
-     * @param interleaved
-     *        interleave component data
      */
-    public void setRawData(byte[] data, int offset, boolean little, boolean interleaved)
+    public void setRawData(byte[] data, int offset, boolean little)
     {
         if (data == null)
             return;
@@ -3404,22 +3321,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         try
         {
             int inOff = offset;
-            if (interleaved)
+            for (int c = 0; c < sizeC; c++)
             {
-                // interleave channel data
-                for (int c = 0; c < sizeC; c++)
-                {
-                    setRawData(c, data, inOff, sizeC, little);
-                    inOff += sizeType;
-                }
-            }
-            else
-            {
-                for (int c = 0; c < sizeC; c++)
-                {
-                    setRawData(c, data, inOff, 1, little);
-                    inOff += sizeXY * sizeType;
-                }
+                setRawData(c, data, inOff, little);
+                inOff += sizeXY * sizeType;
             }
         }
         finally
@@ -3435,12 +3340,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        data as byte array
      * @param little
      *        little endian order
-     * @param interleaved
-     *        interleave component data
      */
-    public void setRawData(byte[] data, boolean little, boolean interleaved)
+    public void setRawData(byte[] data, boolean little)
     {
-        setRawData(data, 0, little, interleaved);
+        setRawData(data, 0, little);
     }
 
     /**

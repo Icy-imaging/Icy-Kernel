@@ -147,7 +147,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             synchronized (frames)
             {
                 for (IcyFrame frame : frames)
-                    if (frameClass.isAssignableFrom(frame.getClass()))
+                    if (frameClass.isInstance(frame))
                         result.add(frame);
 
             }

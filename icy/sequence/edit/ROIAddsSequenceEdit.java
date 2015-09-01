@@ -3,7 +3,7 @@ package icy.sequence.edit;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 
-import java.util.List;
+import java.util.Collection;
 
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -15,12 +15,12 @@ import javax.swing.undo.CannotUndoException;
  */
 public class ROIAddsSequenceEdit extends AbstractROIsSequenceEdit
 {
-    public ROIAddsSequenceEdit(Sequence sequence, List<ROI> rois, String name)
+    public ROIAddsSequenceEdit(Sequence sequence, Collection<ROI> rois, String name)
     {
         super(sequence, rois, name);
     }
 
-    public ROIAddsSequenceEdit(Sequence sequence, List<ROI> rois)
+    public ROIAddsSequenceEdit(Sequence sequence, Collection<ROI> rois)
     {
         this(sequence, rois, (rois.size() > 1) ? "ROI group added" : "ROI added");
     }

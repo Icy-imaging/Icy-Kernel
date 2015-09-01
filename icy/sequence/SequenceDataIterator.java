@@ -35,7 +35,7 @@ import java.util.NoSuchElementException;
  * as double in XYCZT <i>([T[Z[C[Y[X}}]]])</i> dimension order.<br>
  * Whatever is the internal {@link DataType} data is returned and set as double.<br>
  * <b>If the sequence size or type is modified during iteration the iterator
- * becomes invalid and can causes exception to happen.</b>
+ * becomes invalid and can exception can happen.</b>
  * 
  * @author Stephane
  */
@@ -184,14 +184,14 @@ public class SequenceDataIterator implements DataIterator
      * @param inclusive
      *        If true then all partially contained (intersected) pixels in the ROI are included.
      * @param z
-     *        The specific Z position (contained in the ROI) we want to iterate.<br>
-     *        Set to -1 to use the whole ROI Z information instead.
+     *        The specific Z position (slice) we want to iterate or <code>-1</code> to iterate over
+     *        the whole ROI Z dimension.
      * @param t
-     *        The specific T position (contained in the ROI) we want to iterate.<br>
-     *        Set to -1 to use the whole ROI T information instead.
+     *        The specific T position (frame) we want to iterate or <code>-1</code> to iterate over
+     *        the whole ROI T dimension.
      * @param c
-     *        The specific C position (contained in the ROI) we want to iterate.<br>
-     *        Set to -1 to use the whole ROI C information instead.
+     *        The specific C position (channel) we want to iterate or <code>-1</code> to iterate
+     *        over the whole ROI C dimension.
      */
     public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive, int z, int t, int c)
     {
@@ -304,25 +304,25 @@ public class SequenceDataIterator implements DataIterator
         // get the 2D mask for specified C
         if (roi != null)
         {
-            switch(roi.getDimension())
+            switch (roi.getDimension())
             {
                 case 2:
                     // ignore Z, T and C roi informations (wanted for fixed Z, T and C positions)
                     imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(-1, -1, -1, inclusive), c);
                     break;
-                    
+
                 case 3:
                     // ignore T and C roi informations (wanted for fixed T and C positions)
-                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, -1, -1, inclusive), c);
+                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, -t, -1, inclusive), c);
                     break;
-                    
+
                 case 4:
                     // ignore C roi information (wanted for fixed C position)
                     imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, t, -1, inclusive), c);
                     break;
-                    
+
                 // assume 5D
-                default:                    
+                default:
                     imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, t, c, inclusive), c);
             }
         }
@@ -433,5 +433,4 @@ public class SequenceDataIterator implements DataIterator
     {
         return t;
     }
-
 }
