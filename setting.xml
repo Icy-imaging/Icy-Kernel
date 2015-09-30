@@ -39,258 +39,12 @@
 <key name="col_standard_dev" value="false"/>
 <key name="col_perimeter" value="false"/>
 <key name="col_area" value="true"/>
-<section name="view">
-<section name="PositionY">
-<key name="order" value="3"/>
-<key name="visible" value="false"/>
 </section>
-<section name="ReadOnly">
-<key name="order" value="27"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MassCenterX">
-<key name="order" value="12"/>
-<key name="visible" value="false"/>
-</section>
-<section name="PositionZ">
-<key name="order" value="4"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Interior">
-<key name="order" value="18"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MinIntensity">
-<key name="order" value="23"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MassCenterT">
-<key name="order" value="15"/>
-<key name="visible" value="false"/>
-</section>
-<section name="SizeC">
-<key name="order" value="11"/>
-<key name="visible" value="false"/>
-</section>
-<section name="Area">
-<key name="order" value="20"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SizeX">
-<key name="order" value="7"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MaxIntensity">
-<key name="order" value="25"/>
-<key name="visible" value="false"/>
-</section>
-<section name="StandardDeviation">
-<key name="order" value="28"/>
-<key name="visible" value="false"/>
-</section>
-<section name="SizeT">
-<key name="order" value="10"/>
-<key name="visible" value="false"/>
-</section>
-<section name="PositionT">
-<key name="order" value="5"/>
-<key name="visible" value="false"/>
-</section>
-<section name="SizeZ">
-<key name="order" value="9"/>
-<key name="visible" value="false"/>
-</section>
-<section name="SizeY">
-<key name="order" value="8"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MeanIntensity">
-<key name="order" value="24"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MassCenterZ">
-<key name="order" value="14"/>
-<key name="visible" value="false"/>
-</section>
-<section name="PositionX">
-<key name="order" value="2"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MassCenterY">
-<key name="order" value="13"/>
-<key name="visible" value="false"/>
-</section>
-<section name="Volume">
-<key name="order" value="22"/>
-<key name="visible" value="false"/>
-</section>
-<section name="Surface area">
-<key name="order" value="21"/>
-<key name="visible" value="false"/>
-</section>
-<section name="PositionC">
-<key name="order" value="6"/>
-<key name="visible" value="false"/>
-</section>
-<section name="Opacity">
-<key name="order" value="29"/>
-<key name="visible" value="false"/>
-</section>
-<section name="Contour">
-<key name="order" value="17"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Name">
-<key name="order" value="1"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Perimeter">
-<key name="order" value="19"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SumIntensity">
-<key name="order" value="26"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MassCenterC">
-<key name="order" value="16"/>
-<key name="visible" value="false"/>
-</section>
-<section name="Icon">
-<key name="order" value="0"/>
-<key name="visible" value="true"/>
-</section>
-</section>
-<section name="export">
-<section name="PositionY">
-<key name="order" value="3"/>
-<key name="visible" value="true"/>
-</section>
-<section name="ReadOnly">
-<key name="order" value="27"/>
-<key name="visible" value="false"/>
-</section>
-<section name="MassCenterX">
-<key name="order" value="12"/>
-<key name="visible" value="true"/>
-</section>
-<section name="PositionZ">
-<key name="order" value="4"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Interior">
-<key name="order" value="18"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MinIntensity">
-<key name="order" value="23"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MassCenterT">
-<key name="order" value="15"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SizeC">
-<key name="order" value="11"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Area">
-<key name="order" value="20"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SizeX">
-<key name="order" value="7"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MaxIntensity">
-<key name="order" value="25"/>
-<key name="visible" value="true"/>
-</section>
-<section name="StandardDeviation">
-<key name="order" value="28"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SizeT">
-<key name="order" value="10"/>
-<key name="visible" value="true"/>
-</section>
-<section name="PositionT">
-<key name="order" value="5"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SizeZ">
-<key name="order" value="9"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SizeY">
-<key name="order" value="8"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MeanIntensity">
-<key name="order" value="24"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MassCenterZ">
-<key name="order" value="14"/>
-<key name="visible" value="true"/>
-</section>
-<section name="PositionX">
-<key name="order" value="2"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MassCenterY">
-<key name="order" value="13"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Volume">
-<key name="order" value="22"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Surface area">
-<key name="order" value="21"/>
-<key name="visible" value="true"/>
-</section>
-<section name="PositionC">
-<key name="order" value="6"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Opacity">
-<key name="order" value="29"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Contour">
-<key name="order" value="17"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Name">
-<key name="order" value="1"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Perimeter">
-<key name="order" value="19"/>
-<key name="visible" value="true"/>
-</section>
-<section name="SumIntensity">
-<key name="order" value="26"/>
-<key name="visible" value="true"/>
-</section>
-<section name="MassCenterC">
-<key name="order" value="16"/>
-<key name="visible" value="true"/>
-</section>
-<section name="Icon">
-<key name="order" value="0"/>
-<key name="visible" value="false"/>
-</section>
-</section>
-</section>
-<key name="lastUpdateCheckTime" value="1443599739204"/>
+<key name="lastUpdateCheckTime" value="1430382283884"/>
 <key name="guiFontSize" value="12"/>
 <key name="usageStatsReport" value="true"/>
-<key name="loaderFolder" value="D:\Stephane\Pictures\bio\divers\lydia"/>
+<key name="loaderFolder" value="D:\Stephane\Pictures\bio\tiff"/>
 <key name="detached" value="false"/>
-<key name="userLogin" value=""/>
-<key name="userName" value=""/>
 </section>
 <section name="repositories">
 <section name="repos0">
@@ -328,41 +82,43 @@
 <section name="loader">
 <section name="entry0">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/tiff/2D GEL.tif"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/bug/lydia/Manipdu03-06-2014.lif"/>
 </section>
 <section name="entry1">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/divers/lydia/homer_PSD95_synpsin_03062014_01_Structured Illumination_Channel Alignment (slice 6)-coloc.tif"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/bug/czi/SCC47 EGF647 LAMP1488 - EGF only 3D with 405_PALM.czi"/>
 </section>
 <section name="entry2">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/bug/lydia/SerieALongNom.lif"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/bug/czi/SCC47 EGF647 LAMP1488 - LAMP1 only 3D with 405 2_PALM - KAthrin.czi"/>
 </section>
 <section name="entry3">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/bug/lydia/Manipdu03-06-2014.lif"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/tiff/2D GEL.tif"/>
 </section>
 <section name="entry4">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/bug/czi/SCC47 EGF647 LAMP1488 - EGF only 3D with 405_PALM.czi"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/tiff/5D_CZT"/>
 </section>
 <section name="entry5">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/bug/czi/SCC47 EGF647 LAMP1488 - LAMP1 only 3D with 405 2_PALM - KAthrin.czi"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/tiff/3D_Z/mri-stack.tif"/>
 </section>
 <section name="entry6">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/tiff/5D_CZT"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/saved/double.tif"/>
 </section>
 <section name="entry7">
 <key name="nbFile" value="1"/>
-<key name="file0" value="D:/Stephane/Pictures/bio/tiff/3D_Z/mri-stack.tif"/>
+<key name="file0" value="D:/Stephane/Pictures/bio/tiff/3D_Z/3D stack.TIF"/>
 </section>
 <section name="entry8">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="Z:/Anastassia/videos for Mabel/15-02-13/A3C1 control cell1_2 cropped resized_30 sec per frame 20min total.avi"/>
 </section>
 <section name="entry9">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:/Stephane/Desktop/Icy Club/ROI ImageJ Bug/chromaffin cell bv, NO TRANS +anti OPHN1 48 HRS - Series003.tif"/>
 </section>
 </section>
 <key name="os" value="win64"/>
@@ -416,10 +172,10 @@
 </section>
 <key name="clientCpuNumber" value="8"/>
 <key name="clientTotalMemory" value="12833738752"/>
-<key name="appFolder" value="D:/Stephane/Documents/dev/GIT/Icy-Kernel"/>
-<key name="id" value="158523550"/>
+<key name="appFolder" value="D:/Stephane/Documents/dev/GIT/Icy-Kernel/bin"/>
+<key name="id" value="59796749"/>
 <key name="version" value="1.6.1.2"/>
-<key name="lastUploadDate" value="1443623216031"/>
+<key name="lastUploadDate" value="1430382269679"/>
 <section name="frame">
 <section name="imageLoader">
 <key name="separate" value="false"/>
@@ -454,29 +210,29 @@
 </section>
 </section>
 <section name="plugins.adufour.protocols.Protocols">
-<key name="protocolFolder" value="D:\Stephane\Desktop"/>
+<key name="protocolFolder" value="D:\Stephane\Documents\dev\GIT\Icy-Kernel\bin\protocols"/>
 <key name="Window X" value="0"/>
 <key name="Window Y" value="0"/>
 </section>
 <section name="plugins.tprovoost.scripteditor.main.ScriptEditorPlugin">
 <section name="recentFiles">
 <section name="entry0">
-<key name="file0" value="D:\Stephane\Documents\dev\GIT\Icy-Kernel\script.js"/>
-</section>
-<section name="entry1">
 <key name="file0" value="D:\Stephane\Downloads\test2.js"/>
 </section>
-<section name="entry2">
+<section name="entry1">
 <key name="file0" value="D:\Stephane\Desktop\export_histogram_clean.js"/>
 </section>
-<section name="entry3">
+<section name="entry2">
 <key name="file0" value="D:\Stephane\Downloads\export_histogram_clean.py"/>
 </section>
-<section name="entry4">
+<section name="entry3">
 <key name="file0" value="D:\Stephane\Desktop\test.js"/>
 </section>
 </section>
 <section name="openedFiles">
+<section name="entry0">
+<key name="file0" value="D:\Stephane\Downloads\test2.js"/>
+</section>
 <key name="idxTab" value="0"/>
 </section>
 </section>
@@ -485,38 +241,6 @@
 <section name="speed">
 <section name="SpeedProfiler">
 <key name="xlsFolder" value="D:/Stephane/Documents/"/>
-</section>
-</section>
-</section>
-<section name="roi">
-<section name="ROIMeasures">
-<section name="measures">
-<section name="DATASET"/>
-<section name="NAME"/>
-<section name="X"/>
-<section name="Y"/>
-<section name="Z"/>
-<section name="T"/>
-<section name="C"/>
-<section name="BOX_WIDTH"/>
-<section name="BOX_HEIGHT"/>
-<section name="BOX_DEPTH"/>
-<section name="CONTOUR"/>
-<section name="INTERIOR"/>
-<section name="SPHERICITY"/>
-<section name="ROUNDNESS"/>
-<section name="CONVEXITY"/>
-<section name="MAX_FERET"/>
-<section name="ELLIPSE_A"/>
-<section name="ELLIPSE_B"/>
-<section name="ELLIPSE_C"/>
-<section name="ELONGATION"/>
-<section name="FLATNESS3D"/>
-<section name="INTENSITY_MIN"/>
-<section name="INTENSITY_AVG"/>
-<section name="INTENSITY_MAX"/>
-<section name="INTENSITY_SUM"/>
-<section name="INTENSITY_STD"/>
 </section>
 </section>
 </section>
@@ -576,21 +300,21 @@
 </section>
 <section name="frame">
 <section name="main">
-<key name="XE" value="194"/>
-<key name="YE" value="205"/>
+<key name="XE" value="151"/>
+<key name="YE" value="260"/>
 <key name="WidthE" value="1985"/>
 <key name="HeightE" value="1160"/>
 <key name="MaximizedE" value="false"/>
 <key name="previousState" value="true"/>
 </section>
 <section name="inspector">
-<key name="XC" value="1360"/>
+<key name="XC" value="1677"/>
 <key name="YC" value="0"/>
 <key name="XE" value="1771"/>
 <key name="YE" value="314"/>
 <key name="XI" value="600"/>
 <key name="YI" value="140"/>
-<key name="WidthC" value="617"/>
+<key name="WidthC" value="300"/>
 <key name="HeightC" value="998"/>
 <key name="WidthE" value="715"/>
 <key name="HeightE" value="954"/>
@@ -608,7 +332,7 @@
 <key name="YE" value="100"/>
 <key name="XI" value="100"/>
 <key name="YI" value="100"/>
-<key name="WidthC" value="609"/>
+<key name="WidthC" value="292"/>
 <key name="HeightC" value="908"/>
 <key name="WidthE" value="400"/>
 <key name="HeightE" value="600"/>
@@ -626,7 +350,7 @@
 <key name="YE" value="200"/>
 <key name="XI" value="200"/>
 <key name="YI" value="200"/>
-<key name="WidthC" value="609"/>
+<key name="WidthC" value="292"/>
 <key name="HeightC" value="908"/>
 <key name="WidthE" value="400"/>
 <key name="HeightE" value="300"/>
@@ -644,7 +368,7 @@
 <key name="YE" value="200"/>
 <key name="XI" value="200"/>
 <key name="YI" value="200"/>
-<key name="WidthC" value="609"/>
+<key name="WidthC" value="292"/>
 <key name="HeightC" value="908"/>
 <key name="WidthE" value="400"/>
 <key name="HeightE" value="300"/>
@@ -658,8 +382,8 @@
 <section name="preference">
 <key name="XE" value="100"/>
 <key name="YE" value="100"/>
-<key name="XI" value="267"/>
-<key name="YI" value="133"/>
+<key name="XI" value="514"/>
+<key name="YI" value="195"/>
 <key name="WidthE" value="640"/>
 <key name="HeightE" value="480"/>
 <key name="WidthI" value="859"/>

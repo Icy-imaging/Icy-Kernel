@@ -3093,29 +3093,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Copy all properties from the given ROI.<br>
-     * All compatible properties from the source ROI are copied into current ROI except the internal
-     * id.
+     * All compatible properties from the source ROI are copied into current ROI except the internal id.<br>
+     * Return <code>false</code> if the operation failed
      */
-    public void copyFrom(ROI roi)
+    public boolean copyFrom(ROI roi)
     {
-        int tries;
-
         // use XML persistence for cloning
         final Node node = XMLUtil.createDocument(true).getDocumentElement();
 
-        // save operation can fails sometime, insist
-        tries = 3;
-        while ((tries > 0) && !roi.saveToXML(node))
-            tries--;
+        // save operation can fails sometime...
+        if (roi.saveToXML(node))
+            if (loadFromXML(node, true))
+                return true;
 
-        // if (tries == 0)
-        // throw new RuntimeException("Cannot copy roi from " + roi.getName() + ": XML save operation failed !");
-
-        // restore it on current ROI
-        tries = 3;
-        while ((tries > 0) && !loadFromXML(node, true))
-            tries--;
-
+        return false;
         // if (tries == 0)
         // throw new RuntimeException("Cannot copy roi from " + roi.getName() + ": XML load operation failed !");
     }
