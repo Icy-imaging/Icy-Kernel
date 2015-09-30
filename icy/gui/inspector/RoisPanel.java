@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -524,7 +524,6 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             try
             {
                 final Object[] roiResultsList;
-                final Sequence seq = getSequence();
 
                 synchronized (descriptorsToCompute)
                 {
@@ -537,100 +536,105 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     descriptorsToCompute.clear();
                 }
 
-                for (Object object : roiResultsList)
+                final Sequence seq = getSequence();
+
+                if (seq != null)
                 {
-                    final ROIResults roiResults = (ROIResults) object;
-                    final Map<ColumnInfo, DescriptorResult> results = roiResults.descriptorResults;
-                    final Object[] keys;
-
-                    synchronized (results)
+                    for (Object object : roiResultsList)
                     {
-                        keys = results.keySet().toArray();
-                    }
-
-                    for (Object key : keys)
-                    {
-                        final ColumnInfo columnInfo = (ColumnInfo) key;
-                        final ROIDescriptor descriptor = columnInfo.descriptor;
-                        final DescriptorResult result;
+                        final ROIResults roiResults = (ROIResults) object;
+                        final Map<ColumnInfo, DescriptorResult> results = roiResults.descriptorResults;
+                        final Object[] keys;
 
                         synchronized (results)
                         {
-                            // get result
-                            result = results.get(key);
+                            keys = results.keySet().toArray();
                         }
 
-                        // need to refresh this column result
-                        if ((result != null) && result.isOutdated())
+                        for (Object key : keys)
                         {
-                            // get the corresponding plugin
-                            final PluginROIDescriptor plugin;
+                            final ColumnInfo columnInfo = (ColumnInfo) key;
+                            final ROIDescriptor descriptor = columnInfo.descriptor;
+                            final DescriptorResult result;
 
-                            synchronized (descriptorMap)
+                            synchronized (results)
                             {
-                                plugin = descriptorMap.get(descriptor);
+                                // get result
+                                result = results.get(key);
                             }
 
-                            if (plugin != null)
+                            // need to refresh this column result
+                            if ((result != null) && result.isOutdated())
                             {
-                                final Map<ROIDescriptor, Object> newResults;
+                                // get the corresponding plugin
+                                final PluginROIDescriptor plugin;
 
-                                try
+                                synchronized (descriptorMap)
                                 {
-                                    // need computation per channel ?
-                                    if (descriptor.useSequenceData())
-                                        newResults = plugin.compute(roiResults.getRoiForChannel(columnInfo.channel),
-                                                seq);
-                                    else
-                                        newResults = plugin.compute(roiResults.roi, seq);
-
-                                    for (Entry<ROIDescriptor, Object> entryNewResult : newResults.entrySet())
-                                    {
-                                        // get the column for this result
-                                        final ColumnInfo resultColumnInfo = getColumnInfo(entryNewResult.getKey(),
-                                                columnInfo.channel);
-                                        final DescriptorResult oResult;
-
-                                        synchronized (results)
-                                        {
-                                            // get corresponding result
-                                            oResult = results.get(resultColumnInfo);
-                                        }
-
-                                        if (oResult != null)
-                                        {
-                                            // set the result value
-                                            oResult.setValue(entryNewResult.getValue());
-                                            // result is up to date
-                                            oResult.setOutdated(false);
-                                        }
-                                    }
-                                }
-                                catch (UnsupportedOperationException e)
-                                {
-                                    // not supported --> clear associated results and set them as computed
-                                    for (ROIDescriptor desc : plugin.getDescriptors())
-                                    {
-                                        // get the column for this result
-                                        final ColumnInfo resultColumnInfo = getColumnInfo(desc, columnInfo.channel);
-                                        final DescriptorResult oResult;
-
-                                        synchronized (results)
-                                        {
-                                            // get corresponding result
-                                            oResult = results.get(resultColumnInfo);
-                                        }
-
-                                        if (oResult != null)
-                                        {
-                                            oResult.setValue(null);
-                                            oResult.setOutdated(false);
-                                        }
-                                    }
+                                    plugin = descriptorMap.get(descriptor);
                                 }
 
-                                // refresh table
-                                refreshTableData();
+                                if (plugin != null)
+                                {
+                                    final Map<ROIDescriptor, Object> newResults;
+
+                                    try
+                                    {
+                                        // need computation per channel ?
+                                        if (descriptor.useSequenceData())
+                                            newResults = plugin.compute(
+                                                    roiResults.getRoiForChannel(columnInfo.channel), seq);
+                                        else
+                                            newResults = plugin.compute(roiResults.roi, seq);
+
+                                        for (Entry<ROIDescriptor, Object> entryNewResult : newResults.entrySet())
+                                        {
+                                            // get the column for this result
+                                            final ColumnInfo resultColumnInfo = getColumnInfo(entryNewResult.getKey(),
+                                                    columnInfo.channel);
+                                            final DescriptorResult oResult;
+
+                                            synchronized (results)
+                                            {
+                                                // get corresponding result
+                                                oResult = results.get(resultColumnInfo);
+                                            }
+
+                                            if (oResult != null)
+                                            {
+                                                // set the result value
+                                                oResult.setValue(entryNewResult.getValue());
+                                                // result is up to date
+                                                oResult.setOutdated(false);
+                                            }
+                                        }
+                                    }
+                                    catch (UnsupportedOperationException e)
+                                    {
+                                        // not supported --> clear associated results and set them as computed
+                                        for (ROIDescriptor desc : plugin.getDescriptors())
+                                        {
+                                            // get the column for this result
+                                            final ColumnInfo resultColumnInfo = getColumnInfo(desc, columnInfo.channel);
+                                            final DescriptorResult oResult;
+
+                                            synchronized (results)
+                                            {
+                                                // get corresponding result
+                                                oResult = results.get(resultColumnInfo);
+                                            }
+
+                                            if (oResult != null)
+                                            {
+                                                oResult.setValue(null);
+                                                oResult.setOutdated(false);
+                                            }
+                                        }
+                                    }
+
+                                    // refresh table
+                                    refreshTableData();
+                                }
                             }
                         }
                     }

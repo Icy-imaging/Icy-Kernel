@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -64,6 +64,7 @@ public class ZipUtil
         }
         catch (IOException e)
         {
+            // we can freely ignore this one
         }
 
         // return packed data
@@ -72,8 +73,10 @@ public class ZipUtil
 
     /**
      * Uncompress the specified array of byte and return unpacked data
+     * 
+     * @throws DataFormatException
      */
-    public static byte[] unpack(byte[] packedData)
+    public static byte[] unpack(byte[] packedData) throws DataFormatException
     {
         final Inflater decompressor = new Inflater();
 
@@ -87,16 +90,8 @@ public class ZipUtil
         // unpack data
         while (!decompressor.finished())
         {
-            try
-            {
-                final int count = decompressor.inflate(buf);
-                bos.write(buf, 0, count);
-            }
-            catch (DataFormatException e)
-            {
-                IcyExceptionHandler.showErrorMessage(e, true);
-                return null;
-            }
+            final int count = decompressor.inflate(buf);
+            bos.write(buf, 0, count);
         }
         try
         {
@@ -104,6 +99,7 @@ public class ZipUtil
         }
         catch (IOException e)
         {
+            // we can freely ignore this one
         }
 
         // return unpacked data
@@ -136,7 +132,7 @@ public class ZipUtil
                 {
                     if (!FileUtil.createDir(outputDirectory + FileUtil.separator + entry.getName()))
                     {
-                        System.err.println("ZipUtil.unpack(" + zipFile + "," + outputDirectory + ") error :");
+                        System.err.println("ZipUtil.extract(" + zipFile + "," + outputDirectory + ") error :");
                         System.err.println("Can't create directory : '" + outputDirectory + FileUtil.separator
                                 + entry.getName() + "'");
                         ok = false;
@@ -146,7 +142,7 @@ public class ZipUtil
                 else if (!FileUtil.save(outputDirectory + FileUtil.separator + entry.getName(),
                         NetworkUtil.download(file.getInputStream(entry)), true))
                 {
-                    System.err.println("ZipUtil.unpack(" + zipFile + "," + outputDirectory + ") failed.");
+                    System.err.println("ZipUtil.extract(" + zipFile + "," + outputDirectory + ") failed.");
                     ok = false;
                     break;
                 }
@@ -156,7 +152,7 @@ public class ZipUtil
         }
         catch (IOException ioe)
         {
-            System.err.println("ZipUtil.unpack(" + zipFile + "," + outputDirectory + ") error :");
+            System.err.println("ZipUtil.extract(" + zipFile + "," + outputDirectory + ") error :");
             IcyExceptionHandler.showErrorMessage(ioe, false);
             ok = false;
         }

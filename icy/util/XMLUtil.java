@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.zip.DataFormatException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -461,94 +462,124 @@ public class XMLUtil
     /**
      * Get all child node of specified node.
      */
+    @SuppressWarnings("null")
     public static ArrayList<Node> getChildren(Node node)
     {
         final ArrayList<Node> result = new ArrayList<Node>();
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // sometime the XML library fails so we make several attempts
+        while (tries > 0)
         {
-            if (nodeList != null)
+            try
             {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+                final NodeList nodeList = node.getChildNodes();
 
-                    if (n != null)
-                        result.add(n);
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if (n != null)
+                            result.add(n);
+                    }
                 }
+
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return result;
+        throw exception;
     }
 
     /**
      * Get the first child node with specified name from node.<br>
      * Return null if not found.
      */
+    @SuppressWarnings("null")
     public static Node getChild(Node node, String name)
     {
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
-            {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+            final NodeList nodeList = node.getChildNodes();
 
-                    if ((n != null) && n.getNodeName().equals(name))
-                        return n;
+            try
+            {
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if ((n != null) && n.getNodeName().equals(name))
+                            return n;
+                    }
                 }
+
+                return null;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return null;
+        throw exception;
     }
 
     /**
      * Get all child nodes with specified name from node.
      */
+    @SuppressWarnings("null")
     public static ArrayList<Node> getChildren(Node node, String name)
     {
         final ArrayList<Node> result = new ArrayList<Node>();
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
-            {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+            final NodeList nodeList = node.getChildNodes();
 
-                    if ((n != null) && n.getNodeName().equals(name))
-                        result.add(n);
+            try
+            {
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if ((n != null) && n.getNodeName().equals(name))
+                            result.add(n);
+                    }
                 }
+
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return result;
+        throw exception;
     }
 
     /**
@@ -581,94 +612,123 @@ public class XMLUtil
     /**
      * Get all child element of specified node.
      */
+    @SuppressWarnings("null")
     public static ArrayList<Element> getElements(Node node)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
-            {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+            final NodeList nodeList = node.getChildNodes();
 
-                    if (n instanceof Element)
-                        result.add((Element) n);
+            try
+            {
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if (n instanceof Element)
+                            result.add((Element) n);
+                    }
                 }
+
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return result;
+        throw exception;
     }
 
     /**
      * Get the first child element with specified name from node.<br>
      * Return null if not found.
      */
+    @SuppressWarnings("null")
     public static Element getElement(Node node, String name)
     {
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
+            try
             {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+                final NodeList nodeList = node.getChildNodes();
 
-                    if ((n instanceof Element) && n.getNodeName().equals(name))
-                        return (Element) n;
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if ((n instanceof Element) && n.getNodeName().equals(name))
+                            return (Element) n;
+                    }
                 }
+
+                return null;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return null;
+        throw exception;
     }
 
     /**
      * Get all child element with specified name of specified node.
      */
+    @SuppressWarnings("null")
     public static ArrayList<Element> getElements(Node node, String name)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
-            {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+            final NodeList nodeList = node.getChildNodes();
 
-                    if ((n instanceof Element) && n.getNodeName().equals(name))
-                        result.add((Element) n);
+            try
+            {
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if ((n instanceof Element) && n.getNodeName().equals(name))
+                            result.add((Element) n);
+                    }
                 }
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return result;
+        throw exception;
     }
 
     /**
@@ -701,69 +761,89 @@ public class XMLUtil
     /**
      * Get all child element with specified type (name) from specified node.
      */
+    @SuppressWarnings("null")
     public static ArrayList<Element> getGenericElements(Node node, String type)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
-            {
-                for (int i = 0; i < nodeList.getLength(); i++)
-                {
-                    final Node n = nodeList.item(i);
+            final NodeList nodeList = node.getChildNodes();
 
-                    if ((n instanceof Element) && n.getNodeName().equals(type))
-                        result.add((Element) n);
+            try
+            {
+                if (nodeList != null)
+                {
+                    for (int i = 0; i < nodeList.getLength(); i++)
+                    {
+                        final Node n = nodeList.item(i);
+
+                        if ((n instanceof Element) && n.getNodeName().equals(type))
+                            result.add((Element) n);
+                    }
                 }
+
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return result;
+        throw exception;
     }
 
     /**
      * Get all child element with specified type (name) and name ('name attribute value')
      * from specified node.
      */
+    @SuppressWarnings("null")
     public static ArrayList<Element> getGenericElements(Node node, String type, String name)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
+            final NodeList nodeList = node.getChildNodes();
+
+            try
             {
-                for (int i = 0; i < nodeList.getLength(); i++)
+                if (nodeList != null)
                 {
-                    final Node n = nodeList.item(i);
-
-                    if ((n instanceof Element) && n.getNodeName().equals(type))
+                    for (int i = 0; i < nodeList.getLength(); i++)
                     {
-                        final Element element = (Element) n;
+                        final Node n = nodeList.item(i);
 
-                        if (element.getAttribute(ATTR_NAME_NAME).equals(name))
-                            result.add(element);
+                        if ((n instanceof Element) && n.getNodeName().equals(type))
+                        {
+                            final Element element = (Element) n;
+
+                            if (element.getAttribute(ATTR_NAME_NAME).equals(name))
+                                result.add(element);
+                        }
                     }
                 }
+
+                return result;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return result;
+        throw exception;
     }
 
     /**
@@ -788,36 +868,46 @@ public class XMLUtil
      * Get child element with specified type (name) and name ('name attribute value')
      * from specified node.
      */
+    @SuppressWarnings("null")
     public static Element getGenericElement(Node node, String type, String name)
     {
-        final NodeList nodeList = node.getChildNodes();
+        int tries = 3;
+        RuntimeException exception = null;
 
-        // have to catch exception as sometime NodeList launch null pointer exception
-        try
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            if (nodeList != null)
+            final NodeList nodeList = node.getChildNodes();
+
+            try
             {
-                for (int i = 0; i < nodeList.getLength(); i++)
+                if (nodeList != null)
                 {
-                    final Node n = nodeList.item(i);
-
-                    if ((n instanceof Element) && n.getNodeName().equals(type))
+                    for (int i = 0; i < nodeList.getLength(); i++)
                     {
-                        final Element element = (Element) n;
+                        final Node n = nodeList.item(i);
 
-                        if (element.getAttribute(ATTR_NAME_NAME).equals(name))
-                            return element;
+                        if ((n instanceof Element) && n.getNodeName().equals(type))
+                        {
+                            final Element element = (Element) n;
+
+                            if (element.getAttribute(ATTR_NAME_NAME).equals(name))
+                                return element;
+                        }
                     }
                 }
+
+                return null;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
             }
         }
-        catch (Exception e)
-        {
-            // ignore
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        return null;
+        throw exception;
     }
 
     /**
@@ -878,16 +968,13 @@ public class XMLUtil
         return StringUtil.parseDouble(value, def);
     }
 
-    private static byte[] getBytes(String value, byte[] def)
+    private static byte[] getBytes(String value, byte[] def) throws DataFormatException
     {
         if (value == null)
             return def;
 
         // get packed byte data
         final byte[] result = (byte[]) ArrayUtil.stringToArray1D(value, DataType.BYTE, true, ":");
-
-        if (result == null)
-            return def;
 
         // unpack and return
         return ZipUtil.unpack(result);
@@ -939,17 +1026,36 @@ public class XMLUtil
      * Get attribute value from the specified Element.<br>
      * If no attribute found 'def' value is returned.
      */
+    @SuppressWarnings("null")
     public static String getAttributeValue(Element element, String attribute, String def)
     {
-        if (element != null)
-        {
-            final Attr attr = element.getAttributeNode(attribute);
+        if (element == null)
+            return def;
 
-            if (attr != null)
-                return attr.getValue();
+        int tries = 3;
+        RuntimeException exception = null;
+
+        // sometime the XML library fails so we make several attempts
+        while (tries > 0)
+        {
+            try
+            {
+                final Attr attr = element.getAttributeNode(attribute);
+
+                if (attr != null)
+                    return attr.getValue();
+
+                return def;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
+            }
         }
 
-        return def;
+        throw exception;
     }
 
     /**
@@ -963,11 +1069,23 @@ public class XMLUtil
 
     /**
      * Get attribute value as byte array from the specified Element.<br>
-     * If no attribute found 'def' value is returned.
+     * If the attribute is not found 'def' value is returned.<br>
+     * If an error occurred or if element is <code>null</code> then <code>null</code> is returned.
      */
     public static byte[] getAttributeBytesValue(Element element, String attribute, byte[] def)
     {
-        return getBytes(getAttributeValue(element, attribute, ""), def);
+        try
+        {
+            return getBytes(getAttributeValue(element, attribute, ""), def);
+        }
+        catch (Exception e)
+        {
+            if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return null;
+        }
     }
 
     /**
@@ -1010,39 +1128,76 @@ public class XMLUtil
      * Get first value (value of first child) from the specified Element.<br>
      * If no value found 'def' value is returned.
      */
+    @SuppressWarnings("null")
     public static String getFirstValue(Element element, String def)
     {
-        if (element != null)
+        if (element == null)
+            return def;
+
+        int tries = 3;
+        RuntimeException exception = null;
+
+        // sometime the XML library fails so we make several attempts
+        while (tries > 0)
         {
-            final Node child = element.getFirstChild();
-            if (child != null)
-                return child.getNodeValue();
+            try
+            {
+                final Node child = element.getFirstChild();
+
+                if (child != null)
+                    return child.getNodeValue();
+
+                return def;
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
+            }
         }
 
-        return def;
+        throw exception;
     }
 
     /**
      * Get all values (value of all child) from the specified Element.<br>
      * If no value found 'def' value is returned.
      */
+    @SuppressWarnings("null")
     public static String getAllValues(Element element, String def)
     {
-        if (element != null)
+        if (element == null)
+            return def;
+
+        int tries = 3;
+        RuntimeException exception = null;
+
+        // sometime the XML library fails so we make several attempts
+        while (tries > 0)
         {
-            final StringBuilder str = new StringBuilder();
-
-            Node child = element.getFirstChild();
-            while (child != null)
+            try
             {
-                str.append(child.getNodeValue());
-                child = child.getNextSibling();
-            }
+                final StringBuilder str = new StringBuilder();
 
-            return str.toString();
+                Node child = element.getFirstChild();
+                while (child != null)
+                {
+                    str.append(child.getNodeValue());
+                    child = child.getNextSibling();
+                }
+
+                return str.toString();
+            }
+            catch (RuntimeException e)
+            {
+                // try again
+                exception = e;
+                tries--;
+            }
         }
 
-        return def;
+        throw exception;
     }
 
     /**
@@ -1100,11 +1255,23 @@ public class XMLUtil
 
     /**
      * Get value as byte array from the specified Element.<br>
-     * If no byte array value found 'def' value is returned.
+     * If no byte array value found 'def' value is returned.<br>
+     * Return <code>null</code> if an error happened.
      */
     public static byte[] getBytesValue(Element element, byte[] def)
     {
-        return getBytes(getFirstValue(element, ""), def);
+        try
+        {
+            return getBytes(getFirstValue(element, ""), def);
+        }
+        catch (Exception e)
+        {
+            if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return null;
+        }
     }
 
     /**
@@ -1179,11 +1346,24 @@ public class XMLUtil
     }
 
     /**
-     * Get element value as byte array from the specified node.
+     * Get element value as byte array from the specified node.<br>
+     * If no byte array value found 'def' value is returned.<br>
+     * Return <code>null</code> if an error happened.
      */
     public static byte[] getElementBytesValue(Node node, String name, byte[] def)
     {
-        return getBytes(getElementValue(node, name, ""), def);
+        try
+        {
+            return getBytes(getElementValue(node, name, ""), def);
+        }
+        catch (Exception e)
+        {
+            if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return null;
+        }
     }
 
     /**
@@ -1249,11 +1429,23 @@ public class XMLUtil
     /**
      * Get value ('value' attribute value) as byte array from element with specified type
      * and name ('name' attribute value).<br>
-     * If no byte array value found 'def' value is returned.
+     * If no byte array value found 'def' value is returned.<br>
+     * Return <code>null</code> if an error happened.
      */
     public static byte[] getGenericElementBytesValue(Node node, String type, String name, byte[] def)
     {
-        return getBytes(getGenericElementValue(node, type, name, ""), def);
+        try
+        {
+            return getBytes(getElementValue(node, name, ""), def);
+        }
+        catch (Exception e)
+        {
+            if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return null;
+        }
     }
 
     /**
@@ -1689,15 +1881,26 @@ public class XMLUtil
      */
     public static boolean removeNode(Node parent, Node child)
     {
-        try
+        int tries = 3;
+        // RuntimeException exception = null;
+
+        // have to make several attempts as sometime XML library fails to correctly retrieve XML data
+        while (tries > 0)
         {
-            parent.removeChild(child);
-            return true;
+            try
+            {
+                parent.removeChild(child);
+                return true;
+            }
+            catch (RuntimeException e)
+            {
+                // exception = e;
+                tries--;
+            }
         }
-        catch (Exception e)
-        {
-            return false;
-        }
+
+        // we just ignore here
+        return false;
     }
 
     /**

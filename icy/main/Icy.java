@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -39,10 +39,12 @@ import icy.gui.util.LookAndFeelUtil;
 import icy.imagej.ImageJPatcher;
 import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
+import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginUpdater;
+import icy.plugin.abstract_.Plugin;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
@@ -136,7 +138,8 @@ public class Icy
      */
     static String[] args;
     static String[] pluginArgs;
-    static String startupPlugin;
+    static String startupPluginName;
+    static Plugin startupPlugin;
     static String startupImage;
 
     /**
@@ -330,7 +333,7 @@ public class Icy
                     });
                 }
             }
-            
+
             // force check update for the new version
             GeneralPreferences.setLastUpdateCheckTime(0);
         }
@@ -371,10 +374,20 @@ public class Icy
         while (PluginInstaller.isProcessing() || WorkspaceInstaller.isProcessing())
             ThreadUtil.sleep(1);
 
-        if (startupPlugin != null)
+        if (startupPluginName != null)
         {
             PluginLoader.waitWhileLoading();
-            PluginLauncher.start(startupPlugin);
+
+            final PluginDescriptor plugin = PluginLoader.getPlugin(startupPluginName);
+
+            if (plugin == null)
+            {
+                System.err.println("Could not launch plugin '" + startupPluginName + "': the plugin was not found.");
+                System.err.println("Be sure you correctly wrote the complete class name and respected the case.");
+                System.err.println("Ex: plugins.mydevid.analysis.MyPluginClass");
+            }
+            else
+                startupPlugin = PluginLauncher.start(plugin);
         }
 
         // headless mode ? we can exit now...
@@ -384,9 +397,10 @@ public class Icy
 
     private static boolean handleAppArgs(String[] args)
     {
-        final List<String> pluginArgs = new ArrayList<String>();
+        final List<String> pluginArgsList = new ArrayList<String>();
 
         startupImage = null;
+        startupPluginName = null;
         startupPlugin = null;
         boolean execute = false;
         boolean headless = false;
@@ -397,10 +411,10 @@ public class Icy
         for (String arg : args)
         {
             // store plugin arguments
-            if (startupPlugin != null)
-                pluginArgs.add(arg);
+            if (startupPluginName != null)
+                pluginArgsList.add(arg);
             else if (execute)
-                startupPlugin = arg;
+                startupPluginName = arg;
             // special flag to disabled JCL (needed for development)
             else if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
                 PluginLoader.setJCLDisabled(true);
@@ -419,7 +433,7 @@ public class Icy
         }
 
         // save the plugin arguments
-        Icy.pluginArgs = pluginArgs.toArray(new String[pluginArgs.size()]);
+        Icy.pluginArgs = pluginArgsList.toArray(new String[pluginArgsList.size()]);
 
         return headless;
     }
@@ -823,11 +837,28 @@ public class Icy
     }
 
     /**
-     * Returns the command line arguments
+     * Returns the plugin command line arguments
      */
     public static String[] getCommandLinePluginArgs()
     {
         return pluginArgs;
+    }
+
+    /**
+     * Clear the plugin command line arguments.<br>
+     * This method should be called after the launching plugin actually 'consumed' the startup arguments.
+     */
+    public static void clearCommandLinePluginArgs()
+    {
+        pluginArgs = new String[0];
+    }
+
+    /**
+     * Returns the startup plugin if any
+     */
+    public static Plugin getStartupPlugin()
+    {
+        return startupPlugin;
     }
 
     /**

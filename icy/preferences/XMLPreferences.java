@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -63,8 +63,18 @@ public class XMLPreferences
          */
         public void load(String filename)
         {
-            // get document
-            doc = XMLUtil.loadDocument(new File(filename));
+            try
+            {
+                // get document
+                doc = XMLUtil.loadDocument(new File(filename));
+            }
+            catch (Throwable t)
+            {
+                System.err.println("Error: " + filename + " preferences file is corrupted, cannot recover settings.");
+                // corrupted XML file
+                doc = null;
+            }
+
             // create it if not existing
             if (doc == null)
                 doc = XMLUtil.createDocument(false);
@@ -496,7 +506,7 @@ public class XMLPreferences
     {
         synchronized (root)
         {
-            XMLUtil.setGenericElementBytesValue(currentElement, TYPE_KEY, key, value);
+            XMLUtil.setGenericElementBytesValue(currentElement, TYPE_KEY, key, value.clone());
         }
     }
 

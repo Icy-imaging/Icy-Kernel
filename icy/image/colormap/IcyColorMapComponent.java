@@ -838,7 +838,15 @@ public class IcyColorMapComponent implements XMLPersistent
             {
                 int ind = 0;
                 if (nodesPoint.size() == 0)
-                    copyFrom(XMLUtil.getElementBytesValue(node, ID_VALUE, new byte[] {}));
+                {
+                    final byte[] data = XMLUtil.getElementBytesValue(node, ID_VALUE, new byte[] {});
+
+                    // an error occurred while retrieved XML data
+                    if (data == null)
+                        return false;
+
+                    copyFrom(data);
+                }
                 else
                 {
                     // backward compatibility

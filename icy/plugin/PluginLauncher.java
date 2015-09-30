@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -205,14 +205,11 @@ public class PluginLauncher
     }
 
     /**
-     * Start the specified plugin.<br>
-     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or <code>null</code> if an error
-     * occurred or if the specified class name is not a valid plugin
-     * class name.
-     * 
-     * @param pluginClassName
-     *        class name of the plugin we want to start
+     * @deprecated Use {@link #start(PluginDescriptor)} instead.<br>
+     *             You can retrieve a {@link PluginDescriptor} from the class name by using
+     *             {@link PluginLoader#getPlugin(String)} method.
      */
+    @Deprecated
     public static Plugin start(String pluginClassName)
     {
         final PluginDescriptor plugin = PluginLoader.getPlugin(pluginClassName);
@@ -252,14 +249,11 @@ public class PluginLauncher
     }
 
     /**
-     * Same as {@link #start(String)} except it throws {@link Exception} on error so user
-     * can handle them.
-     * 
-     * @throws InterruptedException
-     *         if the current thread was interrupted while waiting for execution on EDT.
-     * @throws Exception
-     *         if the computation threw an exception (only when plugin is executed on EDT).
+     * @deprecated Use {@link #startSafe(PluginDescriptor)} instead.<br>
+     *             You can retrieve a {@link PluginDescriptor} from the class name by using
+     *             {@link PluginLoader#getPlugin(String)} method.
      */
+    @Deprecated
     public static Plugin startSafe(String pluginClassName) throws Exception
     {
         final PluginDescriptor plugin = PluginLoader.getPlugin(pluginClassName);
