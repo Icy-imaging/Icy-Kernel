@@ -86,7 +86,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     @Deprecated
     public SeriesSelectionDialog(IFormatReader reader)
     {
-        super(Icy.getMainInterface().getMainFrame(), "Series selection");
+        super("Series selection", null, Icy.getMainInterface().getMainFrame());
 
         this.reader = reader;
         // default is empty
@@ -215,7 +215,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
         setPreferredSize(new Dimension(740, 520));
         pack();
-        ComponentUtil.center(SeriesSelectionDialog.this);
+        ComponentUtil.center(this);
         setVisible(true);
     }
 
@@ -228,7 +228,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadataImpl metadata)
             throws UnsupportedFormatException, IOException
     {
-        super(Icy.getMainInterface().getMainFrame(), "Series selection");
+        super("Series selection", null, Icy.getMainInterface().getMainFrame());
 
         this.importer = importer;
         this.id = id;
