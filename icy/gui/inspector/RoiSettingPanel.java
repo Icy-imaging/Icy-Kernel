@@ -1,7 +1,7 @@
 package icy.gui.inspector;
 
+import icy.gui.component.AbstractRoisPanel.BaseColumnInfo;
 import icy.gui.component.button.IcyButton;
-import icy.gui.inspector.RoisPanel.BaseColumnInfo;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;

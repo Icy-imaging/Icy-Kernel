@@ -78,8 +78,7 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
     IcyButton undoButton;
     IcyButton redoButton;
     JSpinner historySizeField;
-    IcyButton clearOlderButton;
-    IcyButton clearNewerButton;
+    IcyButton clearAllButLastButton;
     IcyButton clearAllButton;
     final Runnable refresher;
 
@@ -253,15 +252,10 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
         Component horizontalStrut_2 = Box.createHorizontalStrut(8);
         bottomPanel.add(horizontalStrut_2);
 
-        clearOlderButton = new IcyButton(SequenceOperationActions.undoClearOldsAction);
-        clearOlderButton.setFlat(true);
-        clearOlderButton.setHideActionText(true);
-        bottomPanel.add(clearOlderButton);
-
-        clearNewerButton = new IcyButton(SequenceOperationActions.undoClearFuturesAction);
-        clearNewerButton.setFlat(true);
-        clearNewerButton.setHideActionText(true);
-        bottomPanel.add(clearNewerButton);
+        clearAllButLastButton = new IcyButton(SequenceOperationActions.undoClearAllButLastAction);
+        clearAllButLastButton.setFlat(true);
+        clearAllButLastButton.setHideActionText(true);
+        bottomPanel.add(clearAllButLastButton);
 
         clearAllButton = new IcyButton(SequenceOperationActions.undoClearAction);
         clearAllButton.setFlat(true);
@@ -341,16 +335,14 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
                 {
                     undoButton.setEnabled(undoManager.canUndo());
                     redoButton.setEnabled(undoManager.canRedo());
-                    clearOlderButton.setEnabled(undoManager.canUndo());
-                    clearNewerButton.setEnabled(undoManager.canRedo());
+                    clearAllButLastButton.setEnabled(undoManager.canUndo());
                     clearAllButton.setEnabled(undoManager.canUndo() || undoManager.canRedo());
                 }
                 else
                 {
                     undoButton.setEnabled(false);
                     redoButton.setEnabled(false);
-                    clearOlderButton.setEnabled(false);
-                    clearNewerButton.setEnabled(false);
+                    clearAllButLastButton.setEnabled(false);
                     clearAllButton.setEnabled(false);
                 }
             }
