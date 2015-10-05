@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -433,4 +433,5 @@ public class SequenceDataIterator implements DataIterator
     {
         return t;
     }
+
 }

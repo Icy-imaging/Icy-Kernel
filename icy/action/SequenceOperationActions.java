@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -1093,7 +1093,7 @@ public class SequenceOperationActions
     }
 
     public static IcyAbstractAction undoAction = new IcyAbstractAction("Undo", new IcyIcon(ResourceUtil.ICON_UNDO),
-            "Undo last operation", KeyEvent.VK_Z, SystemUtil.getMenuCtrlMask())
+            "Undo last operation (Ctrl+Z)", KeyEvent.VK_Z, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -1114,7 +1114,7 @@ public class SequenceOperationActions
     };
 
     public static IcyAbstractAction redoAction = new IcyAbstractAction("Redo", new IcyIcon(ResourceUtil.ICON_REDO),
-            "Redo last operation", KeyEvent.VK_Y, SystemUtil.getMenuCtrlMask())
+            "Redo last operation (Ctrl+Y)", KeyEvent.VK_Y, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -1135,7 +1135,7 @@ public class SequenceOperationActions
     };
 
     public static IcyAbstractAction undoClearAction = new IcyAbstractAction("Clear history", new IcyIcon(
-            ResourceUtil.ICON_DELETE), "Clear all history (can release some memory)")
+            ResourceUtil.ICON_TRASH), "Clear all history (will release some memory")
     {
         /**
          * 
@@ -1163,8 +1163,9 @@ public class SequenceOperationActions
         }
     };
 
-    public static IcyAbstractAction undoClearOldsAction = new IcyAbstractAction("Clear olders", new IcyIcon(
-            ResourceUtil.ICON_CLEAR_BEFORE), "Clear all history except the last operation (can release some memory)")
+    public static IcyAbstractAction undoClearAllButLastAction = new IcyAbstractAction("Clear all but last",
+            new IcyIcon(ResourceUtil.ICON_CLEAR_BEFORE),
+            "Clear all history but the last operation (can release some memory)")
     {
         /**
          * 
@@ -1179,35 +1180,6 @@ public class SequenceOperationActions
             if (undoManager != null)
             {
                 undoManager.discardOldEdits(1);
-                return true;
-            }
-
-            return false;
-        }
-
-        @Override
-        public boolean isEnabled()
-        {
-            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
-        }
-    };
-
-    public static IcyAbstractAction undoClearFuturesAction = new IcyAbstractAction("Clear futures", new IcyIcon(
-            ResourceUtil.ICON_CLEAR_AFTER), "Clear all future operations from history (can release some memory)")
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -395525273305262280L;
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
-
-            if (undoManager != null)
-            {
-                undoManager.discardFutureEdits(0);
                 return true;
             }
 

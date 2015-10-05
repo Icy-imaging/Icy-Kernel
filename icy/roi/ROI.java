@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -317,7 +317,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         // load properties from XML
         if (roi != null)
         {
-            roi.loadFromXML(node);
+            // error while loading infos --> return null
+            if (!roi.loadFromXML(node))
+                return null;
+
             roi.setSelected(false);
         }
 
@@ -452,7 +455,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 final Node nodeROI = XMLUtil.addElement(node, ID_ROI);
 
                 if (!roi.saveToXML(nodeROI))
+                {
                     XMLUtil.removeNode(node, nodeROI);
+                    System.err.println("Error: the roi " + roi.getName() + "s was not correctly saved to XML !");
+                }
             }
         }
     }
@@ -2771,7 +2777,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return getCopy();
 
         final Rectangle5D bounds5D = getSubtractionBounds(roi, true);
-
         final int dim = getEffectiveDimension(bounds5D);
         // we want integer bounds now
         final Rectangle5D.Integer bounds = bounds5D.toInteger();
@@ -2895,17 +2900,26 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             getOverlay().setMousePos(new Point5D.Double(pos.getX(), pos.getY(), -1, -1, -1));
     }
 
+    /**
+     * Returns a copy of the ROI or <code>null</code> if the operation failed.
+     */
     public ROI getCopy()
     {
         // use XML persistence for cloning
         final Node node = XMLUtil.createDocument(true).getDocumentElement();
 
-        saveToXML(node);
+        // save
+        if (!saveToXML(node))
+            // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": XML save operation failed !");
+            return null;
+
         final ROI result = createFromXML(node);
+        if (result == null)
+            // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": creation from XML failed !");
+            return null;
 
         // then generate id and modify name
-        if (result != null)
-            result.id = generateId();
+        result.id = generateId();
 
         return result;
     }
@@ -3079,18 +3093,22 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Copy all properties from the given ROI.<br>
-     * All compatible properties from the source ROI are copied into current ROI except the internal
-     * id.
+     * All compatible properties from the source ROI are copied into current ROI except the internal id.<br>
+     * Return <code>false</code> if the operation failed
      */
-    public void copyFrom(ROI roi)
+    public boolean copyFrom(ROI roi)
     {
         // use XML persistence for cloning
         final Node node = XMLUtil.createDocument(true).getDocumentElement();
 
-        // save ROI properties in XML node
-        roi.saveToXML(node);
-        // restore it on current ROI
-        loadFromXML(node, true);
+        // save operation can fails sometime...
+        if (roi.saveToXML(node))
+            if (loadFromXML(node, true))
+                return true;
+
+        return false;
+        // if (tries == 0)
+        // throw new RuntimeException("Cannot copy roi from " + roi.getName() + ": XML load operation failed !");
     }
 
     public boolean loadFromXML(Node node, boolean preserveId)

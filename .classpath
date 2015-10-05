@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/package.html|plugins/test/ROIBasicDescriptor.java|plugins/test/ROIDescriptorBlock.java|plugins/test/TestHeadLess.java|plugins/test/TestImgLib2.java" including="icy/**|plugins/kernel/**|plugins/test/**|res/**" kind="src" path=""/>
+	<classpathentry excluding="**/package.html" including="icy/**|plugins/kernel/**|plugins/test/**|res/**" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/customizer.jar"/>
@@ -29,7 +29,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/laf-plugin.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/laf-widget.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-flamingo.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar" sourcepath="D:/Stephane/Documents/dev/GIT/Icy-Insubstantial"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/irclib.jar"/>

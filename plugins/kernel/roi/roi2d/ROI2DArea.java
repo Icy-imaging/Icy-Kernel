@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -837,11 +837,13 @@ public class ROI2DArea extends ROI2D
         minX = maxX = minY = maxY = 0;
         boolean empty = true;
         int offset = 0;
+        final byte[] data = maskData;
+
         for (int y = 0; y < sizeY; y++)
         {
             for (int x = 0; x < sizeX; x++)
             {
-                if (maskData[offset++] != 0)
+                if (data[offset++] != 0)
                 {
                     if (empty)
                     {
@@ -991,6 +993,7 @@ public class ROI2DArea extends ROI2D
         {
             // set point in mask
             addToBounds(new Rectangle(x, y, 1, 1));
+
             // set color depending remove or adding to mask
             maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 1;
         }
@@ -998,6 +1001,7 @@ public class ROI2DArea extends ROI2D
         {
             // remove point from mask
             maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 0;
+
             // mark that bounds need to be updated
             boundsNeedUpdate = true;
         }
@@ -1027,6 +1031,7 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToAdd);
 
         int offDst, offSrc;
+        final byte[] data = maskData;
 
         // calculate offset
         offDst = ((boundsToAdd.y - bounds.y) * bounds.width) + (boundsToAdd.x - bounds.x);
@@ -1036,7 +1041,7 @@ public class ROI2DArea extends ROI2D
         {
             for (int x = 0; x < boundsToAdd.width; x++)
                 if (maskToAdd[offSrc++] != 0)
-                    maskData[offDst + x] = 1;
+                    data[offDst + x] = 1;
 
             offDst += bounds.width;
         }
@@ -1057,6 +1062,7 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToAdd);
 
         int offDst, offSrc;
+        final byte[] data = maskData;
 
         // calculate offset
         offDst = ((boundsToAdd.y - bounds.y) * bounds.width) + (boundsToAdd.x - bounds.x);
@@ -1066,7 +1072,7 @@ public class ROI2DArea extends ROI2D
         {
             for (int x = 0; x < boundsToAdd.width; x++)
                 if (maskToAdd[offSrc++])
-                    maskData[offDst + x] = 1;
+                    data[offDst + x] = 1;
 
             offDst += bounds.width;
         }
@@ -1100,6 +1106,7 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToXAdd);
 
         int offDst, offSrc;
+        final byte[] data = maskData;
 
         // calculate offset
         offDst = ((boundsToXAdd.y - bounds.y) * bounds.width) + (boundsToXAdd.x - bounds.x);
@@ -1109,7 +1116,7 @@ public class ROI2DArea extends ROI2D
         {
             for (int x = 0; x < boundsToXAdd.width; x++)
                 if (maskToXAdd[offSrc++] != 0)
-                    maskData[offDst + x] ^= 1;
+                    data[offDst + x] ^= 1;
 
             offDst += bounds.width;
         }
@@ -1149,6 +1156,7 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToXAdd);
 
         int offDst, offSrc;
+        final byte[] data = maskData;
 
         // calculate offset
         offDst = ((boundsToXAdd.y - bounds.y) * bounds.width) + (boundsToXAdd.x - bounds.x);
@@ -1158,7 +1166,7 @@ public class ROI2DArea extends ROI2D
         {
             for (int x = 0; x < boundsToXAdd.width; x++)
                 if (maskToXAdd[offSrc++])
-                    maskData[offDst + x] ^= 1;
+                    data[offDst + x] ^= 1;
 
             offDst += bounds.width;
         }
@@ -1191,12 +1199,13 @@ public class ROI2DArea extends ROI2D
         // calculate offset
         int offDst = ((intersection.y - bounds.y) * bounds.width) + (intersection.x - bounds.x);
         int offSrc = ((intersection.y - boundsToRemove.y) * boundsToRemove.width) + (intersection.x - boundsToRemove.x);
+        final byte[] data = maskData;
 
         for (int y = 0; y < intersection.height; y++)
         {
             for (int x = 0; x < intersection.width; x++)
                 if (maskToRemove[offSrc + x] != 0)
-                    maskData[offDst + x] = 0;
+                    data[offDst + x] = 0;
 
             offDst += bounds.width;
             offSrc += boundsToRemove.width;
@@ -1230,12 +1239,13 @@ public class ROI2DArea extends ROI2D
         // calculate offset
         int offDst = ((intersection.y - bounds.y) * bounds.width) + (intersection.x - bounds.x);
         int offSrc = ((intersection.y - boundsToRemove.y) * boundsToRemove.width) + (intersection.x - boundsToRemove.x);
+        final byte[] data = maskData;
 
         for (int y = 0; y < intersection.height; y++)
         {
             for (int x = 0; x < intersection.width; x++)
                 if (maskToRemove[offSrc + x])
-                    maskData[offDst + x] = 0;
+                    data[offDst + x] = 0;
 
             offDst += bounds.width;
             offSrc += boundsToRemove.width;
@@ -1644,13 +1654,14 @@ public class ROI2DArea extends ROI2D
         final int yi = (int) y - bounds.y;
         final int wi = (int) (x + w) - (int) x;
         final int hi = (int) (y + h) - (int) y;
+        final byte[] data = maskData;
 
         // scan all pixels, can take sometime if mask is large
         int offset = (yi * bounds.width) + xi;
         for (int j = 0; j < hi; j++)
         {
             for (int i = 0; i < wi; i++)
-                if (maskData[offset++] == 0)
+                if (data[offset++] == 0)
                     return false;
 
             offset += bounds.width - wi;
@@ -1689,6 +1700,7 @@ public class ROI2DArea extends ROI2D
         int yi = (int) y - bounds.y;
         int wi = (int) (x + w) - (int) x;
         int hi = (int) (y + h) - (int) y;
+        final byte[] data = maskData;
 
         // adjust box to mask size
         if (xi < 0)
@@ -1711,7 +1723,7 @@ public class ROI2DArea extends ROI2D
         for (int j = 0; j < hi; j++)
         {
             for (int i = 0; i < wi; i++)
-                if (maskData[offset++] != 0)
+                if (data[offset++] != 0)
                     return true;
 
             offset += bounds.width - wi;
@@ -1735,6 +1747,7 @@ public class ROI2DArea extends ROI2D
         // this ROI doesn't take care of inclusive parameter as intersect = contains
         int offSrc = 0;
         int offDst = 0;
+        final byte[] data = maskData;
 
         // adjust offset in source mask
         if (intersect.x > bounds.x)
@@ -1750,7 +1763,7 @@ public class ROI2DArea extends ROI2D
         for (int j = 0; j < intersect.height; j++)
         {
             for (int i = 0; i < intersect.width; i++)
-                result[offDst++] = (maskData[offSrc++] != 0);
+                result[offDst++] = (data[offSrc++] != 0);
 
             offSrc += bounds.width - intersect.width;
             offDst += w - intersect.width;
@@ -1764,9 +1777,10 @@ public class ROI2DArea extends ROI2D
     {
         // just count the number of point contained in the mask
         double result = 0d;
+        final byte[] data = maskData;
 
-        for (int i = 0; i < maskData.length; i++)
-            if (maskData[i] != 0)
+        for (int i = 0; i < data.length; i++)
+            if (data[i] != 0)
                 result += 1d;
 
         return result;
@@ -1848,10 +1862,10 @@ public class ROI2DArea extends ROI2D
         // reset image with new rectangle
         updateImage(r);
 
-        final int len = r.width * r.height;
+        final byte[] data = maskData;
 
-        for (int i = 0; i < len; i++)
-            maskData[i] = (byte) (booleanMask[i] ? 1 : 0);
+        for (int i = 0; i < data.length; i++)
+            data[i] = (byte) (booleanMask[i] ? 1 : 0);
 
         if (optimizeBounds())
             roiChanged();
@@ -1898,6 +1912,11 @@ public class ROI2DArea extends ROI2D
 
             // retrieve mask data
             final byte[] data = XMLUtil.getElementBytesValue(node, ID_BOOLMASK_DATA, new byte[0]);
+
+            // an error occurred while retrieved XML data
+            if (data == null)
+                return false;
+
             // set the ROI from the unpacked boolean mask
             setAsByteMask(rect, data);
         }
@@ -1915,14 +1934,20 @@ public class ROI2DArea extends ROI2D
         if (!super.saveToXML(node))
             return false;
 
-        // retrieve mask bounds
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_X, bounds.x);
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bounds.y);
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bounds.width);
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bounds.height);
+        final Rectangle bnd = (Rectangle) bounds.clone();
+        final byte[] data = maskData;
 
-        // set mask data as byte array
-        XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, maskData);
+        // invalid --> return false
+        if ((bnd.width * bnd.height) != data.length)
+            return false;
+
+        // retrieve mask bounds
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_X, bnd.x);
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bnd.y);
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bnd.width);
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bnd.height);
+        // set mask data as byte array (we need to clone to avoid any data modification during serialization)        
+        XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data.clone());
 
         return true;
     }

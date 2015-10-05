@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -196,8 +196,8 @@ public class ResourceUtil
     public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
     public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
 
-    public static final Image ICON_CLEAR_BEFORE = ResourceUtil.getAlphaIconAsImage("square_clear_before.png");
-    public static final Image ICON_CLEAR_AFTER = ResourceUtil.getAlphaIconAsImage("square_clear_after.png");
+    public static final Image ICON_CLEAR_BEFORE = ResourceUtil.getAlphaIconAsImage("clear_top.png");
+    public static final Image ICON_CLEAR_AFTER = ResourceUtil.getAlphaIconAsImage("clear_bottom.png");
 
     public static final Image ICON_PANEL_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
     public static final Image ICON_PANEL_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");

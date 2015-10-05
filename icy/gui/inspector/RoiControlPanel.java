@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -21,6 +21,7 @@ package icy.gui.inspector;
 import icy.action.RoiActions;
 import icy.clipboard.Clipboard;
 import icy.clipboard.Clipboard.ClipboardListener;
+import icy.gui.component.AbstractRoisPanel;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.SpecialValueSpinner;
@@ -124,13 +125,13 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     JCheckBox displayNameCheckBox;
 
     // internals
-    private final RoisPanel roisPanel;
+    private final AbstractRoisPanel roisPanel;
     final Semaphore modifyingRoi;
     private List<ROI> modifiedRois;
     final Runnable roiActionsRefresher;
     final Runnable roiPropertiesRefresher;
 
-    public RoiControlPanel(RoisPanel roisPanel)
+    public RoiControlPanel(AbstractRoisPanel roisPanel)
     {
         super();
 

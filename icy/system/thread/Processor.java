@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Institut Pasteur.
+ * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -355,20 +355,6 @@ public class Processor extends ThreadPoolExecutor
     public Processor(int numThread)
     {
         this(-1, numThread, NORM_PRIORITY);
-    }
-
-    /**
-     * Create a new Processor with specified number of processing thread.
-     * 
-     * @param threadName
-     *        The name of the threads (useful for debugging purposes)
-     * @param numThread
-     *        The maximum number of processing thread.
-     */
-    public Processor(String threadName, int numThread)
-    {
-        this(-1, numThread, NORM_PRIORITY);
-        setThreadName(threadName);
     }
 
     /**

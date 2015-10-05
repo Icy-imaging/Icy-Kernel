@@ -30,7 +30,7 @@ public class Point2DRemovedROIEdit extends AbstractPoint2DROIEdit
 
         position = point.getPosition();
         
-        // we need to save the index in old points list
+        // we need to save the index in the old point list
         int i = 0;
         for(Anchor2D p: previousPoints)
         {
