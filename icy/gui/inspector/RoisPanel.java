@@ -100,16 +100,6 @@ public class RoisPanel extends AbstractRoisPanel
         roiControlPanel.selectionChanged();
     }
 
-    @Override
-    protected void sequenceDataChanged()
-    {
-        super.sequenceDataChanged();
-
-        // if data changed (more Z or T) we need to refresh action
-        // so we can change ROI position correctly
-        roiControlPanel.refreshROIActions();
-    }
-
     // called when selection changed in the ROI roiTable
     @Override
     public void valueChanged(ListSelectionEvent e)
@@ -125,9 +115,9 @@ public class RoisPanel extends AbstractRoisPanel
     {
         super.activeSequenceChanged(event);
 
-        // if type changed (number of channel) we need to refresh action
-        // so we change change ROI position correctly
-        if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_TYPE)
+        // if data changed (more or less Z, T or C) we need to refresh action
+        // so we can change ROI position correctly
+        if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_DATA)
             roiControlPanel.refreshROIActions();
     }
 

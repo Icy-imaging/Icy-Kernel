@@ -886,34 +886,61 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns the pixel size scaling factor to convert a number of pixel/voxel unit into <code>µm</code><br/>
      * <br>
-     * For instance to get the scale ration for 2D distance or 2D surface:<br>
-     * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(2)</code><br>
+     * For instance to get the scale ration for 2D distance:<br>
+     * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(2, 1)</code><br>
+     * For a 2D surface:<br>
+     * <code>valueMicroMeter2 = pixelNum * getPixelSizeScaling(2, 2)</code><br>
      * For a 3D volume:<br>
-     * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(3)</code><br>
+     * <code>valueMicroMeter3 = pixelNum * getPixelSizeScaling(3, 3)</code><br>
      * 
-     * @param dimension
-     *        dimension order<br>
-     *        <li>1 --> pixel size X used for conversion</li><br/>
-     *        <li>2 --> (pixel size X * pixel size Y) used for conversion</li><br/>
-     *        <li>3 --> (pixel size X * pixel size Y * pixel size Z) used for conversion</li><br/>
+     * @param dimCompute
+     *        dimension order for size calculation<br>
+     *        <li>1 --> pixel size X used for conversion</li><br>
+     *        <li>2 --> pixel size X and Y used for conversion</li><br>
+     *        <li>3 or above --> pixel size X, Y and Z used for conversion</li><br>
+     * @param dimResult
+     *        dimension order for the result (unit)<br>
+     *        <li>1 --> distance</li><br>
+     *        <li>2 --> area</li><br>
+     *        <li>3 or above --> volume</li><br>
      */
-    public double getPixelSizeScaling(int dimension)
+    public double getPixelSizeScaling(int dimCompute, int dimResult)
     {
-        switch (dimension)
+        double result;
+
+        switch (dimCompute)
         {
             case 0:
                 // incorrect
                 return 0d;
 
             case 1:
-                return getPixelSizeX();
+                result = getPixelSizeX();
+                break;
 
             case 2:
-                return getPixelSizeX() * getPixelSizeY();
+                result = getPixelSizeX() * getPixelSizeY();
+                break;
 
             default:
-                return getPixelSizeX() * getPixelSizeY() * getPixelSizeZ();
+                result = getPixelSizeX() * getPixelSizeY() * getPixelSizeZ();
+                break;
         }
+
+        int i = dimResult;
+
+        while (i > dimCompute)
+        {
+            result *= result;
+            i--;
+        }
+        while (i < dimCompute)
+        {
+            result = Math.sqrt(result);
+            i++;
+        }
+
+        return result;
     }
 
     /**
@@ -953,16 +980,19 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * </pre>
      * 
      * @param dimCompute
-     *        dimension order for the calculation
+     *        dimension order for size calculation<br>
+     *        <li>1 --> pixel size X used for conversion</li><br>
+     *        <li>2 --> pixel size X and Y used for conversion</li><br>
+     *        <li>3 or above --> pixel size X, Y and Z used for conversion</li><br>
      * @param dimResult
-     *        dimension order for the result (unit)
+     *        dimension order for the result (unit)<br>
+     *        <li>1 --> distance</li><br>
+     *        <li>2 --> area</li><br>
+     *        <li>3 or above --> volume</li><br>
      * @see #calculateSizeBestUnit(double, int, int)
      */
     public UnitPrefix getBestPixelSizeUnit(int dimCompute, int dimResult)
     {
-        // we want best unit for 1/10 the image size
-        final double div = 10d;
-
         switch (dimResult)
         {
             case 0:
@@ -970,16 +1000,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 return UnitPrefix.MICRO;
 
             case 1:
-                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute) * getSizeX()) / div, UnitPrefix.MICRO,
+                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute, dimResult) * 10), UnitPrefix.MICRO,
                         dimResult);
 
             case 2:
-                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute) * getSizeX() * getSizeY()) / div,
-                        UnitPrefix.MICRO, dimResult);
+                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute, dimResult) * 100), UnitPrefix.MICRO,
+                        dimResult);
 
             default:
-                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute) * getSizeX() * getSizeY() * getSizeZ())
-                        / div, UnitPrefix.MICRO, dimResult);
+                return UnitUtil.getBestUnit((getPixelSizeScaling(dimCompute, dimResult) * 1000), UnitPrefix.MICRO,
+                        dimResult);
         }
     }
 
@@ -987,26 +1017,30 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Returns the size in µm for the specified amount of sample/pixel value in the specified
      * dimension order.<br>
      * <br>
-     * For instance if you want to retrieve the distance in µm:<br>
-     * <code>distance = calculateSize(distanceInPixel, 1)</code><br>
+     * For the perimeter in µm:<br>
+     * <code>surface = calculateSize(surfaceInPixel, 2, 1)</code><br>
      * For a 2D surface in µm2:<br>
-     * <code>surface = calculateSize(surfaceInPixel, 2)</code><br>
+     * <code>surface = calculateSize(surfaceInPixel, 2, 2)</code><br>
      * For a 3D volume in µm3:<br>
-     * <code>volume = calculateSize(volumeInPixel, 3)</code><br>
+     * <code>volume = calculateSize(volumeInPixel, 3, 3)</code><br>
      * 
      * @param pixelNumber
      *        number of pixel
-     * @param dimension
+     * @param dimCompute
      *        dimension order for size calculation<br>
-     *        dimension order = 1 --> pixel size X used for conversion<br>
-     *        dimension order = 2 --> (pixel size X * pixel size Y) used for conversion<br>
-     *        dimension order >= 3 --> (pixel size X * pixel size Y * pixel size Z) used for
-     *        conversion<br>
+     *        <li>1 --> pixel size X used for conversion</li><br>
+     *        <li>2 --> pixel size X and Y used for conversion</li><br>
+     *        <li>3 or above --> pixel size X, Y and Z used for conversion</li><br>
+     * @param dimResult
+     *        dimension order for the result (unit)<br>
+     *        <li>1 --> distance</li><br>
+     *        <li>2 --> area</li><br>
+     *        <li>3 or above --> volume</li><br>
      * @see #calculateSizeBestUnit(double, int, int)
      */
-    public double calculateSize(double pixelNumber, int dimension)
+    public double calculateSize(double pixelNumber, int dimCompute, int dimResult)
     {
-        return pixelNumber * getPixelSizeScaling(dimension);
+        return pixelNumber * getPixelSizeScaling(dimCompute, dimResult);
     }
 
     /**
@@ -1045,26 +1079,23 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * @param pixelNumber
      *        number of pixel
      * @param dimCompute
-     *        dimension order for the calculation
+     *        dimension order for size calculation<br>
+     *        <li>1 --> pixel size X used for conversion</li><br>
+     *        <li>2 --> pixel size X and Y used for conversion</li><br>
+     *        <li>3 or above --> pixel size X, Y and Z used for conversion</li><br>
      * @param dimResult
-     *        dimension order for the result (unit)
-     * @see #calculateSize(double, int)
+     *        dimension order for the result (unit)<br>
+     *        <li>1 --> distance</li><br>
+     *        <li>2 --> area</li><br>
+     *        <li>3 or above --> volume</li><br>
+     * @see #calculateSize(double, int, int)
      * @see #getBestPixelSizeUnit(int, int)
      */
     public double calculateSizeBestUnit(double pixelNumber, int dimCompute, int dimResult)
     {
-        final double value = calculateSize(pixelNumber, dimCompute);
+        final double value = calculateSize(pixelNumber, dimCompute, dimResult);
         final UnitPrefix unit = getBestPixelSizeUnit(dimCompute, dimResult);
         return UnitUtil.getValueInUnit(value, UnitPrefix.MICRO, unit, dimResult);
-    }
-
-    /**
-     * @deprecated Use {@link #calculateSize(double, int, int, int)} instead.
-     */
-    @Deprecated
-    public String calculateSize(double pixelNumber, int dimension, int significantDigit)
-    {
-        return calculateSize(pixelNumber, dimension, dimension, significantDigit);
     }
 
     /**
@@ -1086,11 +1117,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      *        dimension order for the result (unit)
      * @param significantDigit
      *        wanted significant digit for the result (0 for all)
-     * @see #calculateSize(double, int)
+     * @see #calculateSize(double, int, int)
      */
     public String calculateSize(double pixelNumber, int dimCompute, int dimResult, int significantDigit)
     {
-        double value = calculateSize(pixelNumber, dimCompute);
+        double value = calculateSize(pixelNumber, dimCompute, dimResult);
         final String postFix = (dimResult > 1) ? StringUtil.toString(dimResult) : "";
         final UnitPrefix unit = UnitUtil.getBestUnit(value, UnitPrefix.MICRO, dimResult);
         // final UnitPrefix unit = getBestPixelSizeUnit(dimCompute, dimResult);

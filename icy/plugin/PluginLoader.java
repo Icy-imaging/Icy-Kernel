@@ -546,7 +546,7 @@ public class PluginLoader
      */
     public static ArrayList<PluginDescriptor> getPlugins(Class<?> clazz)
     {
-        return getPlugins(clazz, false, false, true);
+        return getPlugins(clazz, true, false, false);
     }
 
     /**

@@ -1307,7 +1307,7 @@ public abstract class ROI2D extends ROI
 
     /**
      * Return perimeter of the 2D ROI in pixels.<br>
-     * This is basically the number of pixel representing ROI edges.<br>
+     * This is basically the number of pixel representing ROI contour.<br>
      * 
      * @deprecated Use {@link #getNumberOfContourPoints()} instead.
      * @see #getNumberOfContourPoints()

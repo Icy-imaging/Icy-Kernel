@@ -45,7 +45,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import plugins.kernel.roi.descriptor.intensity.ROIIntensityDescriptorsPlugin;
+import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROIMeanIntensityDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROIMinIntensityDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROIStandardDeviationDescriptor;
+import plugins.kernel.roi.descriptor.intensity.ROISumIntensityDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIAreaDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROIBasicMeasureDescriptorsPlugin;
+import plugins.kernel.roi.descriptor.measure.ROIContourDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIInteriorDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIMassCenterDescriptorsPlugin;
+import plugins.kernel.roi.descriptor.measure.ROIPerimeterDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROISurfaceAreaDescriptor;
+import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
 
 /**
  * ROI utilities class.
@@ -65,8 +78,7 @@ public class ROIUtil
     public static Map<ROIDescriptor, PluginROIDescriptor> getROIDescriptors()
     {
         final Map<ROIDescriptor, PluginROIDescriptor> result = new HashMap<ROIDescriptor, PluginROIDescriptor>();
-        final List<PluginDescriptor> pluginDescriptors = PluginLoader.getPlugins(PluginROIDescriptor.class, true,
-                false, false);
+        final List<PluginDescriptor> pluginDescriptors = PluginLoader.getPlugins(PluginROIDescriptor.class);
 
         for (PluginDescriptor pluginDescriptor : pluginDescriptors)
         {
@@ -124,8 +136,7 @@ public class ROIUtil
      * not found).
      * 
      * @param descriptorId
-     *        the id of the descriptor we want to compute ( {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
-     *        instance)
+     *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
@@ -143,22 +154,10 @@ public class ROIUtil
     }
 
     /**
-     * Computes and returns the standard deviation for the specified sequence region.
-     * 
-     * @param sequence
-     *        The sequence we want to get the intensity informations.
-     * @param roi
-     *        The ROI define the region where we want to compute the standard deviation.
-     * @param z
-     *        The specific Z position (slice) where we want to compute the standard deviation or <code>-1</code> to use
-     *        the ROI Z dimension information.
-     * @param t
-     *        The specific T position (frame) where we want to compute the standard deviation or <code>-1</code> to use
-     *        the ROI T dimension information.
-     * @param c
-     *        The specific C position (channel) where we want to compute the standard deviation or <code>-1</code> to
-     *        use the ROI C dimension information.
+     * @deprecated Use {@link ROIStandardDeviationDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static double getStandardDeviation(Sequence sequence, ROI roi, int z, int t, int c)
     {
         try
@@ -200,23 +199,10 @@ public class ROIUtil
     }
 
     /**
-     * Computes and returns the min, max, mean intensity for the specified sequence region.<br>
-     * It can returns <code>null</code> if the sequence or the ROI has changed during the operation.
-     * 
-     * @param sequence
-     *        The sequence we want to get the intensity informations.
-     * @param roi
-     *        The ROI define the region where we want to compute intensity information.
-     * @param z
-     *        The specific Z position (slice) where we want to compute intensity information or <code>-1</code> to use
-     *        the ROI Z dimension information.
-     * @param t
-     *        The specific T position (frame) where we want to compute intensity information or <code>-1</code> to use
-     *        the ROI T dimension information.
-     * @param c
-     *        The specific C position (channel) where we want to compute intensity information or <code>-1</code> to use
-     *        the ROI C dimension information.
+     * @deprecated Use {@link ROIIntensityDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi, int z, int t, int c)
     {
         try
@@ -290,114 +276,60 @@ public class ROIUtil
     }
 
     /**
-     * Returns the minimum intensity of sequence pixels contained in the specified ROI.
-     * 
-     * @param sequence
-     *        The sequence we want to get the min intensity information.
-     * @param roi
-     *        The ROI define the region where we want to compute min intensity.
-     * @param z
-     *        The specific Z position (slice) where we want to compute min intensity or <code>-1</code> to use the ROI Z
-     *        dimension information.
-     * @param t
-     *        The specific T position (frame) where we want to compute min intensity or <code>-1</code> to use the ROI T
-     *        dimension information.
-     * @param c
-     *        The specific C position (channel) where we want to compute min intensity or <code>-1</code> to use the ROI
-     *        C dimension information.
+     * @deprecated Use {@link ROIMinIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getMinIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
         return DataIteratorMath.min(new SequenceDataIterator(sequence, roi, false, z, t, c));
     }
 
     /**
-     * Returns the maximum intensity of sequence pixels contained in the specified ROI.
-     * 
-     * @param sequence
-     *        The sequence we want to get the max intensity information.
-     * @param roi
-     *        The ROI define the region where we want to compute max intensity.
-     * @param z
-     *        The specific Z position (slice) where we want to compute max intensity or <code>-1</code> to use the ROI Z
-     *        dimension information.
-     * @param t
-     *        The specific T position (frame) where we want to compute max intensity or <code>-1</code> to use the ROI T
-     *        dimension information.
-     * @param c
-     *        The specific C position (channel) where we want to compute max intensity or <code>-1</code> to use the ROI
-     *        C dimension information.
+     * @deprecated Use {@link ROIMaxIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getMaxIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
         return DataIteratorMath.max(new SequenceDataIterator(sequence, roi, false, z, t, c));
     }
 
     /**
-     * Returns the mean intensity of sequence pixels contained in the specified ROI.
-     * 
-     * @param sequence
-     *        The sequence we want to get the mean intensity.
-     * @param roi
-     *        The ROI define the region where we want to compute mean intensity.
-     * @param z
-     *        The specific Z position (slice) where we want to compute mean intensity or <code>-1</code> to use the ROI
-     *        Z dimension information.
-     * @param t
-     *        The specific T position (frame) where we want to compute mean intensity or <code>-1</code> to use the ROI
-     *        T dimension information.
-     * @param c
-     *        The specific C position (channel) where we want to compute mean intensity or <code>-1</code> to use the
-     *        ROI C dimension information.
+     * @deprecated Use {@link ROIMeanIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getMeanIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
         return DataIteratorMath.mean(new SequenceDataIterator(sequence, roi, false, z, t, c));
     }
 
     /**
-     * Returns the sum of all intensity of sequence pixels contained in the specified ROI.
-     * 
-     * @param sequence
-     *        The sequence we want to get the intensity sum.
-     * @param roi
-     *        The ROI define the region where we want to compute intensity sum.
-     * @param z
-     *        The specific Z position (slice) where we want to compute intensity sum or <code>-1</code> to use the ROI Z
-     *        dimension information.
-     * @param t
-     *        The specific T position (frame) where we want to compute intensity sum or <code>-1</code> to use the ROI T
-     *        dimension information.
-     * @param c
-     *        The specific C position (channel) where we want to compute intensity sum or <code>-1</code> to use the ROI
-     *        C dimension information.
+     * @deprecated Use {@link ROISumIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getSumIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
         return DataIteratorMath.sum(new SequenceDataIterator(sequence, roi, false, z, t, c));
     }
 
     /**
-     * Computes and returns the standard deviation for the specified sequence region.
-     * 
-     * @param sequence
-     *        The sequence we want to get the intensity informations.
-     * @param roi
-     *        The ROI define the region where we want to compute the standard deviation.
+     * @deprecated Use {@link ROIStandardDeviationDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static double getStandardDeviation(Sequence sequence, ROI roi)
     {
         return getStandardDeviation(sequence, roi, -1, -1, -1);
     }
 
     /**
-     * Returns the min, max, mean intensity of sequence pixels contained in the specified ROI.
-     * 
-     * @param sequence
-     *        The sequence we want to get the intensity informations.
-     * @param roi
-     *        The ROI define the region where we want to compute intensity information.
+     * @deprecated Use {@link ROIIntensityDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi)
     {
         return getIntensityInfo(sequence, roi, -1, -1, -1);
@@ -412,40 +344,50 @@ public class ROIUtil
     }
 
     /**
-     * Returns the minimum intensity of sequence pixels contained in the specified ROI.
+     * @deprecated Use {@link ROIMinIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getMinIntensity(Sequence sequence, ROI roi)
     {
         return getMinIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
-     * Returns the maximum intensity of sequence pixels contained in the specified ROI.
+     * @deprecated Use {@link ROIMaxIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getMaxIntensity(Sequence sequence, ROI roi)
     {
         return getMaxIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
-     * Returns the mean intensity of sequence pixels contained in the specified ROI.
+     * @deprecated Use {@link ROIMeanIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getMeanIntensity(Sequence sequence, ROI roi)
     {
         return getMeanIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
-     * Returns the sum of all intensity of sequence pixels contained in the specified ROI.
+     * @deprecated Use {@link ROISumIntensityDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
      */
+    @Deprecated
     public static double getSumIntensity(Sequence sequence, ROI roi)
     {
         return getSumIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
-     * Returns the mass center of specified ROI.
+     * @deprecated Use {@link ROIMassCenterDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static Point5D getMassCenter(ROI roi)
     {
         switch (roi.getDimension())
@@ -474,8 +416,10 @@ public class ROIUtil
     }
 
     /**
-     * Returns the mass center of specified 2D ROI.
+     * @deprecated Use {@link ROIMassCenterDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static Point2D getMassCenter(ROI2D roi)
     {
         double x = 0, y = 0;
@@ -511,8 +455,10 @@ public class ROIUtil
     }
 
     /**
-     * Returns the mass center of specified 3D ROI.
+     * @deprecated Use {@link ROIMassCenterDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static Point3D getMassCenter(ROI3D roi)
     {
         double x = 0, y = 0, z = 0;
@@ -557,8 +503,10 @@ public class ROIUtil
     }
 
     /**
-     * Returns the mass center of specified 4D ROI.
+     * @deprecated Use {@link ROIMassCenterDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static Point4D getMassCenter(ROI4D roi)
     {
         final BooleanMask4D mask4d = roi.getBooleanMask(true);
@@ -613,8 +561,10 @@ public class ROIUtil
     }
 
     /**
-     * Returns the mass center of specified 5D ROI.
+     * @deprecated Use {@link ROIMassCenterDescriptorsPlugin} or {@link #computeDescriptor(String, ROI, Sequence)}
+     *             method instead.
      */
+    @Deprecated
     public static Point5D getMassCenter(ROI5D roi)
     {
         final BooleanMask5D mask5d = roi.getBooleanMask(true);
@@ -673,6 +623,220 @@ public class ROIUtil
                     bounds5D.getCenterT(), bounds5D.getCenterC());
 
         return new Point5D.Double((x / len), (y / len), (z / len), (t / len), (c / len));
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    private static double getMultiplier(Sequence sequence, ROI roi, int dim)
+    {
+        final int dimRoi = roi.getDimension();
+
+        // cannot give this information for this roi
+        if (dimRoi > dim)
+            return 0d;
+
+        final Rectangle5D boundsRoi = roi.getBounds5D();
+        double mul = 1d;
+
+        switch (dim)
+        {
+            case 5:
+                if (dimRoi == 4)
+                {
+                    final int sizeC = sequence.getSizeC();
+
+                    if ((boundsRoi.getSizeC() == Double.POSITIVE_INFINITY) && (sizeC > 1))
+                        mul *= sizeC;
+                    // cannot give this information for this roi
+                    else
+                        mul = 0d;
+                }
+            case 4:
+                if (dimRoi == 3)
+                {
+                    final int sizeT = sequence.getSizeT();
+
+                    if ((boundsRoi.getSizeT() == Double.POSITIVE_INFINITY) && (sizeT > 1))
+                        mul *= sizeT;
+                    // cannot give this information for this roi
+                    else
+                        mul = 0d;
+                }
+            case 3:
+                if (dimRoi == 2)
+                {
+                    final int sizeZ = sequence.getSizeZ();
+
+                    if ((boundsRoi.getSizeZ() == Double.POSITIVE_INFINITY) && (sizeZ > 1))
+                        mul *= sizeZ;
+                    // cannot give this information for this roi
+                    else
+                        mul = 0d;
+                }
+            case 2:
+                if (dimRoi == 1)
+                {
+                    final int sizeY = sequence.getSizeY();
+
+                    if ((boundsRoi.getSizeY() == Double.POSITIVE_INFINITY) && (sizeY > 1))
+                        mul *= sizeY;
+                    // cannot give this information for this roi
+                    else
+                        mul = 0d;
+                }
+        }
+
+        return mul;
+    }
+
+    /**
+     * @deprecated Use {@link ROIContourDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getContourSize(Sequence sequence, double contourPoints, ROI roi, int dim, int roundSignificant)
+    {
+        final double mul = getMultiplier(sequence, roi, dim);
+
+        // 0 means the operation is not supported for this ROI
+        if (mul != 0d)
+            return sequence.calculateSize(MathUtil.roundSignificant(contourPoints, roundSignificant) * mul, dim,
+                    dim - 1, 5);
+
+        return "";
+    }
+
+    /**
+     * @deprecated Use {@link ROIContourDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getContourSize(Sequence sequence, ROI roi, int dim, int roundSignificant)
+    {
+        return getContourSize(sequence, roi.getNumberOfContourPoints(), roi, dim, roundSignificant);
+    }
+
+    /**
+     * @deprecated Use {@link ROIContourDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getContourSize(Sequence sequence, ROI roi, int dim)
+    {
+        return getContourSize(sequence, roi, dim, 0);
+    }
+
+    /**
+     * @deprecated Use {@link ROIInteriorDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getInteriorSize(Sequence sequence, double interiorPoints, ROI roi, int dim,
+            int roundSignificant)
+    {
+        final double mul = getMultiplier(sequence, roi, dim);
+
+        // 0 means the operation is not supported for this ROI
+        if (mul != 0d)
+            return sequence.calculateSize(MathUtil.roundSignificant(interiorPoints, roundSignificant) * mul, dim, dim,
+                    5);
+
+        return "";
+    }
+
+    /**
+     * @deprecated Use {@link ROIInteriorDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getInteriorSize(Sequence sequence, ROI roi, int dim, int roundSignificant)
+    {
+        return getInteriorSize(sequence, roi.getNumberOfPoints(), roi, dim, roundSignificant);
+    }
+
+    /**
+     * @deprecated Use {@link ROIInteriorDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getInteriorSize(Sequence sequence, ROI roi, int dim)
+    {
+        return getInteriorSize(sequence, roi, dim, 0);
+    }
+
+    /**
+     * @deprecated Use {@link ROIPerimeterDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getPerimeter(Sequence sequence, ROI roi, int roundSignificant)
+    {
+        return getContourSize(sequence, roi, 2, roundSignificant);
+    }
+
+    /**
+     * @deprecated Use {@link ROIPerimeterDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getPerimeter(Sequence sequence, ROI roi)
+    {
+        return getPerimeter(sequence, roi, 0);
+    }
+
+    /**
+     * @deprecated Use {@link ROIAreaDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getArea(Sequence sequence, ROI roi, int roundSignificant)
+    {
+        return getInteriorSize(sequence, roi, 2, roundSignificant);
+    }
+
+    /**
+     * @deprecated Use {@link ROIAreaDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getArea(Sequence sequence, ROI roi)
+    {
+        return getArea(sequence, roi, 0);
+    }
+
+    /**
+     * @deprecated Use {@link ROISurfaceAreaDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getSurfaceArea(Sequence sequence, ROI roi, int roundSignificant)
+    {
+        return getContourSize(sequence, roi, 3, roundSignificant);
+    }
+
+    /**
+     * @deprecated Use {@link ROISurfaceAreaDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method
+     *             instead.
+     */
+    @Deprecated
+    public static String getSurfaceArea(Sequence sequence, ROI roi)
+    {
+        return getSurfaceArea(sequence, roi, 0);
+    }
+
+    /**
+     * @deprecated Use {@link ROIVolumeDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getVolume(Sequence sequence, ROI roi, int roundSignificant)
+    {
+        return getInteriorSize(sequence, roi, 3, roundSignificant);
+    }
+
+    /**
+     * @deprecated Use {@link ROIVolumeDescriptor} or {@link #computeDescriptor(String, ROI, Sequence)} method instead.
+     */
+    @Deprecated
+    public static String getVolume(Sequence sequence, ROI roi)
+    {
+        return getVolume(sequence, roi, 0);
     }
 
     /**
@@ -763,361 +927,4 @@ public class ROIUtil
         return roi1.getSubtraction(roi2);
     }
 
-    /**
-     * Calculate the multiplier factor depending the wanted dimension information.
-     */
-    private static double getMultiplier(Sequence sequence, ROI roi, int dim)
-    {
-        final int dimRoi = roi.getDimension();
-
-        // cannot give this information for this roi
-        if (dimRoi > dim)
-            return 0d;
-
-        final Rectangle5D boundsRoi = roi.getBounds5D();
-        double mul = 1d;
-
-        switch (dim)
-        {
-            case 5:
-                if (dimRoi == 4)
-                {
-                    final int sizeC = sequence.getSizeC();
-
-                    if ((boundsRoi.getSizeC() == Double.POSITIVE_INFINITY) && (sizeC > 1))
-                        mul *= sizeC;
-                    // cannot give this information for this roi
-                    else
-                        mul = 0d;
-                }
-            case 4:
-                if (dimRoi == 3)
-                {
-                    final int sizeT = sequence.getSizeT();
-
-                    if ((boundsRoi.getSizeT() == Double.POSITIVE_INFINITY) && (sizeT > 1))
-                        mul *= sizeT;
-                    // cannot give this information for this roi
-                    else
-                        mul = 0d;
-                }
-            case 3:
-                if (dimRoi == 2)
-                {
-                    final int sizeZ = sequence.getSizeZ();
-
-                    if ((boundsRoi.getSizeZ() == Double.POSITIVE_INFINITY) && (sizeZ > 1))
-                        mul *= sizeZ;
-                    // cannot give this information for this roi
-                    else
-                        mul = 0d;
-                }
-            case 2:
-                if (dimRoi == 1)
-                {
-                    final int sizeY = sequence.getSizeY();
-
-                    if ((boundsRoi.getSizeY() == Double.POSITIVE_INFINITY) && (sizeY > 1))
-                        mul *= sizeY;
-                    // cannot give this information for this roi
-                    else
-                        mul = 0d;
-                }
-        }
-
-        return mul;
-    }
-
-    /**
-     * Returns the contour size for specified sequence and dimension from a given number of contour
-     * points.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * <ul>
-     * Ex:
-     * <li>getContourSize(sequence, roi, 2, 5) --> "0.15 mm" (equivalent to perimeter)</li>
-     * <li>getContourSize(sequence, roi, 3, 5) --> "0.028 µm2" (equivalent to surface area)</li>
-     * </ul>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param contourPoints
-     *        the number of contour points (override the ROI value)
-     * @param roi
-     *        the ROI we want to compute the contour size
-     * @param dim
-     *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     */
-    public static String getContourSize(Sequence sequence, double contourPoints, ROI roi, int dim, int roundSignificant)
-    {
-        final double mul = getMultiplier(sequence, roi, dim);
-
-        // 0 means the operation is not supported for this ROI
-        if (mul != 0d)
-            return sequence.calculateSize(MathUtil.roundSignificant(contourPoints, roundSignificant) * mul, dim - 1, 5);
-
-        return "";
-    }
-
-    /**
-     * Returns the ROI contour size for specified sequence and dimension.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * <ul>
-     * Ex:
-     * <li>getContourSize(sequence, roi, 2, 5) --> "0.15 mm" (equivalent to perimeter)</li>
-     * <li>getContourSize(sequence, roi, 3, 5) --> "0.028 µm2" (equivalent to surface area)</li>
-     * </ul>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the contour size
-     * @param dim
-     *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     */
-    public static String getContourSize(Sequence sequence, ROI roi, int dim, int roundSignificant)
-    {
-        return getContourSize(sequence, roi.getNumberOfContourPoints(), roi, dim, roundSignificant);
-    }
-
-    /**
-     * Returns the ROI contour size for specified sequence and dimension.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * <ul>
-     * Ex:
-     * <li>getContourSize(sequence, roi, 2) --> "0.15 mm" (equivalent to perimeter)</li>
-     * <li>getContourSize(sequence, roi, 3) --> "0.028 µm2" (equivalent to surface area)</li>
-     * </ul>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the contour size
-     * @param dim
-     *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
-     */
-    public static String getContourSize(Sequence sequence, ROI roi, int dim)
-    {
-        return getContourSize(sequence, roi, dim, 0);
-    }
-
-    /**
-     * Returns the ROI interior size for specified sequence and dimension from a given number of
-     * interior points.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * <ul>
-     * Ex:
-     * <li>getInteriorSize(sequence, 1287.36, roi, 2, 5) --> "0.15 mm2" (equivalent to area)</li>
-     * <li>getInteriorSize(sequence, 643852.125, roi, 3, 5) --> "0.028 µm3" (equivalent to volume)</li>
-     * </ul>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param interiorPoints
-     *        the number of interior points (override the ROI value)
-     * @param roi
-     *        the ROI we want to compute the interior size
-     * @param dim
-     *        the dimension for the interior size operation (2 = area, 3 = volume, ...)
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     * @see #getArea(Sequence, ROI)
-     * @see #getVolume(Sequence, ROI)
-     */
-    public static String getInteriorSize(Sequence sequence, double interiorPoints, ROI roi, int dim,
-            int roundSignificant)
-    {
-        final double mul = getMultiplier(sequence, roi, dim);
-
-        // 0 means the operation is not supported for this ROI
-        if (mul != 0d)
-            return sequence.calculateSize(MathUtil.roundSignificant(interiorPoints, roundSignificant) * mul, dim, 5);
-
-        return "";
-    }
-
-    /**
-     * Returns the ROI interior size for specified sequence and dimension.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * <ul>
-     * Ex:
-     * <li>getInteriorSize(sequence, roi, 2, 5) --> "0.15 mm2" (equivalent to area)</li>
-     * <li>getInteriorSize(sequence, roi, 3, 5) --> "0.028 µm3" (equivalent to volume)</li>
-     * </ul>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the interior size
-     * @param dim
-     *        the dimension for the interior size operation (2 = area, 3 = volume, ...)
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     * @see #getArea(Sequence, ROI)
-     * @see #getVolume(Sequence, ROI)
-     */
-    public static String getInteriorSize(Sequence sequence, ROI roi, int dim, int roundSignificant)
-    {
-        return getInteriorSize(sequence, roi.getNumberOfPoints(), roi, dim, roundSignificant);
-    }
-
-    /**
-     * Returns the ROI interior size for specified sequence and dimension.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * <ul>
-     * Ex:
-     * <li>getInteriorSize(sequence, roi, 2) --> "0.15 mm2" (equivalent to area)</li>
-     * <li>getInteriorSize(sequence, roi, 3) --> "0.028 µm3" (equivalent to volume)</li>
-     * </ul>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the interior size
-     * @param dim
-     *        the dimension for the interior size operation (2 = area, 3 = volume, ...)
-     * @see #getArea(Sequence, ROI)
-     * @see #getVolume(Sequence, ROI)
-     */
-    public static String getInteriorSize(Sequence sequence, ROI roi, int dim)
-    {
-        return getInteriorSize(sequence, roi, dim, 0);
-    }
-
-    /**
-     * Return perimeter of the specified ROI with the correct unit.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the perimeter
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     */
-    public static String getPerimeter(Sequence sequence, ROI roi, int roundSignificant)
-    {
-        return getContourSize(sequence, roi, 2, roundSignificant);
-    }
-
-    /**
-     * Return perimeter of the specified ROI with the correct unit.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the perimeter
-     */
-    public static String getPerimeter(Sequence sequence, ROI roi)
-    {
-        return getPerimeter(sequence, roi, 0);
-    }
-
-    /**
-     * Return area of the specified ROI.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the area
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     */
-    public static String getArea(Sequence sequence, ROI roi, int roundSignificant)
-    {
-        return getInteriorSize(sequence, roi, 2, roundSignificant);
-    }
-
-    /**
-     * Return area of the specified ROI.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the area
-     */
-    public static String getArea(Sequence sequence, ROI roi)
-    {
-        return getArea(sequence, roi, 0);
-    }
-
-    /**
-     * Return surface area of the specified ROI.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the surface area
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     */
-    public static String getSurfaceArea(Sequence sequence, ROI roi, int roundSignificant)
-    {
-        return getContourSize(sequence, roi, 3, roundSignificant);
-    }
-
-    /**
-     * Return surface area of the specified ROI.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the surface area
-     */
-    public static String getSurfaceArea(Sequence sequence, ROI roi)
-    {
-        return getSurfaceArea(sequence, roi, 0);
-    }
-
-    /**
-     * Return volume of the specified ROI.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the volume
-     * @param roundSignificant
-     *        Round result value to specified number of significant digit (0 to keep all precision).
-     */
-    public static String getVolume(Sequence sequence, ROI roi, int roundSignificant)
-    {
-        return getInteriorSize(sequence, roi, 3, roundSignificant);
-    }
-
-    /**
-     * Return volume of the specified ROI.<br>
-     * The unit result is expressed depending the sequence pixel size information.<br>
-     * It may returns an empty string if the operation is not supported for that ROI.
-     * 
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param roi
-     *        the ROI we want to compute the volume
-     */
-    public static String getVolume(Sequence sequence, ROI roi)
-    {
-        return getVolume(sequence, roi, 0);
-    }
 }

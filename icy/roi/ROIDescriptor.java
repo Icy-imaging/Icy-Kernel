@@ -3,7 +3,9 @@
  */
 package icy.roi;
 
+import icy.roi.ROIEvent.ROIEventType;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
 import icy.util.StringUtil;
 
 /**
@@ -89,12 +91,40 @@ public abstract class ROIDescriptor
     };
 
     /**
-     * Returns <code>true</code> if this descriptor require to access the Sequence pixel information to compute its
-     * result.
+     * Returns <code>true</code> if this descriptor compute its result on {@link Sequence} data and *per channel* (as
+     * pixel intensity information).<br>
+     * By default it returns <code>false</code>, override this method if a descriptor require per channel computation.
      * 
      * @see #compute(ROI, Sequence)
      */
-    public abstract boolean useSequenceData();
+    public boolean separateChannel()
+    {
+        return false;
+    }
+
+    /**
+     * Returns <code>true</code> if this descriptor need to be recomputed when the specified Sequence change event
+     * happen.<br>
+     * By default it returns <code>false</code>, override this method if a descriptor need a specific implementation.
+     * 
+     * @see #compute(ROI, Sequence)
+     */
+    public boolean needRecompute(SequenceEvent change)
+    {
+        return false;
+    }
+
+    /**
+     * Returns <code>true</code> if this descriptor need to be recomputed when the specified ROI change event happen.<br>
+     * By default it returns <code>true</code> on ROI content change, override this method if a descriptor need a
+     * specific implementation.
+     * 
+     * @see #compute(ROI, Sequence)
+     */
+    public boolean needRecompute(ROIEvent change)
+    {
+        return (change.getType() == ROIEventType.ROI_CHANGED);
+    };
 
     /**
      * Computes the descriptor on the specified ROI and return the result.
@@ -102,7 +132,7 @@ public abstract class ROIDescriptor
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
-     *        an optional sequence where the pixel informations can be retrieved (see {@link #useSequenceData()})
+     *        an optional sequence where the pixel informations can be retrieved (see {@link #separateChannel()})
      * @return the result of this descriptor computed from the specified parameters.
      * @throws UnsupportedOperationException
      *         if the type of the given ROI is not supported by this descriptor, or if <code>sequence</code> is

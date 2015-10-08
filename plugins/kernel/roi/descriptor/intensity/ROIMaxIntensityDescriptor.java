@@ -6,6 +6,8 @@ package plugins.kernel.roi.descriptor.intensity;
 import icy.roi.ROI;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceEvent.SequenceEventSourceType;
 
 /**
  * Maximum intensity ROI descriptor class (see {@link ROIDescriptor})
@@ -28,9 +30,15 @@ public class ROIMaxIntensityDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
+    public boolean separateChannel()
     {
         return true;
+    }
+
+    @Override
+    public boolean needRecompute(SequenceEvent change)
+    {
+        return (change.getSourceType() == SequenceEventSourceType.SEQUENCE_DATA);
     }
 
     @Override

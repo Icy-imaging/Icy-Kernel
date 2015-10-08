@@ -8,6 +8,9 @@ import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceEvent.SequenceEventSourceType;
+import icy.util.StringUtil;
 
 /**
  * Area ROI descriptor class (see {@link ROIDescriptor})
@@ -39,8 +42,21 @@ public class ROIAreaDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
+    public boolean needRecompute(SequenceEvent change)
     {
+        final SequenceEventSourceType sourceType = change.getSourceType();
+
+        if (sourceType == SequenceEventSourceType.SEQUENCE_DATA)
+            return true;
+        if (sourceType == SequenceEventSourceType.SEQUENCE_META)
+        {
+            final String metaName = (String) change.getSource();
+
+            return StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_X)
+                    || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_Y)
+                    || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_Z);
+        }
+
         return false;
     }
 
@@ -51,8 +67,8 @@ public class ROIAreaDescriptor extends ROIDescriptor
     }
 
     /**
-     * Computes and returns the area expressed in the unit of the descriptor (see
-     * {@link #getUnit(Sequence)}) for the specified ROI.<br>
+     * Computes and returns the area expressed in the unit of the descriptor (see {@link #getUnit(Sequence)}) for the
+     * specified ROI.<br>
      * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
      * 
      * @param roi
@@ -76,7 +92,7 @@ public class ROIAreaDescriptor extends ROIDescriptor
      * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
      * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
      * 
-     * @param contourPoints
+     * @param interiorPoints
      *        the number of contour points (override the ROI value)
      * @param roi
      *        the ROI we want to compute the surface area
@@ -87,7 +103,8 @@ public class ROIAreaDescriptor extends ROIDescriptor
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
-    public static double computeArea(double interiorPoints, ROI roi, Sequence sequence) throws UnsupportedOperationException
+    public static double computeArea(double interiorPoints, ROI roi, Sequence sequence)
+            throws UnsupportedOperationException
     {
         try
         {
