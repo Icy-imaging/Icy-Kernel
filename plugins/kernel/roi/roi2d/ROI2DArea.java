@@ -1946,7 +1946,7 @@ public class ROI2DArea extends ROI2D
         XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bnd.y);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bnd.width);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bnd.height);
-        // set mask data as byte array (we need to clone to avoid any data modification during serialization)        
+        // set mask data as byte array (we need to clone to avoid any data modification during serialization)
         XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data.clone());
 
         return true;
