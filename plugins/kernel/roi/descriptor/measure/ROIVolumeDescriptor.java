@@ -8,6 +8,9 @@ import icy.roi.ROI;
 import icy.roi.ROI3D;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceEvent.SequenceEventSourceType;
+import icy.util.StringUtil;
 
 /**
  * Volume ROI descriptor class (see {@link ROIDescriptor})
@@ -30,12 +33,6 @@ public class ROIVolumeDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
-    {
-        return false;
-    }
-
-    @Override
     public String getUnit(Sequence sequence)
     {
         if (sequence != null)
@@ -45,14 +42,33 @@ public class ROIVolumeDescriptor extends ROIDescriptor
     }
 
     @Override
+    public boolean needRecompute(SequenceEvent change)
+    {
+        final SequenceEventSourceType sourceType = change.getSourceType();
+
+        if (sourceType == SequenceEventSourceType.SEQUENCE_DATA)
+            return true;
+        if (sourceType == SequenceEventSourceType.SEQUENCE_META)
+        {
+            final String metaName = (String) change.getSource();
+
+            return StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_X)
+                    || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_Y)
+                    || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_Z);
+        }
+
+        return false;
+    }
+
+    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(computeVolume(roi, sequence));
     }
 
     /**
-     * Computes and returns the volume expressed in the unit of the descriptor (see
-     * {@link #getUnit(Sequence)}) for the specified ROI.<br>
+     * Computes and returns the volume expressed in the unit of the descriptor (see {@link #getUnit(Sequence)}) for the
+     * specified ROI.<br>
      * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
      * 
      * @param roi
@@ -87,7 +103,8 @@ public class ROIVolumeDescriptor extends ROIDescriptor
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
-    public static double computeVolume(double interiorPoints, ROI roi, Sequence sequence) throws UnsupportedOperationException
+    public static double computeVolume(double interiorPoints, ROI roi, Sequence sequence)
+            throws UnsupportedOperationException
     {
         try
         {

@@ -89,11 +89,9 @@ public class UnitUtil
      * By best unit we adapt the output unit so the value stay between 0.1 --> 100 range (for
      * dimension 1).<br>
      * Be careful, this method is supposed to be used with unit in <b>decimal</b>
-     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
-     * {@link TimeUnit} methods.<br/>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or {@link TimeUnit} methods.<br/>
      * <br/>
-     * Example: <code>getBestUnit(0.01, UnitPrefix.MILLI, 1)</code> will return
-     * <code>UnitPrefix.MICRO</code><br/>
+     * Example: <code>getBestUnit(0.01, UnitPrefix.MILLI, 1)</code> will return <code>UnitPrefix.MICRO</code><br/>
      * 
      * @param value
      *        : value used to get the best unit.
@@ -134,10 +132,8 @@ public class UnitUtil
      * Get the best unit with the given value and {@link UnitPrefix}. By best unit we adapt the
      * output unit so the value stay between 0.1 --> 100 range (for dimension 1).<br>
      * Be careful, this method is supposed to be used with unit in <b>decimal</b>
-     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
-     * {@link TimeUnit} methods.<br/>
-     * Example: <code>getBestUnit(0.01, UnitPrefix.MILLI, 1)</code> will return
-     * <code>UnitPrefix.MICRO</code><br/>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or {@link TimeUnit} methods.<br/>
+     * Example: <code>getBestUnit(0.01, UnitPrefix.MILLI, 1)</code> will return <code>UnitPrefix.MICRO</code><br/>
      * 
      * @param value
      *        : value used to get the best unit.
@@ -154,8 +150,7 @@ public class UnitUtil
     /**
      * Return the value from a specific unit to another unit.<br/>
      * Be careful, this method is supposed to be used with unit in <b>decimal</b>
-     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
-     * {@link TimeUnit} methods.<br/>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or {@link TimeUnit} methods.<br/>
      * <b>Example:</b><br/>
      * <ul>
      * <li>value = 0.01</li>
@@ -199,8 +194,7 @@ public class UnitUtil
     /**
      * Return the value from a specific unit to another unit.<br/>
      * Be careful, this method is supposed to be used with unit in <b>decimal</b>
-     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
-     * {@link TimeUnit} methods.<br/>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or {@link TimeUnit} methods.<br/>
      * <b>Example:</b><br/>
      * <ul>
      * <li>value = 0.01</li>
@@ -289,29 +283,28 @@ public class UnitUtil
      */
     public static String displayTimeAsStringWithComma(double valueInMs, int precision)
     {
-        String toReturn = "";
+        String result;
+        double v = valueInMs;
 
-        if (valueInMs >= 360000d)
+        if (v >= 360000d)
         {
-            valueInMs /= 360000d;
-            toReturn = StringUtil.toString(valueInMs, precision) + " h";
+            v /= 360000d;
+            result = StringUtil.toString(valueInMs, precision) + " h";
         }
-        else if (valueInMs >= 60000d)
+        else if (v >= 60000d)
         {
-            valueInMs /= 60000d;
-            toReturn = StringUtil.toString(valueInMs, precision) + " min";
+            v /= 60000d;
+            result = StringUtil.toString(valueInMs, precision) + " min";
         }
-        else if (valueInMs >= 1000d)
+        else if (v >= 1000d)
         {
-            valueInMs /= 1000d;
-            toReturn = StringUtil.toString(valueInMs, precision) + " sec";
+            v /= 1000d;
+            result = StringUtil.toString(valueInMs, precision) + " sec";
         }
         else
-        {
-            toReturn = StringUtil.toString(valueInMs, precision) + " ms";
-        }
+            result = StringUtil.toString(valueInMs, precision) + " ms";
 
-        return toReturn;
+        return result;
     }
 
     /**
@@ -325,41 +318,35 @@ public class UnitUtil
      */
     public static String displayTimeAsStringWithUnits(double valueInMs, boolean displayZero)
     {
-        String toReturn = "";
+        String result = "";
+        double v = valueInMs;
 
-        if (valueInMs >= 3600000d)
+        if (v >= 3600000d)
         {
-            toReturn += (int) (valueInMs / 3600000) + "h ";
-            valueInMs %= 3600000;
+            result += (int) (valueInMs / 3600000) + "h ";
+            v %= 3600000;
         }
         else if (displayZero)
+            result += "00h ";
+        if (v >= 60000d)
         {
-            toReturn += "00h ";
-        }
-        if (valueInMs >= 60000d)
-        {
-            toReturn += (int) (valueInMs / 60000) + "min ";
-            valueInMs %= 60000;
+            result += (int) (valueInMs / 60000) + "min ";
+            v %= 60000;
         }
         else if (displayZero)
+            result += "00min ";
+        if (v >= 1000d)
         {
-            toReturn += "00min ";
-        }
-        if (valueInMs >= 1000d)
-        {
-            toReturn += (int) (valueInMs / 1000d) + "sec ";
-            valueInMs %= 1000;
+            result += (int) (valueInMs / 1000d) + "sec ";
+            v %= 1000;
         }
         else if (displayZero)
-        {
-            toReturn += "00sec ";
-        }
+            result += "00sec ";
+        if (v != 0)
+            result += StringUtil.toString(valueInMs, 2) + "ms";
+        else if (displayZero)
+            result += "000ms";
 
-        if (valueInMs != 0)
-            toReturn += StringUtil.toString(valueInMs, 2) + "ms";
-        else if (displayZero)
-            toReturn += "000ms";
-
-        return toReturn;
+        return result;
     }
 }

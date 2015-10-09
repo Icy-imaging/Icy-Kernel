@@ -26,12 +26,6 @@ public class ROIMassCenterCDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
-    {
-        return false;
-    }
-
-    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(getMassCenterC(ROIMassCenterDescriptorsPlugin.computeMassCenter(roi)));

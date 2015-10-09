@@ -5,7 +5,10 @@ package plugins.kernel.roi.descriptor.property;
 
 import icy.roi.ROI;
 import icy.roi.ROIDescriptor;
+import icy.roi.ROIEvent;
+import icy.roi.ROIEvent.ROIEventType;
 import icy.sequence.Sequence;
+import icy.util.StringUtil;
 
 /**
  * Name descriptor class (see {@link ROIDescriptor})
@@ -28,9 +31,10 @@ public class ROINameDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
+    public boolean needRecompute(ROIEvent change)
     {
-        return false;
+        return (change.getType() == ROIEventType.PROPERTY_CHANGED)
+                && (StringUtil.equals(change.getPropertyName(), ROI.PROPERTY_NAME));
     }
 
     @Override

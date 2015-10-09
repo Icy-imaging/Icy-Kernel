@@ -26,12 +26,6 @@ public class ROISizeTDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
-    {
-        return false;
-    }
-
-    @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         return Double.valueOf(getSizeT(roi.getBounds5D()));

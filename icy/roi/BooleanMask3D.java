@@ -845,7 +845,7 @@ public class BooleanMask3D implements Cloneable
      * points of the 3D mask.<br>
      * Points are returned in ascending XYZ order. <br>
      * <br>
-     * WARNING: The basic implementation is not totally accurate.<br>
+     * WARNING: The default implementation is not totally accurate.<br>
      * It returns all points from the first and the last Z slices + contour points for intermediate
      * Z slices.
      * 
@@ -864,7 +864,7 @@ public class BooleanMask3D implements Cloneable
      * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
      * Points are returned in ascending XYZ order.<br>
      * <br>
-     * WARNING: The basic implementation is not totally accurate.<br>
+     * WARNING: The default implementation is not totally accurate.<br>
      * It returns all points from the first and the last Z slices + contour points for intermediate
      * Z slices.
      * 
@@ -874,7 +874,6 @@ public class BooleanMask3D implements Cloneable
     {
         final DynamicArray.Int result = new DynamicArray.Int(8);
 
-        // perimeter = first slice volume + inter slices perimeter + last slice volume
         // TODO: fix this method and use real 3D contour point
         if (mask.size() <= 2)
         {

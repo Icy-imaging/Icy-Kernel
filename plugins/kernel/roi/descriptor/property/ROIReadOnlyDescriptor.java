@@ -5,7 +5,10 @@ package plugins.kernel.roi.descriptor.property;
 
 import icy.roi.ROI;
 import icy.roi.ROIDescriptor;
+import icy.roi.ROIEvent;
+import icy.roi.ROIEvent.ROIEventType;
 import icy.sequence.Sequence;
+import icy.util.StringUtil;
 
 /**
  * Read-Only descriptor class (see {@link ROIDescriptor})
@@ -28,10 +31,12 @@ public class ROIReadOnlyDescriptor extends ROIDescriptor
     }
 
     @Override
-    public boolean useSequenceData()
+    public boolean needRecompute(ROIEvent change)
     {
-        return false;
+        return (change.getType() == ROIEventType.PROPERTY_CHANGED)
+                && (StringUtil.equals(change.getPropertyName(), ROI.PROPERTY_READONLY));
     }
+
 
     @Override
     public Object compute(ROI roi, Sequence sequence) throws UnsupportedOperationException

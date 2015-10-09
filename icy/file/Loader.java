@@ -2403,9 +2403,18 @@ public class Loader
     /**
      * Internal load a single file and return result as Sequence list (for multi serie).<br>
      * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
-     * loading of
-     * current path.
+     * loading of current path.
      * 
+     * @param importers
+     *        Importers to use to open and load images (first compatible is used)
+     * @param path
+     *        image file to load
+     * @param serie
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select series to open from a
+     *        serie selector dialog.
+     * @param loadingFrame
+     *        the loading frame used to display progress of the operation (can be null)
      * @throws IOException
      */
     static List<Sequence> internalLoadSingle(List<SequenceFileImporter> importers, String path, int serie,

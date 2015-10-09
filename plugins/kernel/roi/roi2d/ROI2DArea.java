@@ -1846,8 +1846,8 @@ public class ROI2DArea extends ROI2D
 
         System.arraycopy(mask, 0, maskData, 0, r.width * r.height);
 
-        if (optimizeBounds())
-            roiChanged();
+        optimizeBounds();
+        roiChanged();
     }
 
     /**
@@ -1867,8 +1867,8 @@ public class ROI2DArea extends ROI2D
         for (int i = 0; i < data.length; i++)
             data[i] = (byte) (booleanMask[i] ? 1 : 0);
 
-        if (optimizeBounds())
-            roiChanged();
+        optimizeBounds();
+        roiChanged();
     }
 
     public void setAsBooleanMask(int x, int y, int w, int h, boolean[] booleanMask)
