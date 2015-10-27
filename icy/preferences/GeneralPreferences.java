@@ -22,6 +22,7 @@ import icy.file.FileUtil;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.LookAndFeelUtil;
+import icy.roi.ROI.ROIPainter;
 
 /**
  * @author Stephane
@@ -34,6 +35,7 @@ public class GeneralPreferences
     public static final String PREF_GENERAL_ID = "general";
     public static final String TOOLTIPS_ID = "toolTips";
     public static final String CONFIRMS_ID = "confirms";
+    public static final String ROIOVERLAY_ID = "roiOverlay";
 
     /**
      * id general
@@ -66,6 +68,7 @@ public class GeneralPreferences
     private static XMLPreferences prefGeneral;
     private static XMLPreferences prefToolTips;
     private static XMLPreferences prefConfirms;
+    private static XMLPreferences prefRoiOverlay;
 
     public static void load()
     {
@@ -73,6 +76,7 @@ public class GeneralPreferences
         prefGeneral = ApplicationPreferences.getPreferences().node(PREF_GENERAL_ID);
         prefToolTips = prefGeneral.node(TOOLTIPS_ID);
         prefConfirms = prefGeneral.node(CONFIRMS_ID);
+        prefRoiOverlay = prefGeneral.node(ROIOVERLAY_ID);
     }
 
     /**
@@ -93,7 +97,7 @@ public class GeneralPreferences
     }
 
     /**
-     * @return the preferences for tool tips ({@link ToolTipFrame}).
+     * @return the root preferences for tool tips ({@link ToolTipFrame}).
      */
     public static XMLPreferences getPreferencesToolTips()
     {
@@ -101,11 +105,19 @@ public class GeneralPreferences
     }
 
     /**
-     * @return the preferences for confirm dialog ({@link IdConfirmDialog}).
+     * @return the root preferences for confirm dialog ({@link IdConfirmDialog}).
      */
     public static XMLPreferences getPreferencesConfirms()
     {
         return prefConfirms;
+    }
+
+    /**
+     * @return the root preferences for ROI overlay setting ({@link ROIPainter}).
+     */
+    public static XMLPreferences getPreferencesRoiOverlay()
+    {
+        return prefRoiOverlay;
     }
 
     public static boolean getExitConfirm()

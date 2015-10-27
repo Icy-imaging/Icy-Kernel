@@ -27,6 +27,7 @@ import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginROI;
+import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
@@ -120,7 +121,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final ROIIdComparator idComparator = new ROIIdComparator();
     public static final ROINameComparator nameComparator = new ROINameComparator();
 
-    public static final int DEFAULT_STROKE = 2;
+    public static final double DEFAULT_STROKE = 2;
     public static final Color DEFAULT_COLOR = Color.GREEN;
     public static final float DEFAULT_OPACITY = 0.3f;
 
@@ -472,6 +473,67 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         saveROIsToXML(node, rois);
     }
 
+    public static Color getDefaultColor()
+    {
+        return new Color(GeneralPreferences.getPreferencesRoiOverlay().getInt(ID_COLOR, DEFAULT_COLOR.getRGB()));
+    }
+
+    public static float getDefaultOpacity()
+    {
+        return GeneralPreferences.getPreferencesRoiOverlay().getFloat(ID_OPACITY, DEFAULT_OPACITY);
+    }
+
+    public static double getDefaultStroke()
+    {
+        return GeneralPreferences.getPreferencesRoiOverlay().getDouble(ID_STROKE, DEFAULT_STROKE);
+    }
+
+    public static boolean getDefaultShowName()
+    {
+        return GeneralPreferences.getPreferencesRoiOverlay().getBoolean(ID_SHOWNAME, false);
+    }
+
+    public static void setDefaultColor(Color value)
+    {
+        GeneralPreferences.getPreferencesRoiOverlay().putInt(ID_COLOR, value.getRGB());
+    }
+
+    public static void setDefaultOpacity(float value)
+    {
+        GeneralPreferences.getPreferencesRoiOverlay().putFloat(ID_OPACITY, value);
+    }
+
+    public static void setDefaultStroke(double value)
+    {
+        GeneralPreferences.getPreferencesRoiOverlay().putDouble(ID_STROKE, value);
+    }
+
+    public static void setDefaultShowName(boolean value)
+    {
+        GeneralPreferences.getPreferencesRoiOverlay().putBoolean(ID_SHOWNAME, value);
+    }
+
+    /**
+     * Returns the effective number of dimension needed for the specified bounds.
+     */
+    protected static int getEffectiveDimension(Rectangle5D bounds)
+    {
+        int result = 5;
+
+        if (bounds.isInfiniteC() || (bounds.getSizeC() <= 1d))
+        {
+            result--;
+            if (bounds.isInfiniteT() || (bounds.getSizeT() <= 1d))
+            {
+                result--;
+                if (bounds.isInfiniteZ() || (bounds.getSizeZ() <= 1d))
+                    result--;
+            }
+        }
+
+        return result;
+    }
+
     /**
      * @deprecated Use {@link IcyCanvas} methods instead
      */
@@ -573,6 +635,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         protected double stroke;
         protected Color color;
         protected float opacity;
+        protected boolean showName;
 
         /**
          * Last mouse position (image coordinates).
@@ -584,9 +647,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             super("ROI painter", OverlayPriority.SHAPE_NORMAL);
 
-            stroke = DEFAULT_STROKE;
-            color = DEFAULT_COLOR;
-            opacity = DEFAULT_OPACITY;
+            stroke = getDefaultStroke();
+            color = getDefaultColor();
+            opacity = getDefaultOpacity();
+            showName = getDefaultShowName();
 
             mousePos = new Point5D.Double();
 
@@ -699,12 +763,32 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         /**
+         * Return <code>true</code> if ROI painter should display the ROI name at draw time.<br>
+         */
+        public boolean getShowName()
+        {
+            return showName;
+        }
+
+        /**
+         * When set to <code>true</code> the ROI painter display the ROI name at draw time.
+         */
+        public void setShowName(boolean value)
+        {
+            if (showName != value)
+            {
+                showName = value;
+                ROI.this.propertyChanged(PROPERTY_SHOWNAME);
+            }
+        }
+
+        /**
          * @deprecated Selected color is now automatically calculated
          */
         @Deprecated
         public void setSelectedColor(Color value)
         {
-
+            //
         }
 
         /**
@@ -965,9 +1049,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             beginUpdate();
             try
             {
-                setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_COLOR.getRGB())));
-                setStroke(XMLUtil.getElementDoubleValue(node, ID_STROKE, DEFAULT_STROKE));
-                setOpacity(XMLUtil.getElementFloatValue(node, ID_OPACITY, DEFAULT_OPACITY));
+                setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, getDefaultColor().getRGB())));
+                setStroke(XMLUtil.getElementDoubleValue(node, ID_STROKE, getDefaultStroke()));
+                setOpacity(XMLUtil.getElementFloatValue(node, ID_OPACITY, getDefaultOpacity()));
             }
             finally
             {
@@ -1007,7 +1091,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean focused;
     protected boolean selected;
     protected boolean readOnly;
-    protected boolean showName;
 
     // attached ROI icon
     protected Image icon;
@@ -1043,7 +1126,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         creating = false;
         focused = false;
         selected = false;
-        showName = false;
 
         cachedBounds = new Rectangle5D.Double();
         cachedNumberOfPoints = 0d;
@@ -1305,6 +1387,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void setSelectedColor(Color value)
     {
+        //
     }
 
     /**
@@ -1608,20 +1691,16 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public boolean getShowName()
     {
-        return showName;
+        return getOverlay().getShowName();
     }
 
     /**
      * Set the <i>show name</i> property of ROI.<br>
-     * When set to <code>true</code> the ROI should display its name at draw time.
+     * When set to <code>true</code> the ROI shows its name at draw time.
      */
     public void setShowName(boolean value)
     {
-        if (showName != value)
-        {
-            showName = value;
-            propertyChanged(PROPERTY_SHOWNAME);
-        }
+        getOverlay().setShowName(value);
     }
 
     /**
@@ -2250,27 +2329,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         return bounds1;
-    }
-
-    /**
-     * Returns the effective number of dimension needed for the specified bounds.
-     */
-    protected int getEffectiveDimension(Rectangle5D bounds)
-    {
-        int result = 5;
-
-        if (bounds.isInfiniteC() || (bounds.getSizeC() <= 1d))
-        {
-            result--;
-            if (bounds.isInfiniteT() || (bounds.getSizeT() <= 1d))
-            {
-                result--;
-                if (bounds.isInfiniteZ() || (bounds.getSizeZ() <= 1d))
-                    result--;
-            }
-        }
-
-        return result;
     }
 
     /**

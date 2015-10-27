@@ -308,7 +308,7 @@ public class RoiSettingPanel extends JPanel implements ActionListener
         panelViewTop.add(lblColumnSelectionFor, gbc_lblColumnSelectionFor);
 
         upViewBtn = new IcyButton(new IcyIcon(ResourceUtil.ICON_ARROW_UP));
-        upViewBtn.setToolTipText("Change column order");
+        upViewBtn.setToolTipText("Change order of selected column(s)");
         upViewBtn.setFlat(true);
         GridBagConstraints gbc_upViewBtn = new GridBagConstraints();
         gbc_upViewBtn.insets = new Insets(0, 0, 0, 5);
@@ -317,7 +317,7 @@ public class RoiSettingPanel extends JPanel implements ActionListener
         panelViewTop.add(upViewBtn, gbc_upViewBtn);
 
         downViewBtn = new IcyButton(new IcyIcon(ResourceUtil.ICON_ARROW_DOWN));
-        downViewBtn.setToolTipText("Change column order");
+        downViewBtn.setToolTipText("Change order of selected column(s)");
         downViewBtn.setFlat(true);
         GridBagConstraints gbc_downViewBtn = new GridBagConstraints();
         gbc_downViewBtn.gridx = 2;
@@ -353,7 +353,7 @@ public class RoiSettingPanel extends JPanel implements ActionListener
         panelExportTop.add(lblNewLabel, gbc_lblNewLabel);
 
         upExportBtn = new IcyButton(new IcyIcon(ResourceUtil.ICON_ARROW_UP));
-        upExportBtn.setToolTipText("Change column order");
+        upExportBtn.setToolTipText("Change order of selected column(s)");
         upExportBtn.setFlat(true);
         GridBagConstraints gbc_upExportBtn = new GridBagConstraints();
         gbc_upExportBtn.insets = new Insets(0, 0, 0, 5);
@@ -362,7 +362,7 @@ public class RoiSettingPanel extends JPanel implements ActionListener
         panelExportTop.add(upExportBtn, gbc_upExportBtn);
 
         downExportBtn = new IcyButton(new IcyIcon(ResourceUtil.ICON_ARROW_DOWN));
-        downExportBtn.setToolTipText("Change column order");
+        downExportBtn.setToolTipText("Change order of selected column(s)");
         downExportBtn.setFlat(true);
         GridBagConstraints gbc_downExportBtn = new GridBagConstraints();
         gbc_downExportBtn.gridx = 2;

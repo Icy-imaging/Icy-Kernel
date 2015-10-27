@@ -1389,8 +1389,17 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     // set image data
                     updateImageData(imageData);
 
-                    // render now !
-                    panel3D.paint(panel3D.getGraphics());
+                    // force fine rendering here
+                    panel3D.setForceFineRendering(true);
+                    try
+                    {
+                        // render now !
+                        panel3D.paint(panel3D.getGraphics());
+                    }
+                    finally
+                    {
+                        panel3D.setForceFineRendering(false);
+                    }
 
                     // NOTE: in vtk the [0,0] pixel is bottom left, so a
                     // vertical flip is required
@@ -2089,23 +2098,39 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         private static final long serialVersionUID = -7399887230624608711L;
 
         long lastRefreshTime;
+        boolean forceFineRendering;
 
         public CustomVtkPanel()
         {
             super();
 
             lastRefreshTime = 0L;
+            forceFineRendering = false;
             // key events should be forwarded from the viewer
             removeKeyListener(this);
+        }
+
+        public boolean getForceFineRendering()
+        {
+            return forceFineRendering;
+        }
+
+        public void setForceFineRendering(boolean value)
+        {
+            forceFineRendering = value;
         }
 
         @Override
         public void paint(Graphics g)
         {
-            // several repaint in a short period of time --> set fast rendering
-            // for 1 second
-            if ((lastRefreshTime != 0) && ((System.currentTimeMillis() - lastRefreshTime) < 250))
-                setCoarseRendering(1000);
+            if (forceFineRendering)
+                setFineRendering();
+            else
+            {
+                // several repaint in a short period of time --> set fast rendering for 1 second
+                if ((lastRefreshTime != 0) && ((System.currentTimeMillis() - lastRefreshTime) < 250))
+                    setCoarseRendering(1000);
+            }
 
             // call paint on overlays first
             if (isLayersVisible())

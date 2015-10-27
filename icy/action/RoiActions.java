@@ -870,7 +870,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export", new IcyIcon(
-            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export all ROI informations in XLS file", true,
+            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export ROI table in a XLS file", true,
             "Exporting ROI informations...")
     {
         /**

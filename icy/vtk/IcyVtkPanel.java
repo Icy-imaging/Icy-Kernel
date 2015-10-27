@@ -358,6 +358,28 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     }
 
     /**
+     * Set coarse and fast rendering mode immediately
+     * 
+     * @see #setCoarseRendering(long)
+     */
+    public void setCoarseRendering()
+    {
+        // set fast rendering
+        rw.SetDesiredUpdateRate(10.0);
+    }
+
+    /**
+     * Set fine (and possibly slow) rendering immediately
+     * 
+     * @see #setFineRendering(long)
+     */
+    public void setFineRendering()
+    {
+        // set quality rendering
+        rw.SetDesiredUpdateRate(0.01);
+    }
+
+    /**
      * Set coarse and fast rendering for the specified amount of time (in ms, always when set to 0)
      */
     public void setCoarseRendering(long time)
@@ -372,7 +394,7 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     }
 
     /**
-     * Set fine (and possibily slow) rendering after specified time delay (in ms)
+     * Set fine (and possibly slow) rendering after specified time delay (in ms)
      */
     public void setFineRendering(long delay)
     {

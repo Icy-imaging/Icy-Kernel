@@ -287,8 +287,8 @@ public class ThreadUtil
         }
         catch (InvocationTargetException e)
         {
-            if (e.getCause() instanceof Exception)
-                throw (Exception) e.getCause();
+            if (e.getTargetException() instanceof Exception)
+                throw (Exception) e.getTargetException();
 
             // not an exception --> handle it
             IcyExceptionHandler.showErrorMessage(e, true);

@@ -3116,12 +3116,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public LUT getUserLUT()
     {
-        if (userLut != null)
-        {
-            // color model changed --> reset user LUT
-            if ((colorModel == null) || !userLut.isCompatible(colorModel))
-                userLut = null;
-        }
+        // color model not anymore compatible with user LUT --> reset user LUT
+        if ((userLut != null) && !userLut.isCompatible(colorModel))
+            userLut = null;
 
         if (userLut == null)
             return getDefaultLUT();
@@ -3134,7 +3131,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void setUserLUT(LUT lut)
     {
-        userLut = lut;
+        if ((colorModel == null) || lut.isCompatible(colorModel))
+            userLut = lut;
     }
 
     /**
@@ -3196,7 +3194,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public IcyColorMap getColorMap(int channel)
     {
-        return getUserLUT().getLutChannel(channel).getColorMap();
+        final LUT lut = getUserLUT();
+
+        if (channel < lut.getNumChannel())
+            return lut.getLutChannel(channel).getColorMap();
+
+        return null;
     }
 
     /**
@@ -3213,11 +3216,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void setColormap(int channel, IcyColorMap map, boolean setAlpha)
     {
-        // at this point we need to set the user LUT
-        if (userLut == null)
-            userLut = getDefaultLUT();
+        final LUT lut = getUserLUT();
 
-        userLut.getLutChannel(channel).setColorMap(map, setAlpha);
+        if (channel < lut.getNumChannel())
+            lut.getLutChannel(channel).setColorMap(map, setAlpha);
     }
 
     /**

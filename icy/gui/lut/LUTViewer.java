@@ -276,15 +276,6 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         });
 
         final Sequence seq = getSequence();
-        final boolean userLut = (seq != null) ? seq.hasUserLUT() : false;
-
-        if (!userLut && autoBoundsCheckBox.isSelected())
-        {
-            ThreadUtil.runSingle(boundsUpdater);
-            refreshAllHistogram();
-            autoRefreshHistoCheckBox.setSelected(true);
-            autoRefreshHistoCheckBox.setEnabled(false);
-        }
 
         scaleGroup = new ButtonGroup();
         logButton = new JRadioButton("log");
@@ -330,7 +321,17 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         channelNameUpdater.run();
 
         if (seq != null)
+        {
+            if (!seq.hasUserLUT() && autoBoundsCheckBox.isSelected())
+            {
+                ThreadUtil.runSingle(boundsUpdater);
+                refreshAllHistogram();
+                autoRefreshHistoCheckBox.setSelected(true);
+                autoRefreshHistoCheckBox.setEnabled(false);
+            }
+
             seq.addListener(this);
+        }
     }
 
     private boolean getPreferredAutoBounds()

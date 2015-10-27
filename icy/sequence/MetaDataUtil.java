@@ -287,7 +287,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Sets the width (sizeX) of the specified image serie.
+     * Sets the width (sizeX) of the specified image serie (need to be >= 1).
      */
     public static void setSizeX(OMEXMLMetadataImpl metaData, int serie, int sizeX)
     {
@@ -295,7 +295,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Sets the height (sizeY) of the specified image serie.
+     * Sets the height (sizeY) of the specified image serie (need to be >= 1).
      */
     public static void setSizeY(OMEXMLMetadataImpl metaData, int serie, int sizeY)
     {
@@ -303,7 +303,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Sets the number of channel (sizeC) of the specified image serie.
+     * Sets the number of channel (sizeC) of the specified image serie (need to be >= 1).
      */
     public static void setSizeC(OMEXMLMetadataImpl metaData, int serie, int sizeC)
     {
@@ -311,7 +311,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Sets the depth (sizeZ) of the specified image serie.
+     * Sets the depth (sizeZ) of the specified image serie (need to be >= 1).
      */
     public static void setSizeZ(OMEXMLMetadataImpl metaData, int serie, int sizeZ)
     {
@@ -319,7 +319,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Sets the number of frame (sizeT) of the specified image serie.
+     * Sets the number of frame (sizeT) of the specified image serie (need to be >= 1).
      */
     public static void setSizeT(OMEXMLMetadataImpl metaData, int serie, int sizeT)
     {
@@ -786,15 +786,15 @@ public class MetaDataUtil
      * @param metadata
      *        metadata object to fill.
      * @param sizeX
-     *        width in pixels.
+     *        width in pixels (need to be >= 1)
      * @param sizeY
-     *        height in pixels.
+     *        height in pixels (need to be >= 1)
      * @param sizeC
-     *        number of channel.
+     *        number of channel (need to be >= 1)
      * @param sizeZ
-     *        number of Z slices.
+     *        number of Z slices (need to be >= 1)
      * @param sizeT
-     *        number of T frames.
+     *        number of T frames (need to be >= 1)
      * @param dataType
      *        data type.
      * @param separateChannel

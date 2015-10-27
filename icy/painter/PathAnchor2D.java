@@ -116,6 +116,16 @@ public class PathAnchor2D extends Anchor2D
         this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, color, selectedColor, PathIterator.SEG_LINETO);
     }
 
+    /**
+     * @deprecated Uses {@link #PathAnchor2D(double, double, double, double, double, double, int, Color, Color)}
+     *             instead.
+     */
+    @Deprecated
+    public PathAnchor2D(double x1, double y1, int ray, Color color, Color selectedColor)
+    {
+        this(0d, 0d, 0d, 0d, x1, y1, ray, color, selectedColor, PathIterator.SEG_MOVETO);
+    }
+
     public PathAnchor2D(double x1, double y1, int type)
     {
         this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR, type);

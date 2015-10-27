@@ -18,6 +18,9 @@
  */
 package icy.gui.util;
 
+import icy.gui.frame.IcyFrame;
+import icy.gui.frame.IcyFrameAdapter;
+import icy.gui.frame.IcyFrameEvent;
 import icy.gui.frame.TitledFrame;
 import icy.util.GraphicsUtil;
 
@@ -25,17 +28,26 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -343,6 +355,112 @@ public class GuiUtil
         return result;
     }
 
+    /**
+     * @param window
+     *        the window to convert in IcyFrame
+     * @return an IcyFrame with the content of specified window (same properties and components)<br/>
+     *         The returned frame windows event (opened, closing, closed) are forwarded to the original window to
+     *         maintain original event behaviors<br/>
+     *         Only the <code>closed</code> event is listened from the original window which will automatically call the
+     *         close() method of the returned IcyFrame.
+     */
+    public static IcyFrame createIcyFrameFromWindow(final Window window)
+    {
+        String title;
+        Component content;
+        JMenuBar menuBar;
+
+        if (window instanceof Frame)
+        {
+            final Frame f = (Frame) window;
+
+            title = f.getTitle();
+
+            if (f instanceof JFrame)
+            {
+                content = ((JFrame) f).getContentPane();
+                menuBar = ((JFrame) f).getJMenuBar();
+            }
+            else
+            {
+                content = f.getComponent(0);
+                menuBar = SwingUtil.getJMenuBar(f.getMenuBar(), false);
+            }
+        }
+        else if (window instanceof Dialog)
+        {
+            final Dialog d = (Dialog) window;
+
+            title = d.getTitle();
+
+            if (d instanceof JDialog)
+            {
+                content = ((JDialog) d).getContentPane();
+                menuBar = ((JDialog) d).getJMenuBar();
+            }
+            else
+            {
+                content = d.getComponent(0);
+                menuBar = null;
+            }
+        }
+        else
+        {
+            title = window.getName();
+            content = window.getComponent(0);
+            menuBar = null;
+        }
+
+        final IcyFrame frame = new IcyFrame(title, true, true, false, false);
+        frame.setLayout(new BorderLayout());
+        frame.add(content, BorderLayout.CENTER);
+        frame.setJMenuBar(menuBar);
+        frame.pack();
+        frame.getIcyExternalFrame().setSize(window.getSize());
+        frame.getIcyInternalFrame().setSize(window.getSize());
+        frame.center();
+
+        frame.setFocusable(window.isFocusable());
+        frame.setResizable(false);
+
+        frame.addFrameListener(new IcyFrameAdapter()
+        {
+            @Override
+            public void icyFrameOpened(IcyFrameEvent e)
+            {
+                for (WindowListener l : window.getWindowListeners())
+                    l.windowOpened(new WindowEvent(window, e.getEvent().getID()));
+            }
+
+            @Override
+            public void icyFrameClosing(IcyFrameEvent e)
+            {
+                window.setLocation(frame.getLocation());
+                for (WindowListener l : window.getWindowListeners())
+                    l.windowClosing(new WindowEvent(window, e.getEvent().getID()));
+            }
+
+            @Override
+            public void icyFrameClosed(IcyFrameEvent e)
+            {
+                for (WindowListener l : window.getWindowListeners())
+                    l.windowClosed(new WindowEvent(window, e.getEvent().getID()));
+            }
+        });
+
+        window.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosed(WindowEvent e)
+            {
+                super.windowClosed(e);
+                frame.close();
+            }
+        });
+
+        return frame;
+    }
+
     public static void setCursor(Component c, int cursor)
     {
         if (c == null)
@@ -407,9 +525,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses
-     *             {@link GraphicsUtil#drawHCenteredString(Graphics, String, int, int, boolean)}
-     *             instead
+     * @deprecated uses {@link GraphicsUtil#drawHCenteredString(Graphics, String, int, int, boolean)} instead
      */
     @Deprecated
     public static void drawHCenteredText(Graphics g, String string, int w, int y)
@@ -418,8 +534,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated Use {@link GraphicsUtil#drawCenteredString(Graphics, String, int, int, boolean)}
-     *             instead
+     * @deprecated Use {@link GraphicsUtil#drawCenteredString(Graphics, String, int, int, boolean)} instead
      */
     @Deprecated
     public static void drawCenteredText(Graphics g, String string, int w, int h)

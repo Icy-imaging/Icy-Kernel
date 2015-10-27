@@ -186,8 +186,16 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // create a new compatible LUT
         final LUT lut = sequence.createCompatibleLUT();
-        // restore user colormaps (without alpha)
-        lut.setColorMaps(sequence.getUserLUT(), false);
+        // restore user LUT if needed
+        if (sequence.hasUserLUT())
+        {
+            final LUT userLut = sequence.getUserLUT();
+
+            // restore colormaps (without alpha)
+            lut.setColorMaps(userLut, false);
+            // then restore scalers
+            lut.setScalers(userLut);
+        }
 
         // set lut (this modify lutPanel)
         setLut(lut);
@@ -704,7 +712,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                     newCanvas.setPositionT(saveT);
                 if (saveC != -1)
                     newCanvas.setPositionC(saveC);
-                
+
                 // canvas set :)
                 canvas = newCanvas;
             }

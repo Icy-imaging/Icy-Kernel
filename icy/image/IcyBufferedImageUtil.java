@@ -451,7 +451,7 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * @deprecated Use {@link #extractChannels(IcyBufferedImage, List)} instead.
+     * @deprecated Use {@link #extractChannels(IcyBufferedImage, int[])} instead.
      */
     @Deprecated
     public static IcyBufferedImage extractChannels(IcyBufferedImage source, List<Integer> channelNumbers)

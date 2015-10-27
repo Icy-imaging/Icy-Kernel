@@ -56,6 +56,7 @@ import java.util.concurrent.Semaphore;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -99,8 +100,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     IcyTextField posCField;
     IcyTextField sizeCField;
     JSeparator separator;
-    JSeparator separator_1;
-    JSeparator separator_2;
     Component horizontalGlue;
     Component horizontalGlue_1;
     SpecialValueSpinner posZSpinner;
@@ -123,6 +122,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     IcyButton xlsExportButton;
     JSpinner strokeSpinner;
     JCheckBox displayNameCheckBox;
+    JButton setAsDefaultBtn;
 
     // internals
     private final AbstractRoisPanel roisPanel;
@@ -178,6 +178,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         sizeTField.addTextChangeListener(this);
         sizeCField.addTextChangeListener(this);
 
+        setAsDefaultBtn.addActionListener(this);
+
         Clipboard.addListener(this);
 
         refreshROIActionsInternal();
@@ -192,9 +194,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         actionPanel.setBorder(new TitledBorder(null, "Action", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(actionPanel);
         GridBagLayout gbl_actionPanel = new GridBagLayout();
-        gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 60, 0};
+        gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 60, 0, 0};
         gbl_actionPanel.rowHeights = new int[] {0, 0, 0, 0, 0};
-        gbl_actionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gbl_actionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
         gbl_actionPanel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         actionPanel.setLayout(gbl_actionPanel);
 
@@ -203,7 +205,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         GridBagConstraints gbc_toolBar = new GridBagConstraints();
         gbc_toolBar.anchor = GridBagConstraints.WEST;
         gbc_toolBar.gridwidth = 4;
-        gbc_toolBar.insets = new Insets(0, 0, 5, 0);
+        gbc_toolBar.insets = new Insets(0, 0, 5, 5);
         gbc_toolBar.gridx = 0;
         gbc_toolBar.gridy = 0;
         actionPanel.add(toolBar, gbc_toolBar);
@@ -216,6 +218,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         saveButton.setHideActionText(true);
         toolBar.add(saveButton);
         separator = new JSeparator();
+        separator.setPreferredSize(new Dimension(2, 2));
         separator.setMaximumSize(new Dimension(2, 32767));
         separator.setOrientation(SwingConstants.VERTICAL);
         toolBar.add(separator);
@@ -231,22 +234,24 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         pasteLinkButton = new IcyButton(RoiActions.pasteLinkAction);
         pasteLinkButton.setHideActionText(true);
         toolBar.add(pasteLinkButton);
-        separator_1 = new JSeparator();
-        separator_1.setMaximumSize(new Dimension(2, 32767));
-        separator_1.setOrientation(SwingConstants.VERTICAL);
-        toolBar.add(separator_1);
-
-        xlsExportButton = new IcyButton(RoiActions.xlsExportAction);
-        toolBar.add(xlsExportButton);
 
         horizontalGlue_1 = Box.createHorizontalGlue();
         toolBar.add(horizontalGlue_1);
+
+        xlsExportButton = new IcyButton(RoiActions.xlsExportAction);
+        xlsExportButton.setMargin(new Insets(2, 0, 2, 4));
+        GridBagConstraints gbc_xlsExportButton = new GridBagConstraints();
+        gbc_xlsExportButton.fill = GridBagConstraints.HORIZONTAL;
+        gbc_xlsExportButton.insets = new Insets(0, 0, 5, 0);
+        gbc_xlsExportButton.gridx = 4;
+        gbc_xlsExportButton.gridy = 0;
+        actionPanel.add(xlsExportButton, gbc_xlsExportButton);
 
         JToolBar toolBar_1 = new JToolBar();
         toolBar_1.setRollover(true);
         GridBagConstraints gbc_toolBar_1 = new GridBagConstraints();
         gbc_toolBar_1.anchor = GridBagConstraints.WEST;
-        gbc_toolBar_1.insets = new Insets(0, 0, 5, 0);
+        gbc_toolBar_1.insets = new Insets(0, 0, 5, 5);
         gbc_toolBar_1.gridwidth = 4;
         gbc_toolBar_1.gridx = 0;
         gbc_toolBar_1.gridy = 1;
@@ -270,16 +275,16 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         subButton.setHideActionText(true);
         toolBar_1.add(subButton);
 
-        separator_2 = new JSeparator();
-        separator_2.setPreferredSize(new Dimension(8, 2));
-        separator_2.setMaximumSize(new Dimension(8, 32767));
-        separator_2.setOrientation(SwingConstants.VERTICAL);
-        toolBar_1.add(separator_2);
-        deleteButton = new IcyButton(RoiActions.deleteAction);
-        toolBar_1.add(deleteButton);
-
         horizontalGlue = Box.createHorizontalGlue();
         toolBar_1.add(horizontalGlue);
+        deleteButton = new IcyButton(RoiActions.deleteAction);
+        deleteButton.setMargin(new Insets(2, 0, 2, 4));
+        GridBagConstraints gbc_deleteButton = new GridBagConstraints();
+        gbc_deleteButton.fill = GridBagConstraints.HORIZONTAL;
+        gbc_deleteButton.insets = new Insets(0, 0, 5, 0);
+        gbc_deleteButton.gridx = 4;
+        gbc_deleteButton.gridy = 1;
+        actionPanel.add(deleteButton, gbc_deleteButton);
 
         final JLabel lblColor = new JLabel("Color");
         GridBagConstraints gbc_lblColor = new GridBagConstraints();
@@ -309,6 +314,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         alphaSlider = new JSlider();
         alphaSlider.setFocusable(false);
         GridBagConstraints gbc_alphaSlider = new GridBagConstraints();
+        gbc_alphaSlider.gridwidth = 2;
         gbc_alphaSlider.fill = GridBagConstraints.HORIZONTAL;
         gbc_alphaSlider.insets = new Insets(0, 0, 5, 0);
         gbc_alphaSlider.gridx = 3;
@@ -337,16 +343,30 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         gbc_strokeSpinner.gridy = 3;
         actionPanel.add(strokeSpinner, gbc_strokeSpinner);
 
-        displayNameCheckBox = new JCheckBox("Display ROI name");
+        displayNameCheckBox = new JCheckBox("Show name");
+        displayNameCheckBox.setToolTipText("Show the ROI name");
         displayNameCheckBox.setMargin(new Insets(2, 0, 2, 2));
         displayNameCheckBox.setIconTextGap(10);
         displayNameCheckBox.setHorizontalTextPosition(SwingConstants.LEADING);
         GridBagConstraints gbc_displayNameCheckBox = new GridBagConstraints();
+        gbc_displayNameCheckBox.insets = new Insets(0, 0, 0, 5);
         gbc_displayNameCheckBox.anchor = GridBagConstraints.WEST;
         gbc_displayNameCheckBox.gridwidth = 2;
         gbc_displayNameCheckBox.gridx = 2;
         gbc_displayNameCheckBox.gridy = 3;
         actionPanel.add(displayNameCheckBox, gbc_displayNameCheckBox);
+
+        setAsDefaultBtn = new JButton("As default");
+        setAsDefaultBtn.setEnabled(false);
+        setAsDefaultBtn.setMargin(new Insets(2, 4, 2, 4));
+        setAsDefaultBtn.setIconTextGap(0);
+        setAsDefaultBtn
+                .setToolTipText("Set the current color, opacity, stroke and show name values as the default settings");
+        GridBagConstraints gbc_setAsDefaultBtn = new GridBagConstraints();
+        gbc_setAsDefaultBtn.fill = GridBagConstraints.HORIZONTAL;
+        gbc_setAsDefaultBtn.gridx = 4;
+        gbc_setAsDefaultBtn.gridy = 3;
+        actionPanel.add(setAsDefaultBtn, gbc_setAsDefaultBtn);
 
         JPanel positionAndSizePanel = new JPanel();
         add(positionAndSizePanel);
@@ -817,10 +837,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     posCSpinnerLabel.setVisible(true);
                 }
 
-                colorButton.setEnabled(hasSelected && editable);
-                strokeSpinner.setEnabled(hasSelected && editable);
-                alphaSlider.setEnabled(hasSelected);
-
                 loadButton.setEnabled(hasSequence);
                 saveButton.setEnabled(hasSelected);
                 copyButton.setEnabled(hasSelected);
@@ -838,7 +854,12 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
                 xlsExportButton.setEnabled(getVisibleRois().size() > 0);
 
+                colorButton.setEnabled(hasSelected && editable);
+                strokeSpinner.setEnabled(hasSelected && editable);
+                alphaSlider.setEnabled(hasSelected);
                 displayNameCheckBox.setEnabled(hasSelected);
+
+                setAsDefaultBtn.setEnabled(hasSelected);
             }
         });
     }
@@ -889,8 +910,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
                     if (bounds != null)
                     {
-                        double value;
-
                         posXField.setText(getPositionAsString(bounds.getX(), bounds.getSizeX()));
                         posYField.setText(getPositionAsString(bounds.getY(), bounds.getSizeY()));
                         posZSpinner.setValue(Integer.valueOf((int) formatPosition(bounds.getZ(), bounds.getSizeZ())));
@@ -1295,6 +1314,19 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 {
                     sequence.endUpdate();
                 }
+            }
+            else if (source == setAsDefaultBtn)
+            {
+                final boolean display = displayNameCheckBox.isSelected();
+                final Color color = colorButton.getColor();
+                final double stroke = ((Double) strokeSpinner.getValue()).doubleValue();
+                final float opacity = alphaSlider.getValue() / 100f;
+
+                // set default ROI Overlay properties
+                ROI.setDefaultColor(color);
+                ROI.setDefaultShowName(display);
+                ROI.setDefaultOpacity(opacity);
+                ROI.setDefaultStroke(stroke);
             }
         }
         finally
