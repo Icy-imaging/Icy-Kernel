@@ -21,11 +21,13 @@ package icy.gui.frame;
 import icy.file.FileUtil;
 import icy.image.ImageUtil;
 import icy.resource.ResourceUtil;
+import icy.util.ClassUtil;
 import icy.util.Random;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.net.URL;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -50,16 +52,34 @@ public class SplashScreenFrame extends JFrame
         private static final int DEFAULT_WIDTH = 960;
         private static final int DEFAULT_HEIGTH = 300;
 
-        private final BufferedImage image;
+        private BufferedImage image;
 
         public SplashPanel()
         {
-            final String[] files = FileUtil.getFiles(SPLASH_FOLDER, null, false, false, false);
+            image = null;
+
+            String[] files = FileUtil.getFiles(SPLASH_FOLDER, null, false, false, false);
 
             if (files.length > 0)
                 image = ImageUtil.load(files[Random.nextInt(files.length)]);
             else
-                image = null;
+            {
+                try
+                {
+                    files = ClassUtil.getResourcesInPackage(SPLASH_FOLDER, null, true, false, false, false).toArray(
+                            new String[0]);
+                    if (files.length > 0)
+                    {
+                        final URL url = getClass().getResource("/" + files[Random.nextInt(files.length)]);
+                        if (url != null)
+                            image = ImageUtil.load(url, true);
+                    }
+                }
+                catch (Exception e)
+                {
+                    System.err.println("Warning: cannot load splashscreen image");
+                }
+            }
 
             if (image != null)
                 setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));

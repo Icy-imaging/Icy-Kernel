@@ -20,10 +20,14 @@ package icy.util;
 
 import icy.network.NetworkUtil;
 import icy.network.URLUtil;
+import icy.system.IcyExceptionHandler;
 
 import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -81,6 +85,8 @@ public class JarUtil
         }
         catch (IOException e)
         {
+            System.err.println("Cannot open " + path + ":");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
             return null;
         }
     }
@@ -101,4 +107,61 @@ public class JarUtil
         return file.getJarEntry(entryName);
     }
 
+    /**
+     * Returns all files contained in the specified JAR file.
+     * 
+     * @param includeFolderEntry
+     *        if <code>true</code> all folder entry are also included
+     * @param includeHidden
+     *        if <code>true</code> all hidden files (starting by '.' character) are also included
+     */
+    public static void getAllFiles(String fileName, boolean includeFolderEntry, boolean includeHidden,
+            List<String> result)
+    {
+        final JarFile jarFile = getJarFile(fileName);
+
+        if (jarFile == null)
+            return;
+
+        final Enumeration<JarEntry> entries = jarFile.entries();
+
+        while (entries.hasMoreElements())
+        {
+            final JarEntry jarEntry = entries.nextElement();
+
+            if (jarEntry.isDirectory() && !includeFolderEntry)
+                continue;
+
+            final String name = jarEntry.getName();
+
+            if (includeHidden || !name.startsWith("."))
+                result.add(jarEntry.getName());
+        }
+
+        try
+        {
+            jarFile.close();
+        }
+        catch (IOException e)
+        {
+            // ignore
+        }
+    }
+
+    /**
+     * Returns all files contained in the specified JAR file.
+     * 
+     * @param includeFolderEntry
+     *        if <code>true</code> all folder entry are also included
+     * @param includeHidden
+     *        if <code>true</code> all hidden files (starting by '.' character) are also included
+     */
+    public static List<String> getAllFiles(String fileName, boolean includeFolderEntry, boolean includeHidden)
+    {
+        final List<String> result = new ArrayList<String>();
+
+        getAllFiles(fileName, includeFolderEntry, includeHidden, result);
+
+        return result;
+    }
 }

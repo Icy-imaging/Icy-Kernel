@@ -302,8 +302,240 @@ public class ClassUtil
     }
 
     /**
-     * This method finds all classes that are located in the package identified by the given
+     * This method returns all resources that are located in the package identified by the given
      * <code>packageName</code>.<br>
+     * <b>WARNING:</b><br>
+     * This is a relative expensive operation. Depending on your classpath multiple directories, JAR and WAR files may
+     * need to be scanned.<br>
+     * Original code written by Jorg Hohwiller for the m-m-m project (http://m-m-m.sf.net)
+     * 
+     * @param packageName
+     *        is the name of the {@link Package} to scan (ex: "java.awt.metrics")
+     * @param extension
+     *        resource extension if we want to retrieve only a specific type of resource (ex: ".class")<br>
+     *        Note that extension filtering is not case sensitive.
+     * @param recursive
+     *        if set to <code>true</code> files from sub packages/folder are also returned.
+     * @param includeFolder
+     *        if <code>true</code> folder entry are also returned
+     * @param includeJar
+     *        if <code>true</code> all sub JAR files are also scanned
+     * @param includeHidden
+     *        if <code>true</code> all hidden files (starting by '.' character) are also scanned
+     * @return
+     *         all files contained in this package represented in path format (ex: "java/awt/geom/Rectangle2D.class")
+     */
+    public static List<String> getResourcesInPackage(String packageName, String extension, boolean recursive,
+            boolean includeFolder, boolean includeJar, boolean includeHidden) throws IOException
+    {
+        final List<String> result = new ArrayList<String>();
+
+        getResourcesInPackage(packageName, extension, recursive, includeFolder, includeJar, includeHidden, result);
+
+        return result;
+    }
+
+    /**
+     * Internal use, see {@link #getResourcesInPackage(String, String, boolean)}
+     */
+    private static void getResourcesInPackage(String packageName, String extension, boolean recursive,
+            boolean includeFolder, boolean includeJar, boolean includeHidden, List<String> result) throws IOException
+    {
+        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        final String path = ClassUtil.getPathFromQualifiedName(packageName);
+        final Enumeration<URL> urls = classLoader.getResources(path);
+        final String ext = StringUtil.isEmpty(extension) ? "" : extension.toLowerCase();
+
+        while (urls.hasMoreElements())
+        {
+            final URL packageUrl = urls.nextElement();
+            final String urlPath = URLDecoder.decode(packageUrl.getFile(), "UTF-8");
+            final String protocol = packageUrl.getProtocol().toLowerCase();
+
+            if ("file".equals(protocol))
+                getResourcesInPath(urlPath, packageName, recursive, includeFolder, includeJar, includeHidden, result);
+            else if ("jar".equals(protocol))
+            {
+                final JarURLConnection connection = (JarURLConnection) packageUrl.openConnection();
+                final JarFile jarFile = connection.getJarFile();
+                final Enumeration<JarEntry> jarEntryEnumeration = jarFile.entries();
+                final String pathWithPrefix = path + '/';
+                final int prefixLength = path.length() + 1;
+
+                while (jarEntryEnumeration.hasMoreElements())
+                {
+                    final JarEntry jarEntry = jarEntryEnumeration.nextElement();
+                    String absoluteFileName = jarEntry.getName();
+
+                    if (StringUtil.isEmpty(extension) || absoluteFileName.endsWith(ext))
+                    {
+                        if (absoluteFileName.startsWith("/"))
+                            absoluteFileName = absoluteFileName.substring(1);
+
+                        boolean accept = true;
+                        if (absoluteFileName.startsWith(pathWithPrefix))
+                        {
+                            if (!recursive)
+                            {
+                                int index = absoluteFileName.indexOf('/', prefixLength);
+                                if (index != -1)
+                                    accept = false;
+                            }
+
+                            if (!includeFolder && jarEntry.isDirectory())
+                                accept = false;
+
+                            if (accept)
+                                result.add(absoluteFileName);
+                        }
+                    }
+                }
+
+                jarFile.close();
+            }
+        }
+    }
+
+    /**
+     * This method returns all resources that are located in the specified path.<br>
+     * 
+     * @param path
+     *        path to scan.
+     * @param recursive
+     *        if <code>true</code> all sub folder are also scanned.
+     * @param includeJar
+     *        if <code>true</code> all JAR files are also scanned
+     * @param includeHidden
+     *        if <code>true</code> all hidden files (starting by '.' character) are also scanned
+     * @return list of found resources.
+     */
+    public static List<String> getResourcesInPath(String path, boolean recursive, boolean includeFolder,
+            boolean includeJar, boolean includeHidden)
+    {
+        final List<String> result = new ArrayList<String>();
+
+        getResourcesInPath(path, ClassUtil.getQualifiedNameFromPath(path), recursive, includeFolder, includeJar,
+                includeHidden, result);
+
+        return result;
+    }
+
+    /**
+     * This method returns all resources that are located in the specified path.<br>
+     * 
+     * @param path
+     *        path to scan.
+     * @param basePath
+     *        path prefix
+     * @param recursive
+     *        if <code>true</code> all sub folder are also scanned.
+     * @param includeJar
+     *        if <code>true</code> all JAR files are also scanned
+     * @param includeHidden
+     *        if <code>true</code> all hidden files (starting by '.' character) are also scanned
+     * @return set of found class.
+     */
+    public static List<String> getResourcesInPath(String path, String basePath, boolean recursive,
+            boolean includeFolder, boolean includeJar, boolean includeHidden)
+    {
+        final List<String> result = new ArrayList<String>();
+
+        getResourcesInPath(path, basePath, recursive, includeFolder, includeJar, includeHidden, result);
+
+        return result;
+    }
+
+    /**
+     * This method returns all resources that are located in the specified path.<br>
+     * 
+     * @param path
+     *        path to scan.
+     * @param basePath
+     *        path prefix
+     * @param recursive
+     *        if <code>true</code> all sub folder are also scanned.
+     * @param includeJar
+     *        if <code>true</code> all JAR files are also scanned
+     * @param includeHidden
+     *        if <code>true</code> all hidden files (starting by '.' character) are also scanned
+     * @param result
+     *        result list
+     */
+    public static void getResourcesInPath(String path, String basePath, boolean recursive, boolean includeFolder,
+            boolean includeJar, boolean includeHidden, List<String> result)
+    {
+        final File file = new File(path);
+        final String qualifiedPath;
+
+        if (StringUtil.isEmpty(basePath))
+            qualifiedPath = "";
+        else
+            qualifiedPath = basePath + "/";
+
+        if (file.isDirectory())
+        {
+            if (recursive)
+                findResourcesRecursive(file, includeFolder, includeJar, includeHidden, result, qualifiedPath);
+            else
+            {
+                for (File subFile : file.listFiles())
+                    findResourceInFile(subFile, includeJar, includeHidden, result, qualifiedPath);
+            }
+        }
+        else
+            findResourceInFile(file, includeJar, includeHidden, result, qualifiedPath);
+    }
+
+    private static void findResourcesRecursive(File directory, boolean includeFolder, boolean includeJar,
+            boolean includeHidden, List<String> result, String basePath)
+    {
+        for (File childFile : directory.listFiles())
+        {
+            final String childFilename = childFile.getName();
+
+            // folder ?
+            if (childFile.isDirectory())
+            {
+                if (!includeHidden && childFilename.startsWith("."))
+                    continue;
+
+                // include this folder entry
+                if (includeFolder)
+                    result.add(basePath + childFilename);
+
+                // then search in sub folder
+                findResourcesRecursive(childFile, includeJar, includeFolder, includeHidden, result, basePath
+                        + childFilename + '/');
+            }
+            else
+                findResourceInFile(childFile, includeJar, includeHidden, result, basePath);
+        }
+    }
+
+    /**
+     * Search for all classes in specified file
+     */
+    public static void findResourceInFile(File file, boolean includeJar, boolean includeHidden, List<String> result,
+            String basePath)
+    {
+        final String shortName = file.getName();
+
+        if (!includeHidden && shortName.startsWith("."))
+            return;
+
+        final String fileName = file.getPath();
+
+        if (FileUtil.getFileExtension(fileName, false).toLowerCase().equals("jar"))
+        {
+            if (includeJar)
+                JarUtil.getAllFiles(fileName, false, includeHidden, result);
+        }
+        else
+            result.add(basePath + shortName);
+    }
+
+    /**
+     * This method finds all classes that are located in the package identified by the given <code>packageName</code>.<br>
      * <b>ATTENTION:</b><br>
      * This is a relative expensive operation. Depending on your classpath multiple
      * directories,JAR-, and WAR-files may need to be scanned. <br>
@@ -328,8 +560,7 @@ public class ClassUtil
     }
 
     /**
-     * This method finds all classes that are located in the package identified by the given
-     * <code>packageName</code>.<br>
+     * This method finds all classes that are located in the package identified by the given <code>packageName</code>.<br>
      * <b>ATTENTION:</b><br>
      * This is a relative expensive operation. Depending on your classpath multiple
      * directories,JAR-, and WAR-files may need to be scanned. <br>
@@ -633,14 +864,12 @@ public class ClassUtil
     }
 
     /**
-     * This method checks and transforms the filename of a potential {@link Class} given by
-     * <code>fileName</code>.
+     * This method checks and transforms the filename of a potential {@link Class} given by <code>fileName</code>.
      * 
      * @param fileName
      *        is the filename.
-     * @return the according Java {@link Class#getName() class-name} for the given
-     *         <code>fileName</code> if it is a class-file that is no anonymous {@link Class}, else
-     *         <code>null</code>.
+     * @return the according Java {@link Class#getName() class-name} for the given <code>fileName</code> if it is a
+     *         class-file that is no anonymous {@link Class}, else <code>null</code>.
      */
     public static String filenameToClassname(String fileName)
     {
@@ -653,15 +882,13 @@ public class ClassUtil
     }
 
     /**
-     * This method checks and transforms the filename of a potential {@link Class} given by
-     * <code>fileName</code>.<br>
+     * This method checks and transforms the filename of a potential {@link Class} given by <code>fileName</code>.<br>
      * Code written by Jorg Hohwiller for the m-m-m project (http://m-m-m.sf.net)
      * 
      * @param fileName
      *        is the filename.
-     * @return the according Java {@link Class#getName() class-name} for the given
-     *         <code>fileName</code> if it is a class-file that is no anonymous {@link Class}, else
-     *         <code>null</code>.
+     * @return the according Java {@link Class#getName() class-name} for the given <code>fileName</code> if it is a
+     *         class-file that is no anonymous {@link Class}, else <code>null</code>.
      */
     public static String fixClassName(String fileName)
     {
@@ -732,8 +959,7 @@ public class ClassUtil
     }
 
     /**
-     * @deprecated Use {@link ReflectionUtil#invokeMethod(Object, String, boolean, Object...)}
-     *             instead
+     * @deprecated Use {@link ReflectionUtil#invokeMethod(Object, String, boolean, Object...)} instead
      */
     @Deprecated
     public static Object invokeMethod(Object object, String methodName, boolean forceAccess, Object... args)
