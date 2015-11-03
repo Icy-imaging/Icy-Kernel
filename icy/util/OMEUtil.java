@@ -65,8 +65,8 @@ public class OMEUtil
 
     /**
      * Safe float evaluation from PositiveFloat object.<br>
-     * Return <code>defaultValue</code> if <code>obj</code> is null or equal to infinite with
-     * <code>allowInfinite</code> set to false.
+     * Return <code>defaultValue</code> if <code>obj</code> is null or equal to infinite with <code>allowInfinite</code>
+     * set to false.
      */
     public static double getValue(PositiveFloat obj, double defaultValue, boolean allowInfinite)
     {
@@ -94,7 +94,11 @@ public class OMEUtil
         if (obj == null)
             return defaultValue;
 
-        return obj.value(UNITS.MICROM).doubleValue();
+        final Number value = obj.value(UNITS.MICROM);
+        if (value == null)
+            return defaultValue;
+
+        return value.doubleValue();
     }
 
     /**
@@ -106,7 +110,11 @@ public class OMEUtil
         if (obj == null)
             return defaultValue;
 
-        return obj.value(UNITS.SECOND).doubleValue();
+        final Number value = obj.value(UNITS.SECOND);
+        if (value == null)
+            return defaultValue;
+
+        return value.doubleValue();
     }
 
     /**
@@ -256,8 +264,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses
-     *             {@link MetaDataUtil#setMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)}
+     * @deprecated Uses {@link MetaDataUtil#setMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)}
      *             instead.
      */
     @Deprecated
@@ -277,9 +284,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses
-     *             {@link MetaDataUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
-     *             instead.
+     * @deprecated Uses {@link MetaDataUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
@@ -289,8 +294,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Use {@link MetaDataUtil#generateMetaData(int, int, int, DataType, boolean)}
-     *             instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(int, int, int, DataType, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, DataType dataType,
@@ -310,8 +314,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean, boolean, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT, boolean separateChannel)
