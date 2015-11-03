@@ -46,11 +46,14 @@ public class ImageDataIterator implements DataIterator
      * internals
      */
     protected final BooleanMask2D mask;
-    protected final Rectangle bounds;
-    protected final int w, h;
+    protected final Rectangle regionBounds;
+    protected final Rectangle imageBounds;
+    protected final Rectangle finalBounds;
     protected final int c;
+    protected final int w, h;
     protected int x, y;
-    protected int off;
+    protected int imgOff;
+    protected int maskOff;
     protected boolean done;
     protected Object data;
 
@@ -68,32 +71,32 @@ public class ImageDataIterator implements DataIterator
     {
         super();
 
-        final Rectangle bnd;
-
-        if (boundsXY != null)
-            bnd = boundsXY;
+        if (maskXY != null)
+            regionBounds = maskXY.bounds;
         else
-            bnd = maskXY.bounds;
+            regionBounds = boundsXY;
 
         this.image = image;
         this.mask = maskXY;
 
         if (image != null)
         {
+            imageBounds = image.getBounds();
             dataType = image.getDataType_();
-            bounds = bnd.intersection(image.getBounds());
             c = channel;
         }
         else
         {
+            imageBounds = new Rectangle();
             dataType = DataType.UNDEFINED;
-            bounds = new Rectangle();
             c = 0;
         }
 
+        finalBounds = regionBounds.intersection(imageBounds);
+
         // cached
-        w = bounds.width;
-        h = bounds.height;
+        w = finalBounds.width;
+        h = finalBounds.height;
 
         // start iterator
         reset();
@@ -156,8 +159,7 @@ public class ImageDataIterator implements DataIterator
     }
 
     /**
-     * Create a new ImageData iterator to iterate data through the specified
-     * <code>BooleanMask2D</code> and C dimension.
+     * Create a new ImageData iterator to iterate data through the specified <code>BooleanMask2D</code> and C dimension.
      * 
      * @param image
      *        Image we want to iterate data from
@@ -193,28 +195,28 @@ public class ImageDataIterator implements DataIterator
 
     public int getMinX()
     {
-        return bounds.x;
+        return finalBounds.x;
     }
 
     public int getMaxX()
     {
-        return (bounds.x + bounds.width) - 1;
+        return (finalBounds.x + w) - 1;
     }
 
     public int getMinY()
     {
-        return bounds.y;
+        return finalBounds.y;
     }
 
     public int getMaxY()
     {
-        return (bounds.y + bounds.height) - 1;
+        return (finalBounds.y + h) - 1;
     }
 
     @Override
     public void reset()
     {
-        done = (image == null) || (c < 0) || (c >= image.getSizeC()) || bounds.isEmpty();
+        done = (image == null) || (c < 0) || (c >= image.getSizeC()) || finalBounds.isEmpty();
 
         if (!done)
         {
@@ -224,7 +226,13 @@ public class ImageDataIterator implements DataIterator
             // reset position
             y = 0;
             x = -1;
-            off = -1;
+            imgOff = (finalBounds.x - imageBounds.x) + ((finalBounds.y - imageBounds.y) * imageBounds.width);
+            imgOff--;
+            if (mask != null)
+            {
+                maskOff = (finalBounds.x - regionBounds.x) + ((finalBounds.y - regionBounds.y) * regionBounds.width);
+                maskOff--;
+            }
             // allow to correctly set initial position in boolean mask
             next();
         }
@@ -238,7 +246,7 @@ public class ImageDataIterator implements DataIterator
         if (mask != null)
         {
             // advance while mask do not contains current point
-            while (!done && !mask.mask[off])
+            while (!done && !mask.mask[maskOff])
                 nextPosition();
         }
     }
@@ -248,12 +256,31 @@ public class ImageDataIterator implements DataIterator
      */
     protected void nextPosition()
     {
-        off++;
-        if (++x >= w)
+        if (mask != null)
         {
-            x = 0;
-            if (++y >= h)
-                done = true;
+            imgOff++;
+            maskOff++;
+            if (++x >= w)
+            {
+                x = 0;
+                imgOff += imageBounds.width - finalBounds.width;
+                maskOff += regionBounds.width - finalBounds.width;
+
+                if (++y >= h)
+                    done = true;
+            }
+        }
+        else
+        {
+            imgOff++;
+            if (++x >= w)
+            {
+                x = 0;
+                imgOff += imageBounds.width - finalBounds.width;
+
+                if (++y >= h)
+                    done = true;
+            }
         }
     }
 
@@ -269,7 +296,7 @@ public class ImageDataIterator implements DataIterator
         if (done)
             throw new NoSuchElementException(null);
 
-        return Array1DUtil.getValue(data, image.getOffset(x + bounds.x, y + bounds.y), dataType);
+        return Array1DUtil.getValue(data, imgOff, dataType);
     }
 
     @Override
@@ -278,7 +305,7 @@ public class ImageDataIterator implements DataIterator
         if (done)
             throw new NoSuchElementException(null);
 
-        Array1DUtil.setValue(data, image.getOffset(x + bounds.x, y + bounds.y), dataType, value);
+        Array1DUtil.setValue(data, imgOff, dataType, value);
     }
 
     /**
@@ -286,7 +313,7 @@ public class ImageDataIterator implements DataIterator
      */
     public int getX()
     {
-        return x;
+        return finalBounds.x + x;
     }
 
     /**
@@ -294,7 +321,7 @@ public class ImageDataIterator implements DataIterator
      */
     public int getY()
     {
-        return y;
+        return finalBounds.y + y;
     }
 
     /**
@@ -311,7 +338,7 @@ public class ImageDataIterator implements DataIterator
     @Deprecated
     public int getPositionX()
     {
-        return x;
+        return getX();
     }
 
     /**
@@ -320,7 +347,7 @@ public class ImageDataIterator implements DataIterator
     @Deprecated
     public int getPositionY()
     {
-        return y;
+        return getY();
     }
 
     /**
@@ -329,6 +356,6 @@ public class ImageDataIterator implements DataIterator
     @Deprecated
     public int getPositionC()
     {
-        return c;
+        return getC();
     }
 }
