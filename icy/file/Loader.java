@@ -314,7 +314,7 @@ public class Loader
         }
 
         /**
-         * @deprecated Use {@link FilePosition#FilePosition(String, String, int, int, int, int)} instead.
+         * @deprecated Use {@link #FilePosition(String, String, int, int, int, int)} instead.
          */
         @Deprecated
         public FilePosition(String path, int t, int z, int c)

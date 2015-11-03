@@ -80,7 +80,7 @@ import vtk.vtkUnsignedCharArray;
  * @author Stephane
  */
 @SuppressWarnings("deprecation")
-public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, SettingChangeListener
+public class VtkCanvasNew extends Canvas3D implements Runnable, ActionListener, SettingChangeListener
 {
     /**
      * 
@@ -205,7 +205,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected final EDTTask<Object> edtTask;
     protected boolean initialized;
 
-    public VtkCanvas(Viewer viewer)
+    public VtkCanvasNew(Viewer viewer)
     {
         super(viewer);
 
@@ -213,7 +213,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         // create the processor
         propertiesUpdater = new Thread(this, "VTK canvas properties updater");
-        propertiesToUpdate = new LinkedBlockingQueue<VtkCanvas.Property>(256);
+        propertiesToUpdate = new LinkedBlockingQueue<VtkCanvasNew.Property>(256);
 
         preferences = CanvasPreferences.getPreferences().node(PREF_ID);
 
@@ -252,7 +252,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         shadingButton.setToolTipText("Enable volume shadow");
 
         renderer = panel3D.GetRenderer();
-        renderWindow = panel3D.GetRenderWindow();
+        renderWindow = panel3D.getRenderWindow();
         // set renderer properties
         renderer.SetLightFollowCamera(1);
         // set interactor
@@ -2159,14 +2159,14 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         protected void paintLayer(Sequence seq, Layer layer)
         {
             if (layer.isVisible())
-                layer.getOverlay().paint(null, seq, VtkCanvas.this);
+                layer.getOverlay().paint(null, seq, VtkCanvasNew.this);
         }
 
         @Override
         public void mouseEntered(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseEntered(e, null);
+            VtkCanvasNew.this.mouseEntered(e, null);
 
             super.mouseEntered(e);
         }
@@ -2175,7 +2175,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mouseExited(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseExited(e, null);
+            VtkCanvasNew.this.mouseExited(e, null);
 
             super.mouseExited(e);
         }
@@ -2184,7 +2184,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mouseClicked(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseClick(e, null);
+            VtkCanvasNew.this.mouseClick(e, null);
 
             super.mouseClicked(e);
         }
@@ -2193,7 +2193,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mouseMoved(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseMove(e, null);
+            VtkCanvasNew.this.mouseMove(e, null);
 
             super.mouseMoved(e);
         }
@@ -2202,7 +2202,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mouseDragged(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseDrag(e, null);
+            VtkCanvasNew.this.mouseDrag(e, null);
 
             super.mouseDragged(e);
         }
@@ -2211,7 +2211,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mousePressed(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mousePressed(e, null);
+            VtkCanvasNew.this.mousePressed(e, null);
 
             super.mousePressed(e);
         }
@@ -2220,7 +2220,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mouseReleased(MouseEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseReleased(e, null);
+            VtkCanvasNew.this.mouseReleased(e, null);
 
             super.mouseReleased(e);
         }
@@ -2229,7 +2229,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         public void mouseWheelMoved(MouseWheelEvent e)
         {
             // send mouse event to overlays
-            VtkCanvas.this.mouseWheelMoved(e, null);
+            VtkCanvasNew.this.mouseWheelMoved(e, null);
 
             super.mouseWheelMoved(e);
         }
@@ -2260,8 +2260,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                                 viewer.setLut(lut);
                             }
                         }
-                        else
-                            Render();
+                        
+                        // request repaint
+                        repaint();
 
                         e.consume();
                         break;

@@ -482,8 +482,6 @@ public class PluginDescriptor implements XMLPersistent
 
     /**
      * Check if the plugin class is an instance of (or subclass of) the specified class.
-     * 
-     * @param clazz
      */
     public boolean isInstanceOf(Class<?> baseClazz)
     {

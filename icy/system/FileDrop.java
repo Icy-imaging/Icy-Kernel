@@ -290,8 +290,6 @@ public class FileDrop
      * <tt>null</tt> value for
      * the parameter <tt>out</tt> will result in no debugging output.
      * 
-     * @param out
-     *        PrintStream to record debugging info or null for no debugging.
      * @param c
      *        Component on which files will be dropped.
      * @param listener

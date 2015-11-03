@@ -22,24 +22,19 @@ import icy.preferences.CanvasPreferences;
 import icy.util.EventUtil;
 
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import vtk.vtkActor;
-import vtk.vtkActorCollection;
+import vtk.vtkPanel;
 import vtk.vtkPropPicker;
 
 /**
  * @author stephane
  */
-public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMotionListener, MouseWheelListener,
-        KeyListener
+public class IcyVtkPanelOld extends vtkPanel
 {
     /**
      * 
@@ -49,7 +44,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     protected Timer timer;
     final protected vtkPropPicker picker;
 
-    public IcyVtkPanel()
+    public IcyVtkPanelOld()
     {
         super();
 
@@ -59,55 +54,45 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         picker = new vtkPropPicker();
         // set ambient color to white
         lgt.SetAmbientColor(1d, 1d, 1d);
-
-        addMouseListener(this);
-        addMouseMotionListener(this);
-        addMouseWheelListener(this);
-        addKeyListener(this);
     }
 
     @Override
-    protected void delete()
+    public void Delete()
     {
+        super.Delete();
+
         // important to release timer here
         timer.cancel();
-
-        super.delete();
     }
 
     @Override
     public void removeNotify()
     {
+        super.removeNotify();
+
         // important to release timer here
         timer.cancel();
-
-        super.removeNotify();
     }
 
     @Override
-    public void lock()
+    public void setBounds(int x, int y, int width, int height)
     {
-        if (!isWindowSet())
-            return;
+        super.setBounds(x, y, width, height);
 
-        super.lock();
+        if (windowset == 1)
+        {
+            Lock();
+            rw.SetSize(width, height);
+            UnLock();
+        }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public void unlock()
+    public void setSize(int w, int h)
     {
-        if (!isWindowSet())
-            return;
-
-        super.unlock();
-    }
-
-    /**
-     * Return picker object.
-     */
-    public vtkPropPicker getPicker()
-    {
-        return picker;
+        // have to use this to by-pass the wrong vtkPanel implementation
+        resize(w, h);
     }
 
     @Override
@@ -232,72 +217,51 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     }
 
     @Override
-    public void keyTyped(KeyEvent e)
-    {
-        //
-    }
-
-    @Override
     public void keyPressed(KeyEvent e)
     {
-        if (e.isConsumed())
-            return;
-        if (ren.VisibleActorCount() == 0)
-            return;
-
-        char keyChar = e.getKeyChar();
-
-        if ('r' == keyChar)
-        {
-            resetCamera();
-            repaint();
-        }
-        if ('u' == keyChar)
-        {
-            pickActor(lastX, lastY);
-        }
-        if ('w' == keyChar)
-        {
-            vtkActorCollection ac;
-            vtkActor anActor;
-            int i;
-
-            ac = ren.GetActors();
-            ac.InitTraversal();
-            for (i = 0; i < ac.GetNumberOfItems(); i++)
-            {
-                anActor = ac.GetNextActor();
-                anActor.GetProperty().SetRepresentationToWireframe();
-            }
-            repaint();
-        }
-        if ('s' == keyChar)
-        {
-            vtkActorCollection ac;
-            vtkActor anActor;
-            int i;
-
-            ac = ren.GetActors();
-            ac.InitTraversal();
-            for (i = 0; i < ac.GetNumberOfItems(); i++)
-            {
-                anActor = ac.GetNextActor();
-                anActor.GetProperty().SetRepresentationToSurface();
-            }
-            repaint();
-        }
+        if (!e.isConsumed())
+            super.keyPressed(e);
     }
 
     @Override
     public void keyReleased(KeyEvent e)
     {
-        if (e.isConsumed())
-            return;
+        if (!e.isConsumed())
+            super.keyReleased(e);
     }
 
-    public void pickActor(int x, int y)
+    @Override
+    public void lock()
     {
-        pick(x, y);
+        if (windowset == 0)
+            return;
+
+        super.lock();
+    }
+
+    @Override
+    public void unlock()
+    {
+        if (windowset == 0)
+            return;
+
+        super.unlock();
+    }
+
+    /**
+     * return true if currently rendering
+     */
+    public boolean isRendering()
+    {
+        return rendering;
+    }
+
+    /**
+     * Return picker object.
+     */
+    public vtkPropPicker getPicker()
+    {
+        return picker;
     }
 
     /**
@@ -305,9 +269,9 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
      */
     public vtkActor pick(int x, int y)
     {
-        lock();
+        Lock();
         picker.PickProp(x, rw.GetSize()[1] - y, ren);
-        unlock();
+        UnLock();
 
         return picker.GetActor();
     }
@@ -368,7 +332,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         cam.OrthogonalizeViewUp();
         resetCameraClippingRange();
 
-        if (getLightFollowCamera())
+        if (LightFollowCamera == 1)
         {
             lgt.SetPosition(cam.GetPosition());
             lgt.SetFocalPoint(cam.GetFocalPoint());
@@ -447,7 +411,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
                         return;
 
                     // set back quality rendering
-                    getRenderWindow().SetDesiredUpdateRate(0.01);
+                    GetRenderWindow().SetDesiredUpdateRate(0.01);
                     // request repaint
                     repaint();
                 }

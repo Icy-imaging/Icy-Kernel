@@ -721,7 +721,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + pluginClassName
                         + "' class --> cannot create the canvas.", e), true);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 IcyExceptionHandler.handleException(e, true);
             }

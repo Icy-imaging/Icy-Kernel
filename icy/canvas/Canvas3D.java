@@ -19,11 +19,11 @@
 package icy.canvas;
 
 import icy.gui.viewer.Viewer;
+import icy.vtk.IcyVtkPanel;
 
 import java.awt.image.BufferedImage;
 
 import plugins.kernel.canvas.VtkCanvas;
-import vtk.vtkPanel;
 import vtk.vtkRenderer;
 
 /**
@@ -52,7 +52,7 @@ public abstract class Canvas3D extends IcyCanvas3D
      */
     public abstract void setVolumeDistanceSample(int value);
 
-    public abstract vtkPanel getPanel3D();
+    public abstract IcyVtkPanel getPanel3D();
 
     public abstract vtkRenderer getRenderer();
 
