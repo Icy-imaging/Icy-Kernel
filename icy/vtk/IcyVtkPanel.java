@@ -33,7 +33,10 @@ import java.util.TimerTask;
 
 import vtk.vtkActor;
 import vtk.vtkActorCollection;
+import vtk.vtkAxesActor;
+import vtk.vtkCamera;
 import vtk.vtkPropPicker;
+import vtk.vtkRenderer;
 
 /**
  * @author stephane
@@ -48,6 +51,9 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
 
     protected Timer timer;
     final protected vtkPropPicker picker;
+    final protected vtkAxesActor axis;
+    final protected vtkRenderer axisRenderer;
+    final protected vtkCamera axisCam;
 
     public IcyVtkPanel()
     {
@@ -59,6 +65,27 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         picker = new vtkPropPicker();
         // set ambient color to white
         lgt.SetAmbientColor(1d, 1d, 1d);
+
+        // initialize axis
+        axisRenderer = new vtkRenderer();
+        // BUG: with OpenGL window the global render window viewport is limited to the last layer viewport dimension
+        // axisRenderer.SetViewport(0.0, 0.0, 0.2, 0.2);
+        axisRenderer.SetLayer(1);
+        axisRenderer.InteractiveOff();
+
+        rw.AddRenderer(axisRenderer);
+        rw.SetNumberOfLayers(2);
+
+        axisCam = axisRenderer.GetActiveCamera();
+
+        axis = new vtkAxesActor();
+        axisRenderer.AddActor(axis);
+
+        axisCam.SetViewUp(0, -1, 0);
+        axisCam.Elevation(210);
+        axisCam.SetParallelProjection(cam.GetParallelProjection());
+        axisRenderer.ResetCamera();
+        axisRenderer.ResetCameraClippingRange();
 
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -87,8 +114,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     @Override
     public void lock()
     {
-        if (!isWindowSet())
-            return;
+        // if (!isWindowSet())
+        // return;
 
         super.lock();
     }
@@ -96,8 +123,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     @Override
     public void unlock()
     {
-        if (!isWindowSet())
-            return;
+        // if (!isWindowSet())
+        // return;
 
         super.unlock();
     }
@@ -180,6 +207,9 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         // save mouse position
         lastX = x;
         lastY = y;
+
+        updateAxisView();
+
         // request repaint
         repaint();
     }
@@ -456,5 +486,18 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         else
             // set back quality rendering
             rw.SetDesiredUpdateRate(0.01);
+    }
+
+    protected void updateAxisView()
+    {
+        final double pos[] = cam.GetPosition();
+        final double fp[] = cam.GetFocalPoint();
+        final double viewup[] = cam.GetViewUp();
+
+        // mimic axis camera position to scene camera position
+        axisCam.SetPosition(pos);
+        axisCam.SetFocalPoint(fp);
+        axisCam.SetViewUp(viewup);
+        axisRenderer.ResetCamera();
     }
 }

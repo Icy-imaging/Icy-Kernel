@@ -2261,7 +2261,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                             }
                         }
                         else
-                            Render();
+                            repaint();
 
                         e.consume();
                         break;

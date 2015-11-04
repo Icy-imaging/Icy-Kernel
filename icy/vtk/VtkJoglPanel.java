@@ -2,7 +2,6 @@ package icy.vtk;
 
 import icy.system.thread.ThreadUtil;
 
-import java.awt.Graphics;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -118,18 +117,7 @@ public class VtkJoglPanel extends GLJPanel
             @Override
             public void display(GLAutoDrawable drawable)
             {
-                if (rendering)
-                    return;
-
-                rendering = true;
-                try
-                {
-                    rw.Render();
-                }
-                finally
-                {
-                    rendering = false;
-                }
+                render();
             }
 
             @Override
@@ -214,7 +202,7 @@ public class VtkJoglPanel extends GLJPanel
 
     /**
      * Release VTK and OGL objects.<br>
-     * Call this when you know you won't use anymore the VTK OGL panel
+     * Call it when you know you won't use anymore the VTK OGL panel
      */
     public void disposeInternal()
     {
@@ -315,7 +303,8 @@ public class VtkJoglPanel extends GLJPanel
                     int i = 0;
                     while (renderer != null)
                     {
-                        System.out.println("render " + i++ +"  w=" +renderer.GetSize()[0] + " h=" +renderer.GetSize()[1]);
+                        System.out.println("render " + i++ + "  w=" + renderer.GetSize()[0] + " h="
+                                + renderer.GetSize()[1]);
                         renderer = renderers.GetNextItem();
                     }
 
@@ -328,9 +317,36 @@ public class VtkJoglPanel extends GLJPanel
         }
     }
 
+    /**
+     * @deprecated Use {@link #render()} instead.
+     */
+    @Deprecated
     public void Render()
     {
-        repaint();
+        render();
+    }
+
+    /**
+     * Do rendering
+     */
+    public void render()
+    {
+        if (rendering)
+            return;
+
+        rendering = true;
+        lock();
+        try
+        {
+            rw.Render();
+        }
+        finally
+        {
+            unlock();
+            rendering = false;
+        }
+
+        System.out.println("renderer number: " + rw.GetRenderers().GetNumberOfItems());
     }
 
     // public synchronized void Render()
@@ -376,18 +392,6 @@ public class VtkJoglPanel extends GLJPanel
     public boolean isWindowSet()
     {
         return windowset;
-    }
-
-    // @Override
-    // public void paint(Graphics g)
-    // {
-    // Render();
-    // }
-
-    @Override
-    public void update(Graphics g)
-    {
-        paint(g);
     }
 
     public void lock()
