@@ -13,8 +13,6 @@ import vtk.vtkFixedPointVolumeRayCastMapper;
 import vtk.vtkGPUVolumeRayCastMapper;
 import vtk.vtkImageData;
 import vtk.vtkOpenGLGPUVolumeRayCastMapper;
-import vtk.vtkOpenGLVolumeTextureMapper2D;
-import vtk.vtkOpenGLVolumeTextureMapper3D;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkRenderer;
 import vtk.vtkVolume;
@@ -691,10 +689,10 @@ public class VtkImageVolume
         // return VtkVolumeMapperType.TEXTURE2D;
         // else if (volumeMapper instanceof vtkVolumeTextureMapper3D)
         // return VtkVolumeMapperType.TEXTURE3D;
-        else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper2D)
-            return VtkVolumeMapperType.TEXTURE2D_OPENGL;
-        else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper3D)
-            return VtkVolumeMapperType.TEXTURE3D_OPENGL;
+        // else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper2D)
+        // return VtkVolumeMapperType.TEXTURE2D_OPENGL;
+        // else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper3D)
+        // return VtkVolumeMapperType.TEXTURE3D_OPENGL;
 
         return null;
     }
@@ -727,21 +725,21 @@ public class VtkImageVolume
                 case RAYCAST_GPU_OPENGL:
                     newMapper = new vtkOpenGLGPUVolumeRayCastMapper();
                     break;
-                // case SMART:
-                // newMapper = new vtkSmartVolumeMapper();
-                // break;
-                // case TEXTURE2D:
-                // newMapper = new vtkVolumeTextureMapper2D();
-                // break;
-                // case TEXTURE3D:
-                // newMapper = new vtkVolumeTextureMapper3D();
-                // break;
-                case TEXTURE2D_OPENGL:
-                    newMapper = new vtkOpenGLVolumeTextureMapper2D();
-                    break;
-                case TEXTURE3D_OPENGL:
-                    newMapper = new vtkOpenGLVolumeTextureMapper3D();
-                    break;
+            // case SMART:
+            // newMapper = new vtkSmartVolumeMapper();
+            // break;
+            // case TEXTURE2D:
+            // newMapper = new vtkVolumeTextureMapper2D();
+            // break;
+            // case TEXTURE3D:
+            // newMapper = new vtkVolumeTextureMapper3D();
+            // break;
+            // case TEXTURE2D_OPENGL:
+            // newMapper = new vtkOpenGLVolumeTextureMapper2D();
+            // break;
+            // case TEXTURE3D_OPENGL:
+            // newMapper = new vtkOpenGLVolumeTextureMapper3D();
+            // break;
             }
 
             // setup volume connection
@@ -791,8 +789,9 @@ public class VtkImageVolume
                 // case TEXTURE3D:
                 // return (((vtkVolumeTextureMapper3D)
                 // volumeMapper).IsRenderSupported(volumeProperty, renderer) != 0);
-            case TEXTURE3D_OPENGL:
-                return (((vtkOpenGLVolumeTextureMapper3D) volumeMapper).IsRenderSupported(volumeProperty, renderer) != 0);
+                // case TEXTURE3D_OPENGL:
+                // return (((vtkOpenGLVolumeTextureMapper3D) volumeMapper).IsRenderSupported(volumeProperty, renderer)
+                // != 0);
         }
     }
 

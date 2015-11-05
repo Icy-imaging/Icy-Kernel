@@ -15,12 +15,12 @@ public class VtkCanvasPlugin extends Plugin implements PluginCanvas
     @Override
     public IcyCanvas createCanvas(Viewer viewer)
     {
-        return new VtkCanvasNew(viewer);
+        return new VtkCanvas(viewer);
     }
 
     @Override
     public String getCanvasClassName()
     {
-        return VtkCanvasNew.class.getName();
+        return VtkCanvas.class.getName();
     }
 }

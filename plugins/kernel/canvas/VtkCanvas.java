@@ -63,12 +63,12 @@ import vtk.vtkColorTransferFunction;
 import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
 import vtk.vtkLight;
+import vtk.vtkObjectBase;
 import vtk.vtkOrientationMarkerWidget;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkProp;
 import vtk.vtkPropPicker;
 import vtk.vtkRenderWindow;
-import vtk.vtkRenderWindowInteractor;
 import vtk.vtkRenderer;
 import vtk.vtkTextActor;
 import vtk.vtkTextProperty;
@@ -172,12 +172,12 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected vtkRenderer renderer;
     protected vtkRenderWindow renderWindow;
     protected vtkCamera camera;
-    protected vtkAxesActor axes;
+    // protected vtkAxesActor axes;
     protected vtkCubeAxesActor boundingBox;
     protected vtkCubeAxesActor rulerBox;
     protected vtkTextActor textInfo;
     protected vtkTextProperty textProperty;
-    protected vtkOrientationMarkerWidget widget;
+    // protected vtkOrientationMarkerWidget widget;
 
     /**
      * volume data
@@ -251,13 +251,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         shadingButton.setFocusable(false);
         shadingButton.setToolTipText("Enable volume shadow");
 
-        renderer = panel3D.GetRenderer();
-        renderWindow = panel3D.GetRenderWindow();
-        // set renderer properties
-        renderer.SetLightFollowCamera(1);
-        // set interactor
-        final vtkRenderWindowInteractor interactor = new vtkRenderWindowInteractor();
-        interactor.SetRenderWindow(renderWindow);
+        renderer = panel3D.getRenderer();
+        renderWindow = panel3D.getRenderWindow();
 
         camera = renderer.GetActiveCamera();
         // set camera properties
@@ -308,12 +303,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         imageVolume.setLUT(getLut());
 
         // initialize axe
-        axes = new vtkAxesActor();
-        widget = new vtkOrientationMarkerWidget();
-        widget.SetOrientationMarker(axes);
-        widget.SetInteractor(interactor);
-        widget.SetViewport(0, 0, 0.3, 0.3);
-        widget.SetEnabled(1);
+        panel3D.setAxisOrientationDisplayScale(0.3);
+        // axes = new vtkAxesActor();
+        // widget = new vtkOrientationMarkerWidget();
+        // widget.SetOrientationMarker(axes);
+        // widget.SetInteractor(interactor);
+        // widget.SetViewport(0, 0, 0.3, 0.3);
+        // widget.SetEnabled(1);
 
         // initialize bounding box
         boundingBox = new vtkCubeAxesActor();
@@ -404,7 +400,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         imageVolume.setDiffuse(settingPanel.getVolumeDiffuse());
         imageVolume.setSpecular(settingPanel.getVolumeSpecular());
         imageVolume.setShade(shadingButton.isSelected());
-        axes.SetVisibility(axesButton.isSelected() ? 1 : 0);
+        // axes.SetVisibility(axesButton.isSelected() ? 1 : 0);
         boundingBox.SetVisibility(boundingBoxButton.isSelected() ? 1 : 0);
         rulerBox.SetDrawXGridlines(gridButton.isSelected() ? 1 : 0);
         rulerBox.SetDrawYGridlines(gridButton.isSelected() ? 1 : 0);
@@ -483,13 +479,16 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             public void run()
             {
                 renderer.RemoveAllViewProps();
-                renderer.Delete();
-                renderWindow.Delete();
+                // renderer.Delete();
+                // renderWindow.Delete();
                 imageVolume.release();
-                widget.Delete();
-                axes.Delete();
+                // widget.Delete();
+                // axes.Delete();
                 boundingBox.Delete();
-                camera.Delete();
+                // camera.Delete();
+
+                // dispose extra panel 3D stuff
+                panel3D.disposeInternal();
             }
         });
 
@@ -501,13 +500,16 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         renderer = null;
         renderWindow = null;
         imageVolume = null;
-        widget = null;
-        axes = null;
+        // widget = null;
+        // axes = null;
         boundingBox = null;
         camera = null;
 
         panel3D = null;
         panel = null;
+
+        // call VTK GC
+        vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
     }
 
     @Override
@@ -579,7 +581,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      */
     public vtkAxesActor getAxes()
     {
-        return axes;
+        return panel3D.getAxesActor();
     }
 
     /**
@@ -599,11 +601,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     /**
-     * @return the VTK widget object used to display axes
+     * @deprecated there is no more orientation widget because of the jogl bug with multiple renderer.
      */
+    @Deprecated
     public vtkOrientationMarkerWidget getWidget()
     {
-        return widget;
+        return null;
+        // return widget;
     }
 
     /**
@@ -1632,7 +1636,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 @Override
                 public void run()
                 {
-                    axes.SetVisibility(b ? 1 : 0);
+                    panel3D.setAxisOrientationDisplayEnable(b);
                 }
             });
 
@@ -1828,6 +1832,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         catch (Exception t)
         {
             // just ignore as this is async process
+            System.out.println("[VTKCanvas] Warning:" + t);
         }
     }
 

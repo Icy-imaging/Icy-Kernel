@@ -19,7 +19,6 @@ import vtk.vtkObjectBase;
 import vtk.vtkRenderWindow;
 import vtk.vtkRenderWindowInteractor;
 import vtk.vtkRenderer;
-import vtk.vtkRendererCollection;
 import vtk.vtkTIFFWriter;
 import vtk.vtkWindowToImageFilter;
 
@@ -42,7 +41,6 @@ public class VtkJoglPanel extends GLJPanel
     protected int lastY;
     protected boolean windowset;
     protected boolean lightingset;
-    protected boolean lightFollowCamera;
     protected int interactionMode;
     protected boolean rendering;
 
@@ -63,6 +61,7 @@ public class VtkJoglPanel extends GLJPanel
         wi.ConfigureEvent();
 
         ren = new vtkRenderer();
+        ren.SetLightFollowCamera(1);
         cam = null;
 
         lgt = new vtkLight();
@@ -73,8 +72,6 @@ public class VtkJoglPanel extends GLJPanel
 
         windowset = false;
         lightingset = false;
-        lightFollowCamera = true;
-        interactionMode = 1;
         rendering = false;
 
         addGLEventListener(new GLEventListener()
@@ -178,6 +175,9 @@ public class VtkJoglPanel extends GLJPanel
             {
                 System.out.println("The renderwindow has been kept arount to prevent a crash");
             }
+
+            // call it only once in parent as this can take a lot of time
+            // vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
         }
         finally
         {
@@ -186,8 +186,6 @@ public class VtkJoglPanel extends GLJPanel
             // under Linux, destroying renderWindow crashes.
             lock.unlock();
         }
-
-        vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
     }
 
     /**
@@ -286,7 +284,6 @@ public class VtkJoglPanel extends GLJPanel
         if (windowset)
         {
             final int[] size = rw.GetSize();
-            // final int[] size = wi.GetSize();
 
             // set size only if needed
             if ((size[0] != width) || (size[1] != height))
@@ -296,18 +293,7 @@ public class VtkJoglPanel extends GLJPanel
                 {
                     wi.SetSize(width, height);
                     rw.SetSize(width, height);
-                    vtkRendererCollection renderers = rw.GetRenderers();
-                    renderers.InitTraversal();
-
-                    vtkRenderer renderer = renderers.GetNextItem();
-                    int i = 0;
-                    while (renderer != null)
-                    {
-                        System.out.println("render " + i++ + "  w=" + renderer.GetSize()[0] + " h="
-                                + renderer.GetSize()[1]);
-                        renderer = renderers.GetNextItem();
-                    }
-
+                    sizeChanged();
                 }
                 finally
                 {
@@ -315,6 +301,14 @@ public class VtkJoglPanel extends GLJPanel
                 }
             }
         }
+    }
+
+    /**
+     * Called when window render size changed (helper for this specific event)
+     */
+    public void sizeChanged()
+    {
+        // nothing here but can be overridden
     }
 
     /**
@@ -345,8 +339,6 @@ public class VtkJoglPanel extends GLJPanel
             unlock();
             rendering = false;
         }
-
-        System.out.println("renderer number: " + rw.GetRenderers().GetNumberOfItems());
     }
 
     // public synchronized void Render()
@@ -406,56 +398,31 @@ public class VtkJoglPanel extends GLJPanel
         lock.unlock();
     }
 
-    public boolean getLightFollowCamera()
-    {
-        return lightFollowCamera;
-    }
-
-    public void setLightFollowCamera(boolean value)
-    {
-        lightFollowCamera = value;
-    }
-
     /**
-     * @deprecated Use {@link #setInteractionModeRotate()} instead
+     * @deprecated do nothing now
      */
     @Deprecated
     public void InteractionModeRotate()
     {
-        setInteractionModeRotate();
+        //
     }
 
     /**
-     * @deprecated Use {@link #setInteractionModeTranslate()} instead
+     * @deprecated do nothing now
      */
     @Deprecated
     public void InteractionModeTranslate()
     {
-        setInteractionModeTranslate();
+        //
     }
 
     /**
-     * @deprecated Use {@link #setInteractionModeZoom()} instead
+     * @deprecated do nothing now
      */
     @Deprecated
     public void InteractionModeZoom()
     {
-        setInteractionModeRotate();
-    }
-
-    public void setInteractionModeRotate()
-    {
-        interactionMode = 1;
-    }
-
-    public void setInteractionModeTranslate()
-    {
-        interactionMode = 2;
-    }
-
-    public void setInteractionModeZoom()
-    {
-        interactionMode = 3;
+        //
     }
 
     /**

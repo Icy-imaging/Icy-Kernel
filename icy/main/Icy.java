@@ -994,14 +994,20 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkoggtheora-6.3", false);
                 loadLibrary(vtkLibPath, "vtkverdict-6.3");
                 loadLibrary(vtkLibPath, "vtkpng-6.3");
-                loadLibrary(vtkLibPath, "vtkgl2ps-6.3");
+                
+                loadLibrary(vtkLibPath, "vtkgl2ps-6.3", false);         //
+                
                 loadLibrary(vtkLibPath, "vtktiff-6.3");
                 loadLibrary(vtkLibPath, "vtklibxml2-6.3");
                 loadLibrary(vtkLibPath, "vtkproj4-6.3");
                 loadLibrary(vtkLibPath, "vtksys-6.3");
                 loadLibrary(vtkLibPath, "vtkfreetype-6.3");
                 loadLibrary(vtkLibPath, "vtkmetaio-6.3");
-                loadLibrary(vtkLibPath, "vtkftgl-6.3");
+                loadLibrary(vtkLibPath, "vtkftgl-6.3", false);
+                
+                loadLibrary(vtkLibPath, "vtkftgl2-6.3", false);         //
+
+                loadLibrary(vtkLibPath, "vtkglew-6.3", false);
                 loadLibrary(vtkLibPath, "vtkCommonCore-6.3");
                 loadLibrary(vtkLibPath, "vtkWrappingJava-6.3");
                 loadLibrary(vtkLibPath, "vtkCommonSystem-6.3");
@@ -1077,6 +1083,9 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkRenderingImage-6.3");
                 loadLibrary(vtkLibPath, "vtkRenderingFreeType-6.3");
                 loadLibrary(vtkLibPath, "vtkDomainsChemistry-6.3");
+                
+                loadLibrary(vtkLibPath, "vtkDomainsChemistryOpenGL2-6.3", false);
+                
                 loadLibrary(vtkLibPath, "vtkInteractionStyle-6.3");
                 loadLibrary(vtkLibPath, "vtkIOImport-6.3");
                 loadLibrary(vtkLibPath, "vtkRenderingAnnotation-6.3");
@@ -1091,13 +1100,23 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkInteractionWidgets-6.3");
                 loadLibrary(vtkLibPath, "vtkInteractionImage-6.3");
                 loadLibrary(vtkLibPath, "vtkViewsCore-6.3");
-                loadLibrary(vtkLibPath, "vtkRenderingOpenGL-6.3");
-                //loadLibrary(vtkLibPath, "vtkRenderingFreeTypeOpenGL-6.3");
-                loadLibrary(vtkLibPath, "vtkRenderingLIC-6.3");
-                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL-6.3");
+                
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGL-6.3", false);               //
+                
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGL2-6.3", false);
+                
+                loadLibrary(vtkLibPath, "vtkRenderingLIC-6.3", false);                  //              
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL-6.3", false);         //
+                
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL2-6.3", false);
+                
                 loadLibrary(vtkLibPath, "vtkRenderingContext2D-6.3");
-                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL-6.3", false);
-                loadLibrary(vtkLibPath, "vtkRenderingGL2PS-6.3");
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL-6.3", false);        //
+                
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL2-6.3", false);
+                
+                loadLibrary(vtkLibPath, "vtkRenderingGL2PS-6.3", false);                //
+                
                 loadLibrary(vtkLibPath, "vtkViewsContext2D-6.3");
                 loadLibrary(vtkLibPath, "vtkGeovisCore-6.3");
                 loadLibrary(vtkLibPath, "vtkIOExport-6.3");
@@ -1166,6 +1185,9 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkRenderingImageJava");
                 loadLibrary(vtkLibPath, "vtkRenderingFreeTypeJava");
                 loadLibrary(vtkLibPath, "vtkDomainsChemistryJava");
+                
+                loadLibrary(vtkLibPath, "vtkDomainsChemistryOpenGL2Java", false);
+                
                 loadLibrary(vtkLibPath, "vtkInteractionStyleJava");
                 loadLibrary(vtkLibPath, "vtkIOImportJava");
                 loadLibrary(vtkLibPath, "vtkRenderingAnnotationJava");
@@ -1180,13 +1202,23 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkInteractionWidgetsJava");
                 loadLibrary(vtkLibPath, "vtkInteractionImageJava");
                 loadLibrary(vtkLibPath, "vtkViewsCoreJava");
-                loadLibrary(vtkLibPath, "vtkRenderingOpenGLJava");
-                //loadLibrary(vtkLibPath, "vtkRenderingFreeTypeOpenGLJava");
-                loadLibrary(vtkLibPath, "vtkRenderingLICJava");
-                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGLJava");
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGLJava", false);               //
+                
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGL2Java", false);
+                
+                loadLibrary(vtkLibPath, "vtkRenderingLICJava", false);                  //
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGLJava", false);         //
+
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL2Java", false);
+
                 loadLibrary(vtkLibPath, "vtkRenderingContext2DJava");
-                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGLJava", false);
-                loadLibrary(vtkLibPath, "vtkRenderingGL2PSJava");
+                
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGLJava", false);        //
+                
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL2Java", false);
+                
+                loadLibrary(vtkLibPath, "vtkRenderingGL2PSJava", false);                //
+                
                 loadLibrary(vtkLibPath, "vtkViewsContext2DJava");
                 loadLibrary(vtkLibPath, "vtkGeovisCoreJava");
                 loadLibrary(vtkLibPath, "vtkIOExportJava");
