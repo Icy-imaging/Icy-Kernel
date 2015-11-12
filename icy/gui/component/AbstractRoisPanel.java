@@ -86,6 +86,7 @@ import org.jdesktop.swingx.decorator.HighlighterFactory;
 import org.jdesktop.swingx.sort.DefaultSortController;
 import org.jdesktop.swingx.table.DefaultTableColumnModelExt;
 import org.jdesktop.swingx.table.TableColumnExt;
+import org.pushingpixels.substance.api.renderers.SubstanceDefaultTableCellRenderer;
 import org.pushingpixels.substance.api.skin.SkinChangeListener;
 
 import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
@@ -315,16 +316,19 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             @Override
             public void skinChanged()
             {
-                final TableColumnModel columnModel = roiTable.getColumnModel();
+                // regenerate column model to redefine the Cell Renderer (else colors are wrong)
+                roiTable.setColumnModel(new ROITableColumnModel());
 
-                for (int i = 0; i < columnModel.getColumnCount(); i++)
-                {
-                    final TableColumn column = columnModel.getColumn(i);
-
-                    // need to reset specific renderer as background color can be wrong
-                    if (column.getCellRenderer() instanceof ImageTableCellRenderer)
-                        column.setCellRenderer(new ImageTableCellRenderer(18));
-                }
+                // final TableColumnModel columnModel = roiTable.getColumnModel();
+                //
+                // for (int i = 0; i < columnModel.getColumnCount(); i++)
+                // {
+                // final TableColumn column = columnModel.getColumn(i);
+                //
+                // // need to reset specific renderer as background color can be wrong
+                // if (column.getCellRenderer() instanceof ImageTableCellRenderer)
+                // column.setCellRenderer(new ImageTableCellRenderer(18));
+                // }
 
                 // modify highlighter
                 roiTable.setHighlighters(HighlighterFactory.createSimpleStriping());
@@ -598,8 +602,16 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                                 {
                                     // need computation per channel ?
                                     if (descriptor.separateChannel())
-                                        newResults = plugin.compute(roiResults.getRoiForChannel(columnInfo.channel),
-                                                seq);
+                                    {
+                                        // retrieve the ROI for this channel
+                                        final ROI roi = roiResults.getRoiForChannel(columnInfo.channel);
+
+                                        if (roi == null)
+                                            throw new UnsupportedOperationException(
+                                                    "Can't retrieve sub ROI for channel " + columnInfo.channel);
+
+                                        newResults = plugin.compute(roi, seq);
+                                    }
                                     else
                                         newResults = plugin.compute(roiResults.roi, seq);
 
@@ -627,23 +639,28 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                                 }
                                 catch (UnsupportedOperationException e)
                                 {
-                                    // not supported --> clear associated results and set them as computed
-                                    for (ROIDescriptor desc : plugin.getDescriptors())
+                                    final List<ROIDescriptor> descriptors = plugin.getDescriptors();
+
+                                    if (descriptors != null)
                                     {
-                                        // get the column for this result
-                                        final ColumnInfo resultColumnInfo = getColumnInfo(desc, columnInfo.channel);
-                                        final DescriptorResult oResult;
-
-                                        synchronized (results)
+                                        // not supported --> clear associated results and set them as computed
+                                        for (ROIDescriptor desc : descriptors)
                                         {
-                                            // get corresponding result
-                                            oResult = results.get(resultColumnInfo);
-                                        }
+                                            // get the column for this result
+                                            final ColumnInfo resultColumnInfo = getColumnInfo(desc, columnInfo.channel);
+                                            final DescriptorResult oResult;
 
-                                        if (oResult != null)
-                                        {
-                                            oResult.setValue(null);
-                                            oResult.setOutdated(false);
+                                            synchronized (results)
+                                            {
+                                                // get corresponding result
+                                                oResult = results.get(resultColumnInfo);
+                                            }
+
+                                            if (oResult != null)
+                                            {
+                                                oResult.setValue(null);
+                                                oResult.setOutdated(false);
+                                            }
                                         }
                                     }
                                 }
@@ -1369,7 +1386,16 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                             {
                                 // need computation per channel ?
                                 if (descriptor.separateChannel())
-                                    newResults = plugin.compute(results.getRoiForChannel(columnInfo.channel), seq);
+                                {
+                                    // retrieve the ROI for this channel
+                                    final ROI subRoi = results.getRoiForChannel(columnInfo.channel);
+
+                                    if (subRoi == null)
+                                        throw new UnsupportedOperationException("Can't retrieve sub ROI for channel "
+                                                + columnInfo.channel);
+
+                                    newResults = plugin.compute(subRoi, seq);
+                                }
                                 else
                                     newResults = plugin.compute(results.roi, seq);
 
@@ -1676,11 +1702,19 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             {
                 // create it
                 result = roi.getSubROI(-1, -1, channel);
-                // and put it in map
-                synchronized (channelRois)
+
+                // failed ? try again
+                if (result == null)
+                    result = roi.getSubROI(-1, -1, channel);
+
+                if (result != null)
                 {
-                    // we use WeakReference to not waste memory
-                    channelRois.put(key, new WeakReference<ROI>(result));
+                    // and put it in map
+                    synchronized (channelRois)
+                    {
+                        // we use WeakReference to not waste memory
+                        channelRois.put(key, new WeakReference<ROI>(result));
+                    }
                 }
             }
 
@@ -2287,9 +2321,14 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 column.setVisible(cp.visible);
                 column.setSortable(true);
 
+                final Class<?> type = descriptor.getType();
+
                 // image class type column --> use a special renderer
-                if (descriptor.getType() == Image.class)
+                if (type == Image.class)
                     column.setCellRenderer(new ImageTableCellRenderer(18));
+                // use the number cell renderer
+                else if (ClassUtil.isSubClass(type, Number.class))
+                    column.setCellRenderer(new SubstanceDefaultTableCellRenderer.NumberRenderer());
 
                 // and finally add to the model
                 addColumn(column);
@@ -2305,14 +2344,18 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             for (TableColumn column : columns)
             {
                 final ColumnInfo ci = getColumnInfo(columnInfos, column.getModelIndex());
-                final ROIDescriptor descriptor = ci.descriptor;
 
-                // that should be always the case
-                if (StringUtil.equals((String) column.getIdentifier(), descriptor.getId()))
+                if (ci != null)
                 {
-                    column.setHeaderValue(ci.name);
-                    if (column instanceof TableColumnExt)
-                        ((TableColumnExt) column).setToolTipText(descriptor.getDescription() + ci.getSuffix());
+                    final ROIDescriptor descriptor = ci.descriptor;
+
+                    // that should be always the case
+                    if (StringUtil.equals((String) column.getIdentifier(), descriptor.getId()))
+                    {
+                        column.setHeaderValue(ci.name);
+                        if (column instanceof TableColumnExt)
+                            ((TableColumnExt) column).setToolTipText(descriptor.getDescription() + ci.getSuffix());
+                    }
                 }
             }
         }

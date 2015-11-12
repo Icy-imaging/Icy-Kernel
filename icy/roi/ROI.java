@@ -2968,13 +2968,19 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         // save
         if (!saveToXML(node))
+        {
+            System.err.println("Cannot get a copy of roi " + getName() + ": XML save operation failed.");
             // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": XML save operation failed !");
             return null;
+        }
 
         final ROI result = createFromXML(node);
         if (result == null)
+        {
+            System.err.println("Cannot get a copy of roi " + getName() + ": creation from XML failed.");
             // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": creation from XML failed !");
             return null;
+        }
 
         // then generate id and modify name
         result.id = generateId();

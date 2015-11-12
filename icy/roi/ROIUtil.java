@@ -85,9 +85,13 @@ public class ROIUtil
             try
             {
                 final PluginROIDescriptor plugin = (PluginROIDescriptor) PluginLauncher.create(pluginDescriptor);
+                final List<ROIDescriptor> descriptors = plugin.getDescriptors();
 
-                for (ROIDescriptor roiDescriptor : plugin.getDescriptors())
-                    result.put(roiDescriptor, plugin);
+                if (descriptors != null)
+                {
+                    for (ROIDescriptor roiDescriptor : descriptors)
+                        result.put(roiDescriptor, plugin);
+                }
             }
             catch (Exception e)
             {
@@ -136,7 +140,8 @@ public class ROIUtil
      * not found).
      * 
      * @param descriptorId
-     *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for instance)
+     *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
+     *        instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed
      * @param sequence
@@ -855,20 +860,24 @@ public class ROIUtil
 
         ROI result = rois.get(0).getCopy();
 
-        switch (operator)
+        // copy can fail...
+        if (result != null)
         {
-            case AND:
-                for (int i = 1; i < rois.size(); i++)
-                    result = result.intersect(rois.get(i), true);
-                break;
-            case OR:
-                for (int i = 1; i < rois.size(); i++)
-                    result = result.add(rois.get(i), true);
-                break;
-            case XOR:
-                for (int i = 1; i < rois.size(); i++)
-                    result = result.exclusiveAdd(rois.get(i), true);
-                break;
+            switch (operator)
+            {
+                case AND:
+                    for (int i = 1; i < rois.size(); i++)
+                        result = result.intersect(rois.get(i), true);
+                    break;
+                case OR:
+                    for (int i = 1; i < rois.size(); i++)
+                        result = result.add(rois.get(i), true);
+                    break;
+                case XOR:
+                    for (int i = 1; i < rois.size(); i++)
+                        result = result.exclusiveAdd(rois.get(i), true);
+                    break;
+            }
         }
 
         // for (int i = 1; i < rois.size(); i++)
