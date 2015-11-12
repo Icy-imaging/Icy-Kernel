@@ -1185,13 +1185,22 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     @Override
     public Component getViewComponent()
     {
+        return getVtkPanel();
+    }
+
+    public IcyVtkPanel getVtkPanel()
+    {
         return panel3D;
     }
 
+    /**
+     * @deprecated Use {@link #getVtkPanel()}
+     */
+    @Deprecated
     @Override
     public IcyVtkPanel getPanel3D()
     {
-        return panel3D;
+        return getVtkPanel();
     }
 
     @Override
