@@ -928,12 +928,15 @@ public class ROI2DArea extends ROI2D
         // dimension changed ?
         if ((oldBounds.width != newBounds.width) || (oldBounds.height != newBounds.height))
         {
+            final BufferedImage newImageMask;
+            final byte[] newMaskData;
+
             if (!newBounds.isEmpty())
             {
                 // new bounds not empty
-                final BufferedImage newImageMask = new BufferedImage(newBounds.width, newBounds.height,
-                        BufferedImage.TYPE_BYTE_INDEXED, colorModel);
-                final byte[] newMaskData = ((DataBufferByte) newImageMask.getRaster().getDataBuffer()).getData();
+                newImageMask = new BufferedImage(newBounds.width, newBounds.height, BufferedImage.TYPE_BYTE_INDEXED,
+                        colorModel);
+                newMaskData = ((DataBufferByte) newImageMask.getRaster().getDataBuffer()).getData();
 
                 final Rectangle intersect = newBounds.intersection(oldBounds);
 
@@ -962,19 +965,21 @@ public class ROI2DArea extends ROI2D
                         offDst += newBounds.width;
                     }
                 }
-
-                // set new image and maskData
-                imageMask = newImageMask;
-                maskData = newMaskData;
             }
             else
             {
                 // new bounds empty --> use single pixel image to avoid NPE
-                imageMask = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
-                maskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
+                newImageMask = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+                newMaskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
             }
 
-            bounds.setBounds(newBnd);
+            synchronized (this)
+            {
+                // set new image and maskData
+                imageMask = newImageMask;
+                maskData = newMaskData;
+                bounds.setBounds(newBnd);
+            }
 
             return true;
         }

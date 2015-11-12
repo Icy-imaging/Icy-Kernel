@@ -1356,16 +1356,20 @@ public abstract class ROI2D extends ROI
 
         final ROI2D result = (ROI2D) getCopy();
 
-        // set Z, T, C position
-        if (z != -1)
-            result.setZ(z);
-        if (t != -1)
-            result.setT(t);
-        if (c != -1)
-            result.setC(c);
+        // copy can fail...
+        if (result != null)
+        {
+            // set Z, T, C position
+            if (z != -1)
+                result.setZ(z);
+            if (t != -1)
+                result.setT(t);
+            if (c != -1)
+                result.setC(c);
 
-        // set name
-        result.setName(getName() + getNameSuffix(z, t, c));
+            // set name
+            result.setName(getName() + getNameSuffix(z, t, c));
+        }
 
         return result;
     }

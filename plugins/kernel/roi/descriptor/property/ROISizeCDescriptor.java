@@ -16,7 +16,7 @@ public class ROISizeCDescriptor extends ROIDescriptor
 
     public ROISizeCDescriptor()
     {
-        super(ID, "Size C", Double.class);
+        super(ID, "Size C", Number.class);
     }
 
     @Override

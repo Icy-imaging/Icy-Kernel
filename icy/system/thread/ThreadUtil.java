@@ -290,9 +290,7 @@ public class ThreadUtil
             if (e.getTargetException() instanceof Exception)
                 throw (Exception) e.getTargetException();
 
-            // not an exception --> handle it
-            IcyExceptionHandler.showErrorMessage(e, true);
-            return null;
+            throw new Exception(e.getTargetException());
         }
 
         try
@@ -304,9 +302,7 @@ public class ThreadUtil
             if (e.getCause() instanceof Exception)
                 throw (Exception) e.getCause();
 
-            // not an exception --> handle it
-            IcyExceptionHandler.showErrorMessage(e, true);
-            return null;
+            throw new Exception(e.getCause());
         }
     }
 
@@ -416,8 +412,7 @@ public class ThreadUtil
     }
 
     /**
-     * @deprecated Use {@link #runSingle(Runnable)} instead and {@link #invokeNow(Runnable)}
-     *             separately.
+     * @deprecated Use {@link #runSingle(Runnable)} instead and {@link #invokeNow(Runnable)} separately.
      * @see #bgRunSingle(Runnable)
      */
     @Deprecated

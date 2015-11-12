@@ -42,7 +42,8 @@ public class DefaultROIEdit extends AbstractROIEdit
         super.redo();
 
         // redo
-        getROI().copyFrom(current);
+        if (current != null)
+            getROI().copyFrom(current);
     }
 
     @Override

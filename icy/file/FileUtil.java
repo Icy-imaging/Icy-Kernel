@@ -1206,16 +1206,20 @@ public class FileUtil
         {
             final File[] files = f.listFiles();
 
-            // delete files
-            for (File file : files)
+            // can return null...
+            if (files != null)
             {
-                if (file.isDirectory())
+                // delete files
+                for (File file : files)
                 {
-                    if (recursive)
-                        result = result & delete(file, true);
+                    if (file.isDirectory())
+                    {
+                        if (recursive)
+                            result = result & delete(file, true);
+                    }
+                    else
+                        result = result & file.delete();
                 }
-                else
-                    result = result & file.delete();
             }
 
             // then delete empty directory

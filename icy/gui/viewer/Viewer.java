@@ -520,22 +520,25 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
     void updateToolbarComponents()
     {
-        toolBar.removeAll();
+        if (toolBar != null)
+        {
+            toolBar.removeAll();
 
-        toolBar.add(lockComboBox);
-        toolBar.addSeparator();
-        toolBar.add(canvasComboBox);
-        toolBar.addSeparator();
-        toolBar.add(layersEnabledButton);
-        if (canvas != null)
-            canvas.customizeToolbar(toolBar);
-        toolBar.add(Box.createHorizontalGlue());
-        toolBar.addSeparator();
-        toolBar.add(screenShotButton);
-        toolBar.add(screenShotAlternateButton);
-        toolBar.addSeparator();
-        toolBar.add(duplicateButton);
-        toolBar.add(switchStateButton);
+            toolBar.add(lockComboBox);
+            toolBar.addSeparator();
+            toolBar.add(canvasComboBox);
+            toolBar.addSeparator();
+            toolBar.add(layersEnabledButton);
+            if (canvas != null)
+                canvas.customizeToolbar(toolBar);
+            toolBar.add(Box.createHorizontalGlue());
+            toolBar.addSeparator();
+            toolBar.add(screenShotButton);
+            toolBar.add(screenShotAlternateButton);
+            toolBar.addSeparator();
+            toolBar.add(duplicateButton);
+            toolBar.add(switchStateButton);
+        }
     }
 
     void refreshLockCombo()
