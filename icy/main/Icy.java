@@ -1241,7 +1241,17 @@ public class Icy
         if (vtkLibraryLoaded)
             System.out.println("VTK library successfully loaded...");
         else
+        {
             System.out.println("Cannot load VTK library...");
+
+            if (SystemUtil.isMac())
+        	{
+            	final String osVer = SystemUtil.getOSVersion();
+            	
+            	if (osVer.startsWith("10.6") || osVer.startsWith("10.5"))
+        			System.out.println("VTK 6.3 is not supported on OSX " + osVer + ", version 10.7 or above is required.");
+        	}
+        }
     }
 
     private static void loadItkLibrary(String osDir)
