@@ -388,13 +388,11 @@ public class VtkJoglPanel extends GLJPanel
 
     public void lock()
     {
-
         lock.lock();
     }
 
     public void unlock()
     {
-
         lock.unlock();
     }
 

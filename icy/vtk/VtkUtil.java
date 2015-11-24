@@ -474,6 +474,28 @@ public class VtkUtil
     {
         return getPoints(Array2DUtil.toFloatArray1D(points));
     }
+    
+    /**
+     * Get vtkPoints from int[]
+     */
+    public static vtkPoints getPoints(int[] points)
+    {
+        final vtkPoints result = new vtkPoints();
+        final vtkIntArray array = getIntArray(points);
+
+        array.SetNumberOfComponents(3);
+        result.SetData(array);
+
+        return result;
+    }
+
+    /**
+     * Get vtkPoints from int[][3]
+     */
+    public static vtkPoints getPoints(int[][] points)
+    {
+        return getPoints(Array2DUtil.toIntArray1D(points));
+    }
 
     /**
      * Get vtkCellArray from a 1D prepared cells array ( {n, i1, i2, ..., n, i1, i2,...} )

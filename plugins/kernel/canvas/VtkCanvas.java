@@ -9,6 +9,7 @@ import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;
@@ -21,8 +22,8 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
-import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
@@ -33,19 +34,21 @@ import icy.vtk.VtkImageVolume.VtkVolumeBlendType;
 import icy.vtk.VtkImageVolume.VtkVolumeMapperType;
 import icy.vtk.VtkUtil;
 
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +75,6 @@ import vtk.vtkRenderWindow;
 import vtk.vtkRenderer;
 import vtk.vtkTextActor;
 import vtk.vtkTextProperty;
-import vtk.vtkUnsignedCharArray;
 
 /**
  * VTK 3D canvas class.
@@ -250,14 +252,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         shadingButton = new IcyToggleButton(new IcyIcon(ICON_SHADING, false));
         shadingButton.setFocusable(false);
         shadingButton.setToolTipText("Enable volume shadow");
+        
+        // set fast rendering during initialization
+        panel3D.setCoarseRendering(1000);
 
         renderer = panel3D.getRenderer();
         renderWindow = panel3D.getRenderWindow();
-
         camera = renderer.GetActiveCamera();
-        // set camera properties
-        // camera.Azimuth(20.0);
-        // camera.Dolly(1.60);
 
         // get volume mapper from preferences
         VtkVolumeMapperType mapperType = VtkVolumeMapperType.values()[preferences.getInt(ID_MAPPER,
@@ -303,7 +304,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         imageVolume.setLUT(getLut());
 
         // initialize axe
-        panel3D.setAxisOrientationDisplayScale(0.3);
         // axes = new vtkAxesActor();
         // widget = new vtkOrientationMarkerWidget();
         // widget.SetOrientationMarker(axes);
@@ -601,7 +601,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     /**
-     * @deprecated there is no more orientation widget because of the jogl bug with multiple renderer.
+     * @deprecated there is no more orientation widget because of the jogl bug with multiple viewport.
      */
     @Deprecated
     public vtkOrientationMarkerWidget getWidget()
@@ -1383,11 +1383,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         setPositionC(c);
         try
         {
-            final vtkRenderWindow renderWindow = renderer.GetRenderWindow();
-            final int[] size = renderWindow.GetSize();
-            final int w = size[0];
-            final int h = size[1];
-            final vtkUnsignedCharArray array = new vtkUnsignedCharArray();
             final vtkImageData imageData = getImageData();
 
             // VTK need this to be called in the EDT
@@ -1410,41 +1405,92 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     {
                         panel3D.setForceFineRendering(false);
                     }
-
-                    // NOTE: in vtk the [0,0] pixel is bottom left, so a
-                    // vertical flip is required
-                    // NOTE: GetRGBACharPixelData gives problematic results
-                    // depending on the
-                    // platform
-                    // (see comment about alpha and platform-dependence in the
-                    // doc for
-                    // vtkWindowToImageFilter)
-                    // Since the canvas is opaque, simply use GetPixelData.
-                    renderWindow.GetPixelData(0, 0, w - 1, h - 1, 1, array);
                 }
             });
 
-            // convert the vtk array into a IcyBufferedImage
-            final byte[] inData = array.GetJavaArray();
-            final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-            final int[] outData = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-
-            int inOffset = 0;
-            for (int y = h - 1; y >= 0; y--)
+            try
             {
-                int outOffset = y * w;
-
-                for (int x = 0; x < w; x++)
-                {
-                    final int r = TypeUtil.unsign(inData[inOffset++]);
-                    final int g = TypeUtil.unsign(inData[inOffset++]);
-                    final int b = TypeUtil.unsign(inData[inOffset++]);
-
-                    outData[outOffset++] = (r << 16) | (g << 8) | (b << 0);
-                }
+                final Robot robot = new Robot();
+                final Rectangle bounds = panel3D.getBounds();
+                // transform in screen coordinates
+                bounds.setLocation(ComponentUtil.convertPointToScreen(bounds.getLocation(), panel3D));
+                // do the capture
+                return robot.createScreenCapture(bounds);
+            }
+            catch (AWTException e)
+            {
+                IcyExceptionHandler.showErrorMessage(e, true);
+                return null;
             }
 
-            return image;
+            // final int[] size = renderWindow.GetSize();
+            // final int w = size[0];
+            // final int h = size[1];
+            // final vtkUnsignedCharArray array = new vtkUnsignedCharArray();
+            // final vtkImageData imageData = getImageData();
+            // final BufferedImage[] result = new BufferedImage[1];
+            //
+            // // VTK need this to be called in the EDT
+            // invokeOnEDTSilent(new Runnable()
+            // {
+            // @Override
+            // public void run()
+            // {
+            // // set image data
+            // updateImageData(imageData);
+            //
+            // // force fine rendering here
+            // panel3D.setForceFineRendering(true);
+            // try
+            // {
+            // // render now !
+            // panel3D.paint(panel3D.getGraphics());
+            // }
+            // finally
+            // {
+            // panel3D.setForceFineRendering(false);
+            // }
+            //
+            // try
+            // {
+            // Robot r = new Robot();
+            // result[0] = r.createScreenCapture(SwingUtilities.convertRectangle(panel3D, getBounds(), null));
+            // }
+            // catch (AWTException e)
+            // {
+            // // TODO Auto-generated catch block
+            // e.printStackTrace();
+            // }
+            //
+            // // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
+            // // NOTE: GetRGBACharPixelData gives problematic results depending on the platform
+            // // (see comment about alpha and platform-dependence in the doc for vtkWindowToImageFilter)
+            // // Since the canvas is opaque, simply use GetPixelData.
+            // renderWindow.GetPixelData(0, 0, w - 1, h - 1, 1, array);
+            // }
+            // });
+            //
+            // // convert the vtk array into a IcyBufferedImage
+            // final byte[] inData = array.GetJavaArray();
+            // final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            // final int[] outData = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+            //
+            // int inOffset = 0;
+            // for (int y = h - 1; y >= 0; y--)
+            // {
+            // int outOffset = y * w;
+            //
+            // for (int x = 0; x < w; x++)
+            // {
+            // final int r = TypeUtil.unsign(inData[inOffset++]);
+            // final int g = TypeUtil.unsign(inData[inOffset++]);
+            // final int b = TypeUtil.unsign(inData[inOffset++]);
+            //
+            // outData[outOffset++] = (r << 16) | (g << 8) | (b << 0);
+            // }
+            // }
+            //
+            // return image;
         }
         finally
         {
@@ -2302,7 +2348,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-
+            // nothing here
         }
 
         @Override

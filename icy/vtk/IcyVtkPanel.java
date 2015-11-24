@@ -19,6 +19,7 @@
 package icy.vtk;
 
 import icy.preferences.CanvasPreferences;
+import icy.system.thread.ThreadUtil;
 import icy.util.EventUtil;
 
 import java.awt.event.KeyEvent;
@@ -28,8 +29,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import vtk.vtkActor;
 import vtk.vtkActorCollection;
@@ -40,17 +39,19 @@ import vtk.vtkPropPicker;
 import vtk.vtkRenderer;
 
 /**
+ * Icy custom VTK panel used for VTK rendering.
+ * 
  * @author stephane dallongeville
  */
 public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMotionListener, MouseWheelListener,
-        KeyListener
+        KeyListener, Runnable
 {
     /**
      * 
      */
     private static final long serialVersionUID = -8455671369400627703L;
 
-    protected Timer timer;
+    protected Thread renderingMonitor;
     protected vtkPropPicker picker;
     protected vtkAxesActor axis;
     protected vtkRenderer axisRenderer;
@@ -58,18 +59,20 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     protected int axisOffset[];
     protected double axisScale;
     protected boolean lightFollowCamera;
+    protected volatile long fineRenderingTime;
 
     public IcyVtkPanel()
     {
         super();
 
-        // used for restore quality rendering after mouse wheel
-        timer = new Timer("Timer - vtkPanel");
         // picker
         picker = new vtkPropPicker();
         // set ambient color to white
         lgt.SetAmbientColor(1d, 1d, 1d);
         lightFollowCamera = true;
+
+        // assign default renderer to layer 0 (should be the case by default)
+        ren.SetLayer(0);
 
         // initialize axis
         axisRenderer = new vtkRenderer();
@@ -88,7 +91,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
 
         // default axis offset and scale
         axisOffset = new int[] {124, 124};
-        axisScale = 0.4;
+        axisScale = 1;
 
         // reset camera
         axisCam.SetViewUp(0, -1, 0);
@@ -96,6 +99,11 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         axisCam.SetParallelProjection(1);
         axisRenderer.ResetCamera();
         axisRenderer.ResetCameraClippingRange();
+
+        // used for restore quality rendering after a given amount of time
+        fineRenderingTime = 0;
+        renderingMonitor = new Thread(this, "VTK panel rendering monitor");
+        renderingMonitor.start();
 
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -106,8 +114,9 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     @Override
     protected void delete()
     {
-        // important to release timer here
-        timer.cancel();
+        // stop thread
+        fineRenderingTime = 0;
+        renderingMonitor.interrupt();
 
         super.delete();
 
@@ -135,8 +144,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     @Override
     public void removeNotify()
     {
-        // important to release timer here
-        timer.cancel();
+        // cancel fine rendering request
+        fineRenderingTime = 0;
 
         super.removeNotify();
     }
@@ -187,7 +196,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     }
 
     /**
-     * Returns the scale factor (default = 0.4) for the axis orientation display
+     * Returns the scale factor (default = 1) for the axis orientation display
      */
     public double getAxisOrientationDisplayScale()
     {
@@ -221,7 +230,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     }
 
     /**
-     * Returns the scale factor (default = 0.4) for the axis orientation display
+     * Returns the scale factor (default = 1) for the axis orientation display
      */
     public void setAxisOrientationDisplayScale(double value)
     {
@@ -335,7 +344,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         try
         {
             if (c.GetParallelProjection() == 1)
-                c.SetParallelScale(cam.GetParallelScale() / factor);
+                c.SetParallelScale(c.GetParallelScale() / factor);
             else
             {
                 c.Dolly(factor);
@@ -397,69 +406,82 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
      * Set coarse and fast rendering mode immediately
      * 
      * @see #setCoarseRendering(long)
+     * @see #setFineRendering()
      */
     public void setCoarseRendering()
     {
-        // set fast rendering
-        rw.SetDesiredUpdateRate(10.0);
+        // cancel pending fine rendering restoration
+        fineRenderingTime = 0;
+
+        if (rw.GetDesiredUpdateRate() == 10.0)
+            return;
+
+        lock();
+        try
+        {
+            // set fast rendering
+            rw.SetDesiredUpdateRate(10.0);
+        }
+        finally
+        {
+            unlock();
+        }
     }
 
     /**
-     * Set fine (and possibly slow) rendering immediately
+     * Set coarse and fast rendering mode <b>for the specified amount of time</b> (in ms).<br>
+     * Setting it to 0 means for always.
      * 
      * @see #setFineRendering(long)
      */
-    public void setFineRendering()
-    {
-        // set quality rendering
-        rw.SetDesiredUpdateRate(0.01);
-    }
-
-    /**
-     * Set coarse and fast rendering for the specified amount of time (in ms, always when set to 0)
-     */
     public void setCoarseRendering(long time)
     {
-        // cancel pending task
-        timer.cancel();
         // want fast update
-        rw.SetDesiredUpdateRate(10.0);
+        setCoarseRendering();
 
         if (time > 0)
-            setFineRendering(time);
+            fineRenderingTime = System.currentTimeMillis() + time;
     }
 
     /**
-     * Set fine (and possibly slow) rendering after specified time delay (in ms)
+     * Set fine (and possibly slow) rendering mode immediately
+     * 
+     * @see #setFineRendering(long)
+     * @see #setCoarseRendering()
+     */
+    public void setFineRendering()
+    {
+        // cancel pending fine rendering restoration
+        fineRenderingTime = 0;
+
+        if (rw.GetDesiredUpdateRate() == 0.01)
+            return;
+
+        lock();
+        try
+        {
+            // set quality rendering
+            rw.SetDesiredUpdateRate(0.01);
+        }
+        finally
+        {
+            unlock();
+        }
+    }
+
+    /**
+     * Set fine (and possibly slow) rendering <b>after</b> specified time delay (in ms).<br>
+     * Using 0 means we want to immediately switch to fine rendering.
+     * 
+     * @see #setCoarseRendering(long)
      */
     public void setFineRendering(long delay)
     {
-        // cancel pending task
-        timer.cancel();
-
         if (delay > 0)
-        {
-            // schedule quality restoration
-            timer = new Timer();
-            timer.schedule(new TimerTask()
-            {
-                @Override
-                public void run()
-                {
-                    // no parent --> exit
-                    if (getParent() == null)
-                        return;
-
-                    // set back quality rendering
-                    getRenderWindow().SetDesiredUpdateRate(0.01);
-                    // request repaint
-                    repaint();
-                }
-            }, delay);
-        }
+            fineRenderingTime = System.currentTimeMillis() + delay;
         else
-            // set back quality rendering
-            rw.SetDesiredUpdateRate(0.01);
+            // set back quality rendering immediately
+            setFineRendering();
     }
 
     /**
@@ -475,8 +497,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         try
         {
             double pos[] = cam.GetPosition();
-            final double fp[] = cam.GetFocalPoint();
-            final double viewup[] = cam.GetViewUp();
+            double fp[] = cam.GetFocalPoint();
+            double viewup[] = cam.GetViewUp();
 
             // mimic axis camera position to scene camera position
             axisCam.SetPosition(pos);
@@ -484,25 +506,46 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
             axisCam.SetViewUp(viewup);
             axisRenderer.ResetCamera();
 
-            pos = axisCam.GetPosition();
-
             final int[] size = rw.GetSize();
-            final double[] bnds = ren.ComputeVisiblePropBounds();
-            final double range = (Math.abs(bnds[3] - bnds[2]) + Math.abs(bnds[1] - bnds[0])) / 2;
-
             // adjust scale
             final double scale = size[1] / 512d;
             // adjust offset
             final int w = (int) (size[0] - (axisOffset[0] * scale));
             final int h = (int) (size[1] - (axisOffset[1] * scale));
-
             // zoom and translate
-            zoomView(axisCam, axisRenderer, axisScale * (range / 2d));
+            zoomView(axisCam, axisRenderer, axisScale * (axisCam.GetDistance() / 17d));
             translateView(axisCam, axisRenderer, -w, -h);
         }
         finally
         {
             unlock();
+        }
+    }
+
+    @Override
+    public void run()
+    {
+        while (!Thread.currentThread().isInterrupted())
+        {
+            // nothing to do
+            if (fineRenderingTime == 0)
+                ThreadUtil.sleep(1);
+            else
+            {
+                // thread used for restoring fine rendering after a certain amount of time
+                if (System.currentTimeMillis() >= fineRenderingTime)
+                {
+                    // set back quality rendering
+                    setFineRendering();
+                    // request repaint
+                    repaint();
+                    // done
+                    fineRenderingTime = 0;
+                }
+                // wait until delay elapsed
+                else
+                    ThreadUtil.sleep(1);
+            }
         }
     }
 
@@ -546,6 +589,24 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     }
 
     @Override
+    public void mousePressed(MouseEvent e)
+    {
+        if (e.isConsumed())
+            return;
+
+        // nothing to do here
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e)
+    {
+        if (e.isConsumed())
+            return;
+
+        // nothing to do here
+    }
+
+    @Override
     public void mouseMoved(MouseEvent e)
     {
         // just save mouse position
@@ -565,8 +626,10 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         if (ren.VisibleActorCount() == 0)
             return;
 
-        // cancel pending task
-        timer.cancel();
+        // want fast update
+        setCoarseRendering();
+        // abort current rendering
+        rw.SetAbortRender(1);
 
         // get current mouse position
         final int x = e.getX();
@@ -597,24 +660,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
 
         // request repaint
         repaint();
-    }
 
-    @Override
-    public void mousePressed(MouseEvent e)
-    {
-        if (e.isConsumed())
-            return;
-        if (ren.VisibleActorCount() == 0)
-            return;
-
-        // want fast update
-        setCoarseRendering(0);
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e)
-    {
-        // restore quality rendering
+        // restore quality rendering in 1 second
         setFineRendering(1000);
     }
 
@@ -625,8 +672,15 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         if (cam == null)
             return;
 
+        if (e.isConsumed())
+            return;
+        if (ren.VisibleActorCount() == 0)
+            return;
+
         // want fast update
-        setCoarseRendering(0);
+        setCoarseRendering();
+        // abort current rendering
+        rw.SetAbortRender(1);
 
         // get delta
         double delta = e.getWheelRotation() * CanvasPreferences.getMouseWheelSensitivity();
@@ -642,7 +696,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         // request repaint
         repaint();
 
-        // restore quality rendering
+        // restore quality rendering in 1 second
         setFineRendering(1000);
     }
 
@@ -721,4 +775,5 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         if (e.isConsumed())
             return;
     }
+
 }

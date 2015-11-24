@@ -323,27 +323,27 @@ public class UnitUtil
 
         if (v >= 3600000d)
         {
-            result += (int) (valueInMs / 3600000) + "h ";
+            result += (int) (v / 3600000) + "h ";
             v %= 3600000;
         }
         else if (displayZero)
             result += "00h ";
         if (v >= 60000d)
         {
-            result += (int) (valueInMs / 60000) + "min ";
+            result += (int) (v / 60000) + "min ";
             v %= 60000;
         }
         else if (displayZero)
             result += "00min ";
         if (v >= 1000d)
         {
-            result += (int) (valueInMs / 1000d) + "sec ";
+            result += (int) (v / 1000d) + "sec ";
             v %= 1000;
         }
         else if (displayZero)
             result += "00sec ";
         if (v != 0)
-            result += StringUtil.toString(valueInMs, 2) + "ms";
+            result += StringUtil.toString(v, 2) + "ms";
         else if (displayZero)
             result += "000ms";
 

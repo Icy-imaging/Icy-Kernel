@@ -341,7 +341,7 @@ public class WindowPositionSaver
         }
     }
 
-    boolean fixPosition(Rectangle rect)
+    public static boolean fixPosition(Rectangle rect)
     {
         Rectangle desktopRect = SystemUtil.getDesktopBounds();
         boolean result = false;

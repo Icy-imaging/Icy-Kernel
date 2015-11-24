@@ -220,7 +220,7 @@ public class XMLUtil
         if (StringUtil.isEmpty(path))
         {
             if (showError)
-                System.err.println("XMLUtil.loadDocument('" + path + "') error : empty path !");
+                System.err.println("XMLUtil.loadDocument('" + path + "') error: empty path !");
 
             return null;
         }
@@ -253,7 +253,7 @@ public class XMLUtil
         if ((f == null) || !f.exists())
         {
             if (showError)
-                System.err.println("XMLUtil.loadDocument('" + f + "') error : file not found !");
+                System.err.println("XMLUtil.loadDocument('" + f + "') error: file not found !");
 
             return null;
         }
@@ -270,7 +270,7 @@ public class XMLUtil
             {
                 if (showError)
                 {
-                    System.err.println("XMLUtil.loadDocument('" + f.getPath() + "') error :");
+                    System.err.println("XMLUtil.loadDocument('" + f.getPath() + "') error:");
                     IcyExceptionHandler.showErrorMessage(e, false);
                 }
             }
@@ -354,6 +354,13 @@ public class XMLUtil
      */
     public static boolean saveDocument(Document doc, File f)
     {
+        if ((doc == null) || (f == null))
+        {
+            System.err.println("XMLUtil.saveDocument(...) error: specified document or file is null !");
+
+            return false;
+        }
+
         final Transformer transformer = createTransformer();
 
         // an error occurred

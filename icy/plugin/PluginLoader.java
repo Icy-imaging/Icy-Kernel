@@ -271,7 +271,7 @@ public class PluginLoader
             catch (UnsupportedClassVersionError e)
             {
                 // java version error
-                System.err.println("Unsupported java version for class '" + className + "' (discarded)");
+                System.err.println("Newer java version required for class '" + className + "' (discarded)");
             }
             catch (Error e)
             {
@@ -751,6 +751,10 @@ public class PluginLoader
             {
                 // then try to load the plugin class as Plugin class
                 instance.loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
+            }
+            catch (UnsupportedClassVersionError e)
+            {
+                return mess + "Newer java version required.";
             }
             catch (Error e)
             {

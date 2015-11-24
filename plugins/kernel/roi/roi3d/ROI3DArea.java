@@ -35,7 +35,6 @@ import icy.vtk.VtkUtil;
 
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -43,6 +42,7 @@ import java.util.Map.Entry;
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
+import vtk.vtkPoints;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
 import vtk.vtkStructuredGrid;
@@ -59,7 +59,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
         Object grid;
-        Object gridOutline;
+        Object gridOutlineFilter;
         // final Object polyData;
         Object polyMapper;
         Object actor;
@@ -72,7 +72,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         {
             // polyData = null;
             grid = null;
-            gridOutline = null;
+            gridOutlineFilter = null;
             polyMapper = null;
             actor = null;
 
@@ -88,13 +88,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             // init 3D painters stuff
             // polyData = new vtkPolyData();
             grid = new vtkStructuredGrid();
-            gridOutline = new vtkStructuredGridOutlineFilter();
+            gridOutlineFilter = new vtkStructuredGridOutlineFilter();
 
-            ((vtkStructuredGridOutlineFilter) gridOutline).SetInputData((vtkStructuredGrid) grid);
+            ((vtkStructuredGridOutlineFilter) gridOutlineFilter).SetInputData((vtkStructuredGrid) grid);
 
             polyMapper = new vtkPolyDataMapper();
             // ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
-            ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkStructuredGridOutlineFilter) gridOutline)
+            ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkStructuredGridOutlineFilter) gridOutlineFilter)
                     .GetOutputPort());
 
             actor = new vtkActor();
@@ -119,39 +119,19 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             int width = seq.getSizeX();
             int height = seq.getSizeY();
 
-            final ArrayList<double[]> verticesArray = new ArrayList<double[]>();
-
-            for (ROI2DArea area : ROI3DArea.this)
-            {
-                int k = area.getZ();
-
-                verticesArray.ensureCapacity(verticesArray.size() + width * height);
-
-                boolean[] mask = area.getBooleanMask(0, 0, width, height, true);
-
-                int offset = 0;
-                for (int j = 0; j < height; j++)
-                {
-                    for (int i = 0; i < width; i++, offset++)
-                    {
-                        if (mask[offset])
-                            verticesArray.add(new double[] {i, j, k});
-                    }
-                }
-            }
-
-            double[][] points = new double[verticesArray.size()][3];
-            verticesArray.toArray(points);
+            final int[] points3D = getBooleanMask(true).getPointsAsIntArray();
+            final vtkPoints vtkPoints3D = VtkUtil.getPoints(points3D);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             canvas3d.lock();
             try
             {
                 ((vtkStructuredGrid) grid).SetDimensions(width, height, getSizeZ());
-                ((vtkStructuredGrid) grid).SetPoints(VtkUtil.getPoints(points));
+                ((vtkStructuredGrid) grid).SetPoints(vtkPoints3D);
 
-                ((vtkStructuredGridOutlineFilter) gridOutline).Update();
+                ((vtkStructuredGridOutlineFilter) gridOutlineFilter).Update();
                 ((vtkPolyDataMapper) polyMapper).Update();
+                ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
             }
             finally
             {
@@ -161,6 +141,9 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             // no more pending request
             if (!ThreadUtil.hasWaitingSingleTask(this))
                 canvas3d = null;
+
+            // need to repaint
+            painterChanged();
         }
 
         @Override
