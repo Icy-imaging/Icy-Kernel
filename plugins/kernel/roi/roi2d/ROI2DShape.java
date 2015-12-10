@@ -250,6 +250,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             {
                 canvas.unlock();
             }
+
+            // need to repaint
+            painterChanged();
         }
 
         @Override

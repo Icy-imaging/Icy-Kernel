@@ -178,6 +178,9 @@ public class ROI2DPoint extends ROI2DShape
             {
                 canvas.unlock();
             }
+
+            // need to repaint
+            painterChanged();
         }
     }
 
