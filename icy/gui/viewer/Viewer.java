@@ -31,6 +31,7 @@ import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
+import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
@@ -669,8 +670,30 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         {
             try
             {
-                // create new canvas
-                final IcyCanvas newCanvas = IcyCanvas.create(pluginClassName, this);
+                IcyCanvas newCanvas;
+
+                try
+                {
+                    // try to create the new canvas
+                    newCanvas = IcyCanvas.create(pluginClassName, this);
+                }
+                catch (Throwable e)
+                {
+                    if (e instanceof UnsupportedOperationException)
+                    {
+                        MessageDialog.showDialog(e.getLocalizedMessage(), MessageDialog.ERROR_MESSAGE);
+                    }
+                    else if (e instanceof Exception)
+                    {
+                        IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '"
+                                + pluginClassName + "' class --> cannot create the canvas.", e), true);
+                    }
+                    else
+                        IcyExceptionHandler.handleException(e, true);
+
+                    // create a new instance of current canvas
+                    newCanvas = IcyCanvas.create(canvas.getClass().getName(), this);
+                }
 
                 final int saveX;
                 final int saveY;
@@ -718,11 +741,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                 // canvas set :)
                 canvas = newCanvas;
-            }
-            catch (ClassCastException e)
-            {
-                IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + pluginClassName
-                        + "' class --> cannot create the canvas.", e), true);
+
             }
             catch (Throwable e)
             {

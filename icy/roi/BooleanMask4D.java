@@ -875,7 +875,10 @@ public class BooleanMask4D
         }
     }
 
-    int[] toInt4D(int[] source3D, int t)
+    /**
+     * Transforms the specified 3D coordinates int array [x,y,z] in 4D coordinates int array [x,y,z,t] with the specified T value.
+     */
+    public static int[] toInt4D(int[] source3D, int t)
     {
         final int[] result = new int[(source3D.length * 4) / 3];
 

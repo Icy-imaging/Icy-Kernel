@@ -21,9 +21,14 @@ package icy.vtk;
 import icy.image.colormap.IcyColorMap;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
+import icy.roi.ROI;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
+import icy.type.rectangle.Rectangle5D;
+
+import java.awt.Color;
+
 import vtk.vtkActor;
 import vtk.vtkActor2D;
 import vtk.vtkActor2DCollection;
@@ -31,18 +36,24 @@ import vtk.vtkActorCollection;
 import vtk.vtkCellArray;
 import vtk.vtkColorTransferFunction;
 import vtk.vtkDataArray;
+import vtk.vtkDecimatePro;
 import vtk.vtkDoubleArray;
 import vtk.vtkFloatArray;
 import vtk.vtkIdTypeArray;
+import vtk.vtkImageConstantPad;
 import vtk.vtkImageData;
 import vtk.vtkIntArray;
 import vtk.vtkLongArray;
+import vtk.vtkMarchingCubes;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkPoints;
+import vtk.vtkPolyData;
+import vtk.vtkPolyDataConnectivityFilter;
 import vtk.vtkProp;
 import vtk.vtkPropCollection;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
+import vtk.vtkSmoothPolyDataFilter;
 import vtk.vtkUnsignedCharArray;
 import vtk.vtkUnsignedIntArray;
 import vtk.vtkUnsignedLongArray;
@@ -474,7 +485,7 @@ public class VtkUtil
     {
         return getPoints(Array2DUtil.toFloatArray1D(points));
     }
-    
+
     /**
      * Get vtkPoints from int[]
      */
@@ -505,6 +516,95 @@ public class VtkUtil
         final vtkCellArray result = new vtkCellArray();
 
         result.SetCells(numCell, getIdTypeArray(cells));
+
+        return result;
+    }
+
+    /**
+     * Creates and returns a 3D binary (0/1 values) {@link vtkImageData} object corresponding to the ROI 3D boolean mask
+     * (C dimension is not considered) at specified T position.
+     * 
+     * @param roi
+     *        the roi we want to retrieve the vtkImageData mask
+     * @param sz
+     *        the Z size to use for ROI with infinite Z dimension (if ROI has a finite Z dimension then ROI Z size is
+     *        used).
+     * @param t
+     *        the T position we want to retrieve the 3D mask data
+     */
+    public static vtkImageData getBinaryImageData(ROI roi, int sz, int t)
+    {
+        final vtkImageData result;
+
+        final Rectangle5D bounds5d = roi.getBounds5D();
+        final int sizeX;
+        final int sizeY;
+        final int sizeZ;
+        final int x;
+        final int y;
+        final int z;
+        final int c;
+
+        x = (int) bounds5d.getX();
+        y = (int) bounds5d.getY();
+        sizeX = (int) (bounds5d.getMaxX() - x);
+        sizeY = (int) (bounds5d.getMaxY() - y);
+        if (bounds5d.isInfiniteZ())
+        {
+            z = 0;
+            sizeZ = sz;
+        }
+        else
+        {
+            z = (int) bounds5d.getZ();
+            sizeZ = (int) (bounds5d.getMaxZ() - z);
+        }
+        if (bounds5d.isInfiniteC())
+            c = 0;
+        else
+            c = (int) bounds5d.getC();
+
+        long totalSize = sizeX;
+        totalSize *= sizeY;
+        totalSize *= sizeZ;
+
+        if (totalSize > Integer.MAX_VALUE)
+            throw new RuntimeException("Can't allocate array (size > 2^31)");
+
+        // build java array
+        final int sizeXY = sizeX * sizeY;
+        final byte[] array = new byte[(int) totalSize];
+        int offset = 0;
+
+        if (bounds5d.isInfiniteZ())
+        {
+            final boolean[] mask = roi.getBooleanMask2D(x, y, sizeX, sizeY, 0, t, c, true);
+
+            for (int curZ = z; curZ < (z + sizeZ); curZ++)
+            {
+                for (int i = 0; i < sizeXY; i++)
+                    array[offset++] = mask[i] ? (byte) 1 : (byte) 0;
+            }
+        }
+        else
+        {
+            for (int curZ = z; curZ < (z + sizeZ); curZ++)
+            {
+                final boolean[] mask = roi.getBooleanMask2D(x, y, sizeX, sizeY, curZ, t, c, true);
+
+                for (int i = 0; i < sizeXY; i++)
+                    array[offset++] = mask[i] ? (byte) 1 : (byte) 0;
+            }
+        }
+
+        // create a new image data structure
+        result = new vtkImageData();
+        result.SetDimensions(sizeX, sizeY, sizeZ);
+        result.SetExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
+        // pre-allocate data
+        result.AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+        // set data
+        ((vtkUnsignedCharArray) result.GetPointData().GetScalars()).SetJavaArray(array);
 
         return result;
     }
@@ -556,6 +656,87 @@ public class VtkUtil
     }
 
     /**
+     * Create a 3D surface in VTK polygon format from the input VTK image.
+     * 
+     * @param imageData
+     *        the input image to construct surface from
+     * @param threshold
+     *        the threshold intensity value used to build the surface
+     * @param keepLargest
+     *        keeps the largest surface only (useful to remove small surfaces due to noise)
+     * @param simplifyMesh
+     *        try to simplify mesh (reduce the number of polygon) without affecting much the representation
+     * @param smoothness
+     *        smoothness coefficient in number of iteration (0 for no smoothing).<br>
+     *        Smoothing operation take some time, do not use too high smoothness coefficient.
+     */
+    public static vtkPolyData getSurfaceFromImage(vtkImageData imageData, double threshold, boolean keepLargest,
+            boolean simplifyMesh, int smoothness)
+    {
+        vtkPolyData result;
+
+        // pad on all sides to guarantee close meshes
+        final vtkImageConstantPad pad = new vtkImageConstantPad();
+        final int[] extent = imageData.GetExtent();
+        extent[0]--; // min X
+        extent[1]++; // max X
+        extent[2]--; // min Y
+        extent[3]++; // max Y
+        extent[4]--; // min Z
+        extent[5]++; // max Z
+        pad.SetOutputWholeExtent(extent);
+        pad.SetInputData(imageData);
+
+        final vtkMarchingCubes marchingCubes = new vtkMarchingCubes();
+
+        marchingCubes.SetInputConnection(pad.GetOutputPort());
+        marchingCubes.SetValue(0, threshold);
+        marchingCubes.Update();
+
+        // get the poly data result
+        result = marchingCubes.GetOutput();
+
+        if (keepLargest)
+        {
+            final vtkPolyDataConnectivityFilter cc = new vtkPolyDataConnectivityFilter();
+
+            cc.SetInputData(result);
+            cc.SetExtractionModeToLargestRegion();
+            cc.Update();
+
+            result = cc.GetOutput();
+        }
+
+        if (simplifyMesh)
+        {
+            final vtkDecimatePro dec = new vtkDecimatePro();
+
+            dec.SetInputData(result);
+            dec.PreserveTopologyOn();
+            dec.SetTargetReduction(0.9);
+            dec.Update();
+
+            result = dec.GetOutput();
+        }
+
+        if (smoothness > 0)
+        {
+            final vtkSmoothPolyDataFilter smoother = new vtkSmoothPolyDataFilter();
+
+            smoother.SetInputData(result);
+            smoother.SetRelaxationFactor(0.3);
+            smoother.FeatureEdgeSmoothingOff();
+            smoother.BoundarySmoothingOn();
+            smoother.SetNumberOfIterations(smoothness);
+            smoother.Update();
+
+            result = smoother.GetOutput();
+        }
+
+        return result;
+    }
+
+    /**
      * Creates and returns the color map in {@link vtkColorTransferFunction} format from the
      * specified {@link LUTChannel}.
      */
@@ -578,8 +759,7 @@ public class VtkUtil
     }
 
     /**
-     * Creates and returns the opacity map in {@link vtkPiecewiseFunction} format from the specified
-     * {@link LUTChannel}.
+     * Creates and returns the opacity map in {@link vtkPiecewiseFunction} format from the specified {@link LUTChannel}.
      */
     public static vtkPiecewiseFunction getOpacityMap(LUTChannel lutChannel)
     {
@@ -599,6 +779,37 @@ public class VtkUtil
             for (int i = 0; i < IcyColorMap.SIZE; i++)
                 result.AddPoint(scaler.unscale(i), 0d);
         }
+
+        return result;
+    }
+
+    /**
+     * Creates and returns a binary color map in {@link vtkColorTransferFunction} format where 0 value is black and 1 is
+     * set to specified color.
+     */
+    public static vtkColorTransferFunction getBinaryColorMap(Color color)
+    {
+        // SCALAR COLOR FUNCTION
+        final vtkColorTransferFunction result = new vtkColorTransferFunction();
+
+        result.SetRange(0, 1);
+        result.AddRGBPoint(0d, 0d, 0d, 0d);
+        result.AddRGBPoint(1d, color.getRed() / 255d, color.getGreen() / 255d, color.getBlue() / 255d);
+
+        return result;
+    }
+
+    /**
+     * Creates and returns a binary opacity map in {@link vtkPiecewiseFunction} format where 0 is 100% transparent and 1
+     * to the specified opacity value.
+     */
+    public static vtkPiecewiseFunction getBinaryOpacityMap(double opacity)
+    {
+        // SCALAR OPACITY FUNCTION
+        final vtkPiecewiseFunction result = new vtkPiecewiseFunction();
+
+        result.AddPoint(0d, 1d);
+        result.AddPoint(1d, opacity);
 
         return result;
     }

@@ -682,7 +682,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (stroke != value)
             {
                 stroke = value;
-                painterChanged();
+                // painter changed event is done on property changed
                 ROI.this.propertyChanged(PROPERTY_STROKE);
             }
         }
@@ -703,7 +703,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (opacity != value)
             {
                 opacity = value;
-                painterChanged();
+                // painter changed event is done on property changed
                 ROI.this.propertyChanged(PROPERTY_OPACITY);
             }
         }
@@ -757,7 +757,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if ((color != null) && (color != value))
             {
                 color = value;
-                painterChanged();
+                // painter changed event is done on property changed
                 ROI.this.propertyChanged(PROPERTY_COLOR);
             }
         }
@@ -3367,9 +3367,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             case PROPERTY_CHANGED:
                 final String property = event.getPropertyName();
 
-                // painter can display name so repaint
+                // painter affecting display
                 if (StringUtil.isEmpty(property) || StringUtil.equals(property, PROPERTY_NAME)
-                        || StringUtil.equals(property, PROPERTY_SHOWNAME))
+                        || StringUtil.equals(property, PROPERTY_SHOWNAME)
+                        || StringUtil.equals(property, PROPERTY_COLOR) || StringUtil.equals(property, PROPERTY_OPACITY)
+                        || StringUtil.equals(property, PROPERTY_SHOWNAME)
+                        || StringUtil.equals(property, PROPERTY_STROKE))
                     painter.painterChanged();
                 break;
 

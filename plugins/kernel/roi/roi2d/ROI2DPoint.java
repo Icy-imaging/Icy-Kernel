@@ -20,13 +20,15 @@ package plugins.kernel.roi.roi2d;
 
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
+import icy.common.EventHierarchicalChecker;
 import icy.painter.Anchor2D;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
+import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.type.point.Point5D.Double;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -36,7 +38,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.Arrays;
 
 import org.w3c.dom.Node;
 
@@ -55,6 +56,8 @@ public class ROI2DPoint extends ROI2DShape
 {
     public class ROI2DPointPainter extends ROI2DShapePainter
     {
+        vtkSphereSource vtkSource;
+
         @Override
         protected boolean isSmall(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
         {
@@ -112,50 +115,9 @@ public class ROI2DPoint extends ROI2DShape
 
                 g2.dispose();
             }
-
-            if (canvas instanceof VtkCanvas)
-            {
-                // 3D canvas
-                final VtkCanvas cnv = (VtkCanvas) canvas;
-
-                // FIXME : need a better implementation
-                final double[] s = cnv.getVolumeScale();
-
-                // scaling changed ?
-                if (!Arrays.equals(scaling, s))
-                {
-                    // update scaling
-                    scaling = s;
-                    // need rebuild
-                    needRebuild = true;
-                }
-
-                // need to rebuild 3D data structures ?
-                if (needRebuild)
-                {
-                    // initialize VTK objects if not yet done
-                    if (actor == null)
-                        initVtkObjects();
-
-                    // request rebuild 3D objects
-                    canvas3d = cnv;
-                    ThreadUtil.runSingle(this);
-                    needRebuild = false;
-                }
-
-                // actor can be accessed in canvas3d for rendering so we need to synchronize access
-                cnv.lock();
-                try
-                {
-                    // update visibility
-                    if (actor != null)
-                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
-                }
-                finally
-                {
-                    cnv.unlock();
-                }
-            }
+            else
+                // just use parent method
+                super.drawROI(g, sequence, canvas);
         }
 
         @Override
@@ -163,15 +125,19 @@ public class ROI2DPoint extends ROI2DShape
         {
             // init 3D painters stuff
             vtkSource = new vtkSphereSource();
-            ((vtkSphereSource) vtkSource).SetRadius(2);
-            ((vtkSphereSource) vtkSource).SetThetaResolution(12);
-            ((vtkSphereSource) vtkSource).SetPhiResolution(12);
+            vtkSource.SetRadius(getStroke());
+            vtkSource.SetThetaResolution(12);
+            vtkSource.SetPhiResolution(12);
 
             polyMapper = new vtkPolyDataMapper();
-            ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkSphereSource) vtkSource).GetOutputPort());
+            polyMapper.SetInputConnection((vtkSource).GetOutputPort());
 
             actor = new vtkActor();
-            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            actor.SetMapper(polyMapper);
+
+            // initialize color
+            final Color col = getColor();
+            actor.GetProperty().SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
         }
 
         /**
@@ -180,7 +146,7 @@ public class ROI2DPoint extends ROI2DShape
         @Override
         protected void rebuildVtkObjects()
         {
-            final VtkCanvas canvas = canvas3d;
+            final VtkCanvas canvas = canvas3d.get();
             // nothing to update
             if (canvas == null)
                 return;
@@ -199,28 +165,19 @@ public class ROI2DPoint extends ROI2DShape
                 curZ = seq.getSizeZ() / 2d;
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas3d.lock();
+            canvas.lock();
             try
             {
-                ((vtkSphereSource) vtkSource).SetRadius(getStroke());
-                ((vtkSphereSource) vtkSource).SetCenter(pos.getX(), pos.getY(), curZ);
-                ((vtkPolyDataMapper) polyMapper).Update();
+                vtkSource.SetRadius(getStroke());
+                vtkSource.SetCenter(pos.getX(), pos.getY(), curZ);
+                polyMapper.Update();
 
-                ((vtkActor) actor).SetScale(scaling);
-                final Color color = getColor();
-                ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
-                        color.getBlue() / 255d);
-                // opacity is for interior only, contour can be done with layer opacity information
-                // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
+                actor.SetScale(scaling);
             }
             finally
             {
-                canvas3d.unlock();
+                canvas.unlock();
             }
-
-            // no more pending request
-            if (!ThreadUtil.hasWaitingSingleTask(this))
-                canvas3d = null;
         }
     }
 
@@ -334,6 +291,28 @@ public class ROI2DPoint extends ROI2DShape
     public boolean contains(ROI roi)
     {
         return false;
+    }
+
+    /**
+     * roi changed
+     */
+    @Override
+    public void onChanged(EventHierarchicalChecker object)
+    {
+        final ROIEvent event = (ROIEvent) object;
+
+        // do here global process on ROI change
+        switch (event.getType())
+        {
+            case PROPERTY_CHANGED:
+                final String property = event.getPropertyName();
+
+                // stroke changed --> rebuild vtk object
+                if (StringUtil.equals(property, PROPERTY_STROKE))
+                    ((ROI2DShapePainter) getOverlay()).needRebuild = true;
+        }
+
+        super.onChanged(object);
     }
 
     @Override

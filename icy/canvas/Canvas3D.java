@@ -28,7 +28,7 @@ import vtk.vtkRenderer;
 
 /**
  * @deprecated Use {@link VtkCanvas} instead.
- * @author Fabrice de Chaumont & Stephane
+ * @author Stephane
  */
 @Deprecated
 public abstract class Canvas3D extends IcyCanvas3D

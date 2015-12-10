@@ -784,7 +784,11 @@ public class BooleanMask3D implements Cloneable
         }
     }
 
-    protected int[] toInt3D(int[] source2D, int z)
+    /**
+     * Transforms the specified 3D coordinates int array [x,y,z] in 4D coordinates int array [x,y,z,t] with the
+     * specified T value.
+     */
+    public static int[] toInt3D(int[] source2D, int z)
     {
         final int[] result = new int[(source2D.length * 3) / 2];
 

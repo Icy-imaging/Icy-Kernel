@@ -29,14 +29,17 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.io.File;
 
 import vtk.vtkActor;
 import vtk.vtkActorCollection;
 import vtk.vtkAxesActor;
 import vtk.vtkCamera;
+import vtk.vtkFileOutputWindow;
 import vtk.vtkLight;
 import vtk.vtkPropPicker;
 import vtk.vtkRenderer;
+import vtk.vtkUnsignedCharArray;
 
 /**
  * Icy custom VTK panel used for VTK rendering.
@@ -251,6 +254,15 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         lock();
         try
         {
+//            ThreadUtil.invokeNow(new Runnable()
+//            {
+//                @Override
+//                public void run()
+//                {
+//                    getRenderWindow().GetPixelData(0, 0, 1, 1, 0, new vtkUnsignedCharArray());
+//                }
+//            });
+            
             picker.PickProp(x, rw.GetSize()[1] - y, ren);
         }
         finally

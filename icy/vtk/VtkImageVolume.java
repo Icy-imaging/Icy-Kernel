@@ -27,6 +27,46 @@ import vtk.vtkVolumeRayCastMapper;
  */
 public class VtkImageVolume
 {
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public static enum VtkVolumeMapperType
+    {
+        RAYCAST_CPU_FIXEDPOINT
+        {
+            @Override
+            public String toString()
+            {
+                return "Raycaster (CPU)";
+            }
+        },
+        RAYCAST_GPU_OPENGL
+        {
+            @Override
+            public String toString()
+            {
+                return "Raycaster (OpenGL)";
+            }
+        },
+        TEXTURE2D_OPENGL
+        {
+            @Override
+            public String toString()
+            {
+                return "Texture 2D (OpenGL)";
+            }
+        },
+        TEXTURE3D_OPENGL
+        {
+            @Override
+            public String toString()
+            {
+                return "Texture 3D (OpenGL)";
+            }
+        };
+    }
+
     public static enum VtkVolumeBlendType
     {
         COMPOSITE
@@ -64,82 +104,6 @@ public class VtkImageVolume
         };
     }
 
-    public static enum VtkVolumeMapperType
-    {
-        RAYCAST_CPU_FIXEDPOINT
-        {
-            @Override
-            public String toString()
-            {
-                return "Raycaster (CPU)";
-            }
-        },
-        // RAYCAST_CPU
-        // {
-        // @Override
-        // public String toString()
-        // {
-        // return "Raycaster";
-        // }
-        // },
-        // RAYCAST_GPU
-        // {
-        // @Override
-        // public String toString()
-        // {
-        // return "Raycaster (GPU)";
-        // }
-        // },
-        RAYCAST_GPU_OPENGL
-        {
-            @Override
-            public String toString()
-            {
-                return "Raycaster (OpenGL)";
-            }
-        },
-        // TEXTURE2D
-        // {
-        // @Override
-        // public String toString()
-        // {
-        // return "Texture 2D";
-        // }
-        // },
-        TEXTURE2D_OPENGL
-        {
-            @Override
-            public String toString()
-            {
-                return "Texture 2D (OpenGL)";
-            }
-        },
-        // TEXTURE3D
-        // {
-        // @Override
-        // public String toString()
-        // {
-        // return "Texture 3D";
-        // }
-        // },
-        TEXTURE3D_OPENGL
-        {
-            @Override
-            public String toString()
-            {
-                return "Texture 3D (OpenGL)";
-            }
-        };
-        // SMART
-        // {
-        // @Override
-        // public String toString()
-        // {
-        // return "Smart";
-        // }
-        // };
-    }
-
     /**
      * volume data
      */
@@ -173,15 +137,15 @@ public class VtkImageVolume
         volume.SetProperty(volumeProperty);
         // setup volume connection
         volume.SetMapper(volumeMapper);
-        // we want the volume to be pickable
-        volume.SetPickable(1);
+        // volume should not be "pickable" by default
+        volume.SetPickable(0);
 
         imageData = null;
     }
 
     public void release()
     {
-        // delete every VTK objects
+        // delete all VTK objects
         volume.Delete();
         volumeMapper.RemoveAllInputs();
         volumeMapper.Delete();
@@ -327,6 +291,33 @@ public class VtkImageVolume
         if (volumeMapper instanceof vtkFixedPointVolumeRayCastMapper)
         {
             final vtkFixedPointVolumeRayCastMapper mapper = (vtkFixedPointVolumeRayCastMapper) volumeMapper;
+
+            if (mapper.GetAutoAdjustSampleDistances() != 0)
+                return 0d;
+
+            return mapper.GetImageSampleDistance();
+        }
+        else if (volumeMapper instanceof vtkVolumeRayCastMapper)
+        {
+            final vtkVolumeRayCastMapper mapper = (vtkVolumeRayCastMapper) volumeMapper;
+
+            if (mapper.GetAutoAdjustSampleDistances() != 0)
+                return 0d;
+
+            return mapper.GetImageSampleDistance();
+        }
+        else if (volumeMapper instanceof vtkGPUVolumeRayCastMapper)
+        {
+            final vtkGPUVolumeRayCastMapper mapper = (vtkGPUVolumeRayCastMapper) volumeMapper;
+
+            if (mapper.GetAutoAdjustSampleDistances() != 0)
+                return 0d;
+
+            return mapper.GetImageSampleDistance();
+        }
+        else if (volumeMapper instanceof vtkOpenGLGPUVolumeRayCastMapper)
+        {
+            final vtkOpenGLGPUVolumeRayCastMapper mapper = (vtkOpenGLGPUVolumeRayCastMapper) volumeMapper;
 
             if (mapper.GetAutoAdjustSampleDistances() != 0)
                 return 0d;
@@ -640,106 +631,37 @@ public class VtkImageVolume
     }
 
     /**
-     * Returns <code>true</code> if the current volume mapper support multi channel rendering.
+     * Returns true if selected volume mapper is the GPU accelerated raycaster.
      */
-    public boolean isMultiChannelVolumeMapper()
+    public boolean getGPURendering()
     {
-        return isMultiChannelVolumeMapper(getVolumeMapperType());
+        return (volumeMapper instanceof vtkOpenGLGPUVolumeRayCastMapper);
     }
 
     /**
-     * Returns <code>true</code> if the specified volume mapper support multi channel rendering.
+     * Enable GPU volume rendering.
+     * 
+     * @param value
+     *        if <code>true</code> then the GPU accelerated raycaster will be used otherwise the classical CPU
+     *        rayscaster is used.
      */
-    public static boolean isMultiChannelVolumeMapper(VtkVolumeMapperType mapperType)
-    {
-        switch (mapperType)
-        {
-        // case RAYCAST_CPU:
-            case RAYCAST_CPU_FIXEDPOINT:
-                // case SMART:
-                return true;
-
-            default:
-                // case RAYCAST_GPU:
-            case RAYCAST_GPU_OPENGL:
-                // case TEXTURE2D:
-                // case TEXTURE3D:
-            case TEXTURE2D_OPENGL:
-            case TEXTURE3D_OPENGL:
-                return false;
-        }
-    }
-
-    /**
-     * Returns the current volume mapper type (see {@link VtkVolumeMapperType}).
-     */
-    public VtkVolumeMapperType getVolumeMapperType()
-    {
-        if (volumeMapper instanceof vtkFixedPointVolumeRayCastMapper)
-            return VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT;
-        // else if (volumeMapper instanceof vtkVolumeRayCastMapper)
-        // return VtkVolumeMapperType.RAYCAST_CPU;
-        // else if (volumeMapper instanceof vtkGPUVolumeRayCastMapper)
-        // return VtkVolumeMapperType.RAYCAST_GPU;
-        else if (volumeMapper instanceof vtkOpenGLGPUVolumeRayCastMapper)
-            return VtkVolumeMapperType.RAYCAST_GPU_OPENGL;
-        // else if (volumeMapper instanceof vtkSmartVolumeMapper)
-        // return VtkVolumeMapperType.SMART;
-        // else if (volumeMapper instanceof vtkVolumeTextureMapper2D)
-        // return VtkVolumeMapperType.TEXTURE2D;
-        // else if (volumeMapper instanceof vtkVolumeTextureMapper3D)
-        // return VtkVolumeMapperType.TEXTURE3D;
-        // else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper2D)
-        // return VtkVolumeMapperType.TEXTURE2D_OPENGL;
-        // else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper3D)
-        // return VtkVolumeMapperType.TEXTURE3D_OPENGL;
-
-        return null;
-    }
-
-    /**
-     * Sets the current volume mapper type used to render the volume (see {@link VtkVolumeMapperType}).
-     */
-    public boolean setVolumeMapperType(VtkVolumeMapperType value)
+    public boolean setGPURendering(boolean value)
     {
         // volume mapper changed ?
-        if (getVolumeMapperType() != value)
+        if (getGPURendering() != value)
         {
             final vtkVolumeMapper newMapper;
 
-            // DATA
-            switch (value)
+            if (value)
             {
-                default:
-                case RAYCAST_CPU_FIXEDPOINT:
-                    newMapper = new vtkFixedPointVolumeRayCastMapper();
-                    ((vtkFixedPointVolumeRayCastMapper) newMapper).IntermixIntersectingGeometryOn();
-                    break;
-                // case RAYCAST_CPU:
-                // newMapper = new vtkVolumeRayCastMapper();
-                // ((vtkVolumeRayCastMapper) newMapper).IntermixIntersectingGeometryOn();
-                // break;
-                // case RAYCAST_GPU:
-                // newMapper = new vtkGPUVolumeRayCastMapper();
-                // break;
-                case RAYCAST_GPU_OPENGL:
-                    newMapper = new vtkOpenGLGPUVolumeRayCastMapper();
-                    break;
-            // case SMART:
-            // newMapper = new vtkSmartVolumeMapper();
-            // break;
-            // case TEXTURE2D:
-            // newMapper = new vtkVolumeTextureMapper2D();
-            // break;
-            // case TEXTURE3D:
-            // newMapper = new vtkVolumeTextureMapper3D();
-            // break;
-            // case TEXTURE2D_OPENGL:
-            // newMapper = new vtkOpenGLVolumeTextureMapper2D();
-            // break;
-            // case TEXTURE3D_OPENGL:
-            // newMapper = new vtkOpenGLVolumeTextureMapper3D();
-            // break;
+                // GPU raycaster
+                newMapper = new vtkOpenGLGPUVolumeRayCastMapper();
+            }
+            else
+            {
+                // CPU raycaster
+                newMapper = new vtkFixedPointVolumeRayCastMapper();
+                ((vtkFixedPointVolumeRayCastMapper) newMapper).IntermixIntersectingGeometryOn();
             }
 
             // setup volume connection
@@ -765,34 +687,12 @@ public class VtkImageVolume
     }
 
     /**
-     * Returns <code>true</code> if the current selected volume mapper is supported in the specified {@link vtkRenderer}
+     * @deprecated Should always return true now.
      */
-    public boolean isMapperSupported(vtkRenderer renderer)
+    @Deprecated
+    public static boolean isMapperSupported(vtkRenderer renderer)
     {
-        final VtkVolumeMapperType mapperType = getVolumeMapperType();
-
-        if (mapperType == null)
-            return false;
-
-        switch (mapperType)
-        {
-            default:
-                return true;
-
-                // case RAYCAST_GPU:
-                // return (((vtkGPUVolumeRayCastMapper)
-                // volumeMapper).IsRenderSupported(renderer.GetRenderWindow(),
-                // volumeProperty) != 0);
-            case RAYCAST_GPU_OPENGL:
-                return (((vtkOpenGLGPUVolumeRayCastMapper) volumeMapper).IsRenderSupported(renderer.GetRenderWindow(),
-                        volumeProperty) != 0);
-                // case TEXTURE3D:
-                // return (((vtkVolumeTextureMapper3D)
-                // volumeMapper).IsRenderSupported(volumeProperty, renderer) != 0);
-                // case TEXTURE3D_OPENGL:
-                // return (((vtkOpenGLVolumeTextureMapper3D) volumeMapper).IsRenderSupported(volumeProperty, renderer)
-                // != 0);
-        }
+        return true;
     }
 
     /**

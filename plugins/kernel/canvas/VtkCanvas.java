@@ -8,7 +8,6 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
 import icy.gui.component.button.IcyToggleButton;
-import icy.gui.dialog.MessageDialog;
 import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -213,6 +212,15 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         initialized = false;
 
+        // more than 4 channels ? --> not supported by VTK
+        if (getImageSizeC() > 4)
+            throw new UnsupportedOperationException("VTK does not support image with more than 4 channels !");
+
+        // multi channel view
+        posC = -1;
+        // adjust LUT alpha level for 3D view
+        lut.setAlphaToLinear3D();
+
         // create the processor
         propertiesUpdater = new Thread(this, "VTK canvas properties updater");
         propertiesToUpdate = new LinkedBlockingQueue<VtkCanvas.Property>(256);
@@ -252,46 +260,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         shadingButton = new IcyToggleButton(new IcyIcon(ICON_SHADING, false));
         shadingButton.setFocusable(false);
         shadingButton.setToolTipText("Enable volume shadow");
-        
+
         // set fast rendering during initialization
         panel3D.setCoarseRendering(1000);
 
         renderer = panel3D.getRenderer();
         renderWindow = panel3D.getRenderWindow();
         camera = renderer.GetActiveCamera();
-
-        // get volume mapper from preferences
-        VtkVolumeMapperType mapperType = VtkVolumeMapperType.values()[preferences.getInt(ID_MAPPER,
-                VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT.ordinal())];
-        // by default we find channel pos from enabled channel(s)
-        int channelPos = getChannelPos();
-
-        // more than 4 channels ?
-        if (getImageSizeC() > 4)
-        {
-            // multi channel mapper does not support more than 4 channels
-            if (VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
-                // use the GPU texture 2D mapper instead
-                mapperType = VtkVolumeMapperType.TEXTURE2D_OPENGL;
-
-            // can't use multi channel view so display channel 0 by default
-            if (channelPos == -1)
-                channelPos = 0;
-        }
-        // more than 1 channel ?
-        else if (getImageSizeC() > 1)
-        {
-            // more than 1 channel selected --> use the multi channel view
-            if (channelPos == -1)
-                mapperType = VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT;
-        }
-
-        // multi channel view ? --> set channel position to -1 (so we can select channel by channel)
-        if (VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
-            channelPos = -1;
-
-        // set new channel position (don't use setPositionC as setPositionCInternal may fail here)
-        posC = channelPos;
 
         // rebuild volume image
         updateImageData(getImageData());
@@ -332,19 +307,23 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         rulerBox = new vtkCubeAxesActor();
         rulerBox.SetBounds(imageVolume.getVolume().GetBounds());
         rulerBox.SetCamera(camera);
+
         // set bounding box labels properties
+        rulerBox.SetXUnits("micro meter");
         rulerBox.GetTitleTextProperty(0).SetColor(1.0, 0.0, 0.0);
         rulerBox.GetLabelTextProperty(0).SetColor(1.0, 0.0, 0.0);
         rulerBox.GetXAxesGridlinesProperty().SetColor(1.0, 0.0, 0.0);
         rulerBox.GetXAxesGridpolysProperty().SetColor(1.0, 0.0, 0.0);
         rulerBox.GetXAxesInnerGridlinesProperty().SetColor(1.0, 0.0, 0.0);
 
+        rulerBox.SetYUnits("micro meter");
         rulerBox.GetTitleTextProperty(1).SetColor(0.0, 1.0, 0.0);
         rulerBox.GetLabelTextProperty(1).SetColor(0.0, 1.0, 0.0);
         rulerBox.GetYAxesGridlinesProperty().SetColor(0.0, 1.0, 0.0);
         rulerBox.GetYAxesGridpolysProperty().SetColor(0.0, 1.0, 0.0);
         rulerBox.GetYAxesInnerGridlinesProperty().SetColor(0.0, 1.0, 0.0);
 
+        rulerBox.SetZUnits("micro meter");
         rulerBox.GetTitleTextProperty(2).SetColor(0.0, 0.0, 1.0);
         rulerBox.GetLabelTextProperty(2).SetColor(0.0, 0.0, 1.0);
         rulerBox.GetZAxesGridlinesProperty().SetColor(0.0, 0.0, 1.0);
@@ -374,8 +353,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         settingPanel.setBackgroundColor(new Color(preferences.getInt(ID_BGCOLOR, 0x000000)));
         settingPanel.setVolumeBlendingMode(VtkVolumeBlendType.values()[preferences.getInt(ID_BLENDING,
                 VtkVolumeBlendType.COMPOSITE.ordinal())]);
+
         // volume mapper
-        settingPanel.setVolumeMapperType(mapperType);
+        settingPanel.setGPURendering(preferences.getInt(ID_MAPPER, 0) != 0);
         settingPanel.setVolumeInterpolation(preferences.getInt(ID_INTERPOLATION, VtkUtil.VTK_LINEAR_INTERPOLATION));
         settingPanel.setVolumeSample(preferences.getInt(ID_SAMPLE, 0));
         settingPanel.setVolumeAmbient(preferences.getDouble(ID_AMBIENT, 0.5d));
@@ -391,7 +371,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // apply restored settings
         setBackgroundColorInternal(settingPanel.getBackgroundColor());
         imageVolume.setBlendingMode(settingPanel.getVolumeBlendingMode());
-        imageVolume.setVolumeMapperType(settingPanel.getVolumeMapperType());
+        imageVolume.setGPURendering(settingPanel.getGPURendering());
         // mapper may change blending mode
         settingPanel.setVolumeBlendingMode(imageVolume.getBlendingMode());
         imageVolume.setInterpolationMode(settingPanel.getVolumeInterpolation());
@@ -885,19 +865,40 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     /**
-     * @see VtkImageVolume#getVolumeMapperType()
+     * @see VtkImageVolume#getGPURendering()
      */
-    public VtkVolumeMapperType getVolumeMapperType()
+    public boolean getGPURendering()
     {
-        return settingPanel.getVolumeMapperType();
+        return settingPanel.getGPURendering();
     }
 
     /**
-     * @see VtkImageVolume#setVolumeMapperType(VtkVolumeMapperType)
+     * @see VtkImageVolume#setGPURendering(boolean)
      */
+    public void setGPURendering(boolean value)
+    {
+        settingPanel.setGPURendering(value);
+    }
+
+    /**
+     * @deprecated Use {@link #getGPURendering()} instead
+     */
+    @Deprecated
+    public VtkVolumeMapperType getVolumeMapperType()
+    {
+        if (getGPURendering())
+            return VtkVolumeMapperType.RAYCAST_GPU_OPENGL;
+
+        return VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT;
+    }
+
+    /**
+     * @deprecated Use {@link #setGPURendering(boolean)} instead
+     */
+    @Deprecated
     public void setVolumeMapperType(VtkVolumeMapperType value)
     {
-        settingPanel.setVolumeMapperType(value);
+        setGPURendering(VtkVolumeMapperType.RAYCAST_GPU_OPENGL.equals(value));
     }
 
     /**
@@ -965,29 +966,29 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         setVolumeSample(value);
     }
 
-    /**
-     * Returns channel position based on enabled channel in LUT
-     */
-    protected int getChannelPos()
-    {
-        final LUT lut = getLut();
-        int result = -1;
-
-        for (int c = 0; c < lut.getNumChannel(); c++)
-        {
-            final LUTChannel lutChannel = lut.getLutChannel(c);
-
-            if (lutChannel.isEnabled())
-            {
-                if (result == -1)
-                    result = c;
-                else
-                    return -1;
-            }
-        }
-
-        return result;
-    }
+    // /**
+    // * Returns channel position based on enabled channel in LUT
+    // */
+    // protected int getChannelPos()
+    // {
+    // final LUT lut = getLut();
+    // int result = -1;
+    //
+    // for (int c = 0; c < lut.getNumChannel(); c++)
+    // {
+    // final LUTChannel lutChannel = lut.getLutChannel(c);
+    //
+    // if (lutChannel.isEnabled())
+    // {
+    // if (result == -1)
+    // result = c;
+    // else
+    // return -1;
+    // }
+    // }
+    //
+    // return result;
+    // }
 
     /**
      * @see icy.vtk.IcyVtkPanel#getPicker()
@@ -1149,23 +1150,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     {
         final LUT lut = getLut();
 
-        // multi channel volume rendering mapper ?
-        if (imageVolume.isMultiChannelVolumeMapper())
-        {
-            // update the whole LUT
-            for (int c = 0; c < lut.getNumChannel(); c++)
-                updateLut(lut.getLutChannel(c), c);
-        }
-        // single channel mapper
-        else
-        {
-            // find current selected channel
-            final int c = getPositionC();
-
-            // always set on channel 0 if we have a fixed channel position
-            if (c != -1)
-                updateLut(lut.getLutChannel(c), 0);
-        }
+        // update the whole LUT
+        for (int c = 0; c < lut.getNumChannel(); c++)
+            updateLut(lut.getLutChannel(c), c);
     }
 
     protected void updateLut(LUTChannel lutChannel, int channel)
@@ -1354,18 +1341,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     @Override
     protected void setPositionCInternal(int c)
     {
-        if (imageVolume.isMultiChannelVolumeMapper())
-        {
-            // single channel is not possible for multi channel mapper
-            if (c != -1)
-                return;
-        }
-        else
-        {
-            // all channel is not possible for single channel mapper
-            if (c == -1)
-                return;
-        }
+        // single channel mode is not possible here
+        if (c != -1)
+            return;
 
         super.setPositionCInternal(c);
     }
@@ -1594,63 +1572,20 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         }
         else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_MAPPER))
         {
-            final VtkVolumeMapperType type = (VtkVolumeMapperType) value;
-            final boolean prevMC = imageVolume.isMultiChannelVolumeMapper();
+            final boolean gpuRendering = ((Boolean) value).booleanValue();
 
             invokeOnEDT(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    // multi channel mapper does not support more than 4 channels
-                    if (VtkImageVolume.isMultiChannelVolumeMapper(type) && (getImageSizeC() > 4))
-                    {
-                        MessageDialog.showDialog(
-                                "Multi channel volume rendering is not supported on image with more than 4 channels !",
-                                MessageDialog.INFORMATION_MESSAGE);
-                        // use the GPU texture 2D mapper instead
-                        setVolumeMapperType(VtkVolumeMapperType.TEXTURE2D_OPENGL);
-                        return;
-                    }
-
-                    imageVolume.setVolumeMapperType(type);
-
-                    // FIXME: this line actually make VTK to crash
-                    // mapper not supported ? --> switch back to default one
-                    // if (!sequenceVolume.isMapperSupported(renderer))
-                    // sequenceVolume.setVolumeMapperType(VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT);
-
+                    imageVolume.setGPURendering(gpuRendering);
                     // blending mode can change when mapper changed
                     setVolumeBlendingMode(imageVolume.getBlendingMode());
-
-                    final boolean newMC = imageVolume.isMultiChannelVolumeMapper();
-                    if (prevMC != newMC)
-                    {
-                        // changed to multi channel mapper --> display all channel
-                        if (newMC)
-                            setPositionC(-1);
-                        // changed to single channel mapper ?
-                        else
-                        {
-                            // try to find channel pos from enabled channel
-                            final int c = getChannelPos();
-
-                            // no or several channels enabled ? --> by default we select first
-                            // channel
-                            if (c == -1)
-                                setPositionC(0);
-                            else
-                            {
-                                // this won't do any LUT change event so do it manually
-                                setPositionC(c);
-                                updateLut();
-                            }
-                        }
-                    }
                 }
             });
 
-            preferences.putInt(ID_MAPPER, type.ordinal());
+            preferences.putInt(ID_MAPPER, gpuRendering ? 1 : 0);
         }
         else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BLENDING))
         {

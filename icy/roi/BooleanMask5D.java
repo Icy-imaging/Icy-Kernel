@@ -960,7 +960,10 @@ public class BooleanMask5D
         }
     }
 
-    int[] toInt5D(int[] source4D, int c)
+    /**
+     * Transforms the specified 4D coordinates int array [x,y,z,t] in 5D coordinates int array [x,y,z,t,c] with the specified C value.
+     */
+    public static int[] toInt5D(int[] source4D, int c)
     {
         final int[] result = new int[(source4D.length * 5) / 4];
 

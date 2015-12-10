@@ -76,7 +76,10 @@ import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
+import vtk.vtkFileOutputWindow;
 import vtk.vtkNativeLibrary;
+import vtk.vtkObject;
+import vtk.vtkOutputWindow;
 
 /**
  * <br>

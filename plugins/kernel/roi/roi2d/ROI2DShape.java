@@ -41,6 +41,7 @@ import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
+import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
 
 import java.awt.AlphaComposite;
@@ -58,15 +59,19 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
+import vtk.vtkCellArray;
+import vtk.vtkPoints;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
+import vtk.vtkProperty;
 
 /**
  * @author Stephane
@@ -76,20 +81,20 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter, Runnable
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        Object vtkSource;
-        Object polyMapper;
-        Object actor;
+        vtkPolyData polyData;
+        vtkPolyDataMapper polyMapper;
+        vtkActor actor;
         // 3D internal
         boolean needRebuild;
         double scaling[];
-        VtkCanvas canvas3d;
+        WeakReference<VtkCanvas> canvas3d;
 
         public ROI2DShapePainter()
         {
             super();
 
             // don't create VTK object on constructor
-            vtkSource = null;
+            polyData = null;
             polyMapper = null;
             actor = null;
 
@@ -103,13 +108,20 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         protected void initVtkObjects()
         {
             // init 3D painters stuff
-            vtkSource = new vtkPolyData();
+            polyData = new vtkPolyData();
 
             polyMapper = new vtkPolyDataMapper();
-            ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) vtkSource);
+            polyMapper.SetInputData(polyData);
 
             actor = new vtkActor();
-            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            actor.SetMapper(polyMapper);
+
+            // initialize color and stroke
+            final Color col = getColor();
+            final vtkProperty property = actor.GetProperty();
+
+            property.SetPointSize(getStroke());
+            property.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
         }
 
         /**
@@ -117,7 +129,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
          */
         protected void rebuildVtkObjects()
         {
-            final VtkCanvas canvas = canvas3d;
+            final VtkCanvas canvas = canvas3d.get();
             // nothing to update
             if (canvas == null)
                 return;
@@ -221,30 +233,23 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             for (int[] poly : polyList)
                 indexes[ind++] = poly;
 
+            final vtkCellArray cells = VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes));
+            final vtkPoints points = VtkUtil.getPoints(vertices);
+
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas3d.lock();
+            canvas.lock();
             try
             {
-                ((vtkPolyData) vtkSource).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
-                ((vtkPolyData) vtkSource).SetPoints(VtkUtil.getPoints(vertices));
-                ((vtkPolyDataMapper) polyMapper).Update();
+                polyData.SetPolys(cells);
+                polyData.SetPoints(points);
+                polyMapper.Update();
 
-                ((vtkActor) actor).SetScale(scaling);
-                ((vtkActor) actor).GetProperty().SetPointSize(getStroke());
-                final Color color = getColor();
-                ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
-                        color.getBlue() / 255d);
-                // opacity is for interior only, contour can be done with layer opacity information
-                // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
+                actor.SetScale(scaling);
             }
             finally
             {
-                canvas3d.unlock();
+                canvas.unlock();
             }
-
-            // no more pending request
-            if (!ThreadUtil.hasWaitingSingleTask(this))
-                canvas3d = null;
         }
 
         @Override
@@ -744,22 +749,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         initVtkObjects();
 
                     // request rebuild 3D objects
-                    canvas3d = cnv;
+                    canvas3d = new WeakReference<VtkCanvas>(cnv);
                     ThreadUtil.runSingle(this);
                     needRebuild = false;
-                }
-
-                // actor can be accessed in canvas3d for rendering so we need to synchronize access
-                cnv.lock();
-                try
-                {
-                    // update visibility
-                    if (actor != null)
-                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
-                }
-                finally
-                {
-                    cnv.unlock();
                 }
             }
         }
@@ -812,36 +804,21 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 super.setColor(value);
 
                 // also change colors of controls points
-                final Color color = getColor();
                 final Color focusedColor = getFocusedColor();
 
                 synchronized (controlPoints)
                 {
                     for (Anchor2D anchor : controlPoints)
                     {
-                        anchor.setColor(color);
+                        anchor.setColor(value);
                         anchor.setSelectedColor(focusedColor);
                     }
                 }
-
-                if (actor != null)
-                    ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
-                            color.getBlue() / 255d);
             }
             finally
             {
                 endUpdate();
             }
-        }
-
-        @Override
-        public void setOpacity(float value)
-        {
-            // opacity is for interior only, contour can be done with layer opacity information
-            // if (actor != null)
-            // ((vtkActor) actor).GetProperty().SetOpacity(value);
-
-            super.setOpacity(value);
         }
 
         @Override
@@ -851,7 +828,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (actor == null)
                 initVtkObjects();
 
-            return new vtkProp[] {(vtkProp) actor};
+            return new vtkProp[] {actor};
         }
 
         @Override
@@ -1701,6 +1678,51 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             case ROI_CHANGED:
                 // refresh shape
                 updateShape();
+                break;
+
+            case PROPERTY_CHANGED:
+                final String property = event.getPropertyName();
+
+                if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
+                        || StringUtil.equals(property, PROPERTY_OPACITY))
+                {
+                    final ROI2DShapePainter overlay = ((ROI2DShapePainter) getOverlay());
+                    final vtkActor actor = overlay.actor;
+                    final WeakReference<VtkCanvas> canvas3d = overlay.canvas3d;
+
+                    if (actor != null)
+                    {
+                        final VtkCanvas cnv = canvas3d.get();
+                        final vtkProperty vtkProperty = actor.GetProperty();
+                        final Color col = getColor();
+                        final double strk = getStroke();
+                        // final float opacity = getOpacity();
+
+                        // we need to lock canvas as actor can be accessed during rendering
+                        if (cnv != null)
+                        {
+                            cnv.lock();
+                            try
+                            {
+                                vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
+                                vtkProperty.SetPointSize(strk);
+                                // opacity here is about ROI content, whole actor opacity is handled by Layer
+                                // vtkProperty.SetOpacity(opacity);
+                            }
+                            finally
+                            {
+                                cnv.unlock();
+                            }
+                        }
+                        else
+                        {
+                            vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
+                            vtkProperty.SetPointSize(strk);
+                            // opacity here is about ROI content, whole actor opacity is handled by Layer
+                            // vtkProperty.SetOpacity(opacity);
+                        }
+                    }
+                }
                 break;
         }
 
