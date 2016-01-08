@@ -26,6 +26,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JCheckBox;
 
 public class VtkSettingPanel extends JPanel implements ActionListener, TextChangeListener, ColorChangeListener
 
@@ -52,7 +53,7 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
      * GUI
      */
     private ColorChooserButton bgColorButton;
-    private IcyToggleButton gpuMapperButton;
+    private JCheckBox gpuMapperCheckBox;
     private JComboBox volumeBlendingComboBox;
     private JComboBox volumeSampleComboBox;
     private JComboBox volumeInterpolationComboBox;
@@ -73,8 +74,7 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         updateState();
 
         bgColorButton.addColorChangeListener(this);
-
-        gpuMapperButton.addActionListener(this);
+        gpuMapperCheckBox.addActionListener(this);
         volumeBlendingComboBox.addActionListener(this);
         volumeInterpolationComboBox.addActionListener(this);
         volumeSampleComboBox.addActionListener(this);
@@ -113,18 +113,18 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         gbc_bgColorButton.gridy = 0;
         add(bgColorButton, gbc_bgColorButton);
 
-        gpuMapperButton = new IcyToggleButton(new IcyIcon(ICON_GPU, true));
-        gpuMapperButton.setFocusable(false);
-        gpuMapperButton.setIconTextGap(8);
-        gpuMapperButton.setText("GPU rendering");
-        gpuMapperButton.setToolTipText("Enable GPU volume rendering");
+        gpuMapperCheckBox = new JCheckBox("New check box");
+        gpuMapperCheckBox.setFocusable(false);
+        gpuMapperCheckBox.setIconTextGap(8);
+        gpuMapperCheckBox.setText("GPU rendering");
+        gpuMapperCheckBox.setToolTipText("Enable GPU volume rendering");
         GridBagConstraints gbc_gpuMapperCheckBox = new GridBagConstraints();
         gbc_gpuMapperCheckBox.anchor = GridBagConstraints.EAST;
         gbc_gpuMapperCheckBox.gridwidth = 2;
         gbc_gpuMapperCheckBox.insets = new Insets(0, 0, 5, 0);
         gbc_gpuMapperCheckBox.gridx = 2;
         gbc_gpuMapperCheckBox.gridy = 0;
-        add(gpuMapperButton, gbc_gpuMapperCheckBox);
+        add(gpuMapperCheckBox, gbc_gpuMapperCheckBox);
 
         final JLabel lblInterpolation = new JLabel("Interpolation  ");
         lblInterpolation.setToolTipText("Select volume rendering interpolation method");
@@ -275,12 +275,12 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
 
     public boolean getGPURendering()
     {
-        return gpuMapperButton.isSelected();
+        return gpuMapperCheckBox.isSelected();
     }
 
     public void setGPURendering(boolean value)
     {
-        gpuMapperButton.setSelected(value);
+        gpuMapperCheckBox.setSelected(value);
     }
 
     public int getVolumeInterpolation()
@@ -403,9 +403,9 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
     {
         final Object source = e.getSource();
 
-        if (source == gpuMapperButton)
-            fireSettingChange(source, PROPERTY_MAPPER, Boolean.valueOf(!gpuMapperButton.isSelected()),
-                    Boolean.valueOf(gpuMapperButton.isSelected()));
+        if (source == gpuMapperCheckBox)
+            fireSettingChange(source, PROPERTY_MAPPER, Boolean.valueOf(!gpuMapperCheckBox.isSelected()),
+                    Boolean.valueOf(gpuMapperCheckBox.isSelected()));
         else if (source == volumeBlendingComboBox)
             fireSettingChange(source, PROPERTY_BLENDING, null, volumeBlendingComboBox.getSelectedItem());
         else if (source == volumeSampleComboBox)
