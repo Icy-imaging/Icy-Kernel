@@ -5,11 +5,16 @@ import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.NumberTextField;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
+import icy.gui.component.button.IcyToggleButton;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.vtk.VtkImageVolume;
 import icy.vtk.VtkImageVolume.VtkVolumeBlendType;
 
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.util.EventListener;
 
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,11 +35,15 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
      */
     private static final long serialVersionUID = 6433369095311474470L;
 
+    protected static final Image ICON_GPU = ResourceUtil.getAlphaIconAsImage("gpu.png");
+    protected static final Image ICON_SHADING = ResourceUtil.getColorIconAsImage("shading.png");
+
     public static final String PROPERTY_BG_COLOR = "renderBGColor";
     public static final String PROPERTY_MAPPER = "volumeMapper";
     public static final String PROPERTY_BLENDING = "volumeBlending";
     public static final String PROPERTY_SAMPLE = "volumeSample";
     public static final String PROPERTY_INTERPOLATION = "volumeInterpolation";
+    public static final String PROPERTY_SHADING = "shading";
     public static final String PROPERTY_AMBIENT = "volumeAmbient";
     public static final String PROPERTY_DIFFUSE = "volumeDiffuse";
     public static final String PROPERTY_SPECULAR = "volumeSpecular";
@@ -44,10 +52,11 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
      * GUI
      */
     private ColorChooserButton bgColorButton;
-    private JCheckBox gpuMapperCheckBox;
+    private IcyToggleButton gpuMapperButton;
     private JComboBox volumeBlendingComboBox;
     private JComboBox volumeSampleComboBox;
     private JComboBox volumeInterpolationComboBox;
+    private IcyToggleButton shadingButton;
     private NumberTextField volumeAmbientField;
     private NumberTextField volumeSpecularField;
     private NumberTextField volumeDiffuseField;
@@ -65,10 +74,11 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
 
         bgColorButton.addColorChangeListener(this);
 
-        gpuMapperCheckBox.addActionListener(this);
+        gpuMapperButton.addActionListener(this);
         volumeBlendingComboBox.addActionListener(this);
         volumeInterpolationComboBox.addActionListener(this);
         volumeSampleComboBox.addActionListener(this);
+        shadingButton.addActionListener(this);
 
         volumeAmbientField.addTextChangeListener(this);
         volumeDiffuseField.addTextChangeListener(this);
@@ -103,15 +113,18 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         gbc_bgColorButton.gridy = 0;
         add(bgColorButton, gbc_bgColorButton);
 
-        gpuMapperCheckBox = new JCheckBox("GPU Rendering");
-        gpuMapperCheckBox.setToolTipText("Enable GPU volume rendering");
+        gpuMapperButton = new IcyToggleButton(new IcyIcon(ICON_GPU, true));
+        gpuMapperButton.setFocusable(false);
+        gpuMapperButton.setIconTextGap(8);
+        gpuMapperButton.setText("GPU rendering");
+        gpuMapperButton.setToolTipText("Enable GPU volume rendering");
         GridBagConstraints gbc_gpuMapperCheckBox = new GridBagConstraints();
+        gbc_gpuMapperCheckBox.anchor = GridBagConstraints.EAST;
         gbc_gpuMapperCheckBox.gridwidth = 2;
-        gbc_gpuMapperCheckBox.anchor = GridBagConstraints.WEST;
-        gbc_gpuMapperCheckBox.insets = new Insets(0, 0, 5, 5);
+        gbc_gpuMapperCheckBox.insets = new Insets(0, 0, 5, 0);
         gbc_gpuMapperCheckBox.gridx = 2;
         gbc_gpuMapperCheckBox.gridy = 0;
-        add(gpuMapperCheckBox, gbc_gpuMapperCheckBox);
+        add(gpuMapperButton, gbc_gpuMapperCheckBox);
 
         final JLabel lblInterpolation = new JLabel("Interpolation  ");
         lblInterpolation.setToolTipText("Select volume rendering interpolation method");
@@ -180,14 +193,17 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         gbc_volumeSampleComboBox.gridy = 3;
         add(volumeSampleComboBox, gbc_volumeSampleComboBox);
 
-        JLabel lblShading = new JLabel("Light");
-        lblShading.setToolTipText("Set volume light properties");
-        GridBagConstraints gbc_lblShading = new GridBagConstraints();
-        gbc_lblShading.insets = new Insets(0, 0, 0, 5);
-        gbc_lblShading.anchor = GridBagConstraints.WEST;
-        gbc_lblShading.gridx = 0;
-        gbc_lblShading.gridy = 4;
-        add(lblShading, gbc_lblShading);
+        shadingButton = new IcyToggleButton(new IcyIcon(ICON_SHADING, false));
+        shadingButton.setIconTextGap(8);
+        shadingButton.setText("Shading");
+        shadingButton.setFocusable(false);
+        shadingButton.setToolTipText("Enable volume shading");
+        GridBagConstraints gbc_shadingBtn = new GridBagConstraints();
+        gbc_shadingBtn.anchor = GridBagConstraints.WEST;
+        gbc_shadingBtn.insets = new Insets(0, 0, 0, 5);
+        gbc_shadingBtn.gridx = 0;
+        gbc_shadingBtn.gridy = 4;
+        add(shadingButton, gbc_shadingBtn);
 
         volumeAmbientField = new NumberTextField();
         volumeAmbientField.setToolTipText("Ambient lighting coefficient");
@@ -259,12 +275,12 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
 
     public boolean getGPURendering()
     {
-        return gpuMapperCheckBox.isSelected();
+        return gpuMapperButton.isSelected();
     }
 
     public void setGPURendering(boolean value)
     {
-        gpuMapperCheckBox.setSelected(value);
+        gpuMapperButton.setSelected(value);
     }
 
     public int getVolumeInterpolation()
@@ -331,6 +347,23 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
     }
 
     /**
+     * @see VtkImageVolume#getShade()
+     */
+    public boolean getVolumeShading()
+    {
+        return shadingButton.isSelected();
+    }
+
+    /**
+     * @see VtkImageVolume#setShade(boolean)
+     */
+    public void setVolumeShading(boolean value)
+    {
+        if (shadingButton.isSelected() != value)
+            shadingButton.doClick();
+    }
+
+    /**
      * Add a SettingChange listener
      */
     public void addSettingChangeListener(SettingChangeListener listener)
@@ -370,9 +403,9 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
     {
         final Object source = e.getSource();
 
-        if (source == gpuMapperCheckBox)
-            fireSettingChange(source, PROPERTY_MAPPER, Boolean.valueOf(!gpuMapperCheckBox.isSelected()),
-                    Boolean.valueOf(gpuMapperCheckBox.isSelected()));
+        if (source == gpuMapperButton)
+            fireSettingChange(source, PROPERTY_MAPPER, Boolean.valueOf(!gpuMapperButton.isSelected()),
+                    Boolean.valueOf(gpuMapperButton.isSelected()));
         else if (source == volumeBlendingComboBox)
             fireSettingChange(source, PROPERTY_BLENDING, null, volumeBlendingComboBox.getSelectedItem());
         else if (source == volumeSampleComboBox)
@@ -381,6 +414,9 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         else if (source == volumeInterpolationComboBox)
             fireSettingChange(source, PROPERTY_INTERPOLATION, Integer.valueOf(-1),
                     Integer.valueOf(volumeInterpolationComboBox.getSelectedIndex()));
+        else if (source == shadingButton)
+            fireSettingChange(source, PROPERTY_SHADING, Integer.valueOf(-1),
+                    Boolean.valueOf(shadingButton.isSelected()));
 
         updateState();
     }

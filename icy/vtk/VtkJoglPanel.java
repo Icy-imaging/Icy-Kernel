@@ -15,7 +15,6 @@ import vtk.vtkCamera;
 import vtk.vtkGenericOpenGLRenderWindow;
 import vtk.vtkGenericRenderWindowInteractor;
 import vtk.vtkLight;
-import vtk.vtkObjectBase;
 import vtk.vtkRenderWindow;
 import vtk.vtkRenderWindowInteractor;
 import vtk.vtkRenderer;
@@ -93,7 +92,7 @@ public class VtkJoglPanel extends GLJPanel
                     rw.SetPosition(0, 0);
                     setSize(drawable.getWidth(), drawable.getHeight());
                     rw.OpenGLInit();
-
+                    
                     // init light
                     if (!lightingset)
                     {

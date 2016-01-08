@@ -19,8 +19,6 @@
 package plugins.kernel.roi.roi3d;
 
 import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.canvas.IcyCanvas3D;
 import icy.painter.OverlayEvent;
 import icy.painter.OverlayListener;
 import icy.roi.BooleanMask2D;
@@ -67,7 +65,6 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     protected final TreeMap<Integer, R> slices = new TreeMap<Integer, R>();
 
     protected final Class<R> roiClass;
-    protected boolean useChildColor;
     protected Semaphore modifyingSlice;
     protected double translateZ;
 
@@ -79,7 +76,6 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         super();
 
         this.roiClass = roiClass;
-        useChildColor = false;
         modifyingSlice = new Semaphore(1);
         translateZ = 0d;
     }
@@ -107,29 +103,25 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     /**
-     * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and
-     * <code>false</code> if it uses the global 3D ROI color draw property.
+     * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and <code>false</code> if it
+     * uses the global 3D ROI color draw property.
      */
+    @SuppressWarnings("unchecked")
     public boolean getUseChildColor()
     {
-        return useChildColor;
+        return ((ROI3DStackPainter) getOverlay()).getUseChildColor();
     }
 
     /**
-     * Set to <code>true</code> if you want to directly use the 2D slice color draw property and
-     * <code>false</code> to keep the global 3D ROI color draw property.
+     * Set to <code>true</code> if you want to directly use the 2D slice color draw property and <code>false</code> to
+     * keep the global 3D ROI color draw property.
      * 
      * @see #setColor(int, Color)
      */
+    @SuppressWarnings("unchecked")
     public void setUseChildColor(boolean value)
     {
-        if (useChildColor != value)
-        {
-            useChildColor = value;
-            propertyChanged(PROPERTY_USECHILDCOLOR);
-            // need to redraw it
-            getOverlay().painterChanged();
-        }
+        ((ROI3DStackPainter) getOverlay()).setUseChildColor(value);
     }
 
     /**
@@ -137,98 +129,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
      * 
      * @see #setUseChildColor(boolean)
      */
+    @SuppressWarnings("unchecked")
     public void setColor(int z, Color value)
     {
-        final ROI2D slice = getSlice(z);
-
-        modifyingSlice.acquireUninterruptibly();
-        try
-        {
-            if (slice != null)
-                slice.setColor(value);
-        }
-        finally
-        {
-            modifyingSlice.release();
-        }
-    }
-
-    @Override
-    public void setColor(Color value)
-    {
-        beginUpdate();
-        try
-        {
-            super.setColor(value);
-
-            if (!getUseChildColor())
-            {
-                modifyingSlice.acquireUninterruptibly();
-                try
-                {
-                    for (R slice : slices.values())
-                        slice.setColor(value);
-                }
-                finally
-                {
-                    modifyingSlice.release();
-                }
-            }
-        }
-        finally
-        {
-            endUpdate();
-        }
-    }
-
-    @Override
-    public void setOpacity(float value)
-    {
-        beginUpdate();
-        try
-        {
-            super.setOpacity(value);
-
-            modifyingSlice.acquireUninterruptibly();
-            try
-            {
-                for (R slice : slices.values())
-                    slice.setOpacity(value);
-            }
-            finally
-            {
-                modifyingSlice.release();
-            }
-        }
-        finally
-        {
-            endUpdate();
-        }
-    }
-
-    @Override
-    public void setStroke(double value)
-    {
-        beginUpdate();
-        try
-        {
-            super.setStroke(value);
-
-            modifyingSlice.acquireUninterruptibly();
-            try
-            {
-                for (R slice : slices.values())
-                    slice.setStroke(value);
-            }
-            finally
-            {
-                modifyingSlice.release();
-            }
-        }
-        finally
-        {
-            endUpdate();
-        }
+        ((ROI3DStackPainter) getOverlay()).setColor(z, value);
     }
 
     @Override
@@ -392,8 +296,8 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     /**
      * @return The size of this ROI stack along Z.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
-     *         of this ROI, but doesn't guarantee that all slices in-between exist (
-     *         {@link #getSlice(int)} may still return <code>null</code>.<br>
+     *         of this ROI, but doesn't guarantee that all slices in-between exist ( {@link #getSlice(int)} may still
+     *         return <code>null</code>.<br>
      */
     public int getSizeZ()
     {
@@ -435,7 +339,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     {
         if (roi2d == null)
             throw new IllegalArgumentException("Cannot set an empty slice in a 3D ROI");
-        
+
         // set Z, T and C position
         roi2d.setZ(z);
         roi2d.setT(getT());
@@ -742,6 +646,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             {
                 modifyingSlice.release();
             }
+            
+            // notify ROI changed because we modified slice 'internally'
+            if ((dx != 0d) || (dy != 0d))
+                roiChanged();
         }
         finally
         {
@@ -844,14 +752,198 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
 
     public class ROI3DStackPainter extends ROIPainter
     {
-        R getSliceForCanvas(IcyCanvas canvas)
+        protected boolean useChildColor;
+
+        public ROI3DStackPainter()
+        {
+            super();
+
+            useChildColor = false;
+        }
+
+        // protected R getSliceForCanvas(IcyCanvas canvas)
+        // {
+        // final int z = canvas.getPositionZ();
+        //
+        // if (z >= 0)
+        // return getSlice(z);
+        //
+        // return null;
+        // }
+
+        protected ROIPainter getSliceOverlayForCanvas(IcyCanvas canvas)
         {
             final int z = canvas.getPositionZ();
 
             if (z >= 0)
-                return getSlice(z);
+                return getSliceOverlay(z);
 
             return null;
+        }
+
+        /**
+         * Returns the ROI overlay at given Z position.
+         */
+        protected ROIPainter getSliceOverlay(int z)
+        {
+            R roi = getSlice(z);
+
+            if (roi != null)
+                return roi.getOverlay();
+
+            return null;
+        }
+
+        /**
+         * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and <code>false</code> if
+         * it uses the global 3D ROI color draw property.
+         */
+        public boolean getUseChildColor()
+        {
+            return useChildColor;
+        }
+
+        /**
+         * Set to <code>true</code> if you want to directly use the 2D slice color draw property and <code>false</code>
+         * to keep the global 3D ROI color draw property.
+         * 
+         * @see #setColor(int, Color)
+         */
+        public void setUseChildColor(boolean value)
+        {
+            if (useChildColor != value)
+            {
+                useChildColor = value;
+                propertyChanged(PROPERTY_USECHILDCOLOR);
+                // need to redraw it
+                painterChanged();
+            }
+        }
+
+        /**
+         * Set the painter color for the specified ROI slice.
+         * 
+         * @see #setUseChildColor(boolean)
+         */
+        public void setColor(int z, Color value)
+        {
+            final ROIPainter sliceOverlay = getSliceOverlay(z);
+
+            if (sliceOverlay != null)
+            {
+                modifyingSlice.acquireUninterruptibly();
+                try
+                {
+                    sliceOverlay.setColor(value);
+                }
+                finally
+                {
+                    modifyingSlice.release();
+                }
+            }
+        }
+
+        @Override
+        public void setColor(Color value)
+        {
+            beginUpdate();
+            try
+            {
+                super.setColor(value);
+
+                if (!getUseChildColor())
+                {
+                    modifyingSlice.acquireUninterruptibly();
+                    try
+                    {
+                        for (R slice : slices.values())
+                            slice.getOverlay().setColor(value);
+                    }
+                    finally
+                    {
+                        modifyingSlice.release();
+                    }
+                }
+            }
+            finally
+            {
+                endUpdate();
+            }
+        }
+
+        @Override
+        public void setOpacity(float value)
+        {
+            beginUpdate();
+            try
+            {
+                super.setOpacity(value);
+
+                modifyingSlice.acquireUninterruptibly();
+                try
+                {
+                    for (R slice : slices.values())
+                        slice.getOverlay().setOpacity(value);
+                }
+                finally
+                {
+                    modifyingSlice.release();
+                }
+            }
+            finally
+            {
+                endUpdate();
+            }
+        }
+
+        @Override
+        public void setStroke(double value)
+        {
+            beginUpdate();
+            try
+            {
+                super.setStroke(value);
+
+                modifyingSlice.acquireUninterruptibly();
+                try
+                {
+                    for (R slice : slices.values())
+                        slice.getOverlay().setStroke(value);
+                }
+                finally
+                {
+                    modifyingSlice.release();
+                }
+            }
+            finally
+            {
+                endUpdate();
+            }
+        }
+
+        @Override
+        public void setShowName(boolean value)
+        {
+            beginUpdate();
+            try
+            {
+                super.setShowName(value);
+
+                modifyingSlice.acquireUninterruptibly();
+                try
+                {
+                    for (R slice : slices.values())
+                        slice.getOverlay().setShowName(value);
+                }
+                finally
+                {
+                    modifyingSlice.release();
+                }
+            }
+            finally
+            {
+                endUpdate();
+            }
         }
 
         @Override
@@ -859,19 +951,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         {
             if (isActiveFor(canvas))
             {
-                if (canvas instanceof IcyCanvas3D)
-                {
-                    // TODO
+                // forward event to current slice
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                }
-                else if (canvas instanceof IcyCanvas2D)
-                {
-                    // forward event to current slice
-                    final R slice = getSliceForCanvas(canvas);
-
-                    if (slice != null)
-                        slice.getOverlay().paint(g, sequence, canvas);
-                }
+                if (sliceOverlay != null)
+                    sliceOverlay.paint(g, sequence, canvas);
             }
         }
 
@@ -885,10 +969,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().keyPressed(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.keyPressed(e, imagePoint, canvas);
             }
         }
 
@@ -902,10 +986,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().keyReleased(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.keyReleased(e, imagePoint, canvas);
             }
         }
 
@@ -919,10 +1003,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseEntered(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseEntered(e, imagePoint, canvas);
             }
         }
 
@@ -936,10 +1020,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseExited(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseExited(e, imagePoint, canvas);
             }
         }
 
@@ -953,10 +1037,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseMove(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseMove(e, imagePoint, canvas);
             }
         }
 
@@ -970,10 +1054,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseDrag(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseDrag(e, imagePoint, canvas);
             }
         }
 
@@ -987,10 +1071,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mousePressed(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mousePressed(e, imagePoint, canvas);
             }
         }
 
@@ -1004,10 +1088,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseReleased(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseReleased(e, imagePoint, canvas);
             }
         }
 
@@ -1021,10 +1105,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseClick(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseClick(e, imagePoint, canvas);
             }
         }
 
@@ -1038,12 +1122,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             if (isActiveFor(canvas))
             {
                 // forward event to current slice
-                final R slice = getSliceForCanvas(canvas);
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
 
-                if (slice != null)
-                    slice.getOverlay().mouseWheelMoved(e, imagePoint, canvas);
+                if (sliceOverlay != null)
+                    sliceOverlay.mouseWheelMoved(e, imagePoint, canvas);
             }
         }
     }
-
 }

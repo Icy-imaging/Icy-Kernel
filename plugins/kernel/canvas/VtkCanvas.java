@@ -24,6 +24,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.type.collection.array.Array1DUtil;
+import icy.type.point.Point5D;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
 import icy.util.StringUtil;
@@ -67,9 +68,9 @@ import vtk.vtkImageData;
 import vtk.vtkLight;
 import vtk.vtkObjectBase;
 import vtk.vtkOrientationMarkerWidget;
+import vtk.vtkPicker;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkProp;
-import vtk.vtkPropPicker;
 import vtk.vtkRenderWindow;
 import vtk.vtkRenderer;
 import vtk.vtkTextActor;
@@ -96,7 +97,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected static final Image ICON_GRID = ResourceUtil.getAlphaIconAsImage("3x3_grid.png");
     protected static final Image ICON_RULER = ResourceUtil.getAlphaIconAsImage("ruler.png");
     protected static final Image ICON_RULERLABEL = ResourceUtil.getAlphaIconAsImage("ruler_label.png");
-    protected static final Image ICON_SHADING = ResourceUtil.getColorIconAsImage("shading.png");
+    protected static final Image ICON_TARGET = ResourceUtil.getAlphaIconAsImage("target.png");
 
     /**
      * properties
@@ -106,7 +107,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     public static final String PROPERTY_BOUNDINGBOX_GRID = "boundingBoxGrid";
     public static final String PROPERTY_BOUNDINGBOX_RULES = "boundingBoxRules";
     public static final String PROPERTY_BOUNDINGBOX_LABELS = "boundingBoxLabels";
-    public static final String PROPERTY_SHADING = "shading";
     public static final String PROPERTY_LUT = "lut";
     public static final String PROPERTY_DATA = "data";
     public static final String PROPERTY_SCALE = "scale";
@@ -124,8 +124,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected static final String ID_BOUNDINGBOX_GRID = PROPERTY_BOUNDINGBOX_GRID;
     protected static final String ID_BOUNDINGBOX_RULES = PROPERTY_BOUNDINGBOX_RULES;
     protected static final String ID_BOUNDINGBOX_LABELS = PROPERTY_BOUNDINGBOX_LABELS;
+    // protected static final String ID_PICKONMOUSEMOVE = "pickOnMouseMove";
     protected static final String ID_AXES = PROPERTY_AXES;
-    protected static final String ID_SHADING = PROPERTY_SHADING;
+    protected static final String ID_SHADING = VtkSettingPanel.PROPERTY_SHADING;
     protected static final String ID_BGCOLOR = VtkSettingPanel.PROPERTY_BG_COLOR;
     protected static final String ID_MAPPER = VtkSettingPanel.PROPERTY_MAPPER;
     protected static final String ID_SAMPLE = VtkSettingPanel.PROPERTY_SAMPLE;
@@ -179,6 +180,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected vtkTextActor textInfo;
     protected vtkTextProperty textProperty;
     // protected vtkOrientationMarkerWidget widget;
+    protected vtkProp pickedObject;
 
     /**
      * volume data
@@ -195,7 +197,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected IcyToggleButton gridButton;
     protected IcyToggleButton rulerButton;
     protected IcyToggleButton rulerLabelButton;
-    protected IcyToggleButton shadingButton;
+    protected IcyToggleButton pickOnMouseMoveButton;
 
     /**
      * internals
@@ -220,6 +222,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         posC = -1;
         // adjust LUT alpha level for 3D view
         lut.setAlphaToLinear3D();
+
+        pickedObject = null;
 
         // create the processor
         propertiesUpdater = new Thread(this, "VTK canvas properties updater");
@@ -257,9 +261,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         rulerLabelButton = new IcyToggleButton(new IcyIcon(ICON_RULERLABEL));
         rulerLabelButton.setFocusable(false);
         rulerLabelButton.setToolTipText("Display rules label");
-        shadingButton = new IcyToggleButton(new IcyIcon(ICON_SHADING, false));
-        shadingButton.setFocusable(false);
-        shadingButton.setToolTipText("Enable volume shadow");
+        pickOnMouseMoveButton = new IcyToggleButton(new IcyIcon(ICON_TARGET));
+        pickOnMouseMoveButton.setFocusable(false);
+        pickOnMouseMoveButton.setToolTipText("Enabled object focus on mouse over (slow)");
 
         // set fast rendering during initialization
         panel3D.setCoarseRendering(1000);
@@ -358,15 +362,18 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         settingPanel.setGPURendering(preferences.getInt(ID_MAPPER, 0) != 0);
         settingPanel.setVolumeInterpolation(preferences.getInt(ID_INTERPOLATION, VtkUtil.VTK_LINEAR_INTERPOLATION));
         settingPanel.setVolumeSample(preferences.getInt(ID_SAMPLE, 0));
-        settingPanel.setVolumeAmbient(preferences.getDouble(ID_AMBIENT, 0.5d));
+        settingPanel.setVolumeAmbient(preferences.getDouble(ID_AMBIENT, 0.2d));
         settingPanel.setVolumeDiffuse(preferences.getDouble(ID_DIFFUSE, 0.4d));
         settingPanel.setVolumeSpecular(preferences.getDouble(ID_SPECULAR, 0.4d));
+        settingPanel.setVolumeShading(preferences.getBoolean(ID_SHADING, false));
         axesButton.setSelected(preferences.getBoolean(ID_AXES, true));
         boundingBoxButton.setSelected(preferences.getBoolean(ID_BOUNDINGBOX, true));
         gridButton.setSelected(preferences.getBoolean(ID_BOUNDINGBOX_GRID, true));
         rulerButton.setSelected(preferences.getBoolean(ID_BOUNDINGBOX_RULES, false));
         rulerLabelButton.setSelected(preferences.getBoolean(ID_BOUNDINGBOX_LABELS, false));
-        shadingButton.setSelected(preferences.getBoolean(ID_SHADING, false));
+        // pickOnMouseMoveButton.setSelected(preferences.getBoolean(ID_PICKONMOUSEMOVE, false));
+        // always false by default (preferable)
+        pickOnMouseMoveButton.setSelected(false);
 
         // apply restored settings
         setBackgroundColorInternal(settingPanel.getBackgroundColor());
@@ -379,7 +386,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         imageVolume.setAmbient(settingPanel.getVolumeAmbient());
         imageVolume.setDiffuse(settingPanel.getVolumeDiffuse());
         imageVolume.setSpecular(settingPanel.getVolumeSpecular());
-        imageVolume.setShade(shadingButton.isSelected());
+        imageVolume.setShade(settingPanel.getVolumeShading());
         // axes.SetVisibility(axesButton.isSelected() ? 1 : 0);
         boundingBox.SetVisibility(boundingBoxButton.isSelected() ? 1 : 0);
         rulerBox.SetDrawXGridlines(gridButton.isSelected() ? 1 : 0);
@@ -394,6 +401,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         rulerBox.SetXAxisLabelVisibility(rulerLabelButton.isSelected() ? 1 : 0);
         rulerBox.SetYAxisLabelVisibility(rulerLabelButton.isSelected() ? 1 : 0);
         rulerBox.SetZAxisLabelVisibility(rulerLabelButton.isSelected() ? 1 : 0);
+        setPickOnMouseMove(pickOnMouseMoveButton.isSelected());
 
         // add volume to renderer
         renderer.AddVolume(imageVolume.getVolume());
@@ -417,7 +425,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         gridButton.addActionListener(this);
         rulerButton.addActionListener(this);
         rulerLabelButton.addActionListener(this);
-        shadingButton.addActionListener(this);
+        pickOnMouseMoveButton.addActionListener(this);
 
         // create EDTTask object
         edtTask = new EDTTask<Object>();
@@ -503,7 +511,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         toolBar.add(rulerButton);
         toolBar.add(rulerLabelButton);
         toolBar.addSeparator();
-        toolBar.add(shadingButton);
+        toolBar.add(pickOnMouseMoveButton);
     }
 
     @Override
@@ -788,7 +796,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      */
     public boolean isVolumeShadingEnable()
     {
-        return shadingButton.isSelected();
+        return settingPanel.getVolumeShading();
     }
 
     /**
@@ -796,8 +804,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      */
     public void setVolumeShadingEnable(boolean value)
     {
-        if (shadingButton.isSelected() != value)
-            shadingButton.doClick();
+        settingPanel.setVolumeShading(value);
     }
 
     /**
@@ -991,17 +998,48 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     // }
 
     /**
-     * @see icy.vtk.IcyVtkPanel#getPicker()
+     * Returns <code>true</code> if picking on mouse move/drag event is allowed.
+     * 
+     * @see #setPickOnMouseMove(boolean)
+     * @see #getPickedObject()
+     * @see #pick(int, int)
      */
-    public vtkPropPicker getPicker()
+    public boolean getPickOnMouseMove()
     {
-        return panel3D.getPicker();
+        return pickOnMouseMoveButton.isSelected();
+    }
+
+    /**
+     * When set to <code>true</code> any mouse move/drag event will produce a pick operation at cursor position.
+     * This can produce important slowdowns so the default value if <code>false</code>.<br/>
+     * 
+     * @see #getPickOnMouseMove()
+     * @see #getPickedObject()
+     * @see #pick(int, int)
+     */
+    public void setPickOnMouseMove(boolean value)
+    {
+        if (pickOnMouseMoveButton.isSelected() != value)
+            pickOnMouseMoveButton.doClick();
+    }
+
+    /**
+     * Returns the picked object on the last mouse move/press event (can be <code>null</code> if no object was picked).<br/>
+     * By default object is picked on mouse press event but it can be enabled on mouse move event using the
+     * {@link #setPickOnMouseMove(boolean)} method.
+     * 
+     * @see #setPickOnMouseMove(boolean)
+     * @see #pick(int, int)
+     */
+    public vtkProp getPickedObject()
+    {
+        return pickedObject;
     }
 
     /**
      * @see icy.vtk.IcyVtkPanel#pick(int, int)
      */
-    public vtkActor pick(int x, int y)
+    public vtkProp pick(int x, int y)
     {
         return panel3D.pick(x, y);
     }
@@ -1202,6 +1240,14 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     /**
+     * @see icy.vtk.IcyVtkPanel#getPicker()
+     */
+    public vtkPicker getPicker()
+    {
+        return panel3D.getPicker();
+    }
+
+    /**
      * Get scaling for image volume rendering
      */
     @Override
@@ -1252,6 +1298,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     {
         // not supported
         return 0d;
+    }
+
+    @Override
+    public Point5D.Double getMouseImagePos5D()
+    {
+        // not supported
+        return null;
     }
 
     @Override
@@ -1580,8 +1633,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 public void run()
                 {
                     imageVolume.setGPURendering(gpuRendering);
-                    // blending mode can change when mapper changed
-                    setVolumeBlendingMode(imageVolume.getBlendingMode());
                 }
             });
 
@@ -1701,7 +1752,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
             preferences.putBoolean(ID_BOUNDINGBOX_LABELS, b);
         }
-        else if (StringUtil.equals(name, PROPERTY_SHADING))
+        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SHADING))
         {
             final boolean b = ((Boolean) value).booleanValue();
 
@@ -1927,9 +1978,14 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         if (!initialized)
             return;
 
-        // layer visibility property modified ?
-        if ((event.getType() == LayersEventType.CHANGED) && Layer.isPaintProperty(event.getProperty()))
-            propertyChange(PROPERTY_LAYERS_VISIBLE, event.getSource());
+        if (event.getType() == LayersEventType.CHANGED)
+        {
+            final String propertyName = event.getProperty();
+
+            // we ignore priority property here as we display in 3D
+            if (propertyName.equals(Layer.PROPERTY_OPACITY) || propertyName.equals(Layer.PROPERTY_VISIBLE))
+                propertyChange(PROPERTY_LAYERS_VISIBLE, event.getSource());
+        }
     }
 
     @Override
@@ -1974,8 +2030,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     if (l == getImageLayer())
                     {
                         final Sequence seq = getSequence();
-                        // we have a no empty image --> display it if layer is
-                        // visible
+                        // we have a no empty image --> display it if layer is visible
                         if (l.isVisible() && (seq != null) && !seq.isEmpty())
                             prop.SetVisibility(1);
                         else
@@ -1999,8 +2054,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 if (layer == getImageLayer())
                 {
                     final Sequence seq = getSequence();
-                    // we have a no empty image --> display it if layer is
-                    // visible
+                    // we have a no empty image --> display it if layer is visible
                     if (layer.isVisible() && (seq != null) && !seq.isEmpty())
                         prop.SetVisibility(1);
                     else
@@ -2034,8 +2088,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             propertyChange(PROPERTY_BOUNDINGBOX_RULES, Boolean.valueOf(rulerButton.isSelected()));
         else if (source == rulerLabelButton)
             propertyChange(PROPERTY_BOUNDINGBOX_LABELS, Boolean.valueOf(rulerLabelButton.isSelected()));
-        else if (source == shadingButton)
-            propertyChange(PROPERTY_SHADING, Boolean.valueOf(shadingButton.isSelected()));
+        // else if (source == pickOnMouseMoveButton)
+        // preferences.putBoolean(ID_PICKONMOUSEMOVE, pickOnMouseMoveButton.isSelected());
     }
 
     protected void propertyChange(String name, Object value)
@@ -2045,8 +2099,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // remove previous property of same name
         if (propertiesToUpdate.remove(prop))
         {
-            // if we already had a layers visible update then we update all
-            // layers
+            // if we already had a layers visible update then we update all layers
             if (name.equals(PROPERTY_LAYERS_VISIBLE))
                 prop.value = null;
         }
@@ -2187,6 +2240,10 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         @Override
         public void mouseMoved(MouseEvent e)
         {
+            // get picked object
+            if (getPickOnMouseMove())
+                pickedObject = pick(e.getX(), e.getY());
+
             // send mouse event to overlays
             VtkCanvas.this.mouseMove(e, null);
 
@@ -2196,6 +2253,10 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         @Override
         public void mouseDragged(MouseEvent e)
         {
+            // get picked object
+            if (getPickOnMouseMove())
+                pickedObject = pick(e.getX(), e.getY());
+
             // send mouse event to overlays
             VtkCanvas.this.mouseDrag(e, null);
 
@@ -2205,6 +2266,10 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         @Override
         public void mousePressed(MouseEvent e)
         {
+            // get picked object (always on left mouse click)
+            if (EventUtil.isLeftMouseButton(e))
+                pickedObject = pick(e.getX(), e.getY());
+
             // send mouse event to overlays
             VtkCanvas.this.mousePressed(e, null);
 

@@ -57,8 +57,6 @@ import java.awt.image.IndexColorModel;
 
 import org.w3c.dom.Node;
 
-import plugins.kernel.canvas.VtkCanvas;
-
 /**
  * ROI Area type.<br>
  * Use a bitmap mask internally for fast boolean mask operation.<br>
@@ -256,7 +254,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    if (imagePoint != null)
                     {
                         ROI2DArea.this.beginUpdate();
                         try
@@ -302,7 +300,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    if (imagePoint != null)
                     {
                         // keep trace of roi changes from user mouse action
                         roiModifiedByMouse = false;
@@ -400,7 +398,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    if (imagePoint != null)
                     {
                         setBrushPosition(imagePoint.toPoint2D());
                     }
@@ -421,7 +419,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    if (imagePoint != null)
                     {
                         ROI2DArea.this.beginUpdate();
                         try

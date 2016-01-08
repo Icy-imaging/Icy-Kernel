@@ -650,6 +650,9 @@ public class VtkImageVolume
         // volume mapper changed ?
         if (getGPURendering() != value)
         {
+            // save the parameters as they can be modified when mapper change
+            final VtkVolumeBlendType blendingMode = getBlendingMode();
+            final double sampleResolution = getSampleResolution();
             final vtkVolumeMapper newMapper;
 
             if (value)
@@ -679,6 +682,10 @@ public class VtkImageVolume
             // and connect the image data
             if (imageData != null)
                 newMapper.SetInputData(imageData);
+
+            // restore blending and sample resolution
+            setBlendingMode(blendingMode);
+            setSampleResolution(sampleResolution);
 
             return true;
         }

@@ -31,12 +31,13 @@ import icy.system.thread.ThreadUtil;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
+import icy.util.EventUtil;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.event.MouseEvent;
+import java.awt.event.InputEvent;
 import java.awt.geom.Point2D;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -178,11 +179,52 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 canvas.unlock();
             }
 
-            // set color
-            setVtkObjectsColor(getColor());
+            // update color and others properties
+            updateVtkDisplayProperties();
+        }
 
-            // need to repaint
-            painterChanged();
+        protected void updateVtkDisplayProperties()
+        {
+            if (surfaceActor != null)
+            {
+                final VtkCanvas cnv = canvas3d.get();
+                final Color col = getDisplayColor();
+                final double r = col.getRed() / 255d;
+                final double g = col.getGreen() / 255d;
+                final double b = col.getBlue() / 255d;
+
+                // we need to lock canvas as actor can be accessed during rendering
+                if (cnv != null)
+                {
+                    cnv.lock();
+                    try
+                    {
+                        // set actors color
+                        surfaceActor.GetProperty().SetColor(r, g, b);
+                        boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
+                        boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
+                        boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
+                        boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                        setVtkObjectsColor(col);
+                    }
+                    finally
+                    {
+                        cnv.unlock();
+                    }
+                }
+                else
+                {
+                    surfaceActor.GetProperty().SetColor(r, g, b);
+                    boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
+                    boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
+                    boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
+                    boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                    setVtkObjectsColor(col);
+                }
+
+                // need to repaint
+                painterChanged();
+            }
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -232,37 +274,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         }
 
         @Override
-        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
-        {
-            if (canvas instanceof VtkCanvas)
-            {
-                if (isActiveFor(canvas))
-                {
-                    if (!e.isConsumed())
-                    {
-                        final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-
-                        // try to pick an actor
-                        //--> pick lock up with OPENGL2 ????
-                        final vtkActor actor = vtkCanvas.pick(e.getX(), e.getY());
-
-                        if (actor != null)
-                        {
-                            // we clicked on the main --> change selection
-                            if (actor == surfaceActor)
-                                setSelected(!isSelected());
-
-                            // consume event
-                            e.consume();
-                        }
-                    }
-                }
-            }
-
-            super.mouseClick(e, imagePoint, canvas);
-        }
-
-        @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (isActiveFor(canvas))
@@ -297,22 +308,90 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                         needRebuild = false;
                     }
 
-                    if (boundingBox != null)
-                    {
-                        cnv.lock();
-                        try
-                        {
-                            boundingBox.SetVisibility(isSelected() ? 1 : 0);
-                        }
-                        finally
-                        {
-                            cnv.unlock();
-                        }
-                    }
+                    // if (boundingBox != null)
+                    // {
+                    // cnv.lock();
+                    // try
+                    // {
+                    // boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                    // }
+                    // finally
+                    // {
+                    // cnv.unlock();
+                    // }
+                    // }
                 }
                 else
                     super.paint(g, sequence, canvas);
             }
+        }
+
+        @Override
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // specific VTK canvas processing
+            if (canvas instanceof VtkCanvas)
+            {
+                final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? --> focus the ROI
+                final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
+                        && (surfaceActor == vtkCanvas.getPickedObject());
+
+                setFocused(focused);
+
+                return focused;
+            }
+
+            return super.updateFocus(e, imagePoint, canvas);
+        }
+
+        @Override
+        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            boolean hasFocus;
+
+            // mouse cursor is over the actor ? --> focus the ROI
+            if (canvas instanceof VtkCanvas)
+                hasFocus = (surfaceActor != null) && (surfaceActor == ((VtkCanvas) canvas).getPickedObject());
+            else
+                hasFocus = isFocused();
+
+            // nothing to do if the ROI does not have focus
+            if (!hasFocus)
+                return false;
+
+            // union selection
+            if (EventUtil.isShiftDown(e))
+            {
+                // not already selected --> add ROI to selection
+                if (!isSelected())
+                {
+                    setSelected(true);
+                    return true;
+                }
+            }
+            else if (EventUtil.isControlDown(e))
+            // switch selection
+            {
+                // inverse state
+                setSelected(!isSelected());
+                return true;
+            }
+            else
+            // exclusive selection
+            {
+                // not selected --> exclusive ROI selection
+                if (!isSelected())
+                {
+                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
+                    if (!canvas.getSequence().setSelectedROI(ROI3DArea.this))
+                        ROI3DArea.this.setSelected(true);
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
@@ -619,52 +698,17 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 ((ROI3DAreaPainter) painter).needRebuild = true;
                 break;
 
+            case FOCUS_CHANGED:
+            case SELECTION_CHANGED:
+                ((ROI3DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
             case PROPERTY_CHANGED:
                 final String property = event.getPropertyName();
 
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
-                {
-                    final ROI3DAreaPainter overlay = ((ROI3DAreaPainter) getOverlay());
-                    final vtkActor surfaceActor = overlay.surfaceActor;
-                    final vtkCubeAxesActor bndBoxActor = overlay.boundingBox;
-
-                    if (surfaceActor != null)
-                    {
-                        final VtkCanvas cnv = overlay.canvas3d.get();
-                        final Color col = getColor();
-                        final double r = col.getRed() / 255d;
-                        final double g = col.getGreen() / 255d;
-                        final double b = col.getBlue() / 255d;
-
-                        // we need to lock canvas as actor can be accessed during rendering
-                        if (cnv != null)
-                        {
-                            cnv.lock();
-                            try
-                            {
-                                // set actors color
-                                surfaceActor.GetProperty().SetColor(r, g, b);
-                                bndBoxActor.GetXAxesLinesProperty().SetColor(r, g, b);
-                                bndBoxActor.GetYAxesLinesProperty().SetColor(r, g, b);
-                                bndBoxActor.GetZAxesLinesProperty().SetColor(r, g, b);
-                                overlay.setVtkObjectsColor(col);
-                            }
-                            finally
-                            {
-                                cnv.unlock();
-                            }
-                        }
-                        else
-                        {
-                            surfaceActor.GetProperty().SetColor(r, g, b);
-                            bndBoxActor.GetXAxesLinesProperty().SetColor(r, g, b);
-                            bndBoxActor.GetYAxesLinesProperty().SetColor(r, g, b);
-                            bndBoxActor.GetZAxesLinesProperty().SetColor(r, g, b);
-                            overlay.setVtkObjectsColor(col);
-                        }
-                    }
-                }
+                    ((ROI3DAreaPainter) getOverlay()).updateVtkDisplayProperties();
                 break;
         }
 

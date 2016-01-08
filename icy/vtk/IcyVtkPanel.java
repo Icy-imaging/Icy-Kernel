@@ -29,17 +29,16 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.io.File;
 
 import vtk.vtkActor;
 import vtk.vtkActorCollection;
 import vtk.vtkAxesActor;
 import vtk.vtkCamera;
-import vtk.vtkFileOutputWindow;
+import vtk.vtkCellPicker;
 import vtk.vtkLight;
-import vtk.vtkPropPicker;
+import vtk.vtkPicker;
+import vtk.vtkProp;
 import vtk.vtkRenderer;
-import vtk.vtkUnsignedCharArray;
 
 /**
  * Icy custom VTK panel used for VTK rendering.
@@ -55,7 +54,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     private static final long serialVersionUID = -8455671369400627703L;
 
     protected Thread renderingMonitor;
-    protected vtkPropPicker picker;
+    // protected vtkPropPicker picker;
+    protected vtkCellPicker picker;
     protected vtkAxesActor axis;
     protected vtkRenderer axisRenderer;
     protected vtkCamera axisCam;
@@ -69,7 +69,12 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         super();
 
         // picker
-        picker = new vtkPropPicker();
+        // picker = new vtkPropPicker();
+        // picker.PickFromListOff();
+
+        picker = new vtkCellPicker();
+        picker.PickFromListOff();
+
         // set ambient color to white
         lgt.SetAmbientColor(1d, 1d, 1d);
         lightFollowCamera = true;
@@ -164,7 +169,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     /**
      * Return picker object.
      */
-    public vtkPropPicker getPicker()
+    public vtkPicker getPicker()
     {
         return picker;
     }
@@ -241,6 +246,10 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         updateAxisView();
     }
 
+    /**
+     * @deprecated Use {@link #pickActor(int, int)} instead
+     */
+    @Deprecated
     public void pickActor(int x, int y)
     {
         pick(x, y);
@@ -249,28 +258,19 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     /**
      * Pick object at specified position and return it.
      */
-    public vtkActor pick(int x, int y)
+    public vtkProp pick(int x, int y)
     {
         lock();
         try
         {
-//            ThreadUtil.invokeNow(new Runnable()
-//            {
-//                @Override
-//                public void run()
-//                {
-//                    getRenderWindow().GetPixelData(0, 0, 1, 1, 0, new vtkUnsignedCharArray());
-//                }
-//            });
-            
-            picker.PickProp(x, rw.GetSize()[1] - y, ren);
+            picker.Pick(x, rw.GetSize()[1] - y, 0, ren);
         }
         finally
         {
             unlock();
         }
 
-        return picker.GetActor();
+        return picker.GetViewProp();
     }
 
     /**

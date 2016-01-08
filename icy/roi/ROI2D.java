@@ -37,7 +37,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -46,7 +45,6 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
-import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 
 public abstract class ROI2D extends ROI
@@ -150,8 +148,12 @@ public abstract class ROI2D extends ROI
             startDragROIPosition = null;
         }
 
+        @Override
         protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
+            if (imagePoint == null)
+                return false;
+
             // test on canvas has already be done, don't do it again
             final boolean focused = isOverEdge(canvas, imagePoint.getX(), imagePoint.getY());
 
@@ -160,46 +162,7 @@ public abstract class ROI2D extends ROI
             return focused;
         }
 
-        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
-        {
-            // nothing to do if the ROI does not have focus
-            if (!isFocused())
-                return false;
-
-            // union selection
-            if (EventUtil.isShiftDown(e))
-            {
-                // not already selected --> add ROI to selection
-                if (!isSelected())
-                {
-                    setSelected(true);
-                    return true;
-                }
-            }
-            else if (EventUtil.isControlDown(e))
-            // switch selection
-            {
-                // inverse state
-                setSelected(!isSelected());
-                return true;
-            }
-            else
-            // exclusive selection
-            {
-                // not selected --> exclusive ROI selection
-                if (!isSelected())
-                {
-                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
-                    if (!canvas.getSequence().setSelectedROI(ROI2D.this))
-                        ROI2D.this.setSelected(true);
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
+        @Override
         protected boolean updateDrag(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             // not dragging --> exit
@@ -241,66 +204,11 @@ public abstract class ROI2D extends ROI
             setPosition2D(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
 
             // allow undo as the ROI position has been modified from canvas
-            if (savePosition != null)
+            if ((sequence != null) && (savePosition != null))
                 // add position change to undo manager
                 sequence.addUndoableEdit(new PositionROIEdit(ROI2D.this, savePosition));
 
             return true;
-        }
-
-        @Override
-        public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
-        {
-            // do parent stuff
-            super.keyReleased(e, imagePoint, canvas);
-
-            if (isActiveFor(canvas))
-            {
-                // check we can do the action
-                if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
-                {
-                    // just for the shift key state change
-                    if (!isReadOnly())
-                        updateDrag(e, imagePoint, canvas);
-                }
-            }
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
-        {
-            // do parent stuff
-            super.mousePressed(e, imagePoint, canvas);
-
-            // not yet consumed...
-            if (!e.isConsumed())
-            {
-                if (isActiveFor(canvas))
-                {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
-                    {
-                        ROI2D.this.beginUpdate();
-                        try
-                        {
-                            // left button action
-                            if (EventUtil.isLeftMouseButton(e))
-                            {
-                                // update selection
-                                if (updateSelect(e, imagePoint, canvas))
-                                    e.consume();
-                                // always consume when focused to enable dragging
-                                else if (isFocused())
-                                    e.consume();
-                            }
-                        }
-                        finally
-                        {
-                            ROI2D.this.endUpdate();
-                        }
-                    }
-                }
-            }
         }
 
         @Override
@@ -321,16 +229,16 @@ public abstract class ROI2D extends ROI
             // not yet consumed and ROI editable...
             if (!e.isConsumed() && !isReadOnly())
             {
-                if (isActiveFor(canvas))
+                // check we can do the action
+                if (imagePoint != null)
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    if (isActiveFor(canvas))
                     {
-                        ROI2D.this.beginUpdate();
-                        try
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
                         {
-                            // left button action
-                            if (EventUtil.isLeftMouseButton(e))
+                            ROI2D.this.beginUpdate();
+                            try
                             {
                                 // roi focused ?
                                 if (isFocused())
@@ -348,32 +256,11 @@ public abstract class ROI2D extends ROI
                                     e.consume();
                                 }
                             }
+                            finally
+                            {
+                                ROI2D.this.endUpdate();
+                            }
                         }
-                        finally
-                        {
-                            ROI2D.this.endUpdate();
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
-        {
-            // do parent stuff
-            super.mouseMove(e, imagePoint, canvas);
-
-            // update focus
-            if (!e.isConsumed())
-            {
-                if (isActiveFor(canvas))
-                {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
-                    {
-                        if (updateFocus(e, imagePoint, canvas))
-                            e.consume();
                     }
                 }
             }

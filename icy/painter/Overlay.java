@@ -22,22 +22,30 @@ import icy.canvas.IcyCanvas;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
+import icy.file.xml.XMLPersistent;
 import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
+import icy.util.ClassUtil;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
 
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
+
+import org.w3c.dom.Node;
 
 /**
  * Overlay class.<br>
@@ -48,7 +56,7 @@ import javax.swing.event.EventListenerList;
  * @author Stephane
  */
 @SuppressWarnings("deprecation")
-public abstract class Overlay implements Painter, ChangeListener, Comparable<Overlay>
+public abstract class Overlay implements Painter, ChangeListener, Comparable<Overlay>, XMLPersistent
 {
     /**
      * Define the overlay priority:
@@ -79,12 +87,24 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
         BACKGROUND_LOW, BACKGROUND_NORMAL, BACKGROUND_HIGH, BACKGROUND_TOP, IMAGE_LOW, IMAGE_NORMAL, IMAGE_HIGH, IMAGE_TOP, SHAPE_LOW, SHAPE_NORMAL, SHAPE_HIGH, SHAPE_TOP, TEXT_LOW, TEXT_NORMAL, TEXT_HIGH, TEXT_TOP, TOOLTIP_LOW, TOOLTIP_NORMAL, TOOLTIP_HIGH, TOOLTIP_TOP, TOPMOST
     }
 
-    public static final String PROPERTY_NAME = "name";
-    public static final String PROPERTY_PRIORITY = "priority";
-    public static final String PROPERTY_READONLY = "readOnly";
-    public static final String PROPERTY_CANBEREMOVED = "canBeRemoved";
-    public static final String PROPERTY_RECEIVEKEYEVENTONHIDDEN = "receiveKeyEventOnHidden";
-    public static final String PROPERTY_RECEIVEMOUSEEVENTONHIDDEN = "receiveMouseEventOnHidden";
+    public static final String ID_OVERLAY = "overlay";
+
+    public static final String ID_CLASSNAME = "classname";
+    public static final String ID_ID = "id";
+    public static final String ID_NAME = "name";
+    public static final String ID_PRIORITY = "priority";
+    public static final String ID_READONLY = "readOnly";
+    public static final String ID_CANBEREMOVED = "canBeRemoved";
+    public static final String ID_RECEIVEKEYEVENTONHIDDEN = "receiveKeyEventOnHidden";
+    public static final String ID_RECEIVEMOUSEEVENTONHIDDEN = "receiveMouseEventOnHidden";
+
+    public static final String PROPERTY_NAME = ID_NAME;
+    public static final String PROPERTY_PRIORITY = ID_PRIORITY;
+    public static final String PROPERTY_READONLY = ID_READONLY;
+    public static final String PROPERTY_PERSISTENT = "persitent";
+    public static final String PROPERTY_CANBEREMOVED = ID_CANBEREMOVED;
+    public static final String PROPERTY_RECEIVEKEYEVENTONHIDDEN = ID_RECEIVEKEYEVENTONHIDDEN;
+    public static final String PROPERTY_RECEIVEMOUSEEVENTONHIDDEN = ID_RECEIVEMOUSEEVENTONHIDDEN;
 
     /**
      * We consider as tiny object anything with a size of 10 pixels or less
@@ -95,11 +115,159 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     protected static int id_gen = 1;
 
     /**
+     * Create a Overlay from a XML node.
+     * 
+     * @param node
+     *        XML node defining the overlay
+     * @return the created Overlay or <code>null</code> if the Overlay class does not support XML persistence a default
+     *         constructor
+     */
+    public static Overlay createFromXML(Node node)
+    {
+        if (node == null)
+            return null;
+
+        final String className = XMLUtil.getElementValue(node, ID_CLASSNAME, "");
+        if (StringUtil.isEmpty(className))
+            return null;
+
+        final Overlay result;
+
+        try
+        {
+            // search for the specified className
+            final Class<?> clazz = ClassUtil.findClass(className);
+
+            // class found
+            if (clazz != null)
+            {
+                final Class<? extends Overlay> overlayClazz = clazz.asSubclass(Overlay.class);
+
+                // default constructor
+                final Constructor<? extends Overlay> constructor = overlayClazz.getConstructor(new Class[] {});
+                // build Overlay
+                result = constructor.newInstance();
+
+                // load properties from XML
+                if (result != null)
+                {
+                    // error while loading infos --> return null
+                    if (!result.loadFromXML(node))
+                        return null;
+                }
+
+                return result;
+            }
+        }
+        catch (NoSuchMethodException e)
+        {
+            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
+                    + className + "', cannot create the Overlay."), true);
+        }
+        catch (ClassNotFoundException e)
+        {
+            IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + className
+                    + "' class, cannot create the Overlay."), true);
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.handleException(e, true);
+        }
+
+        return null;
+    }
+
+    /**
+     * Return the number of Overlay defined in the specified XML node.
+     * 
+     * @param node
+     *        XML node defining the Overlay list
+     * @return the number of Overlay defined in the XML node.
+     */
+    public static int getOverlayCount(Node node)
+    {
+        if (node != null)
+        {
+            final List<Node> nodesOverlay = XMLUtil.getChildren(node, ID_OVERLAY);
+
+            if (nodesOverlay != null)
+                return nodesOverlay.size();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Return a list of Overlay from a XML node.
+     * 
+     * @param node
+     *        XML node defining the Overlay list
+     * @return a list of Overlay
+     */
+    public static List<Overlay> loadOverlaysFromXML(Node node)
+    {
+        final List<Overlay> result = new ArrayList<Overlay>();
+
+        if (node != null)
+        {
+            final List<Node> nodesOverlay = XMLUtil.getChildren(node, ID_OVERLAY);
+
+            if (nodesOverlay != null)
+            {
+                for (Node n : nodesOverlay)
+                {
+                    final Overlay overlay = createFromXML(n);
+
+                    if (overlay != null)
+                    {
+                        // we assume this overlay should stay persistent then
+                        overlay.setPersistent(true);
+                        result.add(overlay);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Set a list of Overlay to a XML node.
+     * 
+     * @param node
+     *        XML node which is used to store the list of Overlay
+     * @param overlays
+     *        the list of Overlay to store in the XML node
+     */
+    public static void saveOverlaysToXML(Node node, List<Overlay> overlays)
+    {
+        if (node != null)
+        {
+            for (Overlay overlay : overlays)
+            {
+                // only save persistent overlay
+                if (overlay.isPersistent())
+                {
+                    final Node nodeOverlay = XMLUtil.addElement(node, ID_OVERLAY);
+
+                    if (!overlay.saveToXML(nodeOverlay))
+                    {
+                        XMLUtil.removeNode(node, nodeOverlay);
+                        System.err.println("Error: the overlay " + overlay.getName()
+                                + " was not correctly saved to XML !");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * properties
      */
-    protected final int id;
+    protected int id;
     protected String name;
     protected OverlayPriority priority;
+    protected boolean persistent;
     protected boolean readOnly;
     protected boolean canBeRemoved;
     protected boolean receiveKeyEventOnHidden;
@@ -122,6 +290,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
 
         this.name = name;
         this.priority = priority;
+        // by default the overlay is not persistent
+        persistent = false;
         readOnly = false;
         canBeRemoved = true;
         receiveKeyEventOnHidden = false;
@@ -235,6 +405,29 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
+     * Return persistent property.<br/>
+     * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data.
+     */
+    public boolean isPersistent()
+    {
+        return persistent;
+    }
+
+    /**
+     * Set persistent property.<br/>
+     * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data (default is
+     * <code>false</code>).
+     */
+    public void setPersistent(boolean value)
+    {
+        if (persistent != value)
+        {
+            persistent = value;
+            propertyChanged(PROPERTY_PERSISTENT);
+        }
+    }
+
+    /**
      * Return read only property.<br/>
      * When set to <code>true</code> we cannot anymore modify overlay properties from the GUI.
      */
@@ -244,7 +437,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Set read only property.<br>
+     * Set read only property.<br/>
+     * When set to <code>true</code> we cannot anymore modify overlay properties from the GUI.
      */
     public void setReadOnly(boolean value)
     {
@@ -728,6 +922,63 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
             keyReleased(e, imagePoint.toPoint2D(), canvas);
         else
             keyReleased(e, (Point2D) null, canvas);
+    }
+
+    public boolean loadFromXML(Node node, boolean preserveId)
+    {
+        if (node == null)
+            return false;
+
+        beginUpdate();
+        try
+        {
+            // FIXME : this can make duplicate id but it is also important to preserve id
+            if (!preserveId)
+            {
+                id = XMLUtil.getElementIntValue(node, ID_ID, 0);
+                synchronized (Overlay.class)
+                {
+                    // avoid having same id
+                    if (id_gen <= id)
+                        id_gen = id + 1;
+                }
+            }
+            setName(XMLUtil.getElementValue(node, ID_NAME, ""));
+            setPriority(OverlayPriority.values()[XMLUtil.getElementIntValue(node, ID_PRIORITY,
+                    OverlayPriority.SHAPE_NORMAL.ordinal())]);
+            setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
+            setReceiveKeyEventOnHidden(XMLUtil.getElementBooleanValue(node, ID_RECEIVEKEYEVENTONHIDDEN, false));
+            setReceiveMouseEventOnHidden(XMLUtil.getElementBooleanValue(node, ID_RECEIVEMOUSEEVENTONHIDDEN, false));
+        }
+        finally
+        {
+            endUpdate();
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean loadFromXML(Node node)
+    {
+        return loadFromXML(node, false);
+    }
+
+    @Override
+    public boolean saveToXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        XMLUtil.setElementValue(node, ID_CLASSNAME, getClass().getName());
+        XMLUtil.setElementIntValue(node, ID_ID, id);
+        XMLUtil.setElementValue(node, ID_NAME, getName());
+        XMLUtil.setElementIntValue(node, ID_PRIORITY, getPriority().ordinal());
+        XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
+        XMLUtil.setElementBooleanValue(node, ID_RECEIVEKEYEVENTONHIDDEN, getReceiveKeyEventOnHidden());
+        XMLUtil.setElementBooleanValue(node, ID_RECEIVEMOUSEEVENTONHIDDEN, getReceiveMouseEventOnHidden());
+
+        return true;
     }
 
     @Override

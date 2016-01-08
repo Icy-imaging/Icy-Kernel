@@ -107,8 +107,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     }
 
     /**
-     * Returns <code>true</code> if the ROI directly uses the 4D slice color draw property and
-     * <code>false</code> if it uses the global 5D ROI color draw property.
+     * Returns <code>true</code> if the ROI directly uses the 4D slice color draw property and <code>false</code> if it
+     * uses the global 5D ROI color draw property.
      */
     public boolean getUseChildColor()
     {
@@ -116,8 +116,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     }
 
     /**
-     * Set to <code>true</code> if you want to directly use the 4D slice color draw property and
-     * <code>false</code> to keep the global 5D ROI color draw property.
+     * Set to <code>true</code> if you want to directly use the 4D slice color draw property and <code>false</code> to
+     * keep the global 5D ROI color draw property.
      * 
      * @see #setColor(int, Color)
      */
@@ -342,8 +342,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     /**
      * @return The size of this ROI stack along C.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
-     *         of this ROI, but doesn't guarantee that all slices in-between exist (
-     *         {@link #getSlice(int)} may still return <code>null</code>.<br>
+     *         of this ROI, but doesn't guarantee that all slices in-between exist ( {@link #getSlice(int)} may still
+     *         return <code>null</code>.<br>
      */
     public int getSizeC()
     {
@@ -692,6 +692,10 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             {
                 modifyingSlice.release();
             }
+
+            // notify ROI changed because we modified slice 'internally'
+            if ((dx != 0d) || (dy != 0d) || (dz != 0d) || (dt != 0d))
+                roiChanged();
         }
         finally
         {

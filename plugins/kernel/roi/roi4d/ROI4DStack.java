@@ -107,8 +107,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     }
 
     /**
-     * Returns <code>true</code> if the ROI directly uses the 3D slice color draw property and
-     * <code>false</code> if it uses the global 4D ROI color draw property.
+     * Returns <code>true</code> if the ROI directly uses the 3D slice color draw property and <code>false</code> if it
+     * uses the global 4D ROI color draw property.
      */
     public boolean getUseChildColor()
     {
@@ -116,8 +116,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     }
 
     /**
-     * Set to <code>true</code> if you want to directly use the 3D slice color draw property and
-     * <code>false</code> to keep the global 4D ROI color draw property.
+     * Set to <code>true</code> if you want to directly use the 3D slice color draw property and <code>false</code> to
+     * keep the global 4D ROI color draw property.
      * 
      * @see #setColor(int, Color)
      */
@@ -363,12 +363,12 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     {
         return slices.isEmpty();
     }
-    
+
     /**
      * @return The size of this ROI stack along T.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
-     *         of this ROI, but doesn't guarantee that all slices in-between exist (
-     *         {@link #getSlice(int)} may still return <code>null</code>.<br>
+     *         of this ROI, but doesn't guarantee that all slices in-between exist ( {@link #getSlice(int)} may still
+     *         return <code>null</code>.<br>
      */
     public int getSizeT()
     {
@@ -557,7 +557,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     @Override
     public boolean contains(double x, double y, double z, double t)
     {
-        final R roi3d = getSlice((int)Math.floor(t));
+        final R roi3d = getSlice((int) Math.floor(t));
 
         if (roi3d != null)
             return roi3d.contains(x, y, z);
@@ -654,7 +654,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
 
         return volume;
     }
-    
+
     @Override
     public boolean canTranslate()
     {
@@ -718,6 +718,10 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
             {
                 modifyingSlice.release();
             }
+
+            // notify ROI changed because we modified slice 'internally'
+            if ((dx != 0d) || (dy != 0d) || (dz != 0d))
+                roiChanged();
         }
         finally
         {

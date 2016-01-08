@@ -255,7 +255,7 @@ public class ROI2DPolygon extends ROI2DShape
 
             removeAllPoint();
 
-            final ArrayList<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
+            final List<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
             if (nodesPoint != null)
             {
                 for (Node n : nodesPoint)
@@ -280,9 +280,9 @@ public class ROI2DPolygon extends ROI2DShape
         if (!super.saveToXML(node))
             return false;
 
-        final Element dependances = XMLUtil.setElement(node, ID_POINTS);
+        final Element nodePoints = XMLUtil.setElement(node, ID_POINTS);
         for (Anchor2D pt : controlPoints)
-            pt.savePositionToXML(XMLUtil.addElement(dependances, ID_POINT));
+            pt.savePositionToXML(XMLUtil.addElement(nodePoints, ID_POINT));
 
         return true;
     }

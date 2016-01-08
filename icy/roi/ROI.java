@@ -48,6 +48,7 @@ import icy.util.XMLUtil;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
@@ -61,6 +62,7 @@ import javax.swing.event.EventListenerList;
 import org.w3c.dom.Node;
 
 import plugins.kernel.roi.roi2d.ROI2DArea;
+import plugins.kernel.roi.roi2d.ROI2DShape;
 import plugins.kernel.roi.roi3d.ROI3DArea;
 import plugins.kernel.roi.roi4d.ROI4DArea;
 import plugins.kernel.roi.roi5d.ROI5DArea;
@@ -313,6 +315,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return null;
 
         final String className = XMLUtil.getElementValue(node, ID_CLASSNAME, "");
+        if (StringUtil.isEmpty(className))
+            return null;
 
         final ROI roi = create(className);
         // load properties from XML
@@ -392,6 +396,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (node != null)
         {
             final List<Node> nodesROI = XMLUtil.getChildren(node, ID_ROI);
+
             if (nodesROI != null)
                 return nodesROI.size();
         }
@@ -420,7 +425,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 {
                     final ROI roi = createFromXML(n);
 
-                    // add to sequence
                     if (roi != null)
                         result.add(roi);
                 }
@@ -458,7 +462,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 if (!roi.saveToXML(nodeROI))
                 {
                     XMLUtil.removeNode(node, nodeROI);
-                    System.err.println("Error: the roi " + roi.getName() + "s was not correctly saved to XML !");
+                    System.err.println("Error: the roi " + roi.getName() + " was not correctly saved to XML !");
                 }
             }
         }
@@ -841,6 +845,64 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             ROI.this.setName(name);
         }
 
+        /**
+         * Update the focus state of the ROI
+         */
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // empty implementation by default
+            return false;
+        }
+
+        /**
+         * Update the selection state of the ROI (default implementation)
+         */
+        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // nothing to do if the ROI does not have focus
+            if (!isFocused())
+                return false;
+
+            // union selection
+            if (EventUtil.isShiftDown(e))
+            {
+                // not already selected --> add ROI to selection
+                if (!isSelected())
+                {
+                    setSelected(true);
+                    return true;
+                }
+            }
+            else if (EventUtil.isControlDown(e))
+            // switch selection
+            {
+                // inverse state
+                setSelected(!isSelected());
+                return true;
+            }
+            else
+            // exclusive selection
+            {
+                // not selected --> exclusive ROI selection
+                if (!isSelected())
+                {
+                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
+                    if (!canvas.getSequence().setSelectedROI(ROI.this))
+                        ROI.this.setSelected(true);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        protected boolean updateDrag(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // empty implementation by default
+            return false;
+        }
+
         @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
@@ -1027,10 +1089,93 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         @Override
+        public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.keyReleased(e, imagePoint, canvas);
+
+            if (isActiveFor(canvas))
+            {
+                // just for the shift key state change
+                if (!isReadOnly())
+                    updateDrag(e, imagePoint, canvas);
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.mousePressed(e, imagePoint, canvas);
+
+            // not yet consumed...
+            if (!e.isConsumed())
+            {
+                if (isActiveFor(canvas))
+                {
+                    // left button action
+                    if (EventUtil.isLeftMouseButton(e))
+                    {
+                        ROI.this.beginUpdate();
+                        try
+                        {
+                            // update selection
+                            if (updateSelect(e, imagePoint, canvas))
+                                e.consume();
+                            // always consume when focused to enable dragging
+                            else if (isFocused())
+                                e.consume();
+                        }
+                        finally
+                        {
+                            ROI.this.endUpdate();
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.mouseReleased(e, imagePoint, canvas);
+        }
+
+        @Override
+        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.mouseClick(e, imagePoint, canvas);
+
+            // not yet consumed...
+            if (!e.isConsumed())
+            {
+                // and process ROI stuff now
+                if (isActiveFor(canvas))
+                {
+                    // single click
+                    if (e.getClickCount() == 1)
+                    {
+                        // right click action
+                        if (EventUtil.isRightMouseButton(e))
+                        {
+                            // unselect (don't consume event)
+                            if (isSelected())
+                                ROI.this.setSelected(false);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // this allow to keep the backward compatibility
             super.mouseDrag(e, imagePoint, canvas);
+
+            // nothing here by default, should be implemented in deriving classes...
         }
 
         @Override
@@ -1038,6 +1183,16 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             // this allow to keep the backward compatibility
             super.mouseMove(e, imagePoint, canvas);
+
+            // update focus
+            if (!e.isConsumed())
+            {
+                if (isActiveFor(canvas))
+                {
+                    if (updateFocus(e, imagePoint, canvas))
+                        e.consume();
+                }
+            }
         }
 
         @Override
@@ -1155,12 +1310,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * generate unique id
      */
-    private static int generateId()
+    private static synchronized int generateId()
     {
-        synchronized (ROI.class)
-        {
-            return id_generator++;
-        }
+        return id_generator++;
     }
 
     /**
@@ -2982,7 +3134,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return null;
         }
 
-        // then generate id and modify name
+        // then generate new id
         result.id = generateId();
 
         return result;
@@ -3185,7 +3337,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             // FIXME : this can make duplicate id but it is also important to preserve id
             if (!preserveId)
+            {
                 id = XMLUtil.getElementIntValue(node, ID_ID, 0);
+                synchronized (ROI.class)
+                {
+                    // avoid having same id
+                    if (id_generator <= id)
+                        id_generator = id + 1;
+                }
+            }
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
