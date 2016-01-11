@@ -50,7 +50,9 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-scratchpad.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bioformats.jar"/>
-	<classpathentry kind="lib" path="D:/Stephane/workspace/Libraries/jogl/2.1.5/jogamp-all-platforms/jar/gluegen-rt.jar"/>
-	<classpathentry kind="lib" path="D:/Stephane/workspace/Libraries/jogl/2.1.5/jogamp-all-platforms/jar/jogl-all.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/joal.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/jocl.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/jogl-all.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

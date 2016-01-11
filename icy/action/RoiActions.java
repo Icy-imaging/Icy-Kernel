@@ -288,6 +288,7 @@ public class RoiActions
 
                 if ((rois != null) && (rois.size() > 0))
                 {
+                    final List<ROI> copyRois = new ArrayList<ROI>();
                     sequence.beginUpdate();
                     try
                     {
@@ -298,6 +299,7 @@ public class RoiActions
                         for (ROI roi : rois)
                         {
                             final ROI newROI = roi.getCopy();
+                            copyRois.add(newROI);
 
                             if (newROI != null)
                             {
@@ -314,7 +316,7 @@ public class RoiActions
                     }
 
                     // add to undo manager
-                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, copyRois)
                     {
                         @Override
                         public String getPresentationName()
