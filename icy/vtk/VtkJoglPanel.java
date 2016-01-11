@@ -1,7 +1,9 @@
 package icy.vtk;
 
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 
+import java.awt.Graphics;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -461,6 +463,20 @@ public class VtkJoglPanel extends GLJPanel
         {
             unlock();
         }
+    }
+    
+    @Override
+    public void paint(Graphics g)
+    {
+    	try
+    	{
+    		super.paint(g);
+    	}
+    	catch(Exception e)
+    	{
+    		// it can happen with older video cards
+    		IcyExceptionHandler.handleException(e, true);
+    	}
     }
 
     /**
