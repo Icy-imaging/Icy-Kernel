@@ -141,7 +141,7 @@ public class VtkJoglPanel extends GLJPanel
             if (!IdConfirmDialog
                     .confirm(
                             "Warning",
-                            "Your graphics card driver does not support OpenGL 2, VTK cannot work correctly.\nDo you want to continue ?",
+                            "Your graphics card driver does not support OpenGL 2, VTK cannot work correctly.\nDo you want to continue anyway ?",
                             IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
                 throw new UnsupportedOperationException(
                         "OpenGL 2 is not supported by your graphics card driver, cannot display VTK window...");
