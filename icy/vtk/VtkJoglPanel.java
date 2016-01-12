@@ -472,10 +472,10 @@ public class VtkJoglPanel extends GLJPanel
     	{
     		super.paint(g);
     	}
-    	catch(Exception e)
+    	catch(Throwable t)
     	{
     		// it can happen with older video cards
-    		IcyExceptionHandler.handleException(e, true);
+    		IcyExceptionHandler.handleException(t, true);
     	}
     }
 
