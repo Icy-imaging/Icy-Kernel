@@ -1,5 +1,6 @@
 package icy.vtk;
 
+import icy.gui.dialog.IdConfirmDialog;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 
@@ -94,7 +95,7 @@ public class VtkJoglPanel extends GLJPanel
                     rw.SetPosition(0, 0);
                     setSize(drawable.getWidth(), drawable.getHeight());
                     rw.OpenGLInit();
-                    
+
                     // init light
                     if (!lightingset)
                     {
@@ -130,6 +131,21 @@ public class VtkJoglPanel extends GLJPanel
 
         // super.setSize(200, 200);
         // rw.SetSize(200, 200);
+
+        // get maximum supported GL profile
+        final GLProfile glp = GLProfile.getMaximum(true);
+
+        // not compatible with OpenGL2 (needed by VTK)
+        if (!glp.isGL2())
+        {
+            if (!IdConfirmDialog
+                    .confirm(
+                            "Warning",
+                            "Your graphics card driver does not support OpenGL 2, VTK cannot work correctly.\nDo you want to continue ?",
+                            IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
+                throw new UnsupportedOperationException(
+                        "OpenGL 2 is not supported by your graphics card driver, cannot display VTK window...");
+        }
     }
 
     /**
@@ -464,19 +480,19 @@ public class VtkJoglPanel extends GLJPanel
             unlock();
         }
     }
-    
+
     @Override
     public void paint(Graphics g)
     {
-    	try
-    	{
-    		super.paint(g);
-    	}
-    	catch(Throwable t)
-    	{
-    		// it can happen with older video cards
-    		IcyExceptionHandler.handleException(t, true);
-    	}
+        try
+        {
+            super.paint(g);
+        }
+        catch (Throwable t)
+        {
+            // it can happen with older video cards
+            IcyExceptionHandler.handleException(t, true);
+        }
     }
 
     /**
