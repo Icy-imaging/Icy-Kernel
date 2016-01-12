@@ -8,6 +8,7 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -27,6 +28,7 @@ import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point5D;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
+import icy.util.OpenGLUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkImageVolume;
@@ -217,6 +219,18 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // more than 4 channels ? --> not supported by VTK
         if (getImageSizeC() > 4)
             throw new UnsupportedOperationException("VTK does not support image with more than 4 channels !");
+
+        // not compatible with OpenGL2 (needed by VTK)
+        if (!OpenGLUtil.isOpenGLSupported(2))
+        {
+            if (!IdConfirmDialog
+                    .confirm(
+                            "Warning",
+                            "Your graphics card driver does not support OpenGL 2, VTK cannot work correctly.\nDo you want to continue anyway ?",
+                            IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
+                throw new UnsupportedOperationException(
+                        "OpenGL 2 is not supported by your graphics card driver, cannot display VTK window...");
+        }
 
         // multi channel view
         posC = -1;
