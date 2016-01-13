@@ -218,7 +218,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         // more than 4 channels ? --> not supported by VTK
         if (getImageSizeC() > 4)
-            throw new UnsupportedOperationException("VTK does not support image with more than 4 channels !");
+            throw new UnsupportedOperationException(
+                    "VTK does not support image with more than 4 channels !\nYou should remove some channels in your image.");
 
         // not compatible with OpenGL2 (needed by VTK)
         if (!OpenGLUtil.isOpenGLSupported(2))

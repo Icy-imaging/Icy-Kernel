@@ -1,8 +1,10 @@
 package icy.vtk;
 
 import icy.gui.dialog.IdConfirmDialog;
+import icy.gui.dialog.MessageDialog;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+import icy.util.OpenGLUtil;
 
 import java.awt.Graphics;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,6 +47,7 @@ public class VtkJoglPanel extends GLJPanel
     protected boolean lightingset;
     protected int interactionMode;
     protected boolean rendering;
+    private boolean failed;
 
     public VtkJoglPanel()
     {
@@ -75,6 +78,7 @@ public class VtkJoglPanel extends GLJPanel
         windowset = false;
         lightingset = false;
         rendering = false;
+        failed = false;
 
         addGLEventListener(new GLEventListener()
         {
@@ -132,11 +136,8 @@ public class VtkJoglPanel extends GLJPanel
         // super.setSize(200, 200);
         // rw.SetSize(200, 200);
 
-        // get maximum supported GL profile
-        final GLProfile glp = GLProfile.getMaximum(true);
-
         // not compatible with OpenGL2 (needed by VTK)
-        if (!glp.isGL2())
+        if (!OpenGLUtil.isOpenGLSupported(2))
         {
             if (!IdConfirmDialog
                     .confirm(
@@ -484,6 +485,10 @@ public class VtkJoglPanel extends GLJPanel
     @Override
     public void paint(Graphics g)
     {
+        // previous failed --> do nothing now
+        if (failed)
+            return;
+
         try
         {
             super.paint(g);
@@ -491,6 +496,11 @@ public class VtkJoglPanel extends GLJPanel
         catch (Throwable t)
         {
             // it can happen with older video cards
+            failed = true;
+
+            MessageDialog.showDialog("An error occured while initializing OpenGL !\n"
+                    + "You may try to update your graphics card driver to fix this issue.", MessageDialog.ERROR_MESSAGE);
+
             IcyExceptionHandler.handleException(t, true);
         }
     }
