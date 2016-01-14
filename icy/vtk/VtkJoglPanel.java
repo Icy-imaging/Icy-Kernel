@@ -60,6 +60,12 @@ public class VtkJoglPanel extends GLJPanel
         rw.SetSupportsOpenGL(1);
         rw.SetIsCurrent(true);
 
+        // FIXME: smoothing is broken with VTK 6.3
+//        rw.SetPointSmoothing(1);
+//        rw.SetLineSmoothing(1);
+//        rw.SetPolygonSmoothing(1);
+//        rw.SetMultiSamples(4);
+
         // init window interactor
         wi = new vtkGenericRenderWindowInteractor();
         wi.SetRenderWindow(rw);
@@ -67,6 +73,7 @@ public class VtkJoglPanel extends GLJPanel
 
         ren = new vtkRenderer();
         ren.SetLightFollowCamera(1);
+        
         cam = null;
 
         lgt = new vtkLight();

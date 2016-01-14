@@ -68,6 +68,7 @@ import java.util.List;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkCellArray;
+import vtk.vtkCubeAxesActor;
 import vtk.vtkPoints;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
@@ -81,14 +82,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 {
     public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter, Runnable
     {
-        // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        vtkPolyData polyData;
-        vtkPolyDataMapper polyMapper;
-        vtkActor actor;
+        // VTK 3D objects
+        protected vtkCubeAxesActor boundingBox;
+        protected vtkPolyData polyData;
+        protected vtkPolyDataMapper polyMapper;
+        protected vtkActor actor;
         // 3D internal
-        boolean needRebuild;
-        double scaling[];
-        WeakReference<VtkCanvas> canvas3d;
+        protected boolean needRebuild;
+        protected double scaling[];
+        protected WeakReference<VtkCanvas> canvas3d;
 
         public ROI2DShapePainter()
         {
@@ -108,7 +110,23 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
         protected void initVtkObjects()
         {
-            // init 3D painters stuff
+            // initialize bounding box
+            boundingBox = new vtkCubeAxesActor();
+
+            // set bounding box properties
+            boundingBox.SetFlyModeToStaticEdges();
+            boundingBox.SetUseBounds(true);
+            boundingBox.XAxisLabelVisibilityOff();
+            boundingBox.XAxisMinorTickVisibilityOff();
+            boundingBox.XAxisTickVisibilityOff();
+            boundingBox.YAxisLabelVisibilityOff();
+            boundingBox.YAxisMinorTickVisibilityOff();
+            boundingBox.YAxisTickVisibilityOff();
+            boundingBox.ZAxisLabelVisibilityOff();
+            boundingBox.ZAxisMinorTickVisibilityOff();
+            boundingBox.ZAxisTickVisibilityOff();
+
+            // init poly data object
             polyData = new vtkPolyData();
 
             polyMapper = new vtkPolyDataMapper();
@@ -119,10 +137,16 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
             // initialize color and stroke
             final Color col = getColor();
-            final vtkProperty property = actor.GetProperty();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
 
+            final vtkProperty property = actor.GetProperty();
             property.SetPointSize(getStroke());
-            property.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
+            property.SetColor(r, g, b);
+            boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
+            boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
+            boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
         }
 
         /**
@@ -246,14 +270,18 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 polyMapper.Update();
 
                 actor.SetScale(scaling);
+
+                // adjust bounding box
+                boundingBox.SetBounds(actor.GetBounds());
+                boundingBox.SetCamera(canvas.getCamera());
             }
             finally
             {
                 canvas.unlock();
             }
 
-            // need to repaint
-            painterChanged();
+            // update color and others properties
+            updateVtkDisplayProperties();
         }
 
         protected void updateVtkDisplayProperties()
@@ -263,6 +291,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 final VtkCanvas cnv = canvas3d.get();
                 final vtkProperty vtkProperty = actor.GetProperty();
                 final Color col = getDisplayColor();
+                final double r = col.getRed() / 255d;
+                final double g = col.getGreen() / 255d;
+                final double b = col.getBlue() / 255d;
                 final double strk = getStroke();
                 // final float opacity = getOpacity();
 
@@ -272,10 +303,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     cnv.lock();
                     try
                     {
-                        vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
+                        vtkProperty.SetColor(r, g, b);
                         vtkProperty.SetPointSize(strk);
                         // opacity here is about ROI content, whole actor opacity is handled by Layer
                         // vtkProperty.SetOpacity(opacity);
+
+                        boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
+                        boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
+                        boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
+                        boundingBox.SetVisibility(isSelected() ? 1 : 0);
                     }
                     finally
                     {
@@ -288,7 +324,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     vtkProperty.SetPointSize(strk);
                     // opacity here is about ROI content, whole actor opacity is handled by Layer
                     // vtkProperty.SetOpacity(opacity);
+
+                    boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
+                    boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
+                    boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
+                    boundingBox.SetVisibility(isSelected() ? 1 : 0);
                 }
+
+                // need to repaint
+                painterChanged();
             }
         }
 
@@ -892,7 +936,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (actor == null)
                 initVtkObjects();
 
-            return new vtkProp[] {actor};
+            return new vtkProp[] {actor, boundingBox};
         }
 
         @Override

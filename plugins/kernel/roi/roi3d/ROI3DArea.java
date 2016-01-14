@@ -64,17 +64,18 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     public class ROI3DAreaPainter extends ROI3DStackPainter implements VtkPainter, Runnable
     {
         // VTK 3D objects
-        vtkCubeAxesActor boundingBox;
-        vtkPolyDataMapper polyMapper;
-        vtkActor surfaceActor;
-
+        protected vtkCubeAxesActor boundingBox;
+        protected vtkPolyDataMapper polyMapper;
+        protected vtkActor surfaceActor;
         // 3D internal
-        boolean needRebuild;
-        double scaling[];
-        WeakReference<VtkCanvas> canvas3d;
+        protected boolean needRebuild;
+        protected double scaling[];
+        protected WeakReference<VtkCanvas> canvas3d;
 
         public ROI3DAreaPainter()
         {
+            super();
+            
             boundingBox = null;
             polyMapper = null;
             surfaceActor = null;
@@ -192,6 +193,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 final double r = col.getRed() / 255d;
                 final double g = col.getGreen() / 255d;
                 final double b = col.getBlue() / 255d;
+//                final double strk = getStroke();
+//                final float opacity = getOpacity();
 
                 // we need to lock canvas as actor can be accessed during rendering
                 if (cnv != null)
@@ -307,19 +310,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                         ThreadUtil.runSingle(this);
                         needRebuild = false;
                     }
-
-                    // if (boundingBox != null)
-                    // {
-                    // cnv.lock();
-                    // try
-                    // {
-                    // boundingBox.SetVisibility(isSelected() ? 1 : 0);
-                    // }
-                    // finally
-                    // {
-                    // cnv.unlock();
-                    // }
-                    // }
                 }
                 else
                     super.paint(g, sequence, canvas);
