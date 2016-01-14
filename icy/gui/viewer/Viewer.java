@@ -52,6 +52,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
+import icy.system.IcyHandledException;
 import icy.system.thread.ThreadUtil;
 import icy.util.Random;
 import icy.util.StringUtil;
@@ -679,6 +680,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 }
                 catch (Throwable e)
                 {
+                	if (e instanceof IcyHandledException)
+                	{
+                		// just ignore
+                	}
                     if (e instanceof UnsupportedOperationException)
                     {
                         MessageDialog.showDialog(e.getLocalizedMessage(), MessageDialog.ERROR_MESSAGE);

@@ -221,18 +221,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             throw new UnsupportedOperationException(
                     "VTK does not support image with more than 4 channels !\nYou should remove some channels in your image.");
 
-        // not compatible with OpenGL2 (needed by VTK)
-        if (!OpenGLUtil.isOpenGLSupported(2))
-        {
-            if (!IdConfirmDialog
-                    .confirm(
-                            "Warning",
-                            "Your graphics card driver does not support OpenGL 2, VTK cannot work correctly.\nDo you want to continue anyway ?",
-                            IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
-                throw new UnsupportedOperationException(
-                        "OpenGL 2 is not supported by your graphics card driver, cannot display VTK window...");
-        }
-
         // multi channel view
         posC = -1;
         // adjust LUT alpha level for 3D view

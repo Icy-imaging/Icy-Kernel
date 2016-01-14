@@ -3,6 +3,7 @@ package icy.vtk;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.system.IcyExceptionHandler;
+import icy.system.IcyHandledException;
 import icy.system.thread.ThreadUtil;
 import icy.util.OpenGLUtil;
 
@@ -149,10 +150,10 @@ public class VtkJoglPanel extends GLJPanel
             if (!IdConfirmDialog
                     .confirm(
                             "Warning",
-                            "Your graphics card driver does not support OpenGL 2, VTK cannot work correctly.\nDo you want to continue anyway ?",
+                            "Your graphics card driver does not support OpenGL 2, you may experience issues with VTK.\nDo you want to try anyway ?",
                             IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
-                throw new UnsupportedOperationException(
-                        "OpenGL 2 is not supported by your graphics card driver, cannot display VTK window...");
+                throw new IcyHandledException(
+                        "Your graphics card driver is not compatible with OpenGL 2 !");
         }
     }
 

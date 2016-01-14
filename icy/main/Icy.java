@@ -1249,8 +1249,9 @@ public class Icy
                     .getAutoGarbageCollector();
             
             // set auto garbage collection for VTK (every 20 seconds should be enough)
-            vtkJavaGarbageCollector.SetScheduleTime(20, TimeUnit.SECONDS);
-            vtkJavaGarbageCollector.SetAutoGarbageCollection(true);
+            // probably not a good idea...
+//            vtkJavaGarbageCollector.SetScheduleTime(20, TimeUnit.SECONDS);
+//            vtkJavaGarbageCollector.SetAutoGarbageCollection(true);
         }
         else
         {
