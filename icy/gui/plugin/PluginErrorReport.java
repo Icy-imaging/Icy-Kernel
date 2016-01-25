@@ -90,7 +90,7 @@ public class PluginErrorReport
                             + "' has crashed, searching for update...");
 
                     // wait for online basic info loaded
-                    PluginRepositoryLoader.waitBasicLoaded();
+                    PluginRepositoryLoader.waitLoaded();
 
                     PluginDescriptor onlinePlugin = null;
 
@@ -191,6 +191,8 @@ public class PluginErrorReport
         if (plugin != null)
         {
             str = "<html><br>The plugin named <b>" + plugin.getName() + "</b> has encountered a problem";
+            // load icon first
+            plugin.loadIcon();
             icon = plugin.getIcon();
         }
         else if (!StringUtil.isEmpty(devId))

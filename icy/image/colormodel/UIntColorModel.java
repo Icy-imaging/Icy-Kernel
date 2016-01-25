@@ -48,7 +48,7 @@ public class UIntColorModel extends IcyColorModel
         for (int comp = 0; comp < numComponents; comp++)
             scaledData[comp] = (int) colormapScalers[comp].scale(TypeUtil.unsign(pix[comp]));
 
-        return colorSpace.toRGBUnnorm(scaledData);
+        return getIcyColorSpace().toRGBUnnorm(scaledData);
     }
 
     /**

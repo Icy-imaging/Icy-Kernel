@@ -898,7 +898,7 @@ public class PluginLoader
             else
                 pf = null;
 
-            PluginRepositoryLoader.waitBasicLoaded();
+            PluginRepositoryLoader.waitLoaded();
 
             // get list of required and faulty plugins
             for (PluginDescriptor plugin : plugins)

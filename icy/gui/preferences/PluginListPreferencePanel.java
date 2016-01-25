@@ -35,6 +35,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -310,6 +312,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
                     switch (column)
                     {
                         case 0:
+                            loadIconAsync(plugin);
                             return ResourceUtil.scaleIcon(plugin.getIcon(), 32);
 
                         case 1:
@@ -411,6 +414,22 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         // sort on name by default
         table.getRowSorter().toggleSortOrder(1);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent me)
+            {
+                if (!me.isConsumed())
+                {
+                    if (me.getClickCount() == 2)
+                    {
+                        // show detail
+                        detailButton.doClick();
+                        me.consume();
+                    }
+                }
+            }
+        });
 
         final JPanel tableTopPanel = new JPanel();
 
@@ -435,6 +454,23 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         mainPanel.add(buttonsPanel, BorderLayout.EAST);
 
         mainPanel.validate();
+    }
+
+    protected void loadIconAsync(final PluginDescriptor plugin)
+    {
+        if (!plugin.isIconLoaded())
+        {
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // icon correctly loaded ?
+                    if (plugin.loadIcon())
+                        refreshTableData();
+                }
+            });
+        }
     }
 
     @Override

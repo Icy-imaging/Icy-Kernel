@@ -362,6 +362,9 @@ public class Icy
         ApplicationPreferences.setVersion(Icy.version);
         // set LOCI debug level
         loci.common.DebugTools.enableLogging("ERROR");
+        // set OGL debug level
+//        SystemUtil.setProperty("jogl.verbose", "TRUE");
+//        SystemUtil.setProperty("jogl.debug", "TRUE");
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");
@@ -1250,7 +1253,7 @@ public class Icy
             
             // set auto garbage collection for VTK (every 20 seconds should be enough)
             // probably not a good idea...
-//            vtkJavaGarbageCollector.SetScheduleTime(20, TimeUnit.SECONDS);
+//            vtkJavaGarbageCollector.SetScheduleTime(5, TimeUnit.SECONDS);
 //            vtkJavaGarbageCollector.SetAutoGarbageCollection(true);
         }
         else

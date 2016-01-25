@@ -103,56 +103,9 @@ public class PluginRepositoryLoader
                 return;
             }
 
-            // notify change for basic infos
-            basicLoaded = true;
+            // notify basic data has been loaded
+            loaded = true;
             changed(null);
-
-            // we load descriptor
-            for (PluginDescriptor plugin : plugins)
-            {
-                // reload requested --> stop current loading
-                if (processor.hasWaitingTasks())
-                    return;
-                // internet connection lost --> failed
-                if (!NetworkUtil.hasInternetAccess())
-                {
-                    failed = true;
-                    return;
-                }
-
-                plugin.loadDescriptor();
-            }
-
-            // sort list on plugin name
-            synchronized (plugins)
-            {
-                Collections.sort(plugins, PluginNameSorter.instance);
-            }
-
-            // notify final change for descriptors loading
-            descriptorsLoaded = true;
-            changed(null);
-
-            // then we load images
-            for (PluginDescriptor plugin : plugins)
-            {
-                // reload requested --> stop current loading
-                if (processor.hasWaitingTasks())
-                    return;
-                // internet connection lost --> failed
-                if (!NetworkUtil.hasInternetAccess())
-                {
-                    failed = true;
-                    return;
-                }
-
-                plugin.loadImages();
-                // notify change
-                changed(plugin);
-            }
-
-            // images loaded
-            imagesLoaded = true;
         }
     }
 
@@ -178,9 +131,7 @@ public class PluginRepositoryLoader
     /**
      * internals
      */
-    boolean basicLoaded;
-    boolean descriptorsLoaded;
-    boolean imagesLoaded;
+    boolean loaded;
     boolean failed;
 
     private final Loader loader;
@@ -199,6 +150,7 @@ public class PluginRepositoryLoader
         loader = new Loader();
         processor = new SingleProcessor(true, "Online Plugin Loader");
 
+        loaded = false;
         // initial loading
         load();
     }
@@ -284,9 +236,7 @@ public class PluginRepositoryLoader
      */
     private void load()
     {
-        basicLoaded = false;
-        descriptorsLoaded = false;
-        imagesLoaded = false;
+        loaded = false;
         failed = false;
 
         processor.submit(loader);
@@ -294,8 +244,7 @@ public class PluginRepositoryLoader
 
     /**
      * Reload all plugins from all active repositories (old list is cleared).<br>
-     * Asynchronous process, use {@link #waitBasicLoaded()} or {@link #waitDescriptorsLoaded()}
-     * method to wait for specified data to be loaded.
+     * Asynchronous process, use {@link #waitLoaded()} method to wait for basic data to be loaded.
      */
     public static synchronized void reload()
     {
@@ -320,7 +269,7 @@ public class PluginRepositoryLoader
     /**
      * Load and return the list of online plugins located at specified repository
      */
-    List<PluginDescriptor> loadInternal(RepositoryInfo repos)
+    static List<PluginDescriptor> loadInternal(RepositoryInfo repos)
     {
         // we start by loading only identifier part
         final List<PluginOnlineIdent> idents = getPluginIdents(repos);
@@ -395,7 +344,7 @@ public class PluginRepositoryLoader
     }
 
     /**
-     * @return true if loader is loading anything (basic, descriptor or images)
+     * @return true if loader is loading the basic informations
      */
     public static boolean isLoading()
     {
@@ -405,43 +354,63 @@ public class PluginRepositoryLoader
     /**
      * @return true if basic informations (class names, versions...) are loaded.
      */
-    public static boolean isBasicLoaded()
+    public static boolean isLoaded()
     {
-        return instance.failed || instance.basicLoaded;
-    }
-
-    /**
-     * @return true if complete descriptors are loaded.
-     */
-    public static boolean isDescriptorsLoaded()
-    {
-        return instance.failed || instance.descriptorsLoaded;
-    }
-
-    /**
-     * @return true if images are loaded.
-     */
-    public static boolean isImagesLoaded()
-    {
-        return instance.failed || instance.imagesLoaded;
+        return instance.failed || instance.loaded;
     }
 
     /**
      * Wait until basic informations are loaded.
      */
-    public static void waitBasicLoaded()
+    public static void waitLoaded()
     {
-        while (!isBasicLoaded())
+        while (!isLoaded())
             ThreadUtil.sleep(10);
     }
 
     /**
-     * Wait until descriptors are loaded.
+     * @deprecated use {@link #isLoaded()} instead.
      */
+    @Deprecated
+    public static boolean isBasicLoaded()
+    {
+        return isLoaded();
+    }
+
+    /**
+     * @deprecated descriptor loading is now done per descriptor when needed
+     */
+    @Deprecated
+    public static boolean isDescriptorsLoaded()
+    {
+        return true;
+    }
+
+    /**
+     * @deprecated image loading is now done per descriptor when needed
+     */
+    @Deprecated
+    public static boolean isImagesLoaded()
+    {
+        return true;
+    }
+
+    /**
+     * @deprecated use {@link #waitLoaded()} instead.
+     */
+    @Deprecated
+    public static void waitBasicLoaded()
+    {
+        waitLoaded();
+    }
+
+    /**
+     * @deprecated descriptor loading is now done per descriptor when needed
+     */
+    @Deprecated
     public static void waitDescriptorsLoaded()
     {
-        while (!isDescriptorsLoaded())
-            ThreadUtil.sleep(10);
+        // do nothing
     }
 
     /**

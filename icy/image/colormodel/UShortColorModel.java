@@ -46,7 +46,7 @@ public class UShortColorModel extends IcyColorModel
         for (int comp = 0; comp < numComponents; comp++)
             scaledData[comp] = (int) colormapScalers[comp].scale(pix[comp] & 0xFFFF);
 
-        return colorSpace.toRGBUnnorm(scaledData);
+        return getIcyColorSpace().toRGBUnnorm(scaledData);
     }
 
     /**

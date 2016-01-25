@@ -746,6 +746,10 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final boolean editable = !readOnly;
         final int dim = (roi != null) ? roi.getDimension() : 0;
 
+        // avoid retaining ROIS when sequence is closed
+        if (!hasSequence)
+            modifiedRois = null;
+
         // wait a bit to avoid eating too much time with refresh
         ThreadUtil.sleep(1);
 

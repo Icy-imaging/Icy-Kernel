@@ -2556,7 +2556,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     volImg.removeImage(z);
                 else
                 {
-                    final IcyBufferedImage icyImg;
+                    IcyBufferedImage icyImg;
 
                     // convert to icyImage if needed
                     if (image instanceof IcyBufferedImage)
@@ -2572,6 +2572,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     if (!typeChange && !isCompatible(icyImg))
                         throw new IllegalArgumentException("Sequence.setImage : image is not compatible !");
 
+                    // we want to share the same color space for all the sequence:
+                    // colormap eats a lot of memory so it's better to keep one global and we never use colormap for
+                    // single image anyway. But it's important to preserve the colormodel for each image though as it
+                    // store the channel bounds informations.
+                    if (colorModel != null)
+                        icyImg.getIcyColorModel().setColorSpace(colorModel.getIcyColorSpace());
+
+                    // apply this parameter from sequence parameter
+                    icyImg.setAutoUpdateChannelBounds(getAutoUpdateChannelBounds());
+
                     // set image
                     volImg.setImage(z, icyImg);
                 }
@@ -2580,7 +2590,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set an image at the specified position.
+     * Set an image at the specified position.<br/>
+     * Note that the image duplicated/transformed internally before being attached to the Sequence object.
      * 
      * @param t
      *        T position

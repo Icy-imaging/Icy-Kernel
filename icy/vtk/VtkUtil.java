@@ -29,6 +29,7 @@ import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Color;
 
+import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
 import vtk.vtkActor2DCollection;
@@ -673,10 +674,9 @@ public class VtkUtil
     public static vtkPolyData getSurfaceFromImage(vtkImageData imageData, double threshold, boolean keepLargest,
             boolean simplifyMesh, int smoothness)
     {
+        vtkImageData out;
         vtkPolyData result;
 
-        // pad on all sides to guarantee close meshes
-        final vtkImageConstantPad pad = new vtkImageConstantPad();
         final int[] extent = imageData.GetExtent();
         extent[0]--; // min X
         extent[1]++; // max X
@@ -684,17 +684,28 @@ public class VtkUtil
         extent[3]++; // max Y
         extent[4]--; // min Z
         extent[5]++; // max Z
+
+        // pad on all sides to guarantee close meshes
+        final vtkImageConstantPad pad = new vtkImageConstantPad();
+
         pad.SetOutputWholeExtent(extent);
         pad.SetInputData(imageData);
+        pad.Update();
+
+        out = pad.GetOutput();
+        // do not delete input image
+        pad.Delete();
 
         final vtkMarchingCubes marchingCubes = new vtkMarchingCubes();
 
-        marchingCubes.SetInputConnection(pad.GetOutputPort());
+        marchingCubes.SetInputData(out);
         marchingCubes.SetValue(0, threshold);
         marchingCubes.Update();
 
         // get the poly data result
         result = marchingCubes.GetOutput();
+        marchingCubes.GetInput().Delete();
+        marchingCubes.Delete();
 
         if (keepLargest)
         {
@@ -705,6 +716,8 @@ public class VtkUtil
             cc.Update();
 
             result = cc.GetOutput();
+            cc.GetInput().Delete();
+            cc.Delete();
         }
 
         if (simplifyMesh)
@@ -717,6 +730,8 @@ public class VtkUtil
             dec.Update();
 
             result = dec.GetOutput();
+            dec.GetInput().Delete();
+            dec.Delete();
         }
 
         if (smoothness > 0)
@@ -731,6 +746,8 @@ public class VtkUtil
             smoother.Update();
 
             result = smoother.GetOutput();
+            smoother.GetInput().Delete();
+            smoother.Delete();
         }
 
         return result;
@@ -812,5 +829,169 @@ public class VtkUtil
         result.AddPoint(1d, opacity);
 
         return result;
+    }
+
+    /**
+     * Set the Color of the specified {@link vtkPolyData} object.
+     * 
+     * @param polyData
+     *        the vtkPolyData we want to change color
+     * @param color
+     *        the color to set
+     * @param canvas
+     *        the VtkCanvas object to lock during the color change operation for safety (can be <code>null</code> if we
+     *        don't need to lock the VtkCanvas here)
+     */
+    public static void setPolyDataColor(vtkPolyData polyData, Color color, VtkCanvas canvas)
+    {
+        final int numPts = polyData.GetNumberOfPoints();
+        vtkUnsignedCharArray colors = null;
+
+        // try to recover colors object
+        if (polyData.GetPointData() != null)
+        {
+            final vtkDataArray dataArray = polyData.GetPointData().GetScalars();
+
+            if (dataArray instanceof vtkUnsignedCharArray)
+                colors = (vtkUnsignedCharArray) dataArray;
+            // delete it
+            else if (dataArray != null)
+                dataArray.Delete();
+        }
+
+        // colors is not correctly defined ? --> reallocate
+        if ((colors == null) || (colors.GetNumberOfTuples() != numPts) || (colors.GetNumberOfComponents() != 3))
+        {
+            // delete first
+            if (colors != null)
+                colors.Delete();
+
+            // and reallocate
+            colors = new vtkUnsignedCharArray();
+            colors.SetNumberOfComponents(3);
+            colors.SetNumberOfTuples(numPts);
+            // set colors array
+            polyData.GetPointData().SetScalars(colors);
+        }
+
+        final int len = numPts * 3;
+
+        final byte r = (byte) color.getRed();
+        final byte g = (byte) color.getGreen();
+        final byte b = (byte) color.getBlue();
+        final byte[] data = new byte[len];
+
+        for (int i = 0; i < len; i += 3)
+        {
+            data[i + 0] = r;
+            data[i + 1] = g;
+            data[i + 2] = b;
+        }
+
+        if (canvas != null)
+        {
+            canvas.lock();
+            try
+            {
+                colors.SetJavaArray(data);
+                colors.Modified();
+            }
+            finally
+            {
+                canvas.unlock();
+            }
+        }
+        else
+        {
+            colors.SetJavaArray(data);
+            colors.Modified();
+        }
+    }
+
+    /**
+     * Returns a cube polydata object representing the specified bounding box coordinate
+     * 
+     * @see #setOutlineBounds(vtkPolyData, double, double, double, double, double, double, VtkCanvas)
+     */
+    public static vtkPolyData getOutline(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax)
+    {
+        final double points[][] = new double[8][3];
+        final int indexes[][] = { {0, 2, 3, 1}, {4, 5, 7, 6}, {0, 1, 5, 4}, {1, 3, 7, 5}, {0, 4, 6, 2}, {3, 2, 6, 7}};
+
+        for (int i = 0; i < 8; i++)
+        {
+            points[i][0] = ((i & 1) == 0) ? xMin : xMax;
+            points[i][1] = ((i & 2) == 0) ? yMin : yMax;
+            points[i][2] = ((i & 4) == 0) ? zMin : zMax;
+        }
+
+        final vtkCellArray vCells = VtkUtil.getCells(6, prepareCells(indexes));
+        final vtkPoints vPoints = VtkUtil.getPoints(points);
+        final vtkPolyData result = new vtkPolyData();
+
+        result.SetPolys(vCells);
+        result.SetPoints(vPoints);
+
+        return result;
+    }
+
+    /**
+     * Set the bounds of specified outline polydata object (previously created with <i>VtkUtil.getOutline(..)</i>)
+     * 
+     * @param canvas
+     *        the VtkCanvas object to lock during the color change operation for safety (can be <code>null</code> if we
+     *        don't need to lock the VtkCanvas here)
+     * @return <code>false</code> if the specified polydata object is not a valid outline object
+     * @see #getOutline(double, double, double, double, double, double)
+     */
+    public static boolean setOutlineBounds(vtkPolyData outline, double xMin, double xMax, double yMin, double yMax,
+            double zMin, double zMax, VtkCanvas canvas)
+    {
+        final vtkPoints previousPoints = outline.GetPoints();
+
+        // not valid
+        if ((previousPoints != null) && (previousPoints.GetNumberOfPoints() != 8))
+            return false;
+
+        final double newPoints[][] = new double[8][3];
+        for (int i = 0; i < 8; i++)
+        {
+            newPoints[i][0] = ((i & 1) == 0) ? xMin : xMax;
+            newPoints[i][1] = ((i & 2) == 0) ? yMin : yMax;
+            newPoints[i][2] = ((i & 4) == 0) ? zMin : zMax;
+        }
+
+        final vtkPoints points = getPoints(newPoints);
+
+        if (canvas != null)
+        {
+            canvas.lock();
+            try
+            {
+                // rebuild points
+                outline.SetPoints(points);
+                // changed
+                outline.Modified();
+                // delete previous points
+                if (previousPoints != null)
+                    previousPoints.Delete();
+            }
+            finally
+            {
+                canvas.unlock();
+            }
+        }
+        else
+        {
+            // rebuild points
+            outline.SetPoints(points);
+            // changed
+            outline.Modified();
+            // delete previous points
+            if (previousPoints != null)
+                previousPoints.Delete();
+        }
+
+        return true;
     }
 }

@@ -147,8 +147,8 @@ public class IcyBufferedImageUtil
     /**
      * Draw the source {@link IcyBufferedImage} into the destination ARGB {@link BufferedImage}<br>
      * If <code>dest</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
-     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
-     * but the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} but the output
+     * {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
      * 
      * @param source
      *        source image
@@ -164,7 +164,7 @@ public class IcyBufferedImageUtil
 
         // use image lut when no specific lut
         if (lut == null)
-            return argbImageBuilder.buildARGBImage(source, source.getLUT(), dest);
+            return argbImageBuilder.buildARGBImage(source, source.createCompatibleLUT(false), dest);
 
         return argbImageBuilder.buildARGBImage(source, lut, dest);
     }
@@ -589,7 +589,6 @@ public class IcyBufferedImageUtil
                 break;
         }
 
-        
         // use JAI scaler (use a copy to avoid source alteration)
         final RenderedOp renderedOp = RotateDescriptor.create(getCopy(source), Float.valueOf((float) xOrigin), Float
                 .valueOf((float) yOrigin), Float.valueOf((float) angle), interpolation, null, new RenderingHints(

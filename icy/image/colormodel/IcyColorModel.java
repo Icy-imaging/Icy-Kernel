@@ -33,6 +33,7 @@ import icy.math.ScalerListener;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
+import icy.util.ReflectionUtil;
 
 import java.awt.image.BandedSampleModel;
 import java.awt.image.ColorModel;
@@ -46,6 +47,7 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
+import java.lang.reflect.Field;
 
 import javax.swing.event.EventListenerList;
 
@@ -72,7 +74,6 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * overridden variables
      */
     protected final int numComponents;
-    protected final IcyColorSpace colorSpace;
 
     /**
      * listeners
@@ -97,7 +98,6 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
 
         // overridden variable
         this.numComponents = numComponents;
-        colorSpace = (IcyColorSpace) getColorSpace();
 
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
@@ -127,7 +127,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         }
 
         // add the listener to colorSpace
-        colorSpace.addListener(this);
+        getIcyColorSpace().addListener(this);
     }
 
     /**
@@ -568,7 +568,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     @Override
     public Object getDataElements(int rgb, Object pixel)
     {
-        return getDataElements(colorSpace.fromRGB(rgb), 0, pixel);
+        return getDataElements(getIcyColorSpace().fromRGB(rgb), 0, pixel);
     }
 
     /**
@@ -601,9 +601,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * 
      * @param obj
      *        the <code>Object</code> to test for equality
-     * @return <code>true</code> if the specified <code>Object</code> is an instance of
-     *         <code>ColorModel</code> and equals this <code>ColorModel</code>; <code>false</code>
-     *         otherwise.
+     * @return <code>true</code> if the specified <code>Object</code> is an instance of <code>ColorModel</code> and
+     *         equals this <code>ColorModel</code>; <code>false</code> otherwise.
      */
     @Override
     public boolean equals(Object obj)
@@ -666,7 +665,35 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public IcyColorSpace getIcyColorSpace()
     {
-        return colorSpace;
+        return (IcyColorSpace) getColorSpace();
+    }
+
+    /**
+     * Change the colorspace of the color model.<br/>
+     * <b>You should never use this method directly (internal use only)</b>
+     */
+    public void setColorSpace(IcyColorSpace cs)
+    {
+        final IcyColorSpace currentCS = getIcyColorSpace();
+
+        if (currentCS != cs)
+        {
+            try
+            {
+                final Field csField = ReflectionUtil.getField(ColorModel.class, "colorSpace", true);
+                // set new colorSpace value
+                csField.set(this, cs);
+                
+                currentCS.removeListener(this);
+                cs.addListener(this);
+            }
+            catch (Exception e)
+            {
+                System.err.println("Warning: Couldn't change colorspace of IcyColorModel...");
+            }
+        }
+
+        // do not notify about the change here as this method is only called internally
     }
 
     /**
@@ -921,17 +948,15 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Returns the <code>String</code> representation of the contents of this
-     * <code>ColorModel</code>object.
+     * Returns the <code>String</code> representation of the contents of this <code>ColorModel</code>object.
      * 
-     * @return a <code>String</code> representing the contents of this <code>ColorModel</code>
-     *         object.
+     * @return a <code>String</code> representing the contents of this <code>ColorModel</code> object.
      */
     @Override
     public String toString()
     {
         return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents
-                + " color space = " + colorSpace);
+                + " color space = " + getColorSpace());
     }
 
     /**

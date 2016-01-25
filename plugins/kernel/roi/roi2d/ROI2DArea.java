@@ -33,6 +33,7 @@ import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.type.point.Point5D.Double;
+import icy.type.rectangle.Rectangle3D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
@@ -63,9 +64,7 @@ import java.util.Arrays;
 import org.w3c.dom.Node;
 
 import plugins.kernel.canvas.VtkCanvas;
-import plugins.kernel.roi.roi3d.ROI3DArea;
 import vtk.vtkActor;
-import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
@@ -100,7 +99,10 @@ public class ROI2DArea extends ROI2D
         private static final float MAX_CURSOR_SIZE = 500f;
 
         // VTK 3D objects
-        protected vtkCubeAxesActor boundingBox;
+        protected vtkPolyData outline;
+        protected vtkPolyDataMapper outlineMapper;
+        protected vtkActor outlineActor;
+        protected vtkPolyData polyData;
         protected vtkPolyDataMapper polyMapper;
         protected vtkActor surfaceActor;
         // 3D internal
@@ -117,7 +119,10 @@ public class ROI2DArea extends ROI2D
 
             brushPosition = new Point2D.Double();
 
-            boundingBox = null;
+            outline = null;
+            outlineMapper = null;
+            outlineActor = null;
+            polyData = null;
             polyMapper = null;
             surfaceActor = null;
 
@@ -128,26 +133,46 @@ public class ROI2DArea extends ROI2D
             canvas3d = new WeakReference<VtkCanvas>(null);
         }
 
+        @Override
+        protected void finalize() throws Throwable
+        {
+            super.finalize();
+
+            // release allocated VTK resources
+            if (surfaceActor != null)
+                surfaceActor.Delete();
+            if (polyMapper != null)
+                polyMapper.Delete();
+            if (polyData != null)
+            {
+                polyData.GetPointData().GetScalars().Delete();
+                polyData.GetPointData().Delete();
+                polyData.Delete();
+            }
+            if (outlineActor != null)
+                outlineActor.Delete();
+            if (outlineMapper != null)
+                outlineMapper.Delete();
+            if (outline != null)
+            {
+                outline.GetPointData().GetScalars().Delete();
+                outline.GetPointData().Delete();
+                outline.Delete();
+            }
+        };
+
         protected void initVtkObjects()
         {
-            // initialize bounding box
-            boundingBox = new vtkCubeAxesActor();
-
-            // set bounding box properties
-            boundingBox.SetFlyModeToStaticEdges();
-            boundingBox.SetUseBounds(true);
-            boundingBox.XAxisLabelVisibilityOff();
-            boundingBox.XAxisMinorTickVisibilityOff();
-            boundingBox.XAxisTickVisibilityOff();
-            boundingBox.YAxisLabelVisibilityOff();
-            boundingBox.YAxisMinorTickVisibilityOff();
-            boundingBox.YAxisTickVisibilityOff();
-            boundingBox.ZAxisLabelVisibilityOff();
-            boundingBox.ZAxisMinorTickVisibilityOff();
-            boundingBox.ZAxisTickVisibilityOff();
+            outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
+            outlineMapper = new vtkPolyDataMapper();
+            outlineActor = new vtkActor();
+            outlineActor.SetMapper(outlineMapper);
+            // disable picking on the outline
+            outlineActor.SetPickable(0);
+            // and set it to wireframe representation
+            outlineActor.GetProperty().SetRepresentationToWireframe();
 
             polyMapper = new vtkPolyDataMapper();
-
             surfaceActor = new vtkActor();
             surfaceActor.SetMapper(polyMapper);
 
@@ -157,10 +182,8 @@ public class ROI2DArea extends ROI2D
             final double b = col.getBlue() / 255d;
 
             // set actors color
+            outlineActor.GetProperty().SetColor(r, g, b);
             surfaceActor.GetProperty().SetColor(r, g, b);
-            boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
         }
 
         /**
@@ -178,43 +201,64 @@ public class ROI2DArea extends ROI2D
             if (seq == null)
                 return;
 
+            // get bounds
+            final Rectangle3D bounds = getBounds5D().toRectangle3D();
+            // apply scaling on bounds
+            bounds.setX(bounds.getX() * scaling[0]);
+            bounds.setSizeX(bounds.getSizeX() * scaling[0]);
+            bounds.setY(bounds.getY() * scaling[1]);
+            bounds.setSizeY(bounds.getSizeY() * scaling[1]);
+            if (bounds.isInfiniteZ())
+            {
+                bounds.setZ(0);
+                bounds.setSizeZ(seq.getSizeZ() * scaling[2]);
+            }
+            else
+            {
+                bounds.setZ(bounds.getZ() * scaling[2]);
+                bounds.setSizeZ(1d * scaling[2]);
+            }
+
+            // get previous polydata object
+            final vtkPolyData previousPolyData = polyData;
+
+            // update outline
+            VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY(),
+                    bounds.getMinZ(), bounds.getMaxZ(), canvas);
             // get VTK binary image from ROI mask
-            final vtkImageData image = VtkUtil
-                    .getBinaryImageData(ROI2DArea.this, seq.getSizeZ(), canvas.getPositionT());
+            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI2DArea.this, seq.getSizeZ(),
+                    canvas.getPositionT());
             // adjust spacing
-            image.SetSpacing(scaling[0], scaling[1], scaling[2]);
+            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
             // get VTK polygon data representing the surface of the binary image
-            final vtkPolyData polyData = VtkUtil.getSurfaceFromImage(image, 0.5d, false, false, 1);
-
-            // prepare array for color per vertex (as actor coloring does not work)
-            final vtkUnsignedCharArray colors = new vtkUnsignedCharArray();
-            final int numPts = polyData.GetNumberOfPoints();
-
-            colors.SetNumberOfComponents(3);
-            colors.SetNumberOfTuples(numPts);
-            // set colors array
-            polyData.GetPointData().SetScalars(colors);
+            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             canvas.lock();
             try
             {
+                // update outline polygon data
+                outlineMapper.SetInputData(outline);
+                outlineMapper.Update();
                 // update polygon data from image
                 polyMapper.SetInputData(polyData);
                 polyMapper.Update();
 
-                // update actors position
-                final Rectangle2D bounds = ROI2DArea.this.getBounds2D();
-                final int z = getZ();
+                // update actor position
+                surfaceActor.SetPosition(bounds.getX(), bounds.getY(), bounds.getZ());
 
-                if (z == -1)
-                    surfaceActor.SetPosition(bounds.getX() * scaling[0], bounds.getY() * scaling[1], 0d);
-                else
-                    surfaceActor.SetPosition(bounds.getX() * scaling[0], bounds.getY() * scaling[1], z * scaling[2]);
+                // release image data
+                imageData.GetPointData().GetScalars().Delete();
+                imageData.GetPointData().Delete();
+                imageData.Delete();
 
-                // adjust bounding box
-                boundingBox.SetBounds(surfaceActor.GetBounds());
-                boundingBox.SetCamera(canvas.getCamera());
+                // release previous polydata
+                if (previousPolyData != null)
+                {
+                    previousPolyData.GetPointData().GetScalars().Delete();
+                    previousPolyData.GetPointData().Delete();
+                    previousPolyData.Delete();
+                }
             }
             finally
             {
@@ -244,13 +288,11 @@ public class ROI2DArea extends ROI2D
                     try
                     {
                         // set actors color
+                        outlineActor.GetProperty().SetColor(r, g, b);
+                        outlineActor.SetVisibility(isSelected() ? 1 : 0);
                         surfaceActor.GetProperty().SetColor(r, g, b);
                         // opacity here is about ROI content, whole actor opacity is handled by Layer
-                        //surfaceActor.GetProperty().SetOpacity(opacity);
-                        boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                        // surfaceActor.GetProperty().SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
                     finally
@@ -260,11 +302,11 @@ public class ROI2DArea extends ROI2D
                 }
                 else
                 {
+                    outlineActor.GetProperty().SetColor(r, g, b);
+                    outlineActor.SetVisibility(isSelected() ? 1 : 0);
                     surfaceActor.GetProperty().SetColor(r, g, b);
-                    boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                    // opacity here is about ROI content, whole actor opacity is handled by Layer
+                    // surfaceActor.GetProperty().SetOpacity(opacity);
                     setVtkObjectsColor(col);
                 }
 
@@ -275,48 +317,10 @@ public class ROI2DArea extends ROI2D
 
         protected void setVtkObjectsColor(Color color)
         {
-            // get poly data
-            final vtkPolyData polyData = polyMapper.GetInput();
-
+            if (outline != null)
+                VtkUtil.setPolyDataColor(outline, color, canvas3d.get());
             if (polyData != null)
-            {
-                // recover colors object
-                final vtkUnsignedCharArray colors = (vtkUnsignedCharArray) polyData.GetPointData().GetScalars();
-                final int numPts = colors.GetNumberOfTuples() * 3;
-
-                final byte r = (byte) color.getRed();
-                final byte g = (byte) color.getGreen();
-                final byte b = (byte) color.getBlue();
-                final byte[] data = new byte[numPts];
-
-                for (int i = 0; i < numPts; i += 3)
-                {
-                    data[i + 0] = r;
-                    data[i + 1] = g;
-                    data[i + 2] = b;
-                }
-
-                final VtkCanvas canvas = canvas3d.get();
-
-                if (canvas != null)
-                {
-                    canvas.lock();
-                    try
-                    {
-                        colors.SetJavaArray(data);
-                        colors.Modified();
-                    }
-                    finally
-                    {
-                        canvas.unlock();
-                    }
-                }
-                else
-                {
-                    colors.SetJavaArray(data);
-                    colors.Modified();
-                }
-            }
+                VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
 
         void updateCursor()
@@ -938,7 +942,7 @@ public class ROI2DArea extends ROI2D
             if (surfaceActor == null)
                 initVtkObjects();
 
-            return new vtkActor[] {surfaceActor, boundingBox};
+            return new vtkActor[] {surfaceActor, outlineActor};
         }
 
         @Override
@@ -2221,6 +2225,7 @@ public class ROI2DArea extends ROI2D
                 if (boundsNeedUpdate && !roiModifiedByMouse)
                 {
                     if (optimizeBounds())
+                        // need to send a new change event !
                         roiChanged();
                 }
                 // we need to rebuild shape

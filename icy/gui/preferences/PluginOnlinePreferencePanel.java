@@ -235,7 +235,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     protected List<PluginDescriptor> getPlugins()
     {
         // loading...
-        if (!PluginRepositoryLoader.isBasicLoaded())
+        if (!PluginRepositoryLoader.isLoaded())
             return new ArrayList<PluginDescriptor>();
 
         // get selected repository
@@ -256,7 +256,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
         final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
         final boolean selected = (selectedPlugins.size() > 0);
 
-        if (PluginRepositoryLoader.isBasicLoaded())
+        if (PluginRepositoryLoader.isLoaded())
         {
             refreshButton.setText("Reload list");
             refreshButton.setEnabled(true);

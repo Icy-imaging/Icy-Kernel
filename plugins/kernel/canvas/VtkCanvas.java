@@ -8,7 +8,6 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
 import icy.gui.component.button.IcyToggleButton;
-import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -28,7 +27,6 @@ import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point5D;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
-import icy.util.OpenGLUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkImageVolume;
@@ -496,11 +494,12 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         boundingBox = null;
         camera = null;
 
+        panel3D.removeKeyListener(this);
         panel3D = null;
         panel = null;
 
-        // call VTK GC
-        vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
+        // call VTK GC: better if we can avoid this !
+        // vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
     }
 
     @Override
@@ -1063,32 +1062,52 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
     protected void addLayerActors(Layer layer)
     {
+        // not yet initialized
+        if ((renderer == null) || (panel3D == null))
+            return;
+
         final vtkProp[] props = getLayerActors(layer);
 
-        invokeOnEDTSilent(new Runnable()
+        if (props.length > 0)
         {
-            @Override
-            public void run()
+            invokeOnEDTSilent(new Runnable()
             {
-                for (vtkProp actor : props)
-                    VtkUtil.addProp(renderer, actor);
-            }
-        });
+                @Override
+                public void run()
+                {
+                    for (vtkProp actor : props)
+                    {
+                        // refresh camera property for this specific kind of actor
+                        if (actor instanceof vtkCubeAxesActor)
+                            ((vtkCubeAxesActor) actor).SetCamera(panel3D.getCamera());
+
+                        VtkUtil.addProp(renderer, actor);
+                    }
+                }
+            });
+        }
     }
 
     protected void removeLayerActors(Layer layer)
     {
+        // not yet initialized
+        if ((renderer == null) || (panel3D == null))
+            return;
+
         final vtkProp[] props = getLayerActors(layer);
 
-        invokeOnEDTSilent(new Runnable()
+        if (props.length > 0)
         {
-            @Override
-            public void run()
+            invokeOnEDTSilent(new Runnable()
             {
-                for (vtkProp actor : props)
-                    VtkUtil.removeProp(renderer, actor);
-            }
-        });
+                @Override
+                public void run()
+                {
+                    for (vtkProp actor : props)
+                        VtkUtil.removeProp(renderer, actor);
+                }
+            });
+        }
     }
 
     protected void updateBoundingBoxSize()
