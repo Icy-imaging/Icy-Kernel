@@ -69,7 +69,6 @@ import vtk.vtkImageData;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
-import vtk.vtkUnsignedCharArray;
 
 /**
  * ROI Area type.<br>
@@ -1877,7 +1876,11 @@ public class ROI2DArea extends ROI2D
             // only if on same position
             if ((getZ() == roi2d.getZ()) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
             {
-                setAsBooleanMask(BooleanMask2D.getIntersection(getBooleanMask(true), roi2d.getBooleanMask(true)));
+                final Rectangle intersection = getBounds().intersection(roi2d.getBounds());
+                final BooleanMask2D mask = new BooleanMask2D(intersection, getBooleanMask(intersection, true));
+                final BooleanMask2D roiMask = new BooleanMask2D(intersection, roi2d.getBooleanMask(intersection, true));
+
+                setAsBooleanMask(BooleanMask2D.getIntersection(mask, roiMask));
 
                 return this;
             }

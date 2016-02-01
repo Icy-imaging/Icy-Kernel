@@ -18,12 +18,13 @@
  */
 package icy.image;
 
+import icy.canvas.CanvasLayerEvent;
 import icy.common.EventHierarchicalChecker;
 
 /**
  * @author Stephane
  */
-public class IcyBufferedImageEvent implements EventHierarchicalChecker
+public class IcyBufferedImageEvent implements Comparable<CanvasLayerEvent>
 {
     public enum IcyBufferedImageEventType
     {

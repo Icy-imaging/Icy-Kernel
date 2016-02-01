@@ -275,7 +275,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             @Override
             public void run()
             {
-                refreshRoisInternal();
+                refreshFilteredRoisInternal();
             }
         };
         tableDataStructureRefresher = new Runnable()

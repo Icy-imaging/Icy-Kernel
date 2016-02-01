@@ -3128,7 +3128,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public LUT getUserLUT()
     {
         // color model not anymore compatible with user LUT --> reset user LUT
-        if ((userLut != null) && !userLut.isCompatible(colorModel))
+        if ((userLut != null) && (colorModel != null) && !userLut.isCompatible(colorModel))
             userLut = null;
 
         if (userLut == null)

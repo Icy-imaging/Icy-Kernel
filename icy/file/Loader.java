@@ -926,7 +926,7 @@ public class Loader
      */
     public static boolean isSupportedImageFile(String path)
     {
-        return (getSequenceFileImporters(path).size() > 0);
+        return !getSequenceFileImporters(path).isEmpty();
     }
 
     /**

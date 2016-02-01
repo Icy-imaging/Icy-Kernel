@@ -19,8 +19,9 @@
 package icy.common;
 
 /**
- * @author stephane
+ * @deprecated We now use <code>.equals()</code> and <code>.hashcode()</code> methods.
  */
+@Deprecated
 public interface EventHierarchicalChecker
 {
     public boolean isEventRedundantWith(EventHierarchicalChecker event);

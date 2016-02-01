@@ -21,10 +21,12 @@ package icy.common;
 import icy.common.listener.ChangeListener;
 import icy.system.thread.ThreadUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
+ * Utility class to handle <code>Update</code> type event.
+ * 
  * @author stephane
  */
 public class UpdateEventHandler
@@ -42,7 +44,7 @@ public class UpdateEventHandler
     /**
      * internal pending change events
      */
-    private final List<EventHierarchicalChecker> pendingChanges;
+    private final Set<Comparable<Object>> pendingChanges;
 
     /**
      * 
@@ -55,7 +57,7 @@ public class UpdateEventHandler
         this.awtDispatch = awtDispatch;
 
         updateCnt = 0;
-        pendingChanges = new ArrayList<EventHierarchicalChecker>();
+        pendingChanges = new LinkedHashSet<Comparable<<Object>>();
     }
 
     /**
@@ -83,7 +85,7 @@ public class UpdateEventHandler
         this.awtDispatch = awtDispatch;
     }
 
-    public List<EventHierarchicalChecker> getPendingChanges()
+    public Set<Comparable<<Object>> getPendingChanges()
     {
         return pendingChanges;
     }

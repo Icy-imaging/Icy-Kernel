@@ -19,6 +19,7 @@
 package icy.canvas;
 
 import icy.common.EventHierarchicalChecker;
+import icy.painter.Anchor2D.Anchor2DEvent;
 import icy.util.StringUtil;
 
 /**
@@ -26,7 +27,7 @@ import icy.util.StringUtil;
  * 
  * @author Stephane
  */
-public class CanvasLayerEvent implements EventHierarchicalChecker
+public class CanvasLayerEvent implements Comparable<CanvasLayerEvent>
 {
     public enum LayersEventType
     {

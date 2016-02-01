@@ -66,7 +66,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         public void positionChanged(Anchor2D source);
     }
 
-    public static class Anchor2DEvent implements EventHierarchicalChecker
+    public static class Anchor2DEvent implements Comparable<Anchor2DEvent>
     {
         private final Anchor2D source;
 

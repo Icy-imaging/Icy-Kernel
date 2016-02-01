@@ -62,7 +62,6 @@ import javax.swing.event.EventListenerList;
 import org.w3c.dom.Node;
 
 import plugins.kernel.roi.roi2d.ROI2DArea;
-import plugins.kernel.roi.roi2d.ROI2DShape;
 import plugins.kernel.roi.roi3d.ROI3DArea;
 import plugins.kernel.roi.roi4d.ROI4DArea;
 import plugins.kernel.roi.roi5d.ROI5DArea;
@@ -2036,10 +2035,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final Rectangle5D.Integer bounds = getBounds5D().toInteger();
         final Rectangle5D.Integer roiBounds = roi.getBounds5D().toInteger();
 
+        // --> trivial optimization
+        if (bounds.isEmpty() || roiBounds.isEmpty())
+            return false;
+
         // simple bounds contains test
         if (bounds.contains(roiBounds))
         {
             final Rectangle5D.Integer intersection = bounds.createIntersection(roiBounds).toInteger();
+            final Rectangle intersection2D = (Rectangle) intersection.toRectangle2D();
             int minZ;
             int maxZ;
             int minT;
@@ -2087,15 +2091,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     for (int z = minZ; z <= maxZ; z++)
                     {
                         BooleanMask2D mask;
+                        BooleanMask2D roiMask;
+
+                        // take content first
+                        mask = new BooleanMask2D(intersection2D, getBooleanMask2D(intersection2D, z, t, c, false));
+                        roiMask = new BooleanMask2D(intersection2D,
+                                roi.getBooleanMask2D(intersection2D, z, t, c, false));
 
                         // test first only on content
-                        mask = roi.getBooleanMask2D(z, t, c, false);
-                        if (!mask.isEmpty() && !getBooleanMask2D(z, t, c, false).contains(mask))
+                        if (!roiMask.isEmpty() && !mask.contains(roiMask))
                             return false;
 
+                        // take content and edge
+                        mask = new BooleanMask2D(intersection2D, getBooleanMask2D(intersection2D, z, t, c, true));
+                        roiMask = new BooleanMask2D(intersection2D, roi.getBooleanMask2D(intersection2D, z, t, c, true));
+
                         // then test on content and edge
-                        mask = roi.getBooleanMask2D(z, t, c, true);
-                        if (!mask.isEmpty() && !getBooleanMask2D(z, t, c, true).contains(mask))
+                        if (!roiMask.isEmpty() && !mask.contains(roiMask))
                             return false;
                     }
                 }
@@ -2883,7 +2895,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         // we want integer bounds now
         final Rectangle5D.Integer bounds = bounds5D.toInteger();
         final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
-        // get 3D and 4D bounds
+        // get 2D, 3D and 4D bounds
+        final Rectangle bounds2D = (Rectangle) bounds.toRectangle2D();
         final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
         final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
 
@@ -2899,9 +2912,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                 for (int z = 0; z < roiSize.sizeZ; z++)
                 {
-                    mask3D[z] = BooleanMask2D.getIntersection(
-                            roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
-                            getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D mask2D = new BooleanMask2D(bounds2D, getBooleanMask2D(bounds2D, bounds.z + z,
+                            bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D roiMask2D = new BooleanMask2D(bounds2D, roi.getBooleanMask2D(bounds2D, bounds.z
+                            + z, bounds.t + t, bounds.c + c, true));
+
+                    mask3D[z] = BooleanMask2D.getIntersection(mask2D, roiMask2D);
                 }
 
                 mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
