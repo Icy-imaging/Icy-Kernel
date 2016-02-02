@@ -18,21 +18,6 @@
  */
 package icy.painter;
 
-import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
-import icy.file.xml.XMLPersistent;
-import icy.gui.viewer.Viewer;
-import icy.main.Icy;
-import icy.painter.OverlayEvent.OverlayEventType;
-import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
-import icy.type.point.Point5D;
-import icy.util.ClassUtil;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -46,6 +31,21 @@ import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
+
+import icy.canvas.IcyCanvas;
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.file.xml.XMLPersistent;
+import icy.gui.viewer.Viewer;
+import icy.main.Icy;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
+import icy.type.point.Point5D;
+import icy.util.ClassUtil;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
 
 /**
  * Overlay class.<br>
@@ -119,7 +119,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * 
      * @param node
      *        XML node defining the overlay
-     * @return the created Overlay or <code>null</code> if the Overlay class does not support XML persistence a default
+     * @return the created Overlay or <code>null</code> if the Overlay class does not support XML
+     *         persistence a default
      *         constructor
      */
     public static Overlay createFromXML(Node node)
@@ -161,13 +162,16 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
         }
         catch (NoSuchMethodException e)
         {
-            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
-                    + className + "', cannot create the Overlay."), true);
+            IcyExceptionHandler.handleException(
+                    new NoSuchMethodException(
+                            "Default constructor not found in class '" + className + "', cannot create the Overlay."),
+                    true);
         }
         catch (ClassNotFoundException e)
         {
-            IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + className
-                    + "' class, cannot create the Overlay."), true);
+            IcyExceptionHandler.handleException(
+                    new ClassNotFoundException("Cannot find '" + className + "' class, cannot create the Overlay."),
+                    true);
         }
         catch (Exception e)
         {
@@ -253,8 +257,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
                     if (!overlay.saveToXML(nodeOverlay))
                     {
                         XMLUtil.removeNode(node, nodeOverlay);
-                        System.err.println("Error: the overlay " + overlay.getName()
-                                + " was not correctly saved to XML !");
+                        System.err.println(
+                                "Error: the overlay " + overlay.getName() + " was not correctly saved to XML !");
                     }
                 }
             }
@@ -415,7 +419,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
 
     /**
      * Set persistent property.<br/>
-     * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data (default is
+     * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data
+     * (default is
      * <code>false</code>).
      */
     public void setPersistent(boolean value)
@@ -601,7 +606,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         fireOverlayChangedEvent((OverlayEvent) object);
     }

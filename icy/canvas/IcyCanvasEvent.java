@@ -18,13 +18,13 @@
  */
 package icy.canvas;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.sequence.DimensionId;
 
 /**
  * @author Stephane
  */
-public class IcyCanvasEvent implements EventHierarchicalChecker
+public class IcyCanvasEvent implements CollapsibleEvent
 {
     public enum IcyCanvasEventType
     {
@@ -72,15 +72,33 @@ public class IcyCanvasEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof IcyCanvasEvent)
+        if (equals(event))
         {
-            final IcyCanvasEvent e = (IcyCanvasEvent) event;
+            // nothing to change here
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return source.hashCode() ^ type.hashCode() ^ dim.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyCanvasEvent)
+        {
+            final IcyCanvasEvent e = (IcyCanvasEvent) obj;
 
             return (e.getSource() == source) && (e.getType() == type) && (e.getDim() == dim);
         }
 
-        return false;
+        return super.equals(obj);
     }
 }

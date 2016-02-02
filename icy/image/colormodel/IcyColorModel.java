@@ -18,23 +18,6 @@
  */
 package icy.image.colormodel;
 
-import icy.common.EventHierarchicalChecker;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
-import icy.image.colormap.IcyColorMap;
-import icy.image.colormodel.IcyColorModelEvent.IcyColorModelEventType;
-import icy.image.colorspace.IcyColorSpace;
-import icy.image.colorspace.IcyColorSpaceEvent;
-import icy.image.colorspace.IcyColorSpaceListener;
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.math.ScalerEvent;
-import icy.math.ScalerListener;
-import icy.type.DataType;
-import icy.type.TypeUtil;
-import icy.type.collection.array.Array1DUtil;
-import icy.util.ReflectionUtil;
-
 import java.awt.image.BandedSampleModel;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentSampleModel;
@@ -50,6 +33,23 @@ import java.awt.image.WritableRaster;
 import java.lang.reflect.Field;
 
 import javax.swing.event.EventListenerList;
+
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.image.colormap.IcyColorMap;
+import icy.image.colormodel.IcyColorModelEvent.IcyColorModelEventType;
+import icy.image.colorspace.IcyColorSpace;
+import icy.image.colorspace.IcyColorSpaceEvent;
+import icy.image.colorspace.IcyColorSpaceListener;
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.math.ScalerEvent;
+import icy.math.ScalerListener;
+import icy.type.DataType;
+import icy.type.TypeUtil;
+import icy.type.collection.array.Array1DUtil;
+import icy.util.ReflectionUtil;
 
 /**
  * @author stephane
@@ -90,8 +90,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     IcyColorModel(int numComponents, DataType dataType, int[] bits)
     {
-        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT, dataType
-                .toDataBufferType());
+        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT,
+                dataType.toDataBufferType());
 
         if (numComponents == 0)
             throw new IllegalArgumentException("Number of components should be > 0");
@@ -448,8 +448,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     public abstract int getRGB(Object pixel, LUT lut);
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getBlue(Object pixel)
     {
@@ -457,8 +457,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getGreen(Object pixel)
     {
@@ -466,8 +466,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getRed(Object pixel)
     {
@@ -475,8 +475,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getAlpha(Object pixel)
     {
@@ -578,8 +578,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     public abstract Object getDataElements(float[] normComponents, int normOffset, Object obj);
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public ColorModel coerceData(WritableRaster raster, boolean isAlphaPremultiplied)
     {
@@ -601,7 +601,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * 
      * @param obj
      *        the <code>Object</code> to test for equality
-     * @return <code>true</code> if the specified <code>Object</code> is an instance of <code>ColorModel</code> and
+     * @return <code>true</code> if the specified <code>Object</code> is an instance of
+     *         <code>ColorModel</code> and
      *         equals this <code>ColorModel</code>; <code>false</code> otherwise.
      */
     @Override
@@ -622,8 +623,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public boolean isCompatibleRaster(Raster raster)
     {
@@ -646,8 +647,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public boolean isCompatibleSampleModel(SampleModel sm)
     {
@@ -683,7 +684,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
                 final Field csField = ReflectionUtil.getField(ColorModel.class, "colorSpace", true);
                 // set new colorSpace value
                 csField.set(this, cs);
-                
+
                 currentCS.removeListener(this);
                 cs.addListener(this);
             }
@@ -948,15 +949,17 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Returns the <code>String</code> representation of the contents of this <code>ColorModel</code>object.
+     * Returns the <code>String</code> representation of the contents of this
+     * <code>ColorModel</code>object.
      * 
-     * @return a <code>String</code> representing the contents of this <code>ColorModel</code> object.
+     * @return a <code>String</code> representing the contents of this <code>ColorModel</code>
+     *         object.
      */
     @Override
     public String toString()
     {
-        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents
-                + " color space = " + getColorSpace());
+        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents + " color space = "
+                + getColorSpace());
     }
 
     /**
@@ -994,7 +997,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * process on colormodel change
      */
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final IcyColorModelEvent event = (IcyColorModelEvent) compare;
 

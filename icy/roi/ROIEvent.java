@@ -18,12 +18,13 @@
  */
 package icy.roi;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
+import icy.util.StringUtil;
 
 /**
  * @author stephane
  */
-public class ROIEvent implements EventHierarchicalChecker
+public class ROIEvent implements CollapsibleEvent
 {
     @Deprecated
     public enum ROIPointEventType
@@ -33,9 +34,7 @@ public class ROIEvent implements EventHierarchicalChecker
 
     public enum ROIEventType
     {
-        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, @Deprecated
-        PAINTER_CHANGED, @Deprecated
-        NAME_CHANGED;
+        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, @Deprecated PAINTER_CHANGED, @Deprecated NAME_CHANGED;
     }
 
     private final ROI source;
@@ -117,38 +116,53 @@ public class ROIEvent implements EventHierarchicalChecker
         return pointEventType;
     }
 
-    /**
-     * Optimize event
-     */
-    private boolean optimizeEventWith(ROIEvent e)
+    @Override
+    public boolean collapse(CollapsibleEvent event)
     {
-        // same type ?
-        if (e.getType() == type)
+        if (equals(event))
         {
-            switch (type)
-            {
-                case ROI_CHANGED:
-                case FOCUS_CHANGED:
-                case SELECTION_CHANGED:
-                case NAME_CHANGED:
-                case PAINTER_CHANGED:
-                    return true;
-
-                case PROPERTY_CHANGED:
-                    if ((propertyName == null) || propertyName.equals(e.getPropertyName()))
-                        return true;
-            }
+            // nothing to do here
+            return true;
         }
 
         return false;
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public int hashCode()
     {
-        if (event instanceof ROIEvent)
-            return optimizeEventWith((ROIEvent) event);
+        int res = source.hashCode() ^ type.hashCode();
 
-        return false;
+        if (type == ROIEventType.PROPERTY_CHANGED)
+            res ^= propertyName.hashCode();
+
+        return res;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof ROIEvent)
+        {
+            final ROIEvent e = (ROIEvent) obj;
+
+            if ((e.getSource() == source) && (e.getType() == type))
+            {
+                switch (type)
+                {
+                    case ROI_CHANGED:
+                    case FOCUS_CHANGED:
+                    case SELECTION_CHANGED:
+                    case NAME_CHANGED:
+                    case PAINTER_CHANGED:
+                        return true;
+
+                    case PROPERTY_CHANGED:
+                        return StringUtil.equals(propertyName, e.getPropertyName());
+                }
+            }
+        }
+
+        return super.equals(obj);
     }
 }

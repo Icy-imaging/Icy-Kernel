@@ -18,6 +18,29 @@
  */
 package icy.canvas;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
+import javax.swing.event.ChangeEvent;
+
 import icy.action.CanvasActions;
 import icy.action.GeneralActions;
 import icy.action.RoiActions;
@@ -25,7 +48,7 @@ import icy.action.WindowActions;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer.LayerListener;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.ProgressListener;
@@ -61,51 +84,27 @@ import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
 import icy.util.OMEUtil;
-
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JPanel;
-import javax.swing.JToolBar;
-import javax.swing.event.ChangeEvent;
-
 import plugins.kernel.canvas.Canvas2DPlugin;
 import plugins.kernel.canvas.VtkCanvasPlugin;
 
 /**
  * @author Fabrice de Chaumont & Stephane Dallongeville<br>
- * <br>
+ *         <br>
  *         An IcyCanvas is a basic Canvas used into the viewer. It contains a visual representation
  *         of the sequence and provides some facilities as basic transformation and view
  *         synchronization.<br>
  *         Also IcyCanvas receives key events from Viewer when they are not consumed.<br>
- * <br>
+ *         <br>
  *         By default transformations are applied in following order :<br>
  *         Rotation, Translation then Scaling.<br>
  *         The rotation transformation is relative to canvas center.<br>
- * <br>
+ *         <br>
  *         Free feel to implement and override this design or not. <br>
- * <br>
+ *         <br>
  *         (Canvas2D and Canvas3D derives from IcyCanvas)<br>
  */
-public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerListener, SequenceListener, LUTListener,
-        ChangeListener, LayerListener
+public abstract class IcyCanvas extends JPanel
+        implements KeyListener, ViewerListener, SequenceListener, LUTListener, ChangeListener, LayerListener
 {
     protected class IcyCanvasImageOverlay extends Overlay
     {
@@ -225,7 +224,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name.<br>
+     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name.
+     * <br>
      * Returns <code>null</code> if we can't find retrieve the corresponding canvas class name.
      */
     public static String getCanvasClassName(String pluginClassName)
@@ -557,7 +557,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Called by the viewer when canvas is closed to release some resources.<br/>
-     * Be careful to not restore previous state here (as the colormap) because generally <code>shutdown</code> is called
+     * Be careful to not restore previous state here (as the colormap) because generally
+     * <code>shutdown</code> is called
      * <b>after</b> the creation of the other canvas.
      */
     public void shutDown()
@@ -4606,7 +4607,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker event)
+    public void onChanged(CollapsibleEvent event)
     {
         if (event instanceof CanvasLayerEvent)
             layerChanged((CanvasLayerEvent) event);

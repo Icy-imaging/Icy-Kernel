@@ -19,7 +19,7 @@
 package icy.common;
 
 /**
- * @deprecated We now use <code>.equals()</code> and <code>.hashcode()</code> methods.
+ * @deprecated Replaced by the {@link CollapsibleEvent}
  */
 @Deprecated
 public interface EventHierarchicalChecker

@@ -18,7 +18,15 @@
  */
 package icy.image.lut;
 
-import icy.common.EventHierarchicalChecker;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
+
+import org.w3c.dom.Node;
+
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
@@ -34,14 +42,6 @@ import icy.math.ScalerEvent;
 import icy.math.ScalerListener;
 import icy.type.DataType;
 import icy.util.XMLUtil;
-
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-
-import javax.swing.event.EventListenerList;
-
-import org.w3c.dom.Node;
 
 public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListener, XMLPersistent
 {
@@ -316,8 +316,8 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
 
         if (scalers.length != numChannel)
         {
-            throw new IllegalArgumentException("Incorrect size for scalers : " + scalers.length + ".  Expected : "
-                    + numChannel);
+            throw new IllegalArgumentException(
+                    "Incorrect size for scalers : " + scalers.length + ".  Expected : " + numChannel);
         }
 
         final DataType dataType = cm.getDataType_();
@@ -624,7 +624,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final LUTEvent event = (LUTEvent) compare;
 
@@ -633,8 +633,8 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
 
         // propagate event to LUTChannel
         final int channel = event.getComponent();
-        final LUTChannelEventType type = (event.getType() == LUTEventType.COLORMAP_CHANGED) ? LUTChannelEventType.COLORMAP_CHANGED
-                : LUTChannelEventType.SCALER_CHANGED;
+        final LUTChannelEventType type = (event.getType() == LUTEventType.COLORMAP_CHANGED)
+                ? LUTChannelEventType.COLORMAP_CHANGED : LUTChannelEventType.SCALER_CHANGED;
 
         if (channel == -1)
         {

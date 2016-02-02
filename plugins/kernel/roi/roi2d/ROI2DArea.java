@@ -18,29 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.EventHierarchicalChecker;
-import icy.image.ImageUtil;
-import icy.painter.VtkPainter;
-import icy.resource.ResourceUtil;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROIEvent;
-import icy.roi.edit.Area2DChangeROIEdit;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point5D;
-import icy.type.point.Point5D.Double;
-import icy.type.rectangle.Rectangle3D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-import icy.vtk.VtkUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -63,6 +40,28 @@ import java.util.Arrays;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.image.ImageUtil;
+import icy.painter.VtkPainter;
+import icy.resource.ResourceUtil;
+import icy.roi.BooleanMask2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROIEvent;
+import icy.roi.edit.Area2DChangeROIEdit;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.type.point.Point5D.Double;
+import icy.type.rectangle.Rectangle3D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.vtk.VtkUtil;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkImageData;
@@ -290,7 +289,8 @@ public class ROI2DArea extends ROI2D
                         outlineActor.GetProperty().SetColor(r, g, b);
                         outlineActor.SetVisibility(isSelected() ? 1 : 0);
                         surfaceActor.GetProperty().SetColor(r, g, b);
-                        // opacity here is about ROI content, whole actor opacity is handled by Layer
+                        // opacity here is about ROI content, whole actor opacity is handled by
+                        // Layer
                         // surfaceActor.GetProperty().SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
@@ -477,7 +477,8 @@ public class ROI2DArea extends ROI2D
             if (canvas instanceof VtkCanvas)
             {
                 final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? --> focus the ROI
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
                 final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
                         && (surfaceActor == vtkCanvas.getPickedObject());
 
@@ -1606,9 +1607,11 @@ public class ROI2DArea extends ROI2D
      * @param inclusive
      *        if we should also consider the edge of the shape to update the mask
      * @param accurate
-     *        if set to <code>true</code> the operation will be done to be as pixel accurate as possible
+     *        if set to <code>true</code> the operation will be done to be as pixel accurate as
+     *        possible
      * @param immediateUpdate
-     *        if set to <code>true</code> the bounds of the mask will be immediately recomputed (only meaningful for a
+     *        if set to <code>true</code> the bounds of the mask will be immediately recomputed
+     *        (only meaningful for a
      *        remove operation)
      */
     public void updateMask(Shape shape, boolean remove, boolean inclusive, boolean accurate, boolean immediateUpdate)
@@ -2216,7 +2219,7 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -2246,6 +2249,9 @@ public class ROI2DArea extends ROI2D
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
                     ((ROI2DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 
@@ -2305,7 +2311,8 @@ public class ROI2DArea extends ROI2D
         XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bnd.y);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bnd.width);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bnd.height);
-        // set mask data as byte array (we need to clone to avoid any data modification during serialization)
+        // set mask data as byte array (we need to clone to avoid any data modification during
+        // serialization)
         XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data.clone());
 
         return true;

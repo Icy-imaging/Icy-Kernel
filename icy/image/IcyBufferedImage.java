@@ -18,6 +18,7 @@
  */
 package icy.image;
 
+import icy.common.CollapsibleEvent;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
@@ -3512,7 +3513,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         IcyBufferedImageEvent event = (IcyBufferedImageEvent) object;
 

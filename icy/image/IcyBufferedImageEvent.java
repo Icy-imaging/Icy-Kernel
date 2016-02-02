@@ -18,13 +18,12 @@
  */
 package icy.image;
 
-import icy.canvas.CanvasLayerEvent;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @author Stephane
  */
-public class IcyBufferedImageEvent implements Comparable<CanvasLayerEvent>
+public class IcyBufferedImageEvent implements CollapsibleEvent
 {
     public enum IcyBufferedImageEventType
     {
@@ -33,7 +32,7 @@ public class IcyBufferedImageEvent implements Comparable<CanvasLayerEvent>
 
     private final IcyBufferedImage image;
     private final IcyBufferedImageEventType type;
-    private final int param;
+    private int param;
 
     /**
      * @param image
@@ -83,16 +82,38 @@ public class IcyBufferedImageEvent implements Comparable<CanvasLayerEvent>
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof IcyBufferedImageEvent)
+        if (equals(event))
         {
             final IcyBufferedImageEvent e = (IcyBufferedImageEvent) event;
 
-            return (type == e.getType()) && ((param == -1) || (param == e.getParam()));
+            // set all component
+            if (e.getParam() != param)
+                param = -1;
+
+            return true;
         }
 
         return false;
     }
 
+    @Override
+    public int hashCode()
+    {
+        return image.hashCode() ^ type.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyBufferedImageEvent)
+        {
+            final IcyBufferedImageEvent e = (IcyBufferedImageEvent) obj;
+
+            return (image == e.getImage()) && (type == e.getType());
+        }
+
+        return super.equals(obj);
+    }
 }

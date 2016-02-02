@@ -18,16 +18,6 @@
  */
 package icy.image.colormap;
 
-import icy.common.EventHierarchicalChecker;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
-import icy.file.FileUtil;
-import icy.file.xml.XMLPersistent;
-import icy.file.xml.XMLPersistentHelper;
-import icy.image.colormap.IcyColorMapEvent.IcyColorMapEventType;
-import icy.util.ColorUtil;
-import icy.util.XMLUtil;
-
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
@@ -36,6 +26,16 @@ import java.util.List;
 import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
+
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.file.FileUtil;
+import icy.file.xml.XMLPersistent;
+import icy.file.xml.XMLPersistentHelper;
+import icy.image.colormap.IcyColorMapEvent.IcyColorMapEventType;
+import icy.util.ColorUtil;
+import icy.util.XMLUtil;
 
 /**
  * @author stephane
@@ -1268,16 +1268,19 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker e)
+    public void onChanged(CollapsibleEvent e)
     {
         final IcyColorMapEvent event = (IcyColorMapEvent) e;
 
         switch (event.getType())
         {
-        // refresh RGB cache
+            // refresh RGB cache
             case MAP_CHANGED:
             case TYPE_CHANGED:
                 updateRGBCache();
+                break;
+
+            default:
                 break;
         }
 

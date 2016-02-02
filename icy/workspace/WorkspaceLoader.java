@@ -18,12 +18,6 @@
  */
 package icy.workspace;
 
-import icy.common.EventHierarchicalChecker;
-import icy.file.FileUtil;
-import icy.system.thread.SingleProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -31,6 +25,11 @@ import java.util.Collections;
 import java.util.EventListener;
 
 import javax.swing.event.EventListenerList;
+
+import icy.file.FileUtil;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
 
 /**
  * @author Stephane
@@ -42,7 +41,7 @@ public class WorkspaceLoader
         public void workspaceLoaderChanged(WorkspaceLoaderEvent e);
     }
 
-    public static class WorkspaceLoaderEvent implements EventHierarchicalChecker
+    public static class WorkspaceLoaderEvent
     {
         public enum WorkspaceLoaderEventType
         {
@@ -70,9 +69,22 @@ public class WorkspaceLoader
         }
 
         @Override
-        public boolean isEventRedundantWith(EventHierarchicalChecker event)
+        public int hashCode()
         {
-            return (event instanceof WorkspaceLoaderEvent) && (type == ((WorkspaceLoaderEvent) event).getType());
+            return type.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof WorkspaceLoaderEvent)
+            {
+                final WorkspaceLoaderEvent e = (WorkspaceLoaderEvent) obj;
+
+                return (type == e.getType());
+            }
+
+            return super.equals(obj);
         }
     }
 
@@ -139,7 +151,8 @@ public class WorkspaceLoader
     }
 
     /**
-     * Reload the list of installed workspaces (workspaces present in the "workspaces" directory).<br>
+     * Reload the list of installed workspaces (workspaces present in the "workspaces" directory).
+     * <br>
      * Asynchronous version.
      */
     public static void reloadAsynch()

@@ -18,7 +18,25 @@
  */
 package icy.sequence;
 
-import icy.common.EventHierarchicalChecker;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.swing.event.EventListenerList;
+import javax.swing.undo.UndoManager;
+
+import org.w3c.dom.Node;
+
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.gui.viewer.Viewer;
@@ -69,26 +87,7 @@ import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.swing.event.EventListenerList;
-import javax.swing.undo.UndoManager;
-
 import loci.formats.ome.OMEXMLMetadataImpl;
-
-import org.w3c.dom.Node;
 
 /**
  * Image sequence object.<br>
@@ -98,7 +97,8 @@ import org.w3c.dom.Node;
  * Z dimension = depth<br>
  * T dimension = time<br>
  * <br>
- * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code> define a list of
+ * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code>
+ * define a list of
  * {@link IcyBufferedImage} where each image is associated to a Z and T
  * information.
  * 
@@ -884,7 +884,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns the pixel size scaling factor to convert a number of pixel/voxel unit into <code>µm</code><br/>
+     * Returns the pixel size scaling factor to convert a number of pixel/voxel unit into
+     * <code>µm</code><br/>
      * <br>
      * For instance to get the scale ration for 2D distance:<br>
      * <code>valueMicroMeter = pixelNum * getPixelSizeScaling(2, 1)</code><br>
@@ -1192,7 +1193,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
      * when sequence data is modified.<br>
      * This can consume a lot of time if you make many updates on large sequence.<br>
-     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()} block to avoid
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
+     * block to avoid
      * severals recalculation.
      */
     public void setAutoUpdateChannelBounds(boolean value)
@@ -2467,7 +2469,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * This actually create a new image which share its data with internal image
      * so any modifications to one affect the other.<br>
      * if <code>(c == -1)</code> then this method is equivalent to {@link #getImage(int, int)}<br>
-     * if <code>((c == 0) || (sizeC == 1))</code> then this method is equivalent to {@link #getImage(int, int)}<br>
+     * if <code>((c == 0) || (sizeC == 1))</code> then this method is equivalent to
+     * {@link #getImage(int, int)}<br>
      * if <code>((c < 0) || (c >= sizeC))</code> then it returns <code>null</code>
      * 
      * @see IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)
@@ -2573,8 +2576,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                         throw new IllegalArgumentException("Sequence.setImage : image is not compatible !");
 
                     // we want to share the same color space for all the sequence:
-                    // colormap eats a lot of memory so it's better to keep one global and we never use colormap for
-                    // single image anyway. But it's important to preserve the colormodel for each image though as it
+                    // colormap eats a lot of memory so it's better to keep one global and we never
+                    // use colormap for
+                    // single image anyway. But it's important to preserve the colormodel for each
+                    // image though as it
                     // store the channel bounds informations.
                     if (colorModel != null)
                         icyImg.getIcyColorModel().setColorSpace(colorModel.getIcyColorSpace());
@@ -2591,7 +2596,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Set an image at the specified position.<br/>
-     * Note that the image duplicated/transformed internally before being attached to the Sequence object.
+     * Note that the image duplicated/transformed internally before being attached to the Sequence
+     * object.
      * 
      * @param t
      *        T position
@@ -2634,7 +2640,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Add an image (image is added in Z dimension).<br>
-     * This method is equivalent to <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
+     * This method is equivalent to
+     * <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
      */
     public void addImage(BufferedImage image) throws IllegalArgumentException
     {
@@ -3374,7 +3381,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Update channels bounds (min and max values).<br>
      * 
      * @param forceRecalculation
-     *        If true we force all images channels bounds recalculation (this can take sometime).<br>
+     *        If true we force all images channels bounds recalculation (this can take sometime).
+     *        <br>
      *        You can left this flag to false if sequence images have their bounds updated (which
      *        should be the case by default).
      */
@@ -5781,7 +5789,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)} instead.
+     * @deprecated Uses
+     *             {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)}
+     *             instead.
      */
     @Deprecated
     public Sequence getSubSequence(int startX, int startY, int startZ, int startT, int sizeX, int sizeY, int sizeZ,
@@ -5820,7 +5830,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Note that it internally uses {@link #getFilename()} to define the XML filename so be sure it
      * is correctly filled before calling this method.<br>
      * 
-     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code> otherwise.
+     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code>
+     *         otherwise.
      */
     public boolean loadXMLData()
     {
@@ -6109,7 +6120,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     private void componentBoundsChanged(IcyColorModel colorModel, int component)
     {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
+        updater.changed(
+                new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
     }
 
     // /**
@@ -6267,13 +6279,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * process on sequence change
      */
     @Override
-    public void onChanged(EventHierarchicalChecker e)
+    public void onChanged(CollapsibleEvent e)
     {
         final SequenceEvent event = (SequenceEvent) e;
 
         switch (event.getSourceType())
         {
-        // do here global process on sequence data change
+            // do here global process on sequence data change
             case SEQUENCE_DATA:
                 // automatic channel bounds update enabled
                 if (autoUpdateChannelBounds)

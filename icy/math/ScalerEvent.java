@@ -18,12 +18,12 @@
  */
 package icy.math;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @author stephane
  */
-public class ScalerEvent implements EventHierarchicalChecker
+public class ScalerEvent implements CollapsibleEvent
 {
     /**
      * @deprecated
@@ -64,9 +64,33 @@ public class ScalerEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        return (event instanceof ScalerEvent) && (scaler == ((ScalerEvent) event).getScaler());
+        if (equals(event))
+        {
+            // nothing to do here
+            return true;
+        }
+
+        return false;
     }
 
+    @Override
+    public int hashCode()
+    {
+        return scaler.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof ScalerEvent)
+        {
+            final ScalerEvent e = (ScalerEvent) obj;
+
+            return (scaler == e.getScaler());
+        }
+
+        return super.equals(obj);
+    }
 }

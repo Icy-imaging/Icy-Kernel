@@ -18,16 +18,17 @@
  */
 package icy.painter;
 
-import icy.common.EventHierarchicalChecker;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
+
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.main.Icy;
 import icy.painter.PainterEvent.PainterEventType;
 import icy.sequence.Sequence;
-
-import java.util.ArrayList;
-
-import javax.swing.event.EventListenerList;
 
 /**
  * AbstractPainter class.<br>
@@ -192,10 +193,10 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final PainterEvent event = (PainterEvent) object;
-        final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
+        final List<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
 
         // notify listeners
         fireChangedEvent(event);

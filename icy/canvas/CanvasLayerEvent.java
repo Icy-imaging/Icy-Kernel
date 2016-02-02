@@ -18,8 +18,7 @@
  */
 package icy.canvas;
 
-import icy.common.EventHierarchicalChecker;
-import icy.painter.Anchor2D.Anchor2DEvent;
+import icy.common.CollapsibleEvent;
 import icy.util.StringUtil;
 
 /**
@@ -27,7 +26,7 @@ import icy.util.StringUtil;
  * 
  * @author Stephane
  */
-public class CanvasLayerEvent implements Comparable<CanvasLayerEvent>
+public class CanvasLayerEvent implements CollapsibleEvent
 {
     public enum LayersEventType
     {
@@ -85,46 +84,34 @@ public class CanvasLayerEvent implements Comparable<CanvasLayerEvent>
         return property;
     }
 
-    private boolean optimizeEventWith(CanvasLayerEvent e)
+    @Override
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (e.getType() == type)
+        if (equals(event))
         {
-            if (type == LayersEventType.CHANGED)
-            {
-                if (e.getSource() == source)
-                {
-                    // join properties
-                    if (!StringUtil.equals(e.getProperty(), property))
-                        property = null;
-
-                    return true;
-                }
-            }
-            else
-            {
-                // join sources
-                if (e.getSource() != source)
-                {
-                    source = null;
-                    property = null;
-                }
-                // join properties
-                else if (!StringUtil.equals(e.getProperty(), property))
-                    property = null;
-
-                return true;
-            }
+            // nothing to change here
+            return true;
         }
 
         return false;
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public int hashCode()
     {
-        if (event instanceof CanvasLayerEvent)
-            return optimizeEventWith((CanvasLayerEvent) event);
+        return source.hashCode() ^ type.hashCode() ^ ((property != null) ? property.hashCode() : 0);
+    }
 
-        return false;
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof CanvasLayerEvent)
+        {
+            final CanvasLayerEvent e = (CanvasLayerEvent) obj;
+
+            return (e.getSource() == source) && (e.getType() == type) && StringUtil.equals(e.getProperty(), property);
+        }
+
+        return super.equals(obj);
     }
 }

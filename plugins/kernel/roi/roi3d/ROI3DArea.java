@@ -18,8 +18,17 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map.Entry;
+
 import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
@@ -34,16 +43,6 @@ import icy.type.rectangle.Rectangle3D;
 import icy.util.EventUtil;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map.Entry;
-
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
@@ -326,7 +325,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (canvas instanceof VtkCanvas)
             {
                 final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? --> focus the ROI
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
                 final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
                         && (surfaceActor == vtkCanvas.getPickedObject());
 
@@ -505,7 +505,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * @param roiSlice
      *        the 2D ROI to set
      * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
+     *        <code>true</code> if the given slice should be merged with the existing slice, or
+     *        <code>false</code> to
      *        replace the existing slice.
      */
     public void setSlice(int z, ROI2D roiSlice, boolean merge)
@@ -534,8 +535,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         else if (newSlice instanceof ROI2D)
             setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
         else
-            throw new IllegalArgumentException("Can't add the result of the merge operation on 2D slice " + z + ": "
-                    + newSlice.getClassName());
+            throw new IllegalArgumentException(
+                    "Can't add the result of the merge operation on 2D slice " + z + ": " + newSlice.getClassName());
     }
 
     /**
@@ -552,7 +553,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()}
+     *             instead.
      */
     @Deprecated
     public Point3D[] getEdgePoints()
@@ -561,7 +563,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()}
+     *             instead.
      */
     @Deprecated
     public Point3D[] getPoints()
@@ -679,7 +682,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * roi changed
      */
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -702,6 +705,9 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
                     ((ROI3DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 

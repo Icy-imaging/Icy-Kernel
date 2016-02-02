@@ -18,11 +18,13 @@
  */
 package icy.common;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import icy.common.listener.ChangeListener;
 import icy.system.thread.ThreadUtil;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Utility class to handle <code>Update</code> type event.
@@ -44,7 +46,7 @@ public class UpdateEventHandler
     /**
      * internal pending change events
      */
-    private final Set<Comparable<Object>> pendingChanges;
+    private final LinkedHashMap<CollapsibleEvent, CollapsibleEvent> pendingChanges;
 
     /**
      * 
@@ -57,7 +59,7 @@ public class UpdateEventHandler
         this.awtDispatch = awtDispatch;
 
         updateCnt = 0;
-        pendingChanges = new LinkedHashSet<Comparable<<Object>>();
+        pendingChanges = new LinkedHashMap<CollapsibleEvent, CollapsibleEvent>();
     }
 
     /**
@@ -85,9 +87,9 @@ public class UpdateEventHandler
         this.awtDispatch = awtDispatch;
     }
 
-    public Set<Comparable<<Object>> getPendingChanges()
+    public Collection<CollapsibleEvent> getPendingChanges()
     {
-        return pendingChanges;
+        return pendingChanges.values();
     }
 
     public void beginUpdate()
@@ -100,28 +102,17 @@ public class UpdateEventHandler
         updateCnt--;
         if (updateCnt <= 0)
         {
-            boolean done = false;
+            final List<CollapsibleEvent> events;
 
-            // fire pending events
-            while (!done)
+            synchronized (pendingChanges)
             {
-                final EventHierarchicalChecker compare;
-
-                synchronized (pendingChanges)
-                {
-                    // check and remove it from list
-                    done = pendingChanges.isEmpty();
-
-                    if (!done)
-                        compare = pendingChanges.remove(0);
-                    else
-                        compare = null;
-                }
-
-                // and then process (avoid some dead lock)
-                if (compare != null)
-                    dispatchOnChanged(compare);
+                events = new ArrayList<CollapsibleEvent>(pendingChanges.values());
+                pendingChanges.clear();
             }
+
+            // dispatch all contained events (use copy to avoid concurrent changes)
+            for (CollapsibleEvent event : events)
+                dispatchOnChanged(event);
         }
     }
 
@@ -135,32 +126,38 @@ public class UpdateEventHandler
         return !pendingChanges.isEmpty();
     }
 
-    protected void addPendingChange(EventHierarchicalChecker include)
+    protected void addPendingChange(CollapsibleEvent change)
     {
+        final CollapsibleEvent previousChange;
+
         // TODO: can take sometime (select all on many ROI)
+        // TODO: check how fast is it now...
         synchronized (pendingChanges)
         {
-            // test if we already have an including object in the list
-            for (EventHierarchicalChecker cmp : pendingChanges)
-                if (cmp.isEventRedundantWith(include))
-                    return;
+            // search in pending changes if we have an equivalent change
+            previousChange = pendingChanges.get(change);
 
-            // we add it only if it isn't already existing
-            pendingChanges.add(include);
+            // not already existing ? --> just add the new change
+            if (previousChange == null)
+                pendingChanges.put(change, change);
         }
+
+        // found an equivalent previous change ? --> collapse the new change into the old one
+        if (previousChange != null)
+            previousChange.collapse(change);
     }
 
-    public void changed(EventHierarchicalChecker include)
+    public void changed(CollapsibleEvent event)
     {
         if (isUpdating())
-            addPendingChange(include);
+            addPendingChange(event);
         else
-            dispatchOnChanged(include);
+            dispatchOnChanged(event);
     }
 
-    protected void dispatchOnChanged(EventHierarchicalChecker include)
+    protected void dispatchOnChanged(CollapsibleEvent event)
     {
-        final EventHierarchicalChecker event = include;
+        final CollapsibleEvent e = event;
 
         if (awtDispatch)
         {
@@ -170,11 +167,11 @@ public class UpdateEventHandler
                 @Override
                 public void run()
                 {
-                    parent.onChanged(event);
+                    parent.onChanged(e);
                 }
             });
         }
         else
-            parent.onChanged(event);
+            parent.onChanged(e);
     }
 }

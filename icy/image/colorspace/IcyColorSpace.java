@@ -18,7 +18,12 @@
  */
 package icy.image.colorspace;
 
-import icy.common.EventHierarchicalChecker;
+import java.awt.color.ColorSpace;
+import java.awt.image.ColorModel;
+
+import javax.swing.event.EventListenerList;
+
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.image.colormap.FromRGBColorMap;
@@ -32,19 +37,14 @@ import icy.type.DataType;
 import icy.type.collection.array.ArrayUtil;
 import icy.util.ColorUtil;
 
-import java.awt.color.ColorSpace;
-import java.awt.image.ColorModel;
-
-import javax.swing.event.EventListenerList;
-
 /**
  * @author stephane
  */
 public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColorMapListener
 {
     /**
-	 * 
-	 */
+     * 
+     */
     private static final long serialVersionUID = 6413334779215415163L;
 
     /**
@@ -748,6 +748,9 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
                                 map.setBlue(index, (short) cm.getBlue(dvalues));
                                 break;
                             }
+                            
+                            default:
+                                break;
                         }
                     }
                 }
@@ -906,7 +909,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      * process on colorspace change
      */
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final IcyColorSpaceEvent event = (IcyColorSpaceEvent) compare;
 

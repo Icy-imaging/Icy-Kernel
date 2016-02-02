@@ -18,18 +18,6 @@
  */
 package icy.painter;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.EventHierarchicalChecker;
-import icy.file.xml.XMLPersistent;
-import icy.painter.OverlayEvent.OverlayEventType;
-import icy.painter.PainterEvent.PainterEventType;
-import icy.sequence.Sequence;
-import icy.type.point.Point5D;
-import icy.util.EventUtil;
-import icy.util.ShapeUtil;
-import icy.util.XMLUtil;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -42,6 +30,17 @@ import java.util.EventListener;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.file.xml.XMLPersistent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.PainterEvent.PainterEventType;
+import icy.sequence.Sequence;
+import icy.type.point.Point5D;
+import icy.util.EventUtil;
+import icy.util.ShapeUtil;
+import icy.util.XMLUtil;
 import plugins.kernel.canvas.VtkCanvas;
 
 /**
@@ -66,7 +65,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         public void positionChanged(Anchor2D source);
     }
 
-    public static class Anchor2DEvent implements Comparable<Anchor2DEvent>
+    public static class Anchor2DEvent implements CollapsibleEvent
     {
         private final Anchor2D source;
 
@@ -86,12 +85,34 @@ public class Anchor2D extends Overlay implements XMLPersistent
         }
 
         @Override
-        public boolean isEventRedundantWith(EventHierarchicalChecker event)
+        public boolean collapse(CollapsibleEvent event)
         {
-            if (event instanceof Anchor2DEvent)
-                return ((Anchor2DEvent) event).getSource() == source;
+            if (equals(event))
+            {
+                // nothing to do here
+                return true;
+            }
 
             return false;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return source.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof Anchor2DEvent)
+            {
+                final Anchor2DEvent event = (Anchor2DEvent) obj;
+
+                return (event.getSource() == source);
+            }
+
+            return super.equals(obj);
         }
     }
 
@@ -661,7 +682,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
 
     @SuppressWarnings("deprecation")
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         if (object instanceof Anchor2DEvent)
         {
@@ -1087,8 +1108,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         try
         {
             setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
-            setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR,
-                    DEFAULT_SELECTED_COLOR.getRGB())));
+            setSelectedColor(
+                    new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR, DEFAULT_SELECTED_COLOR.getRGB())));
             setX(XMLUtil.getElementDoubleValue(node, ID_POS_X, 0d));
             setY(XMLUtil.getElementDoubleValue(node, ID_POS_Y, 0d));
             setRay(XMLUtil.getElementIntValue(node, ID_RAY, DEFAULT_RAY));

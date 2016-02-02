@@ -18,9 +18,30 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DPositionListener;
 import icy.painter.OverlayEvent;
@@ -43,28 +64,6 @@ import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
-
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkCellArray;
@@ -350,7 +349,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         outlineActor.SetVisibility(isSelected() ? 1 : 0);
                         vtkProperty.SetColor(r, g, b);
                         vtkProperty.SetPointSize(strk);
-                        // opacity here is about ROI content, whole actor opacity is handled by Layer
+                        // opacity here is about ROI content, whole actor opacity is handled by
+                        // Layer
                         // vtkProperty.SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
@@ -390,7 +390,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (canvas instanceof VtkCanvas)
             {
                 final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? --> focus the ROI
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
                 final boolean focused = (actor != null) && vtkCanvas.getPickOnMouseMove()
                         && (actor == vtkCanvas.getPickedObject());
 
@@ -584,8 +585,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                                                 // add undo operation
                                                 if (sequence != null)
-                                                    sequence.addUndoableEdit(new Point2DAddedROIEdit(ROI2DShape.this,
-                                                            point));
+                                                    sequence.addUndoableEdit(
+                                                            new Point2DAddedROIEdit(ROI2DShape.this, point));
                                             }
                                         }
                                     }
@@ -703,7 +704,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                                 // position changed and undo supported --> add undo operation
                                 if ((sequence != null) && (savedPosition != null)
                                         && !savedPosition.equals(pt.getPosition()))
-                                    sequence.addUndoableEdit(new Point2DMovedROIEdit(ROI2DShape.this, pt, savedPosition));
+                                    sequence.addUndoableEdit(
+                                            new Point2DMovedROIEdit(ROI2DShape.this, pt, savedPosition));
                             }
                         }
                     }
@@ -1201,7 +1203,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      *        if set to <code>true</code> the new point will be inserted between the 2 closest
      *        points (in pixels distance) else the new point is inserted at the end of the point
      *        list
-     * @return the new created Anchor2D point if the operation succeed or <code>null</code> otherwise (if the ROI does
+     * @return the new created Anchor2D point if the operation succeed or <code>null</code>
+     *         otherwise (if the ROI does
      *         not support this operation for instance)
      */
     public Anchor2D addNewPoint(Point2D pos, boolean insert)
@@ -1340,7 +1343,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                     switch (selectedPathPoint.getType())
                     {
-                    // we removed a MOVETO point ?
+                        // we removed a MOVETO point ?
                         case PathIterator.SEG_MOVETO:
                             // try to set next point to MOVETO state
                             if (index < controlPoints.size())
@@ -1823,7 +1826,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      * roi changed
      */
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -1846,6 +1849,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
                     ((ROI2DShapePainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 
