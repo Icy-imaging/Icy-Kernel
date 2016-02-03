@@ -18,18 +18,6 @@
  */
 package icy.painter;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.util.EventListener;
-
-import org.w3c.dom.Node;
-
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -41,6 +29,21 @@ import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import plugins.kernel.canvas.VtkCanvas;
 
 /**
@@ -161,6 +164,9 @@ public class Anchor2D extends Overlay implements XMLPersistent
     protected Point2D startDragMousePosition;
     protected Point2D startDragPainterPosition;
 
+    protected final List<Anchor2DListener> anchor2Dlisteners;
+    protected final List<Anchor2DPositionListener> anchor2DPositionlisteners;
+
     public Anchor2D(double x, double y, int ray, Color color, Color selectedColor)
     {
         super("Anchor", OverlayPriority.SHAPE_NORMAL);
@@ -175,6 +181,9 @@ public class Anchor2D extends Overlay implements XMLPersistent
         ellipse = new Ellipse2D.Double();
         startDragMousePosition = null;
         startDragPainterPosition = null;
+
+        anchor2Dlisteners = new ArrayList<Anchor2DListener>();
+        anchor2DPositionlisteners = new ArrayList<Anchor2DPositionListener>();
     }
 
     public Anchor2D(double x, double y, int ray, Color color)
@@ -699,7 +708,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             {
                 final PainterEvent pe = new PainterEvent(this, PainterEventType.PAINTER_CHANGED);
 
-                for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
+                for (Anchor2DListener listener : new ArrayList<Anchor2DListener>(anchor2Dlisteners))
                     listener.painterChanged(pe);
             }
         }
@@ -709,22 +718,22 @@ public class Anchor2D extends Overlay implements XMLPersistent
 
     protected void firePositionChangedEvent(Anchor2D source)
     {
-        for (Anchor2DPositionListener listener : listeners.getListeners(Anchor2DPositionListener.class))
+        for (Anchor2DPositionListener listener : new ArrayList<Anchor2DPositionListener>(anchor2DPositionlisteners))
             listener.positionChanged(source);
 
         // backward compatibility
-        for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
+        for (Anchor2DListener listener : new ArrayList<Anchor2DListener>(anchor2Dlisteners))
             listener.positionChanged(source);
     }
 
     public void addPositionListener(Anchor2DPositionListener listener)
     {
-        listeners.add(Anchor2DPositionListener.class, listener);
+        anchor2DPositionlisteners.add(listener);
     }
 
     public void removePositionListener(Anchor2DPositionListener listener)
     {
-        listeners.remove(Anchor2DPositionListener.class, listener);
+        anchor2DPositionlisteners.remove(listener);
     }
 
     /**
@@ -734,7 +743,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Deprecated
     public void addAnchorListener(Anchor2DListener listener)
     {
-        listeners.add(Anchor2DListener.class, listener);
+        anchor2Dlisteners.add(listener);
     }
 
     /**
@@ -744,7 +753,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Deprecated
     public void removeAnchorListener(Anchor2DListener listener)
     {
-        listeners.remove(Anchor2DListener.class, listener);
+        anchor2Dlisteners.remove(listener);
     }
 
     /**
@@ -1108,8 +1117,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         try
         {
             setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
-            setSelectedColor(
-                    new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR, DEFAULT_SELECTED_COLOR.getRGB())));
+            setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR,
+                    DEFAULT_SELECTED_COLOR.getRGB())));
             setX(XMLUtil.getElementDoubleValue(node, ID_POS_X, 0d));
             setY(XMLUtil.getElementDoubleValue(node, ID_POS_Y, 0d));
             setRay(XMLUtil.getElementIntValue(node, ID_RAY, DEFAULT_RAY));

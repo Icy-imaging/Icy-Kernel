@@ -19,7 +19,6 @@
 package icy.image;
 
 import icy.common.CollapsibleEvent;
-import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
@@ -57,7 +56,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.media.jai.PlanarImage;
-import javax.swing.event.EventListenerList;
 
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
@@ -437,7 +435,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    private final List<IcyBufferedImageListener> listeners;
 
     /**
      * Build an Icy formatted BufferedImage, takes an IcyColorModel and a WritableRaster as input
@@ -454,7 +452,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         super(cm, wr, false, null);
 
         updater = new UpdateEventHandler(this, false);
-        listeners = new EventListenerList();
+        listeners = new ArrayList<IcyBufferedImageListener>();
 
         // automatic update of channel bounds
         this.autoUpdateChannelBounds = autoUpdateChannelBounds;
@@ -3483,18 +3481,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     private void fireChangeEvent(IcyBufferedImageEvent e)
     {
-        for (IcyBufferedImageListener listener : listeners.getListeners(IcyBufferedImageListener.class))
+        for (IcyBufferedImageListener listener : new ArrayList<IcyBufferedImageListener>(listeners))
             listener.imageChanged(e);
     }
 
     public void addListener(IcyBufferedImageListener listener)
     {
-        listeners.add(IcyBufferedImageListener.class, listener);
+        listeners.add(listener);
     }
 
     public void removeListener(IcyBufferedImageListener listener)
     {
-        listeners.remove(IcyBufferedImageListener.class, listener);
+        listeners.remove(listener);
     }
 
     public void beginUpdate()

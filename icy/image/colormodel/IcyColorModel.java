@@ -18,22 +18,6 @@
  */
 package icy.image.colormodel;
 
-import java.awt.image.BandedSampleModel;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentSampleModel;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferDouble;
-import java.awt.image.DataBufferFloat;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DataBufferShort;
-import java.awt.image.DataBufferUShort;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
-import java.lang.reflect.Field;
-
-import javax.swing.event.EventListenerList;
-
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
@@ -50,6 +34,22 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.ReflectionUtil;
+
+import java.awt.image.BandedSampleModel;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferDouble;
+import java.awt.image.DataBufferFloat;
+import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author stephane
@@ -78,7 +78,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    private final List<IcyColorModelListener> listeners;
 
     /**
      * internal updater
@@ -90,8 +90,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     IcyColorModel(int numComponents, DataType dataType, int[] bits)
     {
-        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT,
-                dataType.toDataBufferType());
+        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT, dataType
+                .toDataBufferType());
 
         if (numComponents == 0)
             throw new IllegalArgumentException("Number of components should be > 0");
@@ -99,7 +99,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         // overridden variable
         this.numComponents = numComponents;
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<IcyColorModelListener>();
         updater = new UpdateEventHandler(this, false);
 
         // data type information
@@ -601,8 +601,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * 
      * @param obj
      *        the <code>Object</code> to test for equality
-     * @return <code>true</code> if the specified <code>Object</code> is an instance of
-     *         <code>ColorModel</code> and
+     * @return <code>true</code> if the specified <code>Object</code> is an instance of <code>ColorModel</code> and
      *         equals this <code>ColorModel</code>; <code>false</code> otherwise.
      */
     @Override
@@ -949,17 +948,15 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Returns the <code>String</code> representation of the contents of this
-     * <code>ColorModel</code>object.
+     * Returns the <code>String</code> representation of the contents of this <code>ColorModel</code>object.
      * 
-     * @return a <code>String</code> representing the contents of this <code>ColorModel</code>
-     *         object.
+     * @return a <code>String</code> representing the contents of this <code>ColorModel</code> object.
      */
     @Override
     public String toString()
     {
-        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents + " color space = "
-                + getColorSpace());
+        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents
+                + " color space = " + getColorSpace());
     }
 
     /**
@@ -969,7 +966,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public void addListener(IcyColorModelListener listener)
     {
-        listeners.add(IcyColorModelListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -979,7 +976,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public void removeListener(IcyColorModelListener listener)
     {
-        listeners.remove(IcyColorModelListener.class, listener);
+        listeners.remove(listener);
     }
 
     /**
@@ -989,7 +986,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public void fireEvent(IcyColorModelEvent e)
     {
-        for (IcyColorModelListener listener : listeners.getListeners(IcyColorModelListener.class))
+        for (IcyColorModelListener listener : new ArrayList<IcyColorModelListener>(listeners))
             listener.colorModelChanged(e);
     }
 

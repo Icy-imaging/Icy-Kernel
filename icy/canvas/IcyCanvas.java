@@ -18,29 +18,6 @@
  */
 package icy.canvas;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JPanel;
-import javax.swing.JToolBar;
-import javax.swing.event.ChangeEvent;
-
 import icy.action.CanvasActions;
 import icy.action.GeneralActions;
 import icy.action.RoiActions;
@@ -84,27 +61,51 @@ import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
 import icy.util.OMEUtil;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
+import javax.swing.event.ChangeEvent;
+
 import plugins.kernel.canvas.Canvas2DPlugin;
 import plugins.kernel.canvas.VtkCanvasPlugin;
 
 /**
  * @author Fabrice de Chaumont & Stephane Dallongeville<br>
- *         <br>
+ * <br>
  *         An IcyCanvas is a basic Canvas used into the viewer. It contains a visual representation
  *         of the sequence and provides some facilities as basic transformation and view
  *         synchronization.<br>
  *         Also IcyCanvas receives key events from Viewer when they are not consumed.<br>
- *         <br>
+ * <br>
  *         By default transformations are applied in following order :<br>
  *         Rotation, Translation then Scaling.<br>
  *         The rotation transformation is relative to canvas center.<br>
- *         <br>
+ * <br>
  *         Free feel to implement and override this design or not. <br>
- *         <br>
+ * <br>
  *         (Canvas2D and Canvas3D derives from IcyCanvas)<br>
  */
-public abstract class IcyCanvas extends JPanel
-        implements KeyListener, ViewerListener, SequenceListener, LUTListener, ChangeListener, LayerListener
+public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerListener, SequenceListener, LUTListener,
+        ChangeListener, LayerListener
 {
     protected class IcyCanvasImageOverlay extends Overlay
     {
@@ -224,8 +225,7 @@ public abstract class IcyCanvas extends JPanel
     }
 
     /**
-     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name.
-     * <br>
+     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name. <br>
      * Returns <code>null</code> if we can't find retrieve the corresponding canvas class name.
      */
     public static String getCanvasClassName(String pluginClassName)
@@ -367,6 +367,11 @@ public abstract class IcyCanvas extends JPanel
      * internal updater
      */
     protected final UpdateEventHandler updater;
+    /**
+     * listeners
+     */
+    protected final List<IcyCanvasListener> listeners;
+    protected final List<CanvasLayerListener> layerListeners;
 
     /**
      * Current X position (should be -1 when canvas handle multi X dimension view).
@@ -432,6 +437,9 @@ public abstract class IcyCanvas extends JPanel
 
         // GUI stuff
         panel = new JPanel();
+
+        listeners = new ArrayList<IcyCanvasListener>();
+        layerListeners = new ArrayList<CanvasLayerListener>();
 
         // Z navigation
         zNav = new ZNavigationPanel();
@@ -557,8 +565,7 @@ public abstract class IcyCanvas extends JPanel
 
     /**
      * Called by the viewer when canvas is closed to release some resources.<br/>
-     * Be careful to not restore previous state here (as the colormap) because generally
-     * <code>shutdown</code> is called
+     * Be careful to not restore previous state here (as the colormap) because generally <code>shutdown</code> is called
      * <b>after</b> the creation of the other canvas.
      */
     public void shutDown()
@@ -590,15 +597,9 @@ public abstract class IcyCanvas extends JPanel
         // release layers
         orderedLayers.clear();
 
-        // remove all IcyCanvas listeners
-        final IcyCanvasListener[] canvasListenters = listenerList.getListeners(IcyCanvasListener.class);
-        for (IcyCanvasListener listener : canvasListenters)
-            removeCanvasListener(listener);
-
-        // remove all Layers listeners
-        final CanvasLayerListener[] layersListenters = listenerList.getListeners(CanvasLayerListener.class);
-        for (CanvasLayerListener listener : layersListenters)
-            removeLayerListener(listener);
+        // remove all IcyCanvas & Layer listeners
+        listeners.clear();
+        layerListeners.clear();
     }
 
     /**
@@ -4193,7 +4194,7 @@ public abstract class IcyCanvas extends JPanel
      */
     public void addLayerListener(CanvasLayerListener listener)
     {
-        listenerList.add(CanvasLayerListener.class, listener);
+        layerListeners.add(listener);
     }
 
     /**
@@ -4203,12 +4204,12 @@ public abstract class IcyCanvas extends JPanel
      */
     public void removeLayerListener(CanvasLayerListener listener)
     {
-        listenerList.remove(CanvasLayerListener.class, listener);
+        layerListeners.remove(listener);
     }
 
     protected void fireLayerChangedEvent(CanvasLayerEvent event)
     {
-        for (CanvasLayerListener listener : getListeners(CanvasLayerListener.class))
+        for (CanvasLayerListener listener : new ArrayList<CanvasLayerListener>(layerListeners))
             listener.canvasLayerChanged(event);
     }
 
@@ -4219,7 +4220,7 @@ public abstract class IcyCanvas extends JPanel
      */
     public void addCanvasListener(IcyCanvasListener listener)
     {
-        listenerList.add(IcyCanvasListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -4229,12 +4230,12 @@ public abstract class IcyCanvas extends JPanel
      */
     public void removeCanvasListener(IcyCanvasListener listener)
     {
-        listenerList.remove(IcyCanvasListener.class, listener);
+        listeners.remove(listener);
     }
 
     protected void fireCanvasChangedEvent(IcyCanvasEvent event)
     {
-        for (IcyCanvasListener listener : getListeners(IcyCanvasListener.class))
+        for (IcyCanvasListener listener : new ArrayList<IcyCanvasListener>(listeners))
             listener.canvasChanged(event);
     }
 

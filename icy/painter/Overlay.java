@@ -18,20 +18,6 @@
  */
 package icy.painter;
 
-import java.awt.Graphics2D;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Point2D;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JPanel;
-import javax.swing.event.EventListenerList;
-
-import org.w3c.dom.Node;
-
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
@@ -46,6 +32,19 @@ import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+
+import java.awt.Graphics2D;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Point2D;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JPanel;
+
+import org.w3c.dom.Node;
 
 /**
  * Overlay class.<br>
@@ -162,16 +161,13 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
         }
         catch (NoSuchMethodException e)
         {
-            IcyExceptionHandler.handleException(
-                    new NoSuchMethodException(
-                            "Default constructor not found in class '" + className + "', cannot create the Overlay."),
-                    true);
+            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
+                    + className + "', cannot create the Overlay."), true);
         }
         catch (ClassNotFoundException e)
         {
-            IcyExceptionHandler.handleException(
-                    new ClassNotFoundException("Cannot find '" + className + "' class, cannot create the Overlay."),
-                    true);
+            IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + className
+                    + "' class, cannot create the Overlay."), true);
         }
         catch (Exception e)
         {
@@ -257,8 +253,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
                     if (!overlay.saveToXML(nodeOverlay))
                     {
                         XMLUtil.removeNode(node, nodeOverlay);
-                        System.err.println(
-                                "Error: the overlay " + overlay.getName() + " was not correctly saved to XML !");
+                        System.err.println("Error: the overlay " + overlay.getName()
+                                + " was not correctly saved to XML !");
                     }
                 }
             }
@@ -280,7 +276,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     /**
      * internals
      */
-    protected final EventListenerList listeners;
+    protected final List<OverlayListener> listeners;
     protected final UpdateEventHandler updater;
 
     public Overlay(String name, OverlayPriority priority)
@@ -301,7 +297,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
         receiveKeyEventOnHidden = false;
         receiveMouseEventOnHidden = false;
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<OverlayListener>();
         updater = new UpdateEventHandler(this, false);
     }
 
@@ -420,8 +416,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     /**
      * Set persistent property.<br/>
      * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data
-     * (default is
-     * <code>false</code>).
+     * (default is <code>false</code>).
      */
     public void setPersistent(boolean value)
     {
@@ -613,7 +608,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
 
     protected void fireOverlayChangedEvent(OverlayEvent event)
     {
-        for (OverlayListener listener : listeners.getListeners(OverlayListener.class))
+        for (OverlayListener listener : new ArrayList<OverlayListener>(listeners))
             listener.overlayChanged(event);
     }
 
@@ -622,7 +617,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      */
     public void addOverlayListener(OverlayListener listener)
     {
-        listeners.add(OverlayListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -630,7 +625,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      */
     public void removeOverlayListener(OverlayListener listener)
     {
-        listeners.remove(OverlayListener.class, listener);
+        listeners.remove(listener);
     }
 
     /**

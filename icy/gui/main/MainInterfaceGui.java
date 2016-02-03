@@ -99,8 +99,16 @@ public class MainInterfaceGui implements MainInterface
         }
     }
 
-    private final EventListenerList listeners;
     // private final UpdateEventHandler updater;
+
+    private final EventListenerList listeners;
+
+    // use specific list for faster listeners retrieve
+    private final List<MainListener> mainListeners;
+    private final List<GlobalViewerListener> globalViewerListeners;
+    private final List<GlobalSequenceListener> globalSequenceListeners;
+    private final List<GlobalROIListener> globalROIListeners;
+    private final List<GlobalOverlayListener> globalOverlayListeners;
 
     /**
      * used to generate focused sequence & viewer events
@@ -122,13 +130,18 @@ public class MainInterfaceGui implements MainInterface
     Sequence activeSequence;
 
     /**
-     * Take care that MainInterface constructor do not call the {@link Icy#getMainInterface()}
-     * method.<br>
+     * Take care that MainInterface constructor do not call the {@link Icy#getMainInterface()} method.<br>
      * We use a separate {@link #init()} for that purpose.
      */
     public MainInterfaceGui()
     {
         listeners = new EventListenerList();
+        mainListeners = new ArrayList<MainListener>();
+        globalViewerListeners = new ArrayList<GlobalViewerListener>();
+        globalSequenceListeners = new ArrayList<GlobalSequenceListener>();
+        globalROIListeners = new ArrayList<GlobalROIListener>();
+        globalOverlayListeners = new ArrayList<GlobalOverlayListener>();
+
         viewers = new ArrayList<Viewer>();
         sequences = new ArrayList<Sequence>();
         activePlugins = new ArrayList<WeakReference<Plugin>>();
@@ -582,6 +595,7 @@ public class MainInterfaceGui implements MainInterface
                 v.close();
     }
 
+    @Deprecated
     @Override
     public void closeViewersOfSequence(Sequence sequence)
     {
@@ -907,62 +921,62 @@ public class MainInterfaceGui implements MainInterface
     @Deprecated
     public synchronized void addListener(MainListener listener)
     {
-        listeners.add(MainListener.class, listener);
+        mainListeners.add(listener);
     }
 
     @Override
     @Deprecated
     public synchronized void removeListener(MainListener listener)
     {
-        listeners.remove(MainListener.class, listener);
+        mainListeners.remove(listener);
     }
 
     @Override
     public synchronized void addGlobalViewerListener(GlobalViewerListener listener)
     {
-        listeners.add(GlobalViewerListener.class, listener);
+        globalViewerListeners.add(listener);
     }
 
     @Override
     public synchronized void removeGlobalViewerListener(GlobalViewerListener listener)
     {
-        listeners.remove(GlobalViewerListener.class, listener);
+        globalViewerListeners.remove(listener);
     }
 
     @Override
     public synchronized void addGlobalSequenceListener(GlobalSequenceListener listener)
     {
-        listeners.add(GlobalSequenceListener.class, listener);
+        globalSequenceListeners.add(listener);
     }
 
     @Override
     public synchronized void removeGlobalSequenceListener(GlobalSequenceListener listener)
     {
-        listeners.remove(GlobalSequenceListener.class, listener);
+        globalSequenceListeners.remove(listener);
     }
 
     @Override
     public synchronized void addGlobalROIListener(GlobalROIListener listener)
     {
-        listeners.add(GlobalROIListener.class, listener);
+        globalROIListeners.add(listener);
     }
 
     @Override
     public synchronized void removeGlobalROIListener(GlobalROIListener listener)
     {
-        listeners.remove(GlobalROIListener.class, listener);
+        globalROIListeners.remove(listener);
     }
 
     @Override
     public synchronized void addGlobalOverlayListener(GlobalOverlayListener listener)
     {
-        listeners.add(GlobalOverlayListener.class, listener);
+        globalOverlayListeners.add(listener);
     }
 
     @Override
     public synchronized void removeGlobalOverlayListener(GlobalOverlayListener listener)
     {
-        listeners.remove(GlobalOverlayListener.class, listener);
+        globalOverlayListeners.remove(listener);
     }
 
     @Override
@@ -1060,7 +1074,7 @@ public class MainInterfaceGui implements MainInterface
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.PLUGIN, MainEventType.OPENED, plugin);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.pluginOpened(event);
     }
 
@@ -1075,7 +1089,7 @@ public class MainInterfaceGui implements MainInterface
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.PLUGIN, MainEventType.CLOSED, plugin);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.pluginClosed(event);
     }
 
@@ -1085,12 +1099,12 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireViewerOpenedEvent(Viewer viewer)
     {
-        for (GlobalViewerListener listener : listeners.getListeners(GlobalViewerListener.class))
+        for (GlobalViewerListener listener : new ArrayList<GlobalViewerListener>(globalViewerListeners))
             listener.viewerOpened(viewer);
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.VIEWER, MainEventType.OPENED, viewer);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.viewerOpened(event);
     }
 
@@ -1100,12 +1114,12 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireViewerClosedEvent(Viewer viewer)
     {
-        for (GlobalViewerListener listener : listeners.getListeners(GlobalViewerListener.class))
+        for (GlobalViewerListener listener : new ArrayList<GlobalViewerListener>(globalViewerListeners))
             listener.viewerClosed(viewer);
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.VIEWER, MainEventType.CLOSED, viewer);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.viewerClosed(event);
     }
 
@@ -1129,7 +1143,7 @@ public class MainInterfaceGui implements MainInterface
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.VIEWER, MainEventType.FOCUSED, viewer);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.viewerFocused(event);
         for (FocusedViewerListener listener : listeners.getListeners(FocusedViewerListener.class))
             listener.focusChanged(viewer);
@@ -1141,12 +1155,12 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireSequenceOpenedEvent(Sequence sequence)
     {
-        for (GlobalSequenceListener listener : listeners.getListeners(GlobalSequenceListener.class))
+        for (GlobalSequenceListener listener : new ArrayList<GlobalSequenceListener>(globalSequenceListeners))
             listener.sequenceOpened(sequence);
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.OPENED, sequence);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.sequenceOpened(event);
     }
 
@@ -1156,12 +1170,12 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireSequenceClosedEvent(Sequence sequence)
     {
-        for (GlobalSequenceListener listener : listeners.getListeners(GlobalSequenceListener.class))
+        for (GlobalSequenceListener listener : new ArrayList<GlobalSequenceListener>(globalSequenceListeners))
             listener.sequenceClosed(sequence);
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.CLOSED, sequence);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.sequenceClosed(event);
     }
 
@@ -1185,7 +1199,7 @@ public class MainInterfaceGui implements MainInterface
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.FOCUSED, sequence);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.sequenceFocused(event);
         for (FocusedSequenceListener listener : listeners.getListeners(FocusedSequenceListener.class))
             listener.focusChanged(sequence);
@@ -1197,12 +1211,12 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireRoiAddedEvent(ROI roi)
     {
-        for (GlobalROIListener listener : listeners.getListeners(GlobalROIListener.class))
+        for (GlobalROIListener listener : new ArrayList<GlobalROIListener>(globalROIListeners))
             listener.roiAdded(roi);
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.ROI, MainEventType.ADDED, roi);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.roiAdded(event);
     }
 
@@ -1212,12 +1226,12 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireRoiRemovedEvent(ROI roi)
     {
-        for (GlobalROIListener listener : listeners.getListeners(GlobalROIListener.class))
+        for (GlobalROIListener listener : new ArrayList<GlobalROIListener>(globalROIListeners))
             listener.roiRemoved(roi);
 
         // backward compatibility
         final MainEvent event = new MainEvent(MainEventSourceType.ROI, MainEventType.REMOVED, roi);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.roiRemoved(event);
     }
 
@@ -1227,7 +1241,7 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireOverlayAddedEvent(Overlay overlay)
     {
-        for (GlobalOverlayListener listener : listeners.getListeners(GlobalOverlayListener.class))
+        for (GlobalOverlayListener listener : new ArrayList<GlobalOverlayListener>(globalOverlayListeners))
             listener.overlayAdded(overlay);
 
         // backward compatibility
@@ -1239,7 +1253,7 @@ public class MainInterfaceGui implements MainInterface
             painter = overlay;
 
         final MainEvent event = new MainEvent(MainEventSourceType.PAINTER, MainEventType.ADDED, painter);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.painterAdded(event);
     }
 
@@ -1249,7 +1263,7 @@ public class MainInterfaceGui implements MainInterface
     @SuppressWarnings("deprecation")
     private void fireOverlayRemovedEvent(Overlay overlay)
     {
-        for (GlobalOverlayListener listener : listeners.getListeners(GlobalOverlayListener.class))
+        for (GlobalOverlayListener listener : new ArrayList<GlobalOverlayListener>(globalOverlayListeners))
             listener.overlayRemoved(overlay);
 
         // backward compatibility
@@ -1261,7 +1275,7 @@ public class MainInterfaceGui implements MainInterface
             painter = overlay;
 
         final MainEvent event = new MainEvent(MainEventSourceType.PAINTER, MainEventType.REMOVED, painter);
-        for (MainListener listener : listeners.getListeners(MainListener.class))
+        for (MainListener listener : new ArrayList<MainListener>(mainListeners))
             listener.painterRemoved(event);
     }
 
@@ -1562,7 +1576,7 @@ public class MainInterfaceGui implements MainInterface
             sequence.setUserLUT(userLut);
         // inform sequence is now closed
         sequence.closed();
-        
+
         // fire sequence closed event (after roi / overlay events)
         fireSequenceClosedEvent(sequence);
     }
