@@ -1926,6 +1926,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public abstract void setPosition5D(Point5D position);
 
     /**
+     * Returns <code>true</code> if the ROI is empty (does not contains anything).
+     */
+    public boolean isEmpty()
+    {
+        return getBounds5D().isEmpty();
+    }
+
+    /**
      * Tests if a specified 5D point is inside the ROI.
      * 
      * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the <code>ROI</code>;

@@ -99,6 +99,14 @@ public class BooleanMask4D
      */
     public static BooleanMask4D getUnion(BooleanMask4D mask1, BooleanMask4D mask2)
     {
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask4D();
+
+        if ((mask1 == null) || mask1.isEmpty())
+            return (BooleanMask4D) mask2.clone();
+        if ((mask2 == null) || mask2.isEmpty())
+            return (BooleanMask4D) mask1.clone();
+
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -157,6 +165,9 @@ public class BooleanMask4D
      */
     public static BooleanMask4D getIntersection(BooleanMask4D mask1, BooleanMask4D mask2)
     {
+        if ((mask1 == null) || (mask2 == null))
+            return new BooleanMask4D();
+
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -215,6 +226,14 @@ public class BooleanMask4D
      */
     public static BooleanMask4D getExclusiveUnion(BooleanMask4D mask1, BooleanMask4D mask2)
     {
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask4D();
+
+        if ((mask1 == null) || mask1.isEmpty())
+            return (BooleanMask4D) mask2.clone();
+        if ((mask2 == null) || mask2.isEmpty())
+            return (BooleanMask4D) mask1.clone();
+
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -273,6 +292,11 @@ public class BooleanMask4D
      */
     public static BooleanMask4D getSubtraction(BooleanMask4D mask1, BooleanMask4D mask2)
     {
+        if (mask1 == null)
+            return new BooleanMask4D();
+        if (mask2 == null)
+            return (BooleanMask4D) mask1.clone();
+
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
         // need to subtract something ?
@@ -311,7 +335,7 @@ public class BooleanMask4D
             return new BooleanMask4D(bounds, mask);
         }
 
-        return new BooleanMask4D();
+        return (BooleanMask4D) mask1.clone();
     }
 
     /**
@@ -876,7 +900,8 @@ public class BooleanMask4D
     }
 
     /**
-     * Transforms the specified 3D coordinates int array [x,y,z] in 4D coordinates int array [x,y,z,t] with the specified T value.
+     * Transforms the specified 3D coordinates int array [x,y,z] in 4D coordinates int array [x,y,z,t] with the
+     * specified T value.
      */
     public static int[] toInt4D(int[] source3D, int t)
     {

@@ -276,8 +276,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
         if (MetaDataUtil.getPixelSizeZ(metaData, 0, 1d) == 1d)
             MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
-        if (MetaDataUtil.getTimeInterval(metaData, 0, 0.1d) == 0.1d)
-            MetaDataUtil.setTimeInterval(metaData, 0, 0.1d);
+        if (MetaDataUtil.getTimeInterval(metaData, 0, 0.0d) == 0.0d)
+            MetaDataUtil.setTimeInterval(metaData, 0, 0.0d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         overlays = new HashSet<Overlay>();
@@ -833,7 +833,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getTimeInterval()
     {
-        return MetaDataUtil.getTimeInterval(metaData, 0, 0.1d);
+        double result = MetaDataUtil.getTimeInterval(metaData, 0, 0d);
+
+        if (result == 0d)
+            result = MetaDataUtil.getTimeIntervalFromTimePositions(metaData, 0);
+
+        return result;
     }
 
     /**
@@ -877,7 +882,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void setTimeInterval(double value)
     {
-        if (getTimeInterval() != value)
+        if (MetaDataUtil.getTimeInterval(metaData, 0, 0d) != value)
         {
             MetaDataUtil.setTimeInterval(metaData, 0, value);
             metaChanged(ID_TIME_INTERVAL);
@@ -3242,8 +3247,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public DataType getDataType_()
     {
+        // assume unsigned byte by default
         if (colorModel == null)
-            return DataType.UNDEFINED;
+            return DataType.UBYTE;
 
         return colorModel.getDataType_();
     }

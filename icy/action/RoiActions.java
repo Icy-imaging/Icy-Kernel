@@ -299,10 +299,11 @@ public class RoiActions
                         for (ROI roi : rois)
                         {
                             final ROI newROI = roi.getCopy();
-                            copyRois.add(newROI);
 
                             if (newROI != null)
                             {
+                                copyRois.add(newROI);
+
                                 // select the ROI
                                 newROI.setSelected(true);
                                 // and add it

@@ -73,6 +73,11 @@ public class ZipUtil
         while (!compressor.finished())
         {
             final int count = compressor.deflate(buf);
+
+            // nothing more to do ? --> end here
+            if (count == 0)
+                break;
+
             bos.write(buf, 0, count);
         }
 
@@ -130,6 +135,11 @@ public class ZipUtil
         while (!decompressor.finished())
         {
             final int count = decompressor.inflate(buf);
+
+            // nothing more to do ? --> end here
+            if (count == 0)
+                break;
+
             bos.write(buf, 0, count);
         }
         try

@@ -763,7 +763,7 @@ public class PluginLoader
             catch (ClassCastException e)
             {
                 return mess + IcyExceptionHandler.getErrorMessage(e, false)
-                        + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
+                        + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class.";
             }
             catch (ClassNotFoundException e)
             {

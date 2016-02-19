@@ -95,6 +95,14 @@ public class BooleanMask3D implements Cloneable
      */
     public static BooleanMask3D getUnion(BooleanMask3D mask1, BooleanMask3D mask2)
     {
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask3D();
+
+        if ((mask1 == null) || mask1.isEmpty())
+            return (BooleanMask3D) mask2.clone();
+        if ((mask2 == null) || mask2.isEmpty())
+            return (BooleanMask3D) mask1.clone();
+
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -153,6 +161,9 @@ public class BooleanMask3D implements Cloneable
      */
     public static BooleanMask3D getIntersection(BooleanMask3D mask1, BooleanMask3D mask2)
     {
+        if ((mask1 == null) || (mask2 == null))
+            return new BooleanMask3D();
+
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -211,6 +222,14 @@ public class BooleanMask3D implements Cloneable
      */
     public static BooleanMask3D getExclusiveUnion(BooleanMask3D mask1, BooleanMask3D mask2)
     {
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask3D();
+
+        if ((mask1 == null) || mask1.isEmpty())
+            return (BooleanMask3D) mask2.clone();
+        if ((mask2 == null) || mask2.isEmpty())
+            return (BooleanMask3D) mask1.clone();
+
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -269,6 +288,11 @@ public class BooleanMask3D implements Cloneable
      */
     public static BooleanMask3D getSubtraction(BooleanMask3D mask1, BooleanMask3D mask2)
     {
+        if (mask1 == null)
+            return new BooleanMask3D();
+        if (mask2 == null)
+            return (BooleanMask3D) mask1.clone();
+
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
         // need to subtract something ?
@@ -307,7 +331,7 @@ public class BooleanMask3D implements Cloneable
             return new BooleanMask3D(bounds, mask);
         }
 
-        return new BooleanMask3D();
+        return (BooleanMask3D) mask1.clone();
     }
 
     /**

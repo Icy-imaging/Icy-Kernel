@@ -381,8 +381,8 @@ public class Loader
         }
     }
 
-    private final static String nonImageExtensions[] = {"xml", "txt", "pdf", "xls", "doc", "docx", "pdf", "rtf", "exe",
-            "wav", "mp3", "app"};
+    private final static Set<String> nonImageExtensions = new HashSet<String>(CollectionUtil.asList(new String[] {
+            "xml", "txt", "pdf", "xls", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
 
     /**
      * Returns all available resource importer.
@@ -399,12 +399,12 @@ public class Loader
                 // add the importer
                 result.add((Importer) PluginLauncher.create(plugin));
             }
-            catch (Exception e)
+            catch (Throwable t)
             {
                 // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(e, false, true);
+                IcyExceptionHandler.showErrorMessage(t, false, true);
                 // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
             }
         }
 
@@ -426,12 +426,12 @@ public class Loader
                 // add the importer
                 result.add((FileImporter) PluginLauncher.create(plugin));
             }
-            catch (Exception e)
+            catch (Throwable t)
             {
                 // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(e, false, true);
+                IcyExceptionHandler.showErrorMessage(t, false, true);
                 // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
             }
         }
 
@@ -629,12 +629,12 @@ public class Loader
                 // add the importer
                 result.add((SequenceImporter) PluginLauncher.create(plugin));
             }
-            catch (Exception e)
+            catch (Throwable t)
             {
                 // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(e, false, true);
+                IcyExceptionHandler.showErrorMessage(t, false, true);
                 // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
             }
         }
 
@@ -656,12 +656,12 @@ public class Loader
                 // add the importer
                 result.add((SequenceIdImporter) PluginLauncher.create(plugin));
             }
-            catch (Exception e)
+            catch (Throwable t)
             {
                 // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(e, false, true);
+                IcyExceptionHandler.showErrorMessage(t, false, true);
                 // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
             }
         }
 
@@ -683,12 +683,12 @@ public class Loader
                 // add the importer
                 result.add((SequenceFileImporter) PluginLauncher.create(plugin));
             }
-            catch (Exception e)
+            catch (Exception t)
             {
                 // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(e, false, true);
+                IcyExceptionHandler.showErrorMessage(t, false, true);
                 // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
             }
         }
 
@@ -770,7 +770,7 @@ public class Loader
     public static Map<SequenceFileImporter, List<String>> getSequenceFileImporters(List<String> paths,
             boolean useFirstFound)
     {
-        return getSequenceFileImporters(getSequenceFileImporters(), paths, useFirstFound);
+        return getSequenceFileImporters(getSequenceFileImporters(), cleanNonImageFile(paths), useFirstFound);
     }
 
     /**
@@ -914,11 +914,7 @@ public class Loader
     {
         final String ext = FileUtil.getFileExtension(path, false).toLowerCase();
 
-        for (String rejected : nonImageExtensions)
-            if (ext.equals(rejected))
-                return true;
-
-        return false;
+        return nonImageExtensions.contains(ext);
     }
 
     /**
@@ -1519,7 +1515,7 @@ public class Loader
         // detect if this is a complete folder load
         final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
         // explode path list
-        final List<String> singlePaths = explodeAndClean(paths);
+        final List<String> singlePaths = explode(paths);
 
         // get the sequence importer first
         final Map<SequenceFileImporter, List<String>> sequenceFileImporters;
@@ -1530,7 +1526,7 @@ public class Loader
         else
         {
             sequenceFileImporters = new HashMap<SequenceFileImporter, List<String>>(1);
-            sequenceFileImporters.put(importer, new ArrayList<String>(singlePaths));
+            sequenceFileImporters.put(importer, new ArrayList<String>(cleanNonImageFile(singlePaths)));
         }
 
         for (Entry<SequenceFileImporter, List<String>> entry : sequenceFileImporters.entrySet())
@@ -1790,7 +1786,7 @@ public class Loader
             public void run()
             {
                 // explode path list
-                final List<String> singlePaths = explodeAndClean(paths);
+                final List<String> singlePaths = explode(paths);
 
                 if (singlePaths.size() > 0)
                 {
@@ -1976,7 +1972,7 @@ public class Loader
                 // detect if this is a complete folder load
                 final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
                 // explode path list
-                final List<String> singlePaths = explodeAndClean(paths);
+                final List<String> singlePaths = explode(paths);
 
                 // get the sequence importer first
                 final Map<SequenceFileImporter, List<String>> sequenceFileImporters = getSequenceFileImporters(
@@ -2455,9 +2451,9 @@ public class Loader
                     // selectSerie(..) does async processes)
                     selectedSeries = selectSerie(importer.getClass().newInstance(), path, meta, serie, serieCount);
                 }
-                catch (Exception e)
+                catch (Throwable t)
                 {
-                    IcyExceptionHandler.showErrorMessage(e, true, true);
+                    IcyExceptionHandler.showErrorMessage(t, true, true);
                     System.err.print("Open first serie by default...");
                     selectedSeries = new int[] {0};
                 }
@@ -2624,35 +2620,17 @@ public class Loader
         return result;
     }
 
-    /**
-     * @deprecated Use {@link #explodeAndClean(List)} instead.
-     */
-    @Deprecated
-    static File[] explodeAndClean(File[] files)
+    static List<String> explode(List<String> paths)
     {
-        final File[] allFiles = FileUtil.explode(files, null, true, false);
-        final List<File> result = new ArrayList<File>();
-
-        // extensions based exclusion
-        for (int i = 0; i < allFiles.length; i++)
-        {
-            final File file = allFiles[i];
-
-            // keep non discarded images
-            if (!canDiscardImageFile(file.getPath()))
-                result.add(file);
-        }
-
-        return result.toArray(new File[result.size()]);
+        return FileUtil.toPaths(FileUtil.explode(FileUtil.toFiles(paths), null, true, false));
     }
 
-    static List<String> explodeAndClean(List<String> paths)
+    static List<String> cleanNonImageFile(List<String> paths)
     {
-        final List<String> allPaths = FileUtil.toPaths(FileUtil.explode(FileUtil.toFiles(paths), null, true, false));
         final List<String> result = new ArrayList<String>();
 
         // extensions based exclusion
-        for (String path : allPaths)
+        for (String path : paths)
         {
             // keep non discarded images
             if (!canDiscardImageFile(path))
@@ -2787,7 +2765,7 @@ public class Loader
                         }
                     }
                 }
-                catch (Exception e)
+                catch (Throwable t)
                 {
                     // ignore...
                 }

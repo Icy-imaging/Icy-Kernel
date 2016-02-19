@@ -18,28 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.IndexColorModel;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-
-import org.w3c.dom.Node;
-
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -62,6 +40,29 @@ import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.vtk.VtkUtil;
+
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+
+import org.w3c.dom.Node;
+
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkImageData;
@@ -2299,11 +2300,20 @@ public class ROI2DArea extends ROI2D
         if (!super.saveToXML(node))
             return false;
 
-        final Rectangle bnd = (Rectangle) bounds.clone();
-        final byte[] data = maskData;
+        final Rectangle bnd;
+        final byte[] data;
+
+        synchronized (maskData)
+        {
+            bnd = (Rectangle) bounds.clone();
+            // clone to avoid any data modification during serialization
+            data = maskData.clone();
+        }
+
+        final int len = bnd.width * bnd.height;
 
         // invalid --> return false
-        if ((bnd.width * bnd.height) != data.length)
+        if ((len > 0) && (len != data.length))
             return false;
 
         // retrieve mask bounds
@@ -2311,9 +2321,10 @@ public class ROI2DArea extends ROI2D
         XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bnd.y);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bnd.width);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bnd.height);
-        // set mask data as byte array (we need to clone to avoid any data modification during
-        // serialization)
-        XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data.clone());
+
+        // set mask data as byte array
+        if (len > 0)
+            XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data);
 
         return true;
     }

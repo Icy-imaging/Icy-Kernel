@@ -410,7 +410,7 @@ public class GuiUtil
             content = window.getComponent(0);
             menuBar = null;
         }
-
+        
         final IcyFrame frame = new IcyFrame(title, true, true, false, false);
         frame.setLayout(new BorderLayout());
         frame.add(content, BorderLayout.CENTER);

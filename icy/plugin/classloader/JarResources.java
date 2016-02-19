@@ -88,21 +88,21 @@ public class JarResources
                 loadContent(name, url);
                 content = entryContents.get(name);
 
-//                try
-//                {
-//                    // load content and return it
-//                    loadContent(name, url);
-//                    content = entryContents.get(name);
-//                }
-//                catch (IOException e)
-//                {
-//                    // content cannot be loaded, remove the URL entry
-//                    // better to not remove it after all, so we know why it failed next time
-//                    // entryUrls.remove(name);
-//                    
-//                    // and throw exception
-//                    throw e;
-//                }
+                // try
+                // {
+                // // load content and return it
+                // loadContent(name, url);
+                // content = entryContents.get(name);
+                // }
+                // catch (IOException e)
+                // {
+                // // content cannot be loaded, remove the URL entry
+                // // better to not remove it after all, so we know why it failed next time
+                // // entryUrls.remove(name);
+                //
+                // // and throw exception
+                // throw e;
+                // }
             }
         }
 
@@ -173,18 +173,20 @@ public class JarResources
                 if (jarEntry.isDirectory())
                     continue;
 
-                if (entryUrls.containsKey(jarEntry.getName()))
+                final String name = jarEntry.getName();
+
+                if (entryUrls.containsKey(name))
                 {
                     if (!collisionAllowed)
-                        throw new JclException("Class/Resource " + jarEntry.getName() + " already loaded");
+                        throw new JclException("Class/Resource " + name + " already loaded");
 
                     if (logger.isLoggable(Level.FINEST))
-                        logger.finest("Class/Resource " + jarEntry.getName() + " already loaded; ignoring entry...");
+                        logger.finest("Class/Resource " + name + " already loaded; ignoring entry...");
                     continue;
                 }
 
                 // add to internal resource HashMap
-                entryUrls.put(jarEntry.getName(), new URL("jar:" + url.toString() + "!/" + jarEntry.getName()));
+                entryUrls.put(name, new URL("jar:" + url.toString() + "!/" + name));
             }
         }
         // catch (NullPointerException e)

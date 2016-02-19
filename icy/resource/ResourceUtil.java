@@ -80,6 +80,7 @@ public class ResourceUtil
     public static final Image ICON_DOCTEXT1 = ResourceUtil.getAlphaIconAsImage("doc_lines.png");
     public static final Image ICON_DOCTEXT2 = ResourceUtil.getAlphaIconAsImage("doc_lines_stright.png");
     public static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
+    public static final Image ICON_FOLDER = ResourceUtil.getAlphaIconAsImage("folder.png");
     public static final Image ICON_OPEN = ResourceUtil.getAlphaIconAsImage("folder_open.png");
     public static final Image ICON_LOAD = ICON_OPEN;
     public static final Image ICON_SAVE = ResourceUtil.getAlphaIconAsImage("save.png");
