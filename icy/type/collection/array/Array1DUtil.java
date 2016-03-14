@@ -4490,7 +4490,7 @@ public class Array1DUtil
 
         for (int i = 0; i < size; i++)
         {
-            out[outOff] = in[inOff];
+            result[outOff] = in[inOff];
             inOff += step;
             outOff++;
         }
@@ -4529,7 +4529,7 @@ public class Array1DUtil
 
             for (int i = 0; i < size; i++)
             {
-                out[outOff2] = in[inOff2];
+                result[outOff2] = in[inOff2];
                 inOff2 += step;
                 outOff2++;
             }

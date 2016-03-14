@@ -668,7 +668,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 else
                 {
                     if (roi.optimizeBounds())
-                        roi.roiChanged();
+                        roi.roiChanged(true);
                 }
             }
         }

@@ -34,7 +34,16 @@ public class ROIEvent implements CollapsibleEvent
 
     public enum ROIEventType
     {
-        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, @Deprecated PAINTER_CHANGED, @Deprecated NAME_CHANGED;
+        FOCUS_CHANGED, SELECTION_CHANGED, /**
+                                           * ROI position or/and content change event.<br>
+                                           * property = {@link ROI#ROICHANGED_POSITION} when only
+                                           * position has changed
+                                           */
+        ROI_CHANGED, /**
+                      * ROI property change event.<br>
+                      * check property field to know which property has actually changed
+                      */
+        PROPERTY_CHANGED, @Deprecated PAINTER_CHANGED, @Deprecated NAME_CHANGED;
     }
 
     private final ROI source;
@@ -62,22 +71,23 @@ public class ROIEvent implements CollapsibleEvent
         this.pointEventType = pointEventType;
     }
 
-    public ROIEvent(ROI source, String propertyName)
-    {
-        super();
-
-        this.source = source;
-        type = ROIEventType.PROPERTY_CHANGED;
-        this.propertyName = propertyName;
-    }
-
-    public ROIEvent(ROI source, ROIEventType type)
+    public ROIEvent(ROI source, ROIEventType type, String propertyName)
     {
         super();
 
         this.source = source;
         this.type = type;
-        propertyName = null;
+        this.propertyName = propertyName;
+    }
+
+    public ROIEvent(ROI source, String propertyName)
+    {
+        this(source, ROIEventType.PROPERTY_CHANGED, propertyName);
+    }
+
+    public ROIEvent(ROI source, ROIEventType type)
+    {
+        this(source, type, null);
     }
 
     /**
@@ -151,6 +161,8 @@ public class ROIEvent implements CollapsibleEvent
                 switch (type)
                 {
                     case ROI_CHANGED:
+                        return StringUtil.equals(propertyName, e.getPropertyName());
+                        
                     case FOCUS_CHANGED:
                     case SELECTION_CHANGED:
                     case NAME_CHANGED:

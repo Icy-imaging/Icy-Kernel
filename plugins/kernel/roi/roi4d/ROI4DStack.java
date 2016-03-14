@@ -34,6 +34,7 @@ import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -421,7 +422,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         slices.put(Integer.valueOf(t), roi3d);
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -440,7 +441,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         }
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(true);
 
         return result;
     }
@@ -472,7 +473,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         switch (event.getType())
         {
             case ROI_CHANGED:
-                roiChanged();
+                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:
@@ -691,7 +692,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         }
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(false);
     }
 
     @Override
@@ -721,7 +722,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
 
             // notify ROI changed because we modified slice 'internally'
             if ((dx != 0d) || (dy != 0d) || (dz != 0d))
-                roiChanged();
+                roiChanged(false);
         }
         finally
         {

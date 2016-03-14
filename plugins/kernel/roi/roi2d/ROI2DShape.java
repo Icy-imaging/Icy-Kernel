@@ -1173,7 +1173,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         else
             controlPoints.add(index, pt);
 
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1246,7 +1246,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         if (empty)
             remove();
         else
-            roiChanged();
+            roiChanged(true);
 
         return true;
     }
@@ -1794,7 +1794,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     public void controlPointPositionChanged(Anchor2D source)
     {
         // anchor(s) position changed --> ROI changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**

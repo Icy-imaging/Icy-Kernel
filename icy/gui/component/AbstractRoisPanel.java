@@ -1741,9 +1741,9 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             Object result = value;
 
             // format result if needed
-            if (result instanceof Double)
+            if (result instanceof Number)
             {
-                final double doubleValue = ((Double) result).doubleValue();
+                final double doubleValue = ((Number) result).doubleValue();
 
                 // replace 'infinity' by infinite symbol
                 if (doubleValue == Double.POSITIVE_INFINITY)
