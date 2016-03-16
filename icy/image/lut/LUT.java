@@ -18,7 +18,7 @@
  */
 package icy.image.lut;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
@@ -38,8 +38,6 @@ import icy.util.XMLUtil;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-
-import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
 
@@ -99,13 +97,13 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         /**
          * listeners
          */
-        private final EventListenerList listeners;
+        private final List<LUTChannelListener> channelListeners;
 
         public LUTChannel(int channel)
         {
             this.channel = channel;
 
-            listeners = new EventListenerList();
+            channelListeners = new ArrayList<LUT.LUTChannelListener>();
         }
 
         public LUT getLut()
@@ -269,7 +267,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
          */
         public void addListener(LUTChannelListener listener)
         {
-            listeners.add(LUTChannelListener.class, listener);
+            channelListeners.add(listener);
         }
 
         /**
@@ -277,7 +275,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
          */
         public void removeListener(LUTChannelListener listener)
         {
-            listeners.remove(LUTChannelListener.class, listener);
+            channelListeners.remove(listener);
         }
 
         /**
@@ -285,7 +283,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
          */
         public void fireEvent(LUTChannelEvent e)
         {
-            for (LUTChannelListener listener : listeners.getListeners(LUTChannelListener.class))
+            for (LUTChannelListener listener : new ArrayList<LUTChannelListener>(channelListeners))
                 listener.lutChannelChanged(e);
         }
     }
@@ -301,7 +299,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    private final List<LUTListener> listeners;
 
     /**
      * internal updater
@@ -331,7 +329,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
             lutChannels.add(new LUTChannel(channel));
         }
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<LUTListener>();
         updater = new UpdateEventHandler(this, false);
 
         // add listener
@@ -604,7 +602,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public void addListener(LUTListener listener)
     {
-        listeners.add(LUTListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -614,17 +612,17 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public void removeListener(LUTListener listener)
     {
-        listeners.remove(LUTListener.class, listener);
+        listeners.remove(listener);
     }
 
     public void fireLUTChanged(LUTEvent e)
     {
-        for (LUTListener lutListener : listeners.getListeners(LUTListener.class))
+        for (LUTListener lutListener : new ArrayList<LUTListener>(listeners))
             lutListener.lutChanged(e);
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final LUTEvent event = (LUTEvent) compare;
 

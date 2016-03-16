@@ -604,7 +604,10 @@ public class IcyColorMapComponent implements XMLPersistent
         {
             final float diff = mapf[i] - mapf[i - 1];
 
-            // important difference in difference
+            if ((diff == 0) || (lastdiff == 0))
+                continue;
+
+            // difference changed ?
             if ((diff != lastdiff) && (Math.abs(diff / (diff - lastdiff)) < 1000f))
                 return false;
 

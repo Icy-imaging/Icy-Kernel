@@ -153,7 +153,7 @@ public class PluginUpdater
                 // reload online plugins from all active repositories
                 PluginRepositoryLoader.reload();
                 // wait for basic infos
-                PluginRepositoryLoader.waitBasicLoaded();
+                PluginRepositoryLoader.waitLoaded();
 
                 if (PluginRepositoryLoader.failed())
                 {

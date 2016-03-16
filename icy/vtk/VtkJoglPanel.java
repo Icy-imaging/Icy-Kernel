@@ -6,6 +6,7 @@ import icy.system.IcyExceptionHandler;
 import icy.system.IcyHandledException;
 import icy.system.thread.ThreadUtil;
 import icy.util.OpenGLUtil;
+import icy.util.ReflectionUtil;
 
 import java.awt.Graphics;
 import java.util.concurrent.locks.ReentrantLock;
@@ -17,6 +18,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLJPanel;
 
+import jogamp.opengl.GLDrawableHelper;
 import vtk.vtkCamera;
 import vtk.vtkGenericOpenGLRenderWindow;
 import vtk.vtkGenericRenderWindowInteractor;
@@ -29,6 +31,56 @@ import vtk.vtkWindowToImageFilter;
 
 public class VtkJoglPanel extends GLJPanel
 {
+    class GLEventImpl implements GLEventListener
+    {
+        @Override
+        public void init(GLAutoDrawable drawable)
+        {
+            if (!windowset)
+            {
+                windowset = true;
+
+                // Make sure the JOGL Context is current
+                GLContext ctx = drawable.getContext();
+                if (!ctx.isCurrent())
+                    ctx.makeCurrent();
+
+                // Init VTK OpenGL RenderWindow
+                rw.SetMapped(1);
+                rw.SetPosition(0, 0);
+                setSize(drawable.getWidth(), drawable.getHeight());
+                rw.OpenGLInit();
+
+                // init light
+                if (!lightingset)
+                {
+                    lightingset = true;
+                    ren.AddLight(lgt);
+                    lgt.SetPosition(cam.GetPosition());
+                    lgt.SetFocalPoint(cam.GetFocalPoint());
+                }
+            }
+        }
+
+        @Override
+        public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
+        {
+            setSize(width, height);
+        }
+
+        @Override
+        public void display(GLAutoDrawable drawable)
+        {
+            render();
+        }
+
+        @Override
+        public void dispose(GLAutoDrawable drawable)
+        {
+            delete();
+        }
+    }
+
     /**
      * 
      */
@@ -41,6 +93,7 @@ public class VtkJoglPanel extends GLJPanel
     protected vtkLight lgt;
 
     protected ReentrantLock lock;
+    protected GLEventImpl glEventImpl;
 
     protected int lastX;
     protected int lastY;
@@ -62,10 +115,10 @@ public class VtkJoglPanel extends GLJPanel
         rw.SetIsCurrent(true);
 
         // FIXME: smoothing is broken with VTK 6.3
-//        rw.SetPointSmoothing(1);
-//        rw.SetLineSmoothing(1);
-//        rw.SetPolygonSmoothing(1);
-//        rw.SetMultiSamples(4);
+        // rw.SetPointSmoothing(1);
+        // rw.SetLineSmoothing(1);
+        // rw.SetPolygonSmoothing(1);
+        // rw.SetMultiSamples(4);
 
         // init window interactor
         wi = new vtkGenericRenderWindowInteractor();
@@ -74,7 +127,7 @@ public class VtkJoglPanel extends GLJPanel
 
         ren = new vtkRenderer();
         ren.SetLightFollowCamera(1);
-        
+
         cam = null;
 
         lgt = new vtkLight();
@@ -82,61 +135,14 @@ public class VtkJoglPanel extends GLJPanel
         lgt.SetAmbientColor(1d, 1d, 1d);
 
         lock = new ReentrantLock();
+        glEventImpl = new GLEventImpl();
 
         windowset = false;
         lightingset = false;
         rendering = false;
         failed = false;
 
-        addGLEventListener(new GLEventListener()
-        {
-            @Override
-            public void init(GLAutoDrawable drawable)
-            {
-                if (!windowset)
-                {
-                    windowset = true;
-
-                    // Make sure the JOGL Context is current
-                    GLContext ctx = drawable.getContext();
-                    if (!ctx.isCurrent())
-                        ctx.makeCurrent();
-
-                    // Init VTK OpenGL RenderWindow
-                    rw.SetMapped(1);
-                    rw.SetPosition(0, 0);
-                    setSize(drawable.getWidth(), drawable.getHeight());
-                    rw.OpenGLInit();
-
-                    // init light
-                    if (!lightingset)
-                    {
-                        lightingset = true;
-                        ren.AddLight(lgt);
-                        lgt.SetPosition(cam.GetPosition());
-                        lgt.SetFocalPoint(cam.GetFocalPoint());
-                    }
-                }
-            }
-
-            @Override
-            public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
-            {
-                setSize(width, height);
-            }
-
-            @Override
-            public void display(GLAutoDrawable drawable)
-            {
-                render();
-            }
-
-            @Override
-            public void dispose(GLAutoDrawable drawable)
-            {
-                delete();
-            }
-        });
+        addGLEventListener(glEventImpl);
 
         rw.AddRenderer(ren);
         cam = ren.GetActiveCamera();
@@ -152,8 +158,7 @@ public class VtkJoglPanel extends GLJPanel
                             "Warning",
                             "Your graphics card driver does not support OpenGL 2, you may experience issues with VTK.\nDo you want to try anyway ?",
                             IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
-                throw new IcyHandledException(
-                        "Your graphics card driver is not compatible with OpenGL 2 !");
+                throw new IcyHandledException("Your graphics card driver is not compatible with OpenGL 2 !");
         }
     }
 
@@ -231,6 +236,22 @@ public class VtkJoglPanel extends GLJPanel
     public void disposeInternal()
     {
         super.dispose();
+
+        // remove the GL event listener to avoid memory leak
+        removeGLEventListener(glEventImpl);
+
+        try
+        {
+            // hacky fix to avoid the infamous memory leak from ThreadLocal from GLPanel !
+            final GLDrawableHelper helper = (GLDrawableHelper) ReflectionUtil.getFieldObject(this, "helper", true);
+            final ThreadLocal threadLocal = (ThreadLocal) ReflectionUtil.getFieldObject(helper, "perThreadInitAction",
+                    true);
+            threadLocal.remove();
+        }
+        catch (Throwable t)
+        {
+            // ignore
+        }
     }
 
     /**
@@ -506,8 +527,10 @@ public class VtkJoglPanel extends GLJPanel
             // it can happen with older video cards
             failed = true;
 
-            MessageDialog.showDialog("An error occured while initializing OpenGL !\n"
-                    + "You may try to update your graphics card driver to fix this issue.", MessageDialog.ERROR_MESSAGE);
+            MessageDialog
+                    .showDialog("An error occured while initializing OpenGL !\n"
+                            + "You may try to update your graphics card driver to fix this issue.",
+                            MessageDialog.ERROR_MESSAGE);
 
             IcyExceptionHandler.handleException(t, true);
         }

@@ -21,6 +21,7 @@ package icy.type.collection.array;
 import icy.math.MathUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
+import icy.util.StringUtil;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -3545,7 +3546,7 @@ public class Array1DUtil
     {
         // same sign ?
         if (srcSigned == dstSigned)
-            return longArrayToLongArray(in, inOffset, in, outOffset, length);
+            return longArrayToLongArray(in, inOffset, out, outOffset, length);
 
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final long[] outArray = allocIfNull(out, outOffset + len);
@@ -3734,7 +3735,7 @@ public class Array1DUtil
     {
         // same sign ?
         if (srcSigned == dstSigned)
-            return intArrayToIntArray(in, inOffset, in, outOffset, length);
+            return intArrayToIntArray(in, inOffset, out, outOffset, length);
 
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final int[] outArray = allocIfNull(out, outOffset + len);
@@ -3871,7 +3872,7 @@ public class Array1DUtil
     {
         // same sign ?
         if (srcSigned == dstSigned)
-            return shortArrayToShortArray(in, inOffset, in, outOffset, length);
+            return shortArrayToShortArray(in, inOffset, out, outOffset, length);
 
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);
@@ -3954,7 +3955,7 @@ public class Array1DUtil
     {
         // same sign ?
         if (srcSigned == dstSigned)
-            return byteArrayToByteArray(in, inOffset, in, outOffset, length);
+            return byteArrayToByteArray(in, inOffset, out, outOffset, length);
 
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
@@ -4322,7 +4323,7 @@ public class Array1DUtil
      */
     public static Object stringToArray(String value, DataType dataType, boolean hexa, String separator)
     {
-        if (value == null)
+        if (StringUtil.isEmpty(value))
             return createArray(dataType, 0);
 
         final String[] values = value.split(separator);
@@ -4486,10 +4487,10 @@ public class Array1DUtil
 
         int inOff = inOffset;
         int outOff = outOffset;
-        
+
         for (int i = 0; i < size; i++)
         {
-            out[outOff] = in[inOff];
+            result[outOff] = in[inOff];
             inOff += step;
             outOff++;
         }
@@ -4520,7 +4521,7 @@ public class Array1DUtil
 
         int inOff1 = inOffset;
         int outOff1 = outOffset;
-        
+
         for (int j = 0; j < step; j++)
         {
             int inOff2 = inOff1;
@@ -4528,7 +4529,7 @@ public class Array1DUtil
 
             for (int i = 0; i < size; i++)
             {
-                out[outOff2] = in[inOff2];
+                result[outOff2] = in[inOff2];
                 inOff2 += step;
                 outOff2++;
             }

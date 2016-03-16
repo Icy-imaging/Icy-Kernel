@@ -43,6 +43,8 @@ import java.util.TimerTask;
 
 import javax.swing.JPanel;
 
+import vtk.vtkObjectBase;
+
 /**
  * Memory monitor.
  * 
@@ -266,8 +268,10 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     }
 
     @Override
-    public void mouseClicked(MouseEvent arg0)
+    public void mouseClicked(MouseEvent event)
     {
+        final MouseEvent e = event;
+
         ThreadUtil.bgRun(new Runnable()
         {
             @Override
@@ -275,15 +279,23 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             {
                 final double totalMemory = SystemUtil.getJavaTotalMemory();
                 final double freeBefore = SystemUtil.getJavaFreeMemory();
+
+                // force garbage collector
                 System.gc();
+                // double click --> force VTK garbage collection
+                if (e.getClickCount() > 1)
+                {
+                    vtkObjectBase.JAVA_OBJECT_MANAGER.gc(true);
+                    System.out.println("VTK GC forced");
+                }
 
                 final double freeAfter = SystemUtil.getJavaFreeMemory();
                 final double released = freeAfter - freeBefore;
                 final double usedMemory = totalMemory - freeAfter;
                 final double maxFree = SystemUtil.getJavaMaxMemory() - usedMemory;
 
-                System.out.println("Free / used memory: " + UnitUtil.getBytesString((maxFree > 0) ? maxFree : 0) + " / "
-                        + UnitUtil.getBytesString((usedMemory > 0) ? usedMemory : 0) + " (released by GC: "
+                System.out.println("Free / used memory: " + UnitUtil.getBytesString((maxFree > 0) ? maxFree : 0)
+                        + " / " + UnitUtil.getBytesString((usedMemory > 0) ? usedMemory : 0) + " (released by GC: "
                         + UnitUtil.getBytesString((released > 0) ? released : 0) + ")");
             }
         });

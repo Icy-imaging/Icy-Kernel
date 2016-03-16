@@ -18,13 +18,13 @@
  */
 package icy.painter;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @deprecated Use {@link Overlay} classes instead.
  */
 @Deprecated
-public class PainterEvent implements EventHierarchicalChecker
+public class PainterEvent implements CollapsibleEvent
 {
     public enum PainterEventType
     {
@@ -57,11 +57,33 @@ public class PainterEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof PainterEvent)
-            return ((PainterEvent) event).getType() == type;
+        if (equals(event))
+        {
+            // nothing to do here
+            return true;
+        }
 
         return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return source.hashCode() ^ type.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof PainterEvent)
+        {
+            final PainterEvent e = (PainterEvent) obj;
+
+            return (source == e.getSource()) && (type == e.getType());
+        }
+
+        return super.equals(obj);
     }
 }

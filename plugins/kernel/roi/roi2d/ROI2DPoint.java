@@ -18,19 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.EventHierarchicalChecker;
-import icy.painter.Anchor2D;
-import icy.resource.ResourceUtil;
-import icy.roi.ROI;
-import icy.roi.ROIEvent;
-import icy.sequence.Sequence;
-import icy.type.point.Point5D;
-import icy.type.point.Point5D.Double;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
@@ -41,6 +28,18 @@ import java.awt.geom.Rectangle2D;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.painter.Anchor2D;
+import icy.resource.ResourceUtil;
+import icy.roi.ROI;
+import icy.roi.ROIEvent;
+import icy.sequence.Sequence;
+import icy.type.point.Point5D;
+import icy.type.point.Point5D.Double;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
@@ -106,7 +105,8 @@ public class ROI2DPoint extends ROI2DShape
                 {
                     final Point2D pos = getPoint();
                     final double ray = getAdjustedStroke(canvas);
-                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2, ray * 2);
+                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2,
+                            ray * 2);
 
                     // draw shape
                     g2.setColor(getDisplayColor());
@@ -300,7 +300,7 @@ public class ROI2DPoint extends ROI2DShape
      * roi changed
      */
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -313,6 +313,9 @@ public class ROI2DPoint extends ROI2DShape
                 // stroke changed --> rebuild vtk object
                 if (StringUtil.equals(property, PROPERTY_STROKE))
                     ((ROI2DShapePainter) getOverlay()).needRebuild = true;
+
+            default:
+                break;
         }
 
         super.onChanged(object);

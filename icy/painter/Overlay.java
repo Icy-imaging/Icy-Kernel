@@ -19,7 +19,7 @@
 package icy.painter;
 
 import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
-import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
 
@@ -119,7 +118,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * 
      * @param node
      *        XML node defining the overlay
-     * @return the created Overlay or <code>null</code> if the Overlay class does not support XML persistence a default
+     * @return the created Overlay or <code>null</code> if the Overlay class does not support XML
+     *         persistence a default
      *         constructor
      */
     public static Overlay createFromXML(Node node)
@@ -276,7 +276,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     /**
      * internals
      */
-    protected final EventListenerList listeners;
+    protected final List<OverlayListener> listeners;
     protected final UpdateEventHandler updater;
 
     public Overlay(String name, OverlayPriority priority)
@@ -297,7 +297,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
         receiveKeyEventOnHidden = false;
         receiveMouseEventOnHidden = false;
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<OverlayListener>();
         updater = new UpdateEventHandler(this, false);
     }
 
@@ -415,8 +415,8 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
 
     /**
      * Set persistent property.<br/>
-     * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data (default is
-     * <code>false</code>).
+     * When set to <code>true</code> the Overlay will be saved in the Sequence persistent XML data
+     * (default is <code>false</code>).
      */
     public void setPersistent(boolean value)
     {
@@ -601,14 +601,14 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         fireOverlayChangedEvent((OverlayEvent) object);
     }
 
     protected void fireOverlayChangedEvent(OverlayEvent event)
     {
-        for (OverlayListener listener : listeners.getListeners(OverlayListener.class))
+        for (OverlayListener listener : new ArrayList<OverlayListener>(listeners))
             listener.overlayChanged(event);
     }
 
@@ -617,7 +617,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      */
     public void addOverlayListener(OverlayListener listener)
     {
-        listeners.add(OverlayListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -625,7 +625,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      */
     public void removeOverlayListener(OverlayListener listener)
     {
-        listeners.remove(OverlayListener.class, listener);
+        listeners.remove(listener);
     }
 
     /**

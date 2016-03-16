@@ -18,13 +18,13 @@
  */
 package icy.painter;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.util.StringUtil;
 
 /**
  * @author Stephane
  */
-public class OverlayEvent implements EventHierarchicalChecker
+public class OverlayEvent implements CollapsibleEvent
 {
     public enum OverlayEventType
     {
@@ -71,21 +71,12 @@ public class OverlayEvent implements EventHierarchicalChecker
         return propertyName;
     }
 
-    private boolean optimizeEventWith(OverlayEvent e)
+    @Override
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (e.getType() == type)
+        if (equals(event))
         {
-//            if (type == OverlayEventType.PROPERTY_CHANGED)
-//            {
-//                // join properties
-//                if (!StringUtil.equals(e.getPropertyName(), propertyName))
-//                    propertyName = null;
-//            }
-
-            // same property event ?
-            if (type == OverlayEventType.PROPERTY_CHANGED)
-                return StringUtil.equals(e.getPropertyName(), propertyName);
-
+            // nothing to change here
             return true;
         }
 
@@ -93,11 +84,29 @@ public class OverlayEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public int hashCode()
     {
-        if (event instanceof OverlayEvent)
-            return optimizeEventWith((OverlayEvent) event);
+        int res = source.hashCode() ^ type.hashCode();
 
-        return false;
+        if ((type == OverlayEventType.PROPERTY_CHANGED) && (propertyName != null))
+            res ^= propertyName.hashCode();
+
+        return res;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof OverlayEvent)
+        {
+            final OverlayEvent e = (OverlayEvent) obj;
+
+            // same source type and same type
+            // if property change event then we need to compare property name
+            return (e.getSource() == source) && (e.getType() == type) && ((type != OverlayEventType.PROPERTY_CHANGED)
+                    || StringUtil.equals(e.getPropertyName(), propertyName));
+        }
+
+        return super.equals(obj);
     }
 }

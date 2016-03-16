@@ -18,8 +18,17 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map.Entry;
+
 import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
@@ -34,25 +43,13 @@ import icy.type.rectangle.Rectangle3D;
 import icy.util.EventUtil;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map.Entry;
-
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
-import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
-import vtk.vtkUnsignedCharArray;
 
 /**
  * 3D Area ROI.
@@ -64,7 +61,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     public class ROI3DAreaPainter extends ROI3DStackPainter implements VtkPainter, Runnable
     {
         // VTK 3D objects
-        protected vtkCubeAxesActor boundingBox;
+        protected vtkPolyData outline;
+        protected vtkPolyDataMapper outlineMapper;
+        protected vtkActor outlineActor;
+        protected vtkPolyData polyData;
         protected vtkPolyDataMapper polyMapper;
         protected vtkActor surfaceActor;
         // 3D internal
@@ -75,8 +75,11 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         public ROI3DAreaPainter()
         {
             super();
-            
-            boundingBox = null;
+
+            outline = null;
+            outlineMapper = null;
+            outlineActor = null;
+            polyData = null;
             polyMapper = null;
             surfaceActor = null;
 
@@ -87,26 +90,46 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             canvas3d = new WeakReference<VtkCanvas>(null);
         }
 
+        @Override
+        protected void finalize() throws Throwable
+        {
+            super.finalize();
+
+            // release allocated VTK resources
+            if (surfaceActor != null)
+                surfaceActor.Delete();
+            if (polyMapper != null)
+                polyMapper.Delete();
+            if (polyData != null)
+            {
+                polyData.GetPointData().GetScalars().Delete();
+                polyData.GetPointData().Delete();
+                polyData.Delete();
+            }
+            if (outlineActor != null)
+                outlineActor.Delete();
+            if (outlineMapper != null)
+                outlineMapper.Delete();
+            if (outline != null)
+            {
+                outline.GetPointData().GetScalars().Delete();
+                outline.GetPointData().Delete();
+                outline.Delete();
+            }
+        };
+
         protected void initVtkObjects()
         {
-            // initialize bounding box
-            boundingBox = new vtkCubeAxesActor();
-
-            // set bounding box properties
-            boundingBox.SetFlyModeToStaticEdges();
-            boundingBox.SetUseBounds(true);
-            boundingBox.XAxisLabelVisibilityOff();
-            boundingBox.XAxisMinorTickVisibilityOff();
-            boundingBox.XAxisTickVisibilityOff();
-            boundingBox.YAxisLabelVisibilityOff();
-            boundingBox.YAxisMinorTickVisibilityOff();
-            boundingBox.YAxisTickVisibilityOff();
-            boundingBox.ZAxisLabelVisibilityOff();
-            boundingBox.ZAxisMinorTickVisibilityOff();
-            boundingBox.ZAxisTickVisibilityOff();
+            outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
+            outlineMapper = new vtkPolyDataMapper();
+            outlineActor = new vtkActor();
+            outlineActor.SetMapper(outlineMapper);
+            // disable picking on the outline
+            outlineActor.SetPickable(0);
+            // and set it to wireframe representation
+            outlineActor.GetProperty().SetRepresentationToWireframe();
 
             polyMapper = new vtkPolyDataMapper();
-
             surfaceActor = new vtkActor();
             surfaceActor.SetMapper(polyMapper);
 
@@ -116,10 +139,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             final double b = col.getBlue() / 255d;
 
             // set actors color
+            outlineActor.GetProperty().SetColor(r, g, b);
             surfaceActor.GetProperty().SetColor(r, g, b);
-            boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
         }
 
         /**
@@ -137,43 +158,64 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (seq == null)
                 return;
 
+            // get bounds
+            final Rectangle3D bounds = getBounds3D();
+            // apply scaling on bounds
+            bounds.setX(bounds.getX() * scaling[0]);
+            bounds.setSizeX(bounds.getSizeX() * scaling[0]);
+            bounds.setY(bounds.getY() * scaling[1]);
+            bounds.setSizeY(bounds.getSizeY() * scaling[1]);
+            if (bounds.isInfiniteZ())
+            {
+                bounds.setZ(0);
+                bounds.setSizeZ(seq.getSizeZ() * scaling[2]);
+            }
+            else
+            {
+                bounds.setZ(bounds.getZ() * scaling[2]);
+                bounds.setSizeZ(bounds.getSizeZ() * scaling[2]);
+            }
+
+            // get previous polydata object
+            final vtkPolyData previousPolyData = polyData;
+
+            // update outline
+            VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY(),
+                    bounds.getMinZ(), bounds.getMaxZ(), canvas);
             // get VTK binary image from ROI mask
-            final vtkImageData image = VtkUtil
-                    .getBinaryImageData(ROI3DArea.this, seq.getSizeZ(), canvas.getPositionT());
+            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI3DArea.this, seq.getSizeZ(),
+                    canvas.getPositionT());
             // adjust spacing
-            image.SetSpacing(scaling[0], scaling[1], scaling[2]);
+            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
             // get VTK polygon data representing the surface of the binary image
-            final vtkPolyData polyData = VtkUtil.getSurfaceFromImage(image, 0.5d, false, false, 1);
-
-            // prepare array for color per vertex (as actor coloring does not work)
-            final vtkUnsignedCharArray colors = new vtkUnsignedCharArray();
-            final int numPts = polyData.GetNumberOfPoints();
-
-            colors.SetNumberOfComponents(3);
-            colors.SetNumberOfTuples(numPts);
-            // set colors array
-            polyData.GetPointData().SetScalars(colors);
+            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             canvas.lock();
             try
             {
-                // update polygon data from image
+                // update outline polygon data
+                outlineMapper.SetInputData(outline);
+                outlineMapper.Update();
+                // update surface polygon data
                 polyMapper.SetInputData(polyData);
                 polyMapper.Update();
 
-                // update actors position
-                final Rectangle3D bounds = ROI3DArea.this.getBounds3D();
+                // update actor position
+                surfaceActor.SetPosition(bounds.getX(), bounds.getY(), bounds.getZ());
 
-                if (bounds.isInfiniteZ())
-                    surfaceActor.SetPosition(bounds.getX() * scaling[0], bounds.getY() * scaling[1], 0d);
-                else
-                    surfaceActor.SetPosition(bounds.getX() * scaling[0], bounds.getY() * scaling[1], bounds.getZ()
-                            * scaling[2]);
+                // release image data
+                imageData.GetPointData().GetScalars().Delete();
+                imageData.GetPointData().Delete();
+                imageData.Delete();
 
-                // adjust bounding box
-                boundingBox.SetBounds(surfaceActor.GetBounds());
-                boundingBox.SetCamera(canvas.getCamera());
+                // release previous polydata
+                if (previousPolyData != null)
+                {
+                    previousPolyData.GetPointData().GetScalars().Delete();
+                    previousPolyData.GetPointData().Delete();
+                    previousPolyData.Delete();
+                }
             }
             finally
             {
@@ -193,8 +235,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 final double r = col.getRed() / 255d;
                 final double g = col.getGreen() / 255d;
                 final double b = col.getBlue() / 255d;
-//                final double strk = getStroke();
-//                final float opacity = getOpacity();
+                // final double strk = getStroke();
+                // final float opacity = getOpacity();
 
                 // we need to lock canvas as actor can be accessed during rendering
                 if (cnv != null)
@@ -203,11 +245,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                     try
                     {
                         // set actors color
+                        outlineActor.GetProperty().SetColor(r, g, b);
+                        outlineActor.SetVisibility(isSelected() ? 1 : 0);
                         surfaceActor.GetProperty().SetColor(r, g, b);
-                        boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                        // surfaceActor.GetProperty().SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
                     finally
@@ -217,11 +258,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 }
                 else
                 {
+                    outlineActor.GetProperty().SetColor(r, g, b);
+                    outlineActor.SetVisibility(isSelected() ? 1 : 0);
                     surfaceActor.GetProperty().SetColor(r, g, b);
-                    boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                    // surfaceActor.GetProperty().SetOpacity(opacity);
                     setVtkObjectsColor(col);
                 }
 
@@ -232,48 +272,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 
         protected void setVtkObjectsColor(Color color)
         {
-            // get poly data
-            final vtkPolyData polyData = polyMapper.GetInput();
-
+            if (outline != null)
+                VtkUtil.setPolyDataColor(outline, color, canvas3d.get());
             if (polyData != null)
-            {
-                // recover colors object
-                final vtkUnsignedCharArray colors = (vtkUnsignedCharArray) polyData.GetPointData().GetScalars();
-                final int numPts = colors.GetNumberOfTuples() * 3;
-
-                final byte r = (byte) color.getRed();
-                final byte g = (byte) color.getGreen();
-                final byte b = (byte) color.getBlue();
-                final byte[] data = new byte[numPts];
-
-                for (int i = 0; i < numPts; i += 3)
-                {
-                    data[i + 0] = r;
-                    data[i + 1] = g;
-                    data[i + 2] = b;
-                }
-
-                final VtkCanvas canvas = canvas3d.get();
-
-                if (canvas != null)
-                {
-                    canvas.lock();
-                    try
-                    {
-                        colors.SetJavaArray(data);
-                        colors.Modified();
-                    }
-                    finally
-                    {
-                        canvas.unlock();
-                    }
-                }
-                else
-                {
-                    colors.SetJavaArray(data);
-                    colors.Modified();
-                }
-            }
+                VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
 
         @Override
@@ -323,7 +325,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (canvas instanceof VtkCanvas)
             {
                 final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? --> focus the ROI
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
                 final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
                         && (surfaceActor == vtkCanvas.getPickedObject());
 
@@ -391,7 +394,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (surfaceActor == null)
                 initVtkObjects();
 
-            return new vtkActor[] {surfaceActor, boundingBox};
+            return new vtkActor[] {surfaceActor, outlineActor};
         }
 
         @Override
@@ -502,7 +505,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * @param roiSlice
      *        the 2D ROI to set
      * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
+     *        <code>true</code> if the given slice should be merged with the existing slice, or
+     *        <code>false</code> to
      *        replace the existing slice.
      */
     public void setSlice(int z, ROI2D roiSlice, boolean merge)
@@ -531,8 +535,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         else if (newSlice instanceof ROI2D)
             setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
         else
-            throw new IllegalArgumentException("Can't add the result of the merge operation on 2D slice " + z + ": "
-                    + newSlice.getClassName());
+            throw new IllegalArgumentException(
+                    "Can't add the result of the merge operation on 2D slice " + z + ": " + newSlice.getClassName());
     }
 
     /**
@@ -549,7 +553,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()}
+     *             instead.
      */
     @Deprecated
     public Point3D[] getEdgePoints()
@@ -558,7 +563,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()}
+     *             instead.
      */
     @Deprecated
     public Point3D[] getPoints()
@@ -662,7 +668,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 else
                 {
                     if (roi.optimizeBounds())
-                        roi.roiChanged();
+                        roi.roiChanged(true);
                 }
             }
         }
@@ -676,7 +682,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * roi changed
      */
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -699,6 +705,9 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
                     ((ROI3DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 

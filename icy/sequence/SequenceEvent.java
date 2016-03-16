@@ -18,19 +18,17 @@
  */
 package icy.sequence;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.util.StringUtil;
 
-public class SequenceEvent implements EventHierarchicalChecker
+public class SequenceEvent implements CollapsibleEvent
 {
     public enum SequenceEventSourceType
     {
-        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI,
-        /**
-         * @deprecated
-         **/
-        @Deprecated
-        SEQUENCE_PAINTER, SEQUENCE_OVERLAY
+        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, /**
+                                                                                                                 * @deprecated
+                                                                                                                 **/
+        @Deprecated SEQUENCE_PAINTER, SEQUENCE_OVERLAY
     }
 
     public enum SequenceEventType
@@ -157,27 +155,21 @@ public class SequenceEvent implements EventHierarchicalChecker
         return param;
     }
 
-    /**
-     * Collapse event
-     */
-    private boolean collapseWith(SequenceEvent e)
+    @Override
+    public boolean collapse(CollapsibleEvent event)
     {
-        // same source type
-        if (e.getSourceType() == sourceType)
+        if (equals(event))
         {
+            final SequenceEvent e = (SequenceEvent) event;
+
             switch (sourceType)
             {
-                case SEQUENCE_META:
-                    if (StringUtil.equals((String) e.getSource(), (String) source))
-                        return true;
-                    break;
-
                 case SEQUENCE_COLORMAP:
                 case SEQUENCE_COMPONENTBOUNDS:
                     // join events in one global event
                     if (e.getParam() != param)
                         param = -1;
-                    return true;
+                    break;
 
                 case SEQUENCE_DATA:
                     // optimize different type event to a single CHANGED event (for DATA only)
@@ -185,31 +177,75 @@ public class SequenceEvent implements EventHierarchicalChecker
                         type = SequenceEventType.CHANGED;
                     if (e.getSource() != source)
                         source = null;
-                    return true;
-
-                case SEQUENCE_PAINTER:
-                case SEQUENCE_OVERLAY:
-                case SEQUENCE_ROI:
-                    // duplicate event ?
-                    if ((e.getType() == type) && (e.getSource() == source))
-                        // just ignore the new event
-                        return true;
                     break;
 
-                case SEQUENCE_TYPE:
-                    return true;
+                default:
+                    break;
             }
+
+            return true;
         }
 
         return false;
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public int hashCode()
     {
-        if (event instanceof SequenceEvent)
-            return collapseWith((SequenceEvent) event);
+        int res = sequence.hashCode() ^ sourceType.hashCode();
 
-        return false;
+        switch (sourceType)
+        {
+            case SEQUENCE_META:
+                res ^= source.hashCode();
+                break;
+
+            case SEQUENCE_PAINTER:
+            case SEQUENCE_OVERLAY:
+            case SEQUENCE_ROI:
+                res ^= type.hashCode() ^ source.hashCode();
+                break;
+
+            default:
+                break;
+        }
+
+        return res;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof SequenceEvent)
+        {
+            final SequenceEvent e = (SequenceEvent) obj;
+
+            // same source type
+            if ((e.getSequence() == sequence) && (e.getSourceType() == sourceType))
+            {
+                switch (sourceType)
+                {
+                    case SEQUENCE_META:
+                        return StringUtil.equals((String) e.getSource(), (String) source);
+
+                    case SEQUENCE_COLORMAP:
+                    case SEQUENCE_COMPONENTBOUNDS:
+                        return true;
+
+                    case SEQUENCE_DATA:
+                        return true;
+
+                    case SEQUENCE_PAINTER:
+                    case SEQUENCE_OVERLAY:
+                    case SEQUENCE_ROI:
+                        return ((e.getType() == type) && (e.getSource() == source));
+
+                    case SEQUENCE_TYPE:
+                        return true;
+                }
+            }
+        }
+
+        return super.equals(obj);
     }
 }

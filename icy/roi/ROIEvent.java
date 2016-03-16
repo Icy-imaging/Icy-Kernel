@@ -18,12 +18,13 @@
  */
 package icy.roi;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
+import icy.util.StringUtil;
 
 /**
  * @author stephane
  */
-public class ROIEvent implements EventHierarchicalChecker
+public class ROIEvent implements CollapsibleEvent
 {
     @Deprecated
     public enum ROIPointEventType
@@ -33,9 +34,16 @@ public class ROIEvent implements EventHierarchicalChecker
 
     public enum ROIEventType
     {
-        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, @Deprecated
-        PAINTER_CHANGED, @Deprecated
-        NAME_CHANGED;
+        FOCUS_CHANGED, SELECTION_CHANGED, /**
+                                           * ROI position or/and content change event.<br>
+                                           * property = {@link ROI#ROICHANGED_POSITION} when only
+                                           * position has changed
+                                           */
+        ROI_CHANGED, /**
+                      * ROI property change event.<br>
+                      * check property field to know which property has actually changed
+                      */
+        PROPERTY_CHANGED, @Deprecated PAINTER_CHANGED, @Deprecated NAME_CHANGED;
     }
 
     private final ROI source;
@@ -63,22 +71,23 @@ public class ROIEvent implements EventHierarchicalChecker
         this.pointEventType = pointEventType;
     }
 
-    public ROIEvent(ROI source, String propertyName)
-    {
-        super();
-
-        this.source = source;
-        type = ROIEventType.PROPERTY_CHANGED;
-        this.propertyName = propertyName;
-    }
-
-    public ROIEvent(ROI source, ROIEventType type)
+    public ROIEvent(ROI source, ROIEventType type, String propertyName)
     {
         super();
 
         this.source = source;
         this.type = type;
-        propertyName = null;
+        this.propertyName = propertyName;
+    }
+
+    public ROIEvent(ROI source, String propertyName)
+    {
+        this(source, ROIEventType.PROPERTY_CHANGED, propertyName);
+    }
+
+    public ROIEvent(ROI source, ROIEventType type)
+    {
+        this(source, type, null);
     }
 
     /**
@@ -117,38 +126,55 @@ public class ROIEvent implements EventHierarchicalChecker
         return pointEventType;
     }
 
-    /**
-     * Optimize event
-     */
-    private boolean optimizeEventWith(ROIEvent e)
+    @Override
+    public boolean collapse(CollapsibleEvent event)
     {
-        // same type ?
-        if (e.getType() == type)
+        if (equals(event))
         {
-            switch (type)
-            {
-                case ROI_CHANGED:
-                case FOCUS_CHANGED:
-                case SELECTION_CHANGED:
-                case NAME_CHANGED:
-                case PAINTER_CHANGED:
-                    return true;
-
-                case PROPERTY_CHANGED:
-                    if ((propertyName == null) || propertyName.equals(e.getPropertyName()))
-                        return true;
-            }
+            // nothing to do here
+            return true;
         }
 
         return false;
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public int hashCode()
     {
-        if (event instanceof ROIEvent)
-            return optimizeEventWith((ROIEvent) event);
+        int res = source.hashCode() ^ type.hashCode();
 
-        return false;
+        if (type == ROIEventType.PROPERTY_CHANGED)
+            res ^= propertyName.hashCode();
+
+        return res;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof ROIEvent)
+        {
+            final ROIEvent e = (ROIEvent) obj;
+
+            if ((e.getSource() == source) && (e.getType() == type))
+            {
+                switch (type)
+                {
+                    case ROI_CHANGED:
+                        return StringUtil.equals(propertyName, e.getPropertyName());
+                        
+                    case FOCUS_CHANGED:
+                    case SELECTION_CHANGED:
+                    case NAME_CHANGED:
+                    case PAINTER_CHANGED:
+                        return true;
+
+                    case PROPERTY_CHANGED:
+                        return StringUtil.equals(propertyName, e.getPropertyName());
+                }
+            }
+        }
+
+        return super.equals(obj);
     }
 }

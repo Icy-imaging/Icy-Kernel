@@ -385,7 +385,7 @@ public abstract class ROI2D extends ROI
         if (z != v)
         {
             z = v;
-            roiChanged();
+            roiChanged(false);
         }
     }
 
@@ -417,7 +417,7 @@ public abstract class ROI2D extends ROI
         if (t != v)
         {
             t = v;
-            roiChanged();
+            roiChanged(false);
         }
     }
 
@@ -449,7 +449,7 @@ public abstract class ROI2D extends ROI
         if (c != v)
         {
             c = v;
-            roiChanged();
+            roiChanged(false);
         }
     }
 

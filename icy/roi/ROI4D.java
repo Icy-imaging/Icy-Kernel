@@ -837,7 +837,7 @@ public abstract class ROI4D extends ROI
         if (c != v)
         {
             c = v;
-            roiChanged();
+            roiChanged(false);
         }
     }
 

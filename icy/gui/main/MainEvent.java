@@ -18,12 +18,13 @@
  */
 package icy.gui.main;
 
-import icy.common.EventHierarchicalChecker;
-
 /**
+ * @deprecated Use {@link GlobalOverlayListener}, {@link GlobalPluginListener},
+ *             {@link GlobalROIListener}, {@link GlobalSequenceListener} and
+ *             {@link GlobalViewerListener} interface instead.
  * @author Stephane
  */
-public class MainEvent implements EventHierarchicalChecker
+public class MainEvent
 {
     public enum MainEventSourceType
     {
@@ -72,42 +73,40 @@ public class MainEvent implements EventHierarchicalChecker
         return type;
     }
 
-    /**
-     * Optimize event
-     */
-    private boolean collapseWith(MainEvent e)
-    {
-        // same source type and same type
-        if ((e.getSourceType() == sourceType) && (e.getType() == type))
-        {
-            // just use last source for focused event type
-            if (type == MainEventType.FOCUSED)
-                source = e.getSource();
-            else
-            {
-                // join sources
-                if (e.getSource() != source)
-                    source = null;
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
-    {
-        if (event instanceof MainEvent)
-            return collapseWith((MainEvent) event);
-
-        return false;
-    }
+    // /**
+    // * collapse with specified event
+    // */
+    // public void collapse(MainEvent event)
+    // {
+    // // just use last source for focused event type
+    // if (type == MainEventType.FOCUSED)
+    // source = event.getSource();
+    // }
+    //
+    //    @Override
+//    public int hashCode()
+//    {
+//        return sourceType.hashCode() ^ type.hashCode();
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj)
+//    {
+//        if (obj instanceof MainEvent)
+//        {
+//            final MainEvent e = (MainEvent) obj;
+//
+//            // same source type and same type
+//            return (e.getSourceType() == sourceType) && (e.getType() == type)
+//                    && ((type == MainEventType.FOCUSED) || (e.getSource() == source));
+//        }
+//
+//        return super.equals(obj);
+//    }
 
     @Override
     public String toString()
     {
         return "Source = " + source + "; SourceType = " + sourceType + "; type = " + type;
     }
-
 }

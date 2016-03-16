@@ -202,7 +202,8 @@ public class MetaDataUtil
         if (pix != null)
             return DataType.getDataTypeFromPixelType(pix.getType());
 
-        return DataType.UNDEFINED;
+        // assume byte by default
+        return DataType.UBYTE;
     }
 
     /**
@@ -408,7 +409,22 @@ public class MetaDataUtil
     }
 
     /**
-     * Returns T time size (in second) of the specified image serie.
+     * Computes and returns the T time interval (in second) from internal time positions.<br>
+     * If there is no internal time positions <code>0d</code> is returned.
+     */
+    public static double getTimeIntervalFromTimePositions(OMEXMLMetadataImpl metaData, int serie)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        // try to compute time interval from time position
+        if (pix != null)
+            return computeTimeIntervalFromTimePosition(pix);
+
+        return 0d;
+    }
+
+    /**
+     * Returns T time interval (in second) for the specified image serie.
      */
     public static double getTimeInterval(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
     {
@@ -419,15 +435,6 @@ public class MetaDataUtil
             final Time timeInc = pix.getTimeIncrement();
             if (timeInc != null)
                 return OMEUtil.getValue(timeInc, defaultValue);
-
-            // try to compute time interval from time position
-            final double result = computeTimeIntervalFromTimePosition(pix);
-            if (!Double.isNaN(result))
-            {
-                // we set the time interval
-                setTimeInterval(metaData, serie, result);
-                return result;
-            }
         }
 
         return defaultValue;
@@ -517,7 +524,7 @@ public class MetaDataUtil
 
     /**
      * Computes time interval from the time position informations.<br>
-     * Returns <code>Double.Nan</code> if time position information are missing.
+     * Returns <code>0d</code> if time position information are missing.
      */
     private static double computeTimeIntervalFromTimePosition(Pixels pix)
     {
@@ -556,7 +563,7 @@ public class MetaDataUtil
 
         // we need at least 1 delta
         if (num == 0)
-            return Double.NaN;
+            return 0d;
 
         return result / num;
     }
@@ -824,7 +831,16 @@ public class MetaDataUtil
         final double pixelSizeX = MetaDataUtil.getPixelSizeX(metadata, 0, 1d);
         final double pixelSizeY = MetaDataUtil.getPixelSizeY(metadata, 0, 1d);
         final double pixelSizeZ = MetaDataUtil.getPixelSizeZ(metadata, 0, 1d);
-        final double timeInterval = MetaDataUtil.getTimeInterval(metadata, 0, 0.1d);
+        double timeInterval = MetaDataUtil.getTimeInterval(metadata, 0, 0d);
+        // not defined ?
+        if (timeInterval == 0d)
+        {
+            // try to compute it from time positions
+            timeInterval = getTimeIntervalFromTimePositions(metadata, 0);
+            // we got something --> set it as the time interval
+            if (timeInterval != 0d)
+                MetaDataUtil.setTimeInterval(metadata, 0, timeInterval);
+        }
 
         // init pixels object as we set specific size here
         ome.getImage(0).setPixels(new Pixels());

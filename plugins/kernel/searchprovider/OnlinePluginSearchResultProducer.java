@@ -221,15 +221,15 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
         }
     }
 
-    private boolean ensureOnlineLoaderLoaded()
+    private static boolean ensureOnlineLoaderLoaded()
     {
-        PluginRepositoryLoader.waitBasicLoaded();
+        PluginRepositoryLoader.waitLoaded();
 
         // repository loader failed --> retry once
         if (PluginRepositoryLoader.failed() && NetworkUtil.hasInternetAccess())
         {
             PluginRepositoryLoader.reload();
-            PluginRepositoryLoader.waitBasicLoaded();
+            PluginRepositoryLoader.waitLoaded();
         }
 
         return !PluginRepositoryLoader.failed();

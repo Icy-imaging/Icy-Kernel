@@ -18,7 +18,7 @@
  */
 package icy.image;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
@@ -56,7 +56,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.media.jai.PlanarImage;
-import javax.swing.event.EventListenerList;
 
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
@@ -428,10 +427,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * automatic update of channel bounds
      */
     private boolean autoUpdateChannelBounds;
-    /**
-     * internal image LUT
-     */
-    private final LUT internalLut;
 
     /**
      * internal updater
@@ -440,7 +435,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    private final List<IcyBufferedImageListener> listeners;
 
     /**
      * Build an Icy formatted BufferedImage, takes an IcyColorModel and a WritableRaster as input
@@ -456,11 +451,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         super(cm, wr, false, null);
 
-        // internal lut
-        internalLut = new LUT(cm);
-
         updater = new UpdateEventHandler(this, false);
-        listeners = new EventListenerList();
+        listeners = new ArrayList<IcyBufferedImageListener>();
 
         // automatic update of channel bounds
         this.autoUpdateChannelBounds = autoUpdateChannelBounds;
@@ -479,7 +471,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
     {
-        this(cm, wr, true);
+        this(cm, wr, false);
     }
 
     /**
@@ -488,11 +480,28 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     IcyBufferedImage(IcyColorModel cm, int width, int height)
     {
-        this(cm, cm.createCompatibleWritableRaster(width, height), true);
+        this(cm, cm.createCompatibleWritableRaster(width, height), false);
     }
 
     /**
-     * Create an Icy formatted BufferedImage with specified IcyColorModel, data, width and height.
+     * Create an Icy formatted BufferedImage with specified colorModel, width, height and input data.<br>
+     * ex : <code>img = new IcyBufferedImage(640, 480, new byte[3][640 * 480], true);</code><br>
+     * <br>
+     * This constructor provides the best performance for massive image creation and computation as
+     * it allow you to directly send the data array and disable the channel bounds calculation.
+     * 
+     * @param cm
+     *        the color model
+     * @param width
+     * @param height
+     * @param data
+     *        image data<br>
+     *        Should be a 2D array with first dimension giving the number of component<br>
+     *        and second dimension equals to <code>width * height</code><br>
+     *        The array data type specify the internal data type and should match the given color model parameter.
+     * @param autoUpdateChannelBounds
+     *        If true then channel bounds are automatically calculated.<br>
+     *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
      */
     IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
     {
@@ -545,7 +554,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public IcyBufferedImage(int width, int height, Object[] data, boolean signed)
     {
         this(IcyColorModel.createInstance(data.length, ArrayUtil.getDataType(data[0], signed)), data, width, height,
-                true);
+                false);
     }
 
     /**
@@ -1621,11 +1630,22 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * return LUT of this image
+     * create a compatible LUT for this image.
+     * 
+     * @param createColorModel
+     *        set to <code>true</code> to create a LUT using a new compatible ColorModel else it will use the image
+     *        internal ColorModel
      */
-    public LUT getLUT()
+    public LUT createCompatibleLUT(boolean createColorModel)
     {
-        return internalLut;
+        final IcyColorModel cm;
+
+        if (createColorModel)
+            cm = IcyColorModel.createInstance(getIcyColorModel(), false, false);
+        else
+            cm = getIcyColorModel();
+
+        return new LUT(cm);
     }
 
     /**
@@ -1633,7 +1653,17 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public LUT createCompatibleLUT()
     {
-        return new LUT(IcyColorModel.createInstance(getIcyColorModel(), false, false));
+        return createCompatibleLUT(true);
+    }
+
+    /**
+     * @deprecated No attached LUT to an image.<br/>
+     *             Use {@link #createCompatibleLUT(boolean)} instead.
+     */
+    @Deprecated
+    public LUT getLUT()
+    {
+        return createCompatibleLUT();
     }
 
     /**
@@ -3451,18 +3481,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     private void fireChangeEvent(IcyBufferedImageEvent e)
     {
-        for (IcyBufferedImageListener listener : listeners.getListeners(IcyBufferedImageListener.class))
+        for (IcyBufferedImageListener listener : new ArrayList<IcyBufferedImageListener>(listeners))
             listener.imageChanged(e);
     }
 
     public void addListener(IcyBufferedImageListener listener)
     {
-        listeners.add(IcyBufferedImageListener.class, listener);
+        listeners.add(listener);
     }
 
     public void removeListener(IcyBufferedImageListener listener)
     {
-        listeners.remove(IcyBufferedImageListener.class, listener);
+        listeners.remove(listener);
     }
 
     public void beginUpdate()
@@ -3481,7 +3511,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         IcyBufferedImageEvent event = (IcyBufferedImageEvent) object;
 

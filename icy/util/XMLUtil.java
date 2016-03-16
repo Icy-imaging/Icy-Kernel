@@ -33,6 +33,8 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -73,6 +75,12 @@ public class XMLUtil
     private static DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
     // static transformer factory
     private static TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    // static Deflater
+    // private static Deflater deflater = new Deflater(2, true);
+    private static Deflater deflater = new Deflater(2);
+    // static Inflater
+    // private static Inflater inflater = new Inflater(true);
+    private static Inflater inflater = new Inflater();
 
     // private static synchronized void init()
     // {
@@ -983,8 +991,11 @@ public class XMLUtil
         // get packed byte data
         final byte[] result = (byte[]) ArrayUtil.stringToArray1D(value, DataType.BYTE, true, ":");
 
-        // unpack and return
-        return ZipUtil.unpack(result);
+        synchronized (inflater)
+        {
+            // unpack and return
+            return ZipUtil.unpack(inflater, result);
+        }
     }
 
     private static String toString(boolean value)
@@ -1014,8 +1025,15 @@ public class XMLUtil
 
     private static String toString(byte[] value)
     {
+        final byte[] packed;
+
+        synchronized (deflater)
+        {
+            packed = ZipUtil.pack(deflater, value, -1);
+        }
+
         // pack data and convert to string
-        return ArrayUtil.array1DToString(ZipUtil.pack(value), false, true, ":", -1);
+        return ArrayUtil.array1DToString(packed, false, true, ":", -1);
     }
 
     /**

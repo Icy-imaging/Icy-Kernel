@@ -22,10 +22,10 @@ import icy.gui.frame.IcyInternalFrame;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.viewer.Viewer;
+import icy.image.ImageUtil;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
 import icy.resource.ResourceUtil;
-import icy.system.thread.ThreadUtil;
 import icy.util.GraphicsUtil;
 import icy.util.Random;
 
@@ -82,7 +82,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     /**
      * Background overlay.
      */
-    public static class BackgroundDesktopOverlay extends AbstractDesktopOverlay implements Runnable
+    public static class BackgroundDesktopOverlay extends AbstractDesktopOverlay // implements Runnable
     {
         private final static String BACKGROUND_PATH = "background/";
 
@@ -93,18 +93,12 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         private final Color textColor;
         private final Color bgTextColor;
 
-        // cached background image
-        private BufferedImage cachedImage;
-        private int cachedImgWidth;
-        private int cachedImgHeight;
-        private Color lastBGColor;
-
         public BackgroundDesktopOverlay()
         {
             super();
 
             // load random background (nor really random as we have only one right now)
-            backGround = ResourceUtil.getImage(BACKGROUND_PATH + Integer.toString(Random.nextInt(1)) + ".jpg");
+            backGround = ImageUtil.toGray(ResourceUtil.getImage(BACKGROUND_PATH + Integer.toString(Random.nextInt(1)) + ".jpg"));
             // load Icy logo
             icyLogo = ResourceUtil.getImage("logoICY.png");
 
@@ -114,59 +108,36 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
             bgImgWidth = backGround.getWidth();
             bgImgHeight = backGround.getHeight();
-
-            cachedImgWidth = bgImgWidth * 2;
-            cachedImgHeight = bgImgHeight * 2;
-            lastBGColor = Color.gray;
-
-            // build background image
-            run();
         }
 
         @Override
         public void paint(Graphics g, int width, int height)
         {
-            final double scale = Math.max(2d,
-                    Math.max((double) width / (double) bgImgWidth, (double) height / (double) bgImgHeight));
+            final IcyDesktopPane desktop = Icy.getMainInterface().getDesktopPane();
+            final Color bgColor;
 
-            // compute size of cached background image
-            final int imgWidth = (int) (scale * bgImgWidth);
-            final int imgHeight = (int) (scale * bgImgHeight);
-
-            // size changed ?
-            if ((imgWidth != cachedImgWidth) || (imgHeight != cachedImgHeight))
-            {
-                cachedImgWidth = imgWidth;
-                cachedImgHeight = imgHeight;
-                // refresh image
-                ThreadUtil.bgRunSingle(this);
-            }
+            if (desktop != null)
+                bgColor = LookAndFeelUtil.getBackground(desktop);
             else
-            {
-                final IcyDesktopPane desktop = Icy.getMainInterface().getDesktopPane();
-                if (desktop != null)
-                {
-                    final Color bgColor = LookAndFeelUtil.getBackground(desktop);
+                bgColor = Color.lightGray;
 
-                    // background color changed ?
-                    if (!bgColor.equals(lastBGColor))
-                    {
-                        lastBGColor = bgColor;
-                        // refresh image
-                        ThreadUtil.bgRunSingle(this);
-                    }
-                }
-            }
+            // compute image scaling
+            final double scale = Math.max((double) width / (double) bgImgWidth, (double) height / (double) bgImgHeight);
+            final Graphics2D g2 = (Graphics2D) g.create();
 
-            // draw background image
-            g.drawImage(cachedImage, 0, 0, null);
+            // fill background color
+            g2.setBackground(bgColor);
+            g2.clearRect(0, 0, width, height);
+
+            // paint image over background in transparency
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.2f));
+            g2.drawImage(backGround, 0, 0, (int) (scale * bgImgWidth), (int) (scale * bgImgHeight), bgColor, null);
 
             final String text = "Version " + Icy.version;
             final int textWidth = (int) GraphicsUtil.getStringBounds(g, text).getWidth();
 
-            final Graphics2D g2 = (Graphics2D) g.create();
-
             // draw version text
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
             g2.setColor(bgTextColor);
             g2.drawString(text, width - (textWidth + 31), height - 8);
             g2.setColor(textColor);
@@ -175,38 +146,6 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             g2.drawImage(icyLogo, width - 220, height - 130, null);
 
             g2.dispose();
-        }
-
-        @Override
-        public void run()
-        {
-            final int w = cachedImgWidth;
-            final int h = cachedImgHeight;
-            final BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-
-            // compute image scaling
-            final double scale = Math.max((double) w / (double) bgImgWidth, (double) h / (double) bgImgHeight);
-
-            final Graphics2D g = img.createGraphics();
-
-            // fill background color
-            g.setBackground(lastBGColor);
-            g.clearRect(0, 0, w, h);
-
-            // paint image over background in transparency
-            g.scale(scale, scale);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.2f));
-            g.drawImage(backGround, 0, 0, null);
-
-            g.dispose();
-
-            // assign new cached image
-            cachedImage = img;
-
-            // request repaint
-            final IcyDesktopPane desktop = Icy.getMainInterface().getDesktopPane();
-            if (desktop != null)
-                desktop.repaint();
         }
     }
 
@@ -304,7 +243,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
      * @param wantIconized
      *        Also return iconized viewers
      */
-    public Viewer[] getInternalViewers(boolean wantNotVisible, boolean wantIconized)
+    public static Viewer[] getInternalViewers(boolean wantNotVisible, boolean wantIconized)
     {
         final List<Viewer> result = new ArrayList<Viewer>();
 

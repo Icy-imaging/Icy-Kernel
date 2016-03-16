@@ -54,6 +54,9 @@ public class PluginComboBoxRenderer extends CustomComboBoxRenderer
 
             if (plugin != null)
             {
+                // load icon first
+                plugin.loadIcon();
+
                 setIcon(ResourceUtil.scaleIcon(plugin.getIcon(), 20));
                 if (showLabel)
                     setText(plugin.getName());

@@ -18,28 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.EventHierarchicalChecker;
-import icy.image.ImageUtil;
-import icy.painter.VtkPainter;
-import icy.resource.ResourceUtil;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROIEvent;
-import icy.roi.edit.Area2DChangeROIEdit;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point5D;
-import icy.type.point.Point5D.Double;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-import icy.vtk.VtkUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -62,15 +40,34 @@ import java.util.Arrays;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.image.ImageUtil;
+import icy.painter.VtkPainter;
+import icy.resource.ResourceUtil;
+import icy.roi.BooleanMask2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROIEvent;
+import icy.roi.edit.Area2DChangeROIEdit;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.type.point.Point5D.Double;
+import icy.type.rectangle.Rectangle3D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.vtk.VtkUtil;
 import plugins.kernel.canvas.VtkCanvas;
-import plugins.kernel.roi.roi3d.ROI3DArea;
 import vtk.vtkActor;
-import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
-import vtk.vtkUnsignedCharArray;
 
 /**
  * ROI Area type.<br>
@@ -100,7 +97,10 @@ public class ROI2DArea extends ROI2D
         private static final float MAX_CURSOR_SIZE = 500f;
 
         // VTK 3D objects
-        protected vtkCubeAxesActor boundingBox;
+        protected vtkPolyData outline;
+        protected vtkPolyDataMapper outlineMapper;
+        protected vtkActor outlineActor;
+        protected vtkPolyData polyData;
         protected vtkPolyDataMapper polyMapper;
         protected vtkActor surfaceActor;
         // 3D internal
@@ -117,7 +117,10 @@ public class ROI2DArea extends ROI2D
 
             brushPosition = new Point2D.Double();
 
-            boundingBox = null;
+            outline = null;
+            outlineMapper = null;
+            outlineActor = null;
+            polyData = null;
             polyMapper = null;
             surfaceActor = null;
 
@@ -128,26 +131,46 @@ public class ROI2DArea extends ROI2D
             canvas3d = new WeakReference<VtkCanvas>(null);
         }
 
+        @Override
+        protected void finalize() throws Throwable
+        {
+            super.finalize();
+
+            // release allocated VTK resources
+            if (surfaceActor != null)
+                surfaceActor.Delete();
+            if (polyMapper != null)
+                polyMapper.Delete();
+            if (polyData != null)
+            {
+                polyData.GetPointData().GetScalars().Delete();
+                polyData.GetPointData().Delete();
+                polyData.Delete();
+            }
+            if (outlineActor != null)
+                outlineActor.Delete();
+            if (outlineMapper != null)
+                outlineMapper.Delete();
+            if (outline != null)
+            {
+                outline.GetPointData().GetScalars().Delete();
+                outline.GetPointData().Delete();
+                outline.Delete();
+            }
+        };
+
         protected void initVtkObjects()
         {
-            // initialize bounding box
-            boundingBox = new vtkCubeAxesActor();
-
-            // set bounding box properties
-            boundingBox.SetFlyModeToStaticEdges();
-            boundingBox.SetUseBounds(true);
-            boundingBox.XAxisLabelVisibilityOff();
-            boundingBox.XAxisMinorTickVisibilityOff();
-            boundingBox.XAxisTickVisibilityOff();
-            boundingBox.YAxisLabelVisibilityOff();
-            boundingBox.YAxisMinorTickVisibilityOff();
-            boundingBox.YAxisTickVisibilityOff();
-            boundingBox.ZAxisLabelVisibilityOff();
-            boundingBox.ZAxisMinorTickVisibilityOff();
-            boundingBox.ZAxisTickVisibilityOff();
+            outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
+            outlineMapper = new vtkPolyDataMapper();
+            outlineActor = new vtkActor();
+            outlineActor.SetMapper(outlineMapper);
+            // disable picking on the outline
+            outlineActor.SetPickable(0);
+            // and set it to wireframe representation
+            outlineActor.GetProperty().SetRepresentationToWireframe();
 
             polyMapper = new vtkPolyDataMapper();
-
             surfaceActor = new vtkActor();
             surfaceActor.SetMapper(polyMapper);
 
@@ -157,10 +180,8 @@ public class ROI2DArea extends ROI2D
             final double b = col.getBlue() / 255d;
 
             // set actors color
+            outlineActor.GetProperty().SetColor(r, g, b);
             surfaceActor.GetProperty().SetColor(r, g, b);
-            boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
         }
 
         /**
@@ -178,43 +199,64 @@ public class ROI2DArea extends ROI2D
             if (seq == null)
                 return;
 
+            // get bounds
+            final Rectangle3D bounds = getBounds5D().toRectangle3D();
+            // apply scaling on bounds
+            bounds.setX(bounds.getX() * scaling[0]);
+            bounds.setSizeX(bounds.getSizeX() * scaling[0]);
+            bounds.setY(bounds.getY() * scaling[1]);
+            bounds.setSizeY(bounds.getSizeY() * scaling[1]);
+            if (bounds.isInfiniteZ())
+            {
+                bounds.setZ(0);
+                bounds.setSizeZ(seq.getSizeZ() * scaling[2]);
+            }
+            else
+            {
+                bounds.setZ(bounds.getZ() * scaling[2]);
+                bounds.setSizeZ(1d * scaling[2]);
+            }
+
+            // get previous polydata object
+            final vtkPolyData previousPolyData = polyData;
+
+            // update outline
+            VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY(),
+                    bounds.getMinZ(), bounds.getMaxZ(), canvas);
             // get VTK binary image from ROI mask
-            final vtkImageData image = VtkUtil
-                    .getBinaryImageData(ROI2DArea.this, seq.getSizeZ(), canvas.getPositionT());
+            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI2DArea.this, seq.getSizeZ(),
+                    canvas.getPositionT());
             // adjust spacing
-            image.SetSpacing(scaling[0], scaling[1], scaling[2]);
+            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
             // get VTK polygon data representing the surface of the binary image
-            final vtkPolyData polyData = VtkUtil.getSurfaceFromImage(image, 0.5d, false, false, 1);
-
-            // prepare array for color per vertex (as actor coloring does not work)
-            final vtkUnsignedCharArray colors = new vtkUnsignedCharArray();
-            final int numPts = polyData.GetNumberOfPoints();
-
-            colors.SetNumberOfComponents(3);
-            colors.SetNumberOfTuples(numPts);
-            // set colors array
-            polyData.GetPointData().SetScalars(colors);
+            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             canvas.lock();
             try
             {
+                // update outline polygon data
+                outlineMapper.SetInputData(outline);
+                outlineMapper.Update();
                 // update polygon data from image
                 polyMapper.SetInputData(polyData);
                 polyMapper.Update();
 
-                // update actors position
-                final Rectangle2D bounds = ROI2DArea.this.getBounds2D();
-                final int z = getZ();
+                // update actor position
+                surfaceActor.SetPosition(bounds.getX(), bounds.getY(), bounds.getZ());
 
-                if (z == -1)
-                    surfaceActor.SetPosition(bounds.getX() * scaling[0], bounds.getY() * scaling[1], 0d);
-                else
-                    surfaceActor.SetPosition(bounds.getX() * scaling[0], bounds.getY() * scaling[1], z * scaling[2]);
+                // release image data
+                imageData.GetPointData().GetScalars().Delete();
+                imageData.GetPointData().Delete();
+                imageData.Delete();
 
-                // adjust bounding box
-                boundingBox.SetBounds(surfaceActor.GetBounds());
-                boundingBox.SetCamera(canvas.getCamera());
+                // release previous polydata
+                if (previousPolyData != null)
+                {
+                    previousPolyData.GetPointData().GetScalars().Delete();
+                    previousPolyData.GetPointData().Delete();
+                    previousPolyData.Delete();
+                }
             }
             finally
             {
@@ -244,13 +286,12 @@ public class ROI2DArea extends ROI2D
                     try
                     {
                         // set actors color
+                        outlineActor.GetProperty().SetColor(r, g, b);
+                        outlineActor.SetVisibility(isSelected() ? 1 : 0);
                         surfaceActor.GetProperty().SetColor(r, g, b);
-                        // opacity here is about ROI content, whole actor opacity is handled by Layer
-                        //surfaceActor.GetProperty().SetOpacity(opacity);
-                        boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
-                        boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                        // opacity here is about ROI content, whole actor opacity is handled by
+                        // Layer
+                        // surfaceActor.GetProperty().SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
                     finally
@@ -260,11 +301,11 @@ public class ROI2DArea extends ROI2D
                 }
                 else
                 {
+                    outlineActor.GetProperty().SetColor(r, g, b);
+                    outlineActor.SetVisibility(isSelected() ? 1 : 0);
                     surfaceActor.GetProperty().SetColor(r, g, b);
-                    boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
-                    boundingBox.SetVisibility(isSelected() ? 1 : 0);
+                    // opacity here is about ROI content, whole actor opacity is handled by Layer
+                    // surfaceActor.GetProperty().SetOpacity(opacity);
                     setVtkObjectsColor(col);
                 }
 
@@ -275,48 +316,10 @@ public class ROI2DArea extends ROI2D
 
         protected void setVtkObjectsColor(Color color)
         {
-            // get poly data
-            final vtkPolyData polyData = polyMapper.GetInput();
-
+            if (outline != null)
+                VtkUtil.setPolyDataColor(outline, color, canvas3d.get());
             if (polyData != null)
-            {
-                // recover colors object
-                final vtkUnsignedCharArray colors = (vtkUnsignedCharArray) polyData.GetPointData().GetScalars();
-                final int numPts = colors.GetNumberOfTuples() * 3;
-
-                final byte r = (byte) color.getRed();
-                final byte g = (byte) color.getGreen();
-                final byte b = (byte) color.getBlue();
-                final byte[] data = new byte[numPts];
-
-                for (int i = 0; i < numPts; i += 3)
-                {
-                    data[i + 0] = r;
-                    data[i + 1] = g;
-                    data[i + 2] = b;
-                }
-
-                final VtkCanvas canvas = canvas3d.get();
-
-                if (canvas != null)
-                {
-                    canvas.lock();
-                    try
-                    {
-                        colors.SetJavaArray(data);
-                        colors.Modified();
-                    }
-                    finally
-                    {
-                        canvas.unlock();
-                    }
-                }
-                else
-                {
-                    colors.SetJavaArray(data);
-                    colors.Modified();
-                }
-            }
+                VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
 
         void updateCursor()
@@ -474,7 +477,8 @@ public class ROI2DArea extends ROI2D
             if (canvas instanceof VtkCanvas)
             {
                 final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? --> focus the ROI
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
                 final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
                         && (surfaceActor == vtkCanvas.getPickedObject());
 
@@ -645,7 +649,7 @@ public class ROI2DArea extends ROI2D
                     {
                         if (optimizeBounds())
                         {
-                            roiChanged();
+                            roiChanged(true);
 
                             // empty ? delete ROI
                             if (bounds.isEmpty())
@@ -938,7 +942,7 @@ public class ROI2DArea extends ROI2D
             if (surfaceActor == null)
                 initVtkObjects();
 
-            return new vtkActor[] {surfaceActor, boundingBox};
+            return new vtkActor[] {surfaceActor, outlineActor};
         }
 
         @Override
@@ -962,7 +966,7 @@ public class ROI2DArea extends ROI2D
     /**
      * rectangle bounds
      */
-    final Rectangle bounds;
+    Rectangle bounds;
 
     /**
      * internals
@@ -1140,7 +1144,9 @@ public class ROI2DArea extends ROI2D
         if (bounds.isEmpty())
             return true;
 
-        for (byte b : maskData)
+        final byte[] data = maskData;
+
+        for (byte b : data)
             if (b != 0)
                 return false;
 
@@ -1156,15 +1162,23 @@ public class ROI2DArea extends ROI2D
         // bounds are being updated
         boundsNeedUpdate = false;
 
+        final byte[] data;
+        final Rectangle bnds;
+
         // recompute bound from the mask data
-        final int sizeX = imageMask.getWidth();
-        final int sizeY = imageMask.getHeight();
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
+
+        final int sizeX = bnds.width;
+        final int sizeY = bnds.height;
 
         int minX, minY, maxX, maxY;
         minX = maxX = minY = maxY = 0;
         boolean empty = true;
         int offset = 0;
-        final byte[] data = maskData;
 
         for (int y = 0; y < sizeY; y++)
         {
@@ -1195,10 +1209,10 @@ public class ROI2DArea extends ROI2D
 
         if (!empty)
             // update image to the new bounds
-            return updateImage(new Rectangle(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1));
+            return updateImage(new Rectangle(bnds.x + minX, bnds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1));
 
         // update to empty bounds
-        return updateImage(new Rectangle(bounds.x, bounds.y, 0, 0));
+        return updateImage(new Rectangle(bnds.x, bnds.y, 0, 0));
     }
 
     /**
@@ -1244,13 +1258,22 @@ public class ROI2DArea extends ROI2D
 
     boolean updateImage(Rectangle newBnd)
     {
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
+
         // copy rectangle
-        final Rectangle oldBounds = new Rectangle(bounds);
+        final Rectangle oldBounds = new Rectangle(bnds);
         final Rectangle newBounds = new Rectangle(newBnd);
 
         // replace to oldBounds origin
-        oldBounds.translate(-bounds.x, -bounds.y);
-        newBounds.translate(-bounds.x, -bounds.y);
+        oldBounds.translate(-bnds.x, -bnds.y);
+        newBounds.translate(-bnds.x, -bnds.y);
 
         // dimension changed ?
         if ((oldBounds.width != newBounds.width) || (oldBounds.height != newBounds.height))
@@ -1286,7 +1309,7 @@ public class ROI2DArea extends ROI2D
                     // preserve data
                     for (int j = 0; j < intersect.height; j++)
                     {
-                        System.arraycopy(maskData, offSrc, newMaskData, offDst, intersect.width);
+                        System.arraycopy(data, offSrc, newMaskData, offDst, intersect.width);
 
                         offSrc += oldBounds.width;
                         offDst += newBounds.width;
@@ -1297,7 +1320,7 @@ public class ROI2DArea extends ROI2D
             {
                 // new bounds empty --> use single pixel image to avoid NPE
                 newImageMask = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
-                newMaskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
+                newMaskData = ((DataBufferByte) newImageMask.getRaster().getDataBuffer()).getData();
             }
 
             synchronized (this)
@@ -1305,7 +1328,7 @@ public class ROI2DArea extends ROI2D
                 // set new image and maskData
                 imageMask = newImageMask;
                 maskData = newMaskData;
-                bounds.setBounds(newBnd);
+                bounds = newBnd;
             }
 
             return true;
@@ -1325,7 +1348,6 @@ public class ROI2DArea extends ROI2D
         {
             // set point in mask
             addToBounds(new Rectangle(x, y, 1, 1));
-
             // set color depending remove or adding to mask
             maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 1;
         }
@@ -1333,13 +1355,12 @@ public class ROI2DArea extends ROI2D
         {
             // remove point from mask
             maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 0;
-
             // mark that bounds need to be updated
             boundsNeedUpdate = true;
         }
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1363,10 +1384,17 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToAdd);
 
         int offDst, offSrc;
-        final byte[] data = maskData;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // calculate offset
-        offDst = ((boundsToAdd.y - bounds.y) * bounds.width) + (boundsToAdd.x - bounds.x);
+        offDst = ((boundsToAdd.y - bnds.y) * bnds.width) + (boundsToAdd.x - bnds.x);
         offSrc = 0;
 
         for (int y = 0; y < boundsToAdd.height; y++)
@@ -1375,11 +1403,11 @@ public class ROI2DArea extends ROI2D
                 if (maskToAdd[offSrc++] != 0)
                     data[offDst + x] = 1;
 
-            offDst += bounds.width;
+            offDst += bnds.width;
         }
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1394,10 +1422,17 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToAdd);
 
         int offDst, offSrc;
-        final byte[] data = maskData;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // calculate offset
-        offDst = ((boundsToAdd.y - bounds.y) * bounds.width) + (boundsToAdd.x - bounds.x);
+        offDst = ((boundsToAdd.y - bnds.y) * bnds.width) + (boundsToAdd.x - bnds.x);
         offSrc = 0;
 
         for (int y = 0; y < boundsToAdd.height; y++)
@@ -1406,11 +1441,11 @@ public class ROI2DArea extends ROI2D
                 if (maskToAdd[offSrc++])
                     data[offDst + x] = 1;
 
-            offDst += bounds.width;
+            offDst += bnds.width;
         }
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1438,10 +1473,17 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToXAdd);
 
         int offDst, offSrc;
-        final byte[] data = maskData;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // calculate offset
-        offDst = ((boundsToXAdd.y - bounds.y) * bounds.width) + (boundsToXAdd.x - bounds.x);
+        offDst = ((boundsToXAdd.y - bnds.y) * bnds.width) + (boundsToXAdd.x - bnds.x);
         offSrc = 0;
 
         for (int y = 0; y < boundsToXAdd.height; y++)
@@ -1450,7 +1492,7 @@ public class ROI2DArea extends ROI2D
                 if (maskToXAdd[offSrc++] != 0)
                     data[offDst + x] ^= 1;
 
-            offDst += bounds.width;
+            offDst += bnds.width;
         }
 
         // optimize bounds
@@ -1460,7 +1502,7 @@ public class ROI2DArea extends ROI2D
             optimizeBounds();
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1488,10 +1530,17 @@ public class ROI2DArea extends ROI2D
         addToBounds(boundsToXAdd);
 
         int offDst, offSrc;
-        final byte[] data = maskData;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // calculate offset
-        offDst = ((boundsToXAdd.y - bounds.y) * bounds.width) + (boundsToXAdd.x - bounds.x);
+        offDst = ((boundsToXAdd.y - bnds.y) * bnds.width) + (boundsToXAdd.x - bnds.x);
         offSrc = 0;
 
         for (int y = 0; y < boundsToXAdd.height; y++)
@@ -1500,7 +1549,7 @@ public class ROI2DArea extends ROI2D
                 if (maskToXAdd[offSrc++])
                     data[offDst + x] ^= 1;
 
-            offDst += bounds.width;
+            offDst += bnds.width;
         }
 
         // optimize bounds
@@ -1510,7 +1559,7 @@ public class ROI2DArea extends ROI2D
             optimizeBounds();
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1520,18 +1569,25 @@ public class ROI2DArea extends ROI2D
     {
         final Rectangle boundsToRemove = mask.getBounds();
         final byte[] maskToRemove = mask.maskData;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // compute intersection
-        final Rectangle intersection = bounds.intersection(boundsToRemove);
+        final Rectangle intersection = bnds.intersection(boundsToRemove);
 
         // nothing to remove so nothing to do...
         if (intersection.isEmpty())
             return;
 
         // calculate offset
-        int offDst = ((intersection.y - bounds.y) * bounds.width) + (intersection.x - bounds.x);
+        int offDst = ((intersection.y - bnds.y) * bnds.width) + (intersection.x - bnds.x);
         int offSrc = ((intersection.y - boundsToRemove.y) * boundsToRemove.width) + (intersection.x - boundsToRemove.x);
-        final byte[] data = maskData;
 
         for (int y = 0; y < intersection.height; y++)
         {
@@ -1539,7 +1595,7 @@ public class ROI2DArea extends ROI2D
                 if (maskToRemove[offSrc + x] != 0)
                     data[offDst + x] = 0;
 
-            offDst += bounds.width;
+            offDst += bnds.width;
             offSrc += boundsToRemove.width;
         }
 
@@ -1550,7 +1606,7 @@ public class ROI2DArea extends ROI2D
             optimizeBounds();
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1560,18 +1616,25 @@ public class ROI2DArea extends ROI2D
     {
         final Rectangle boundsToRemove = mask.bounds;
         final boolean[] maskToRemove = mask.mask;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // compute intersection
-        final Rectangle intersection = bounds.intersection(boundsToRemove);
+        final Rectangle intersection = bnds.intersection(boundsToRemove);
 
         // nothing to remove so nothing to do...
         if (intersection.isEmpty())
             return;
 
         // calculate offset
-        int offDst = ((intersection.y - bounds.y) * bounds.width) + (intersection.x - bounds.x);
+        int offDst = ((intersection.y - bnds.y) * bnds.width) + (intersection.x - bnds.x);
         int offSrc = ((intersection.y - boundsToRemove.y) * boundsToRemove.width) + (intersection.x - boundsToRemove.x);
-        final byte[] data = maskData;
 
         for (int y = 0; y < intersection.height; y++)
         {
@@ -1579,7 +1642,7 @@ public class ROI2DArea extends ROI2D
                 if (maskToRemove[offSrc + x])
                     data[offDst + x] = 0;
 
-            offDst += bounds.width;
+            offDst += bnds.width;
             offSrc += boundsToRemove.width;
         }
 
@@ -1590,7 +1653,7 @@ public class ROI2DArea extends ROI2D
             optimizeBounds();
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1603,9 +1666,11 @@ public class ROI2DArea extends ROI2D
      * @param inclusive
      *        if we should also consider the edge of the shape to update the mask
      * @param accurate
-     *        if set to <code>true</code> the operation will be done to be as pixel accurate as possible
+     *        if set to <code>true</code> the operation will be done to be as pixel accurate as
+     *        possible
      * @param immediateUpdate
-     *        if set to <code>true</code> the bounds of the mask will be immediately recomputed (only meaningful for a
+     *        if set to <code>true</code> the bounds of the mask will be immediately recomputed
+     *        (only meaningful for a
      *        remove operation)
      */
     public void updateMask(Shape shape, boolean remove, boolean inclusive, boolean accurate, boolean immediateUpdate)
@@ -1654,7 +1719,7 @@ public class ROI2DArea extends ROI2D
             optimizeBounds();
 
         // notify roi changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1873,7 +1938,11 @@ public class ROI2DArea extends ROI2D
             // only if on same position
             if ((getZ() == roi2d.getZ()) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
             {
-                setAsBooleanMask(BooleanMask2D.getIntersection(getBooleanMask(true), roi2d.getBooleanMask(true)));
+                final Rectangle intersection = getBounds().intersection(roi2d.getBounds());
+                final BooleanMask2D mask = new BooleanMask2D(intersection, getBooleanMask(intersection, true));
+                final BooleanMask2D roiMask = new BooleanMask2D(intersection, roi2d.getBooleanMask(intersection, true));
+
+                setAsBooleanMask(BooleanMask2D.getIntersection(mask, roiMask));
 
                 return this;
             }
@@ -1963,40 +2032,57 @@ public class ROI2DArea extends ROI2D
     @Override
     public boolean contains(double x, double y)
     {
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
+
         // fast discard
-        if (!bounds.contains(x, y))
+        if (!bnds.contains(x, y))
             return false;
 
         // replace to origin
-        final int xi = (int) x - bounds.x;
-        final int yi = (int) y - bounds.y;
+        final int xi = (int) x - bnds.x;
+        final int yi = (int) y - bnds.y;
 
-        return (maskData[(yi * imageMask.getWidth()) + xi] != 0);
+        return (data[(yi * bnds.width) + xi] != 0);
     }
 
     @Override
     public boolean contains(double x, double y, double w, double h)
     {
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
+
         // fast discard
-        if (!bounds.contains(x, y, w, h))
+        if (!bnds.contains(x, y, w, h))
             return false;
 
         // replace to origin
-        final int xi = (int) x - bounds.x;
-        final int yi = (int) y - bounds.y;
+        final int xi = (int) x - bnds.x;
+        final int yi = (int) y - bnds.y;
         final int wi = (int) (x + w) - (int) x;
         final int hi = (int) (y + h) - (int) y;
-        final byte[] data = maskData;
 
         // scan all pixels, can take sometime if mask is large
-        int offset = (yi * bounds.width) + xi;
+        int offset = (yi * bnds.width) + xi;
         for (int j = 0; j < hi; j++)
         {
             for (int i = 0; i < wi; i++)
                 if (data[offset++] == 0)
                     return false;
 
-            offset += bounds.width - wi;
+            offset += bnds.width - wi;
         }
 
         return true;
@@ -2023,16 +2109,24 @@ public class ROI2DArea extends ROI2D
     @Override
     public boolean intersects(double x, double y, double w, double h)
     {
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
+
         // fast discard
-        if (!bounds.intersects(x, y, w, h))
+        if (!bnds.intersects(x, y, w, h))
             return false;
 
         // replace to origin
-        int xi = (int) x - bounds.x;
-        int yi = (int) y - bounds.y;
+        int xi = (int) x - bnds.x;
+        int yi = (int) y - bnds.y;
         int wi = (int) (x + w) - (int) x;
         int hi = (int) (y + h) - (int) y;
-        final byte[] data = maskData;
 
         // adjust box to mask size
         if (xi < 0)
@@ -2045,20 +2139,20 @@ public class ROI2DArea extends ROI2D
             hi += yi;
             yi = 0;
         }
-        if ((xi + wi) > bounds.width)
-            wi -= (xi + wi) - bounds.width;
-        if ((yi + hi) > bounds.height)
-            hi -= (yi + hi) - bounds.height;
+        if ((xi + wi) > bnds.width)
+            wi -= (xi + wi) - bnds.width;
+        if ((yi + hi) > bnds.height)
+            hi -= (yi + hi) - bnds.height;
 
         // scan all pixels, can take sometime if mask is large
-        int offset = (yi * bounds.width) + xi;
+        int offset = (yi * bnds.width) + xi;
         for (int j = 0; j < hi; j++)
         {
             for (int i = 0; i < wi; i++)
                 if (data[offset++] != 0)
                     return true;
 
-            offset += bounds.width - wi;
+            offset += bnds.width - wi;
         }
 
         return false;
@@ -2068,9 +2162,17 @@ public class ROI2DArea extends ROI2D
     public boolean[] getBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
         final boolean[] result = new boolean[w * h];
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (this)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
 
         // calculate intersection
-        final Rectangle intersect = bounds.intersection(new Rectangle(x, y, w, h));
+        final Rectangle intersect = bnds.intersection(new Rectangle(x, y, w, h));
 
         // no intersection between mask and specified rectangle
         if (intersect.isEmpty())
@@ -2079,25 +2181,24 @@ public class ROI2DArea extends ROI2D
         // this ROI doesn't take care of inclusive parameter as intersect = contains
         int offSrc = 0;
         int offDst = 0;
-        final byte[] data = maskData;
 
         // adjust offset in source mask
-        if (intersect.x > bounds.x)
-            offSrc += (intersect.x - bounds.x);
-        if (intersect.y > bounds.y)
-            offSrc += (intersect.y - bounds.y) * bounds.width;
+        if (intersect.x > bnds.x)
+            offSrc += (intersect.x - bnds.x);
+        if (intersect.y > bnds.y)
+            offSrc += (intersect.y - bnds.y) * bnds.width;
         // adjust offset in destination mask
-        if (bounds.x > x)
-            offDst += (bounds.x - x);
-        if (bounds.y > y)
-            offDst += (bounds.y - y) * w;
+        if (bnds.x > x)
+            offDst += (bnds.x - x);
+        if (bnds.y > y)
+            offDst += (bnds.y - y) * w;
 
         for (int j = 0; j < intersect.height; j++)
         {
             for (int i = 0; i < intersect.width; i++)
                 result[offDst++] = (data[offSrc++] != 0);
 
-            offSrc += bounds.width - intersect.width;
+            offSrc += bnds.width - intersect.width;
             offDst += w - intersect.width;
         }
 
@@ -2138,7 +2239,7 @@ public class ROI2DArea extends ROI2D
 
         bounds.translate(dxi, dyi);
 
-        roiChanged();
+        roiChanged(false);
     }
 
     @Override
@@ -2150,9 +2251,9 @@ public class ROI2DArea extends ROI2D
     @Override
     public void setPosition2D(Point2D newPosition)
     {
-        bounds.setLocation((int) newPosition.getX(), (int) newPosition.getY());
+        bounds = new Rectangle((int) newPosition.getX(), (int) newPosition.getY(), bounds.width, bounds.height);
 
-        roiChanged();
+        roiChanged(false);
     }
 
     /**
@@ -2179,7 +2280,7 @@ public class ROI2DArea extends ROI2D
         System.arraycopy(mask, 0, maskData, 0, r.width * r.height);
 
         optimizeBounds();
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -2200,7 +2301,7 @@ public class ROI2DArea extends ROI2D
             data[i] = (byte) (booleanMask[i] ? 1 : 0);
 
         optimizeBounds();
-        roiChanged();
+        roiChanged(true);
     }
 
     public void setAsBooleanMask(int x, int y, int w, int h, boolean[] booleanMask)
@@ -2209,7 +2310,7 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -2221,7 +2322,8 @@ public class ROI2DArea extends ROI2D
                 if (boundsNeedUpdate && !roiModifiedByMouse)
                 {
                     if (optimizeBounds())
-                        roiChanged();
+                        // need to send a new change event !
+                        roiChanged(true);
                 }
                 // we need to rebuild shape
                 ((ROI2DAreaPainter) painter).needRebuild = true;
@@ -2238,6 +2340,9 @@ public class ROI2DArea extends ROI2D
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
                     ((ROI2DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 
@@ -2285,20 +2390,30 @@ public class ROI2DArea extends ROI2D
         if (!super.saveToXML(node))
             return false;
 
-        final Rectangle bnd = (Rectangle) bounds.clone();
-        final byte[] data = maskData;
+        final byte[] data;
+        final Rectangle bnds;
+
+        synchronized (maskData)
+        {
+            data = maskData;
+            bnds = bounds;
+        }
+
+        final int len = bnds.width * bnds.height;
 
         // invalid --> return false
-        if ((bnd.width * bnd.height) != data.length)
+        if ((len > 0) && (len != data.length))
             return false;
 
         // retrieve mask bounds
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_X, bnd.x);
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bnd.y);
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bnd.width);
-        XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bnd.height);
-        // set mask data as byte array (we need to clone to avoid any data modification during serialization)
-        XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data.clone());
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_X, bnds.x);
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_Y, bnds.y);
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bnds.width);
+        XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bnds.height);
+
+        // set mask data as byte array
+        if (len > 0)
+            XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, data);
 
         return true;
     }

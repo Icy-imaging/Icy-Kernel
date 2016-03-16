@@ -18,43 +18,6 @@
  */
 package icy.canvas;
 
-import icy.canvas.CanvasLayerEvent.LayersEventType;
-import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.menu.ToolRibbonTask;
-import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.GuiUtil;
-import icy.gui.viewer.Viewer;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
-import icy.image.ImageUtil;
-import icy.main.Icy;
-import icy.math.Interpolator;
-import icy.math.MathUtil;
-import icy.math.MultiSmoothMover;
-import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
-import icy.math.SmoothMover;
-import icy.math.SmoothMover.SmoothMoveType;
-import icy.math.SmoothMover.SmoothMoverAdapter;
-import icy.painter.ImageOverlay;
-import icy.painter.Overlay;
-import icy.preferences.CanvasPreferences;
-import icy.preferences.XMLPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.roi.ROI;
-import icy.sequence.DimensionId;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.system.thread.SingleProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.StringUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -97,6 +60,43 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import icy.canvas.CanvasLayerEvent.LayersEventType;
+import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.menu.ToolRibbonTask;
+import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
+import icy.gui.util.ComponentUtil;
+import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.image.ImageUtil;
+import icy.main.Icy;
+import icy.math.Interpolator;
+import icy.math.MathUtil;
+import icy.math.MultiSmoothMover;
+import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
+import icy.math.SmoothMover;
+import icy.math.SmoothMover.SmoothMoveType;
+import icy.math.SmoothMover.SmoothMoverAdapter;
+import icy.painter.ImageOverlay;
+import icy.painter.Overlay;
+import icy.preferences.CanvasPreferences;
+import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.roi.ROI;
+import icy.sequence.DimensionId;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.StringUtil;
+
 /**
  * New Canvas 2D : default ICY 2D viewer.<br>
  * Support translation / scale and rotation transformation.<br>
@@ -124,11 +124,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     /**
      * Possible rounded zoom factor : 0.01 --> 100
      */
-    final static double[] zoomRoundedFactors = new double[]
-    {
-            0.01d, 0.02d, 0.0333d, 0.05d, 0.075d, 0.1d, 0.15d, 0.2d, 0.25d, 0.333d, 0.5d, 0.66d, 0.75d, 1d, 1.25d,
-            1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d, 10d, 15d, 20d, 30d, 50d, 66d, 75d, 100d
-    };
+    final static double[] zoomRoundedFactors = new double[] {0.01d, 0.02d, 0.0333d, 0.05d, 0.075d, 0.1d, 0.15d, 0.2d,
+            0.25d, 0.333d, 0.5d, 0.66d, 0.75d, 1d, 1.25d, 1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d, 10d, 15d, 20d,
+            30d, 50d, 66d, 75d, 100d};
 
     /**
      * Image overlay to encapsulate image display in a canvas layer
@@ -592,8 +590,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         }
     }
 
-    public class CanvasView extends JPanel implements ActionListener, MouseWheelListener, MouseListener,
-            MouseMotionListener
+    public class CanvasView extends JPanel
+            implements ActionListener, MouseWheelListener, MouseListener, MouseMotionListener
     {
         /**
          * 
@@ -1986,10 +1984,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // init transform (5 values, log transition type)
         transform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);
         // initials transform values
-        transform.setValues(new double[]
-        {
-                0d, 0d, 1d, 1d, 0d
-        });
+        transform.setValues(new double[] {0d, 0d, 1d, 1d, 0d});
         textInfos = null;
         modifyingZoom = false;
         modifyingRotation = false;
@@ -2103,10 +2098,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // canvas panel (for inspector)
         panel = new JPanel();
 
-        zoomComboBox = new JComboBox(new String[]
-        {
-                "10", "50", "100", "200", "400", "1000"
-        });
+        zoomComboBox = new JComboBox(new String[] {"10", "50", "100", "200", "400", "1000"});
         zoomComboBox.setEditable(true);
         zoomComboBox.setToolTipText("Select zoom factor");
         zoomComboBox.setSelectedIndex(2);
@@ -2135,10 +2127,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        rotationComboBox = new JComboBox(new String[]
-        {
-                "0", "45", "90", "135", "180", "225", "270", "315"
-        });
+        rotationComboBox = new JComboBox(new String[] {"0", "45", "90", "135", "180", "225", "270", "315"});
         rotationComboBox.setEditable(true);
         rotationComboBox.setToolTipText("Select rotation angle");
         rotationComboBox.setSelectedIndex(0);
@@ -2286,10 +2275,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final JPanel subPanel = new JPanel();
         subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.PAGE_AXIS));
 
-        subPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
-                GuiUtil.createFixedWidthBoldLabel("Zoom", 70), zoomComboBox,
-                GuiUtil.createFixedWidthBoldLabel("%", 20), Box.createHorizontalGlue(), zoomMinus,
-                Box.createHorizontalStrut(4), zoomPlus, Box.createHorizontalStrut(4)));
+        subPanel.add(
+                GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), GuiUtil.createFixedWidthBoldLabel("Zoom", 70),
+                        zoomComboBox, GuiUtil.createFixedWidthBoldLabel("%", 20), Box.createHorizontalGlue(), zoomMinus,
+                        Box.createHorizontalStrut(4), zoomPlus, Box.createHorizontalStrut(4)));
         subPanel.add(Box.createVerticalStrut(4));
         subPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
                 GuiUtil.createFixedWidthBoldLabel("Rotation", 70), rotationComboBox,
@@ -2404,10 +2393,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     protected void setTransform(int tx, int ty, double sx, double sy, double rot, boolean smooth)
     {
-        final double[] values = new double[]
-        {
-                tx, ty, sx, sy, rot
-        };
+        final double[] values = new double[] {tx, ty, sx, sy, rot};
 
         // modify all at once for synchronized change events
         if (smooth)
@@ -2474,7 +2460,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final double newScaleY = Math.max(0.01d, Math.min(100d, y));
 
         // get new mouse position on canvas pixel
-        final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY, rot);
+        final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY,
+                rot);
         // new image size
         final int newImgSizeX = (int) Math.ceil(getImageSizeX() * newScaleX);
         final int newImgSizeY = (int) Math.ceil(getImageSizeY() * newScaleY);

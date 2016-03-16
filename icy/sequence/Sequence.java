@@ -18,7 +18,7 @@
  */
 package icy.sequence;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.gui.viewer.Viewer;
@@ -83,7 +83,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.swing.event.EventListenerList;
 import javax.swing.undo.UndoManager;
 
 import loci.formats.ome.OMEXMLMetadataImpl;
@@ -231,7 +230,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * listeners
      */
-    final EventListenerList listeners;
+    final List<SequenceListener> listeners;
+    final List<SequenceModelListener> modelListeners;
 
     /**
      * internals
@@ -276,8 +276,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
         if (MetaDataUtil.getPixelSizeZ(metaData, 0, 1d) == 1d)
             MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
-        if (MetaDataUtil.getTimeInterval(metaData, 0, 0.1d) == 0.1d)
-            MetaDataUtil.setTimeInterval(metaData, 0, 0.1d);
+        if (MetaDataUtil.getTimeInterval(metaData, 0, 0.0d) == 0.0d)
+            MetaDataUtil.setTimeInterval(metaData, 0, 0.0d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         overlays = new HashSet<Overlay>();
@@ -286,7 +286,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         undoManager = new IcyUndoManager(this, GeneralPreferences.getHistorySize());
 
         updater = new UpdateEventHandler(this, false);
-        listeners = new EventListenerList();
+        listeners = new ArrayList<SequenceListener>();
+        modelListeners = new ArrayList<SequenceModelListener>();
 
         // no colorModel yet
         colorModel = null;
@@ -832,7 +833,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getTimeInterval()
     {
-        return MetaDataUtil.getTimeInterval(metaData, 0, 0.1d);
+        double result = MetaDataUtil.getTimeInterval(metaData, 0, 0d);
+
+        if (result == 0d)
+            result = MetaDataUtil.getTimeIntervalFromTimePositions(metaData, 0);
+
+        return result;
     }
 
     /**
@@ -876,7 +882,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void setTimeInterval(double value)
     {
-        if (getTimeInterval() != value)
+        if (MetaDataUtil.getTimeInterval(metaData, 0, 0d) != value)
         {
             MetaDataUtil.setTimeInterval(metaData, 0, value);
             metaChanged(ID_TIME_INTERVAL);
@@ -1250,7 +1256,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void addListener(SequenceListener listener)
     {
-        listeners.add(SequenceListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -1258,7 +1264,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void removeListener(SequenceListener listener)
     {
-        listeners.remove(SequenceListener.class, listener);
+        listeners.remove(listener);
     }
 
     /**
@@ -1266,7 +1272,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public SequenceListener[] getListeners()
     {
-        return listeners.getListeners(SequenceListener.class);
+        return listeners.toArray(new SequenceListener[0]);
     }
 
     /**
@@ -1275,7 +1281,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public void addSequenceModelListener(SequenceModelListener listener)
     {
-        listeners.add(SequenceModelListener.class, listener);
+        modelListeners.add(listener);
     }
 
     /**
@@ -1285,7 +1291,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public void removeSequenceModelListener(SequenceModelListener listener)
     {
-        listeners.remove(SequenceModelListener.class, listener);
+        modelListeners.remove(listener);
     }
 
     /**
@@ -2556,7 +2562,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     volImg.removeImage(z);
                 else
                 {
-                    final IcyBufferedImage icyImg;
+                    IcyBufferedImage icyImg;
 
                     // convert to icyImage if needed
                     if (image instanceof IcyBufferedImage)
@@ -2572,6 +2578,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     if (!typeChange && !isCompatible(icyImg))
                         throw new IllegalArgumentException("Sequence.setImage : image is not compatible !");
 
+                    // we want to share the same color space for all the sequence:
+                    // colormap eats a lot of memory so it's better to keep one global and we never
+                    // use colormap for
+                    // single image anyway. But it's important to preserve the colormodel for each
+                    // image though as it
+                    // store the channel bounds informations.
+                    if (colorModel != null)
+                        icyImg.getIcyColorModel().setColorSpace(colorModel.getIcyColorSpace());
+
+                    // apply this parameter from sequence parameter
+                    icyImg.setAutoUpdateChannelBounds(getAutoUpdateChannelBounds());
+
                     // set image
                     volImg.setImage(z, icyImg);
                 }
@@ -2580,7 +2598,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set an image at the specified position.
+     * Set an image at the specified position.<br/>
+     * Note that the image duplicated/transformed internally before being attached to the Sequence
+     * object.
      * 
      * @param t
      *        T position
@@ -3117,7 +3137,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public LUT getUserLUT()
     {
         // color model not anymore compatible with user LUT --> reset user LUT
-        if ((userLut != null) && !userLut.isCompatible(colorModel))
+        if ((userLut != null) && (colorModel != null) && !userLut.isCompatible(colorModel))
             userLut = null;
 
         if (userLut == null)
@@ -3227,8 +3247,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public DataType getDataType_()
     {
+        // assume unsigned byte by default
         if (colorModel == null)
-            return DataType.UNDEFINED;
+            return DataType.UBYTE;
 
         return colorModel.getDataType_();
     }
@@ -3363,7 +3384,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Update channels bounds (min and max values).<br>
      * 
      * @param forceRecalculation
-     *        If true we force all images channels bounds recalculation (this can take sometime).<br>
+     *        If true we force all images channels bounds recalculation (this can take sometime). <br>
      *        You can left this flag to false if sequence images have their bounds updated (which
      *        should be the case by default).
      */
@@ -5984,7 +6005,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @SuppressWarnings("deprecation")
     private void fireChangedEvent(SequenceEvent e)
     {
-        for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
+        final List<SequenceListener> cachedListeners = new ArrayList<SequenceListener>(listeners);
+
+        for (SequenceListener listener : cachedListeners)
             listener.sequenceChanged(e);
 
         // provide backward compatibility for painter
@@ -6000,7 +6023,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             final SequenceEvent event = new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_PAINTER, painter,
                     e.getType(), e.getParam());
 
-            for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
+            for (SequenceListener listener : cachedListeners)
                 listener.sequenceChanged(event);
         }
     }
@@ -6010,7 +6033,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     private void fireClosedEvent()
     {
-        for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
+        for (SequenceListener listener : new ArrayList<SequenceListener>(listeners))
             listener.sequenceClosed(this);
     }
 
@@ -6020,7 +6043,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public void fireModelImageChangedEvent()
     {
-        for (SequenceModelListener listener : listeners.getListeners(SequenceModelListener.class))
+        for (SequenceModelListener listener : new ArrayList<SequenceModelListener>(modelListeners))
             listener.imageChanged();
     }
 
@@ -6030,7 +6053,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public void fireModelDimensionChangedEvent()
     {
-        for (SequenceModelListener listener : listeners.getListeners(SequenceModelListener.class))
+        for (SequenceModelListener listener : new ArrayList<SequenceModelListener>(modelListeners))
             listener.dimensionChanged();
     }
 
@@ -6256,7 +6279,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * process on sequence change
      */
     @Override
-    public void onChanged(EventHierarchicalChecker e)
+    public void onChanged(CollapsibleEvent e)
     {
         final SequenceEvent event = (SequenceEvent) e;
 

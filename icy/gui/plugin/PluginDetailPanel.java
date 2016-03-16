@@ -215,12 +215,15 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
         add(centerPanel, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
+        updateGui();
+
         addToDesktopPane();
         // random position for more fun
         setLocation(10 * Random.nextInt(20) + 40, 10 * Random.nextInt(10) + 40);
         setVisible(true);
         requestFocus();
 
+        // some parts of the descriptor are not loaded --> async update
         if (!plugin.isAllLoaded())
         {
             ThreadUtil.bgRun(new Runnable()
@@ -242,8 +245,7 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
                 }
             });
         }
-        else
-            updateGui();
+
     }
 
     void updateGui()
@@ -251,12 +253,15 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
         final Font sysFont = pluginAuthorLabel.getFont();
         final Image img = plugin.getImage();
         final String description = plugin.getDescription();
-        final String changesLog = plugin.getChangesLog();
+        final String changesLog = plugin.getChangeLog();
         final String author = plugin.getAuthor();
         final String email = plugin.getEmail();
         final String web = plugin.getWeb();
 
-        pluginImage.setImage(img);
+        if (img == null)
+            pluginImage.setImage(PluginDescriptor.DEFAULT_IMAGE);
+        else
+            pluginImage.setImage(img);
 
         if (StringUtil.isEmpty(description))
             pluginDescriptionText.setText("No description");

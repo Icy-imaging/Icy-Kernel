@@ -408,6 +408,9 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         // check that plugin can be displayed in menu
         if ((plugin != null) && plugin.isActionable())
         {
+            // load icon first
+            plugin.loadIcon();
+
             final IcyCommandButton pluginButton = PluginCommandButton.createButton(plugin);
 
             // add it to the new installed plugins workspace and save it
@@ -437,7 +440,11 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
                 // button found --> update it
                 if (button != null)
+                {
+                    // load icon first
+                    plugin.loadIcon();
                     PluginCommandButton.setButton(button, plugin);
+                }
             }
             else
             {
@@ -616,8 +623,13 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                                 {
                                     // check that menu can be displayed in menu
                                     if (plugin.isActionable())
+                                    {
+                                        // load icon first
+                                        plugin.loadIcon();
+
                                         ribbonBand.addCommandButton(PluginCommandButton.createButton(plugin),
                                                 item.getPriority());
+                                    }
                                 }
                             }
                         }
@@ -739,6 +751,9 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                     menuToPutPlugin = menu;
                 }
             }
+
+            // be sure that icon is loaded
+            pluginDescriptor.loadIcon();
 
             menuToPutPlugin.add(new PluginMenuItem(pluginDescriptor));
         }
@@ -1028,7 +1043,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         ribbon.addTaskbarComponent(helpAndInfoButton);
 
         // LINK
-//        ribbon.addTaskbarComponent(new IcyCommandButton(GeneralActions.linkAction));
+        // ribbon.addTaskbarComponent(new IcyCommandButton(GeneralActions.linkAction));
     }
 
     private void checkPluginsMenuCoherence()
