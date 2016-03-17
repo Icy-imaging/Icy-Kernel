@@ -18,6 +18,30 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.image.ImageUtil;
+import icy.painter.VtkPainter;
+import icy.resource.ResourceUtil;
+import icy.roi.BooleanMask2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROIEvent;
+import icy.roi.edit.Area2DChangeROIEdit;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.type.point.Point5D.Double;
+import icy.type.rectangle.Rectangle3D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.vtk.IcyVtkPanel;
+import icy.vtk.VtkUtil;
+
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -40,28 +64,6 @@ import java.util.Arrays;
 
 import org.w3c.dom.Node;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.CollapsibleEvent;
-import icy.image.ImageUtil;
-import icy.painter.VtkPainter;
-import icy.resource.ResourceUtil;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROIEvent;
-import icy.roi.edit.Area2DChangeROIEdit;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point5D;
-import icy.type.point.Point5D.Double;
-import icy.type.rectangle.Rectangle3D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-import icy.vtk.VtkUtil;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkImageData;
@@ -190,8 +192,13 @@ public class ROI2DArea extends ROI2D
         protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
-            // nothing to update
+            // canvas was closed
             if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
                 return;
 
             final Sequence seq = canvas.getSequence();
@@ -232,7 +239,7 @@ public class ROI2DArea extends ROI2D
             polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas.lock();
+            vtkPanel.lock();
             try
             {
                 // update outline polygon data
@@ -260,7 +267,7 @@ public class ROI2DArea extends ROI2D
             }
             finally
             {
-                canvas.unlock();
+                vtkPanel.unlock();
             }
 
             // update color and others properties
@@ -279,10 +286,12 @@ public class ROI2DArea extends ROI2D
                 // final double strk = getStroke();
                 // final float opacity = getOpacity();
 
+                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
                 // we need to lock canvas as actor can be accessed during rendering
-                if (cnv != null)
+                if (vtkPanel != null)
                 {
-                    cnv.lock();
+                    vtkPanel.lock();
                     try
                     {
                         // set actors color
@@ -296,7 +305,7 @@ public class ROI2DArea extends ROI2D
                     }
                     finally
                     {
-                        cnv.unlock();
+                        vtkPanel.unlock();
                     }
                 }
                 else

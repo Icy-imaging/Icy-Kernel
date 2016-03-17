@@ -3741,7 +3741,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Returns a RGB or ARGB (depending support) BufferedImage representing the canvas view for
-     * image at position (t, z, c).
+     * image at position (t, z, c).<br>
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t

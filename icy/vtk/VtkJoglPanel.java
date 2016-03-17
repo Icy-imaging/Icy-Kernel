@@ -150,15 +150,15 @@ public class VtkJoglPanel extends GLJPanel
         // super.setSize(200, 200);
         // rw.SetSize(200, 200);
 
-        // not compatible with OpenGL2 (needed by VTK)
-        if (!OpenGLUtil.isOpenGLSupported(2))
+        // not compatible with OpenGL 3 ? (new VTK OpenGL backend require OpenGL 3.2)
+        if (!OpenGLUtil.isOpenGLSupported(3))
         {
             if (!IdConfirmDialog
                     .confirm(
                             "Warning",
-                            "Your graphics card driver does not support OpenGL 2, you may experience issues with VTK.\nDo you want to try anyway ?",
+                            "Your graphics card driver does not support OpenGL 3, you may experience issues with VTK.\nDo you want to try anyway ?",
                             IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
-                throw new IcyHandledException("Your graphics card driver is not compatible with OpenGL 2 !");
+                throw new IcyHandledException("Your graphics card driver is not compatible with OpenGL 3 !");
         }
     }
 

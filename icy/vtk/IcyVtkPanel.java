@@ -425,14 +425,14 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         // cancel pending fine rendering restoration
         fineRenderingTime = 0;
 
-        if (rw.GetDesiredUpdateRate() == 10.0)
+        if (rw.GetDesiredUpdateRate() == 7d)
             return;
 
         lock();
         try
         {
             // set fast rendering
-            rw.SetDesiredUpdateRate(10.0);
+            rw.SetDesiredUpdateRate(7d);
         }
         finally
         {

@@ -27,7 +27,6 @@ import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginLoader;
-import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
@@ -93,8 +92,16 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
             if (printStackTrace)
             {
-                for (StackTraceElement element : throwable.getStackTrace())
-                    result = result + "\tat " + element.toString() + "\n";
+                try
+                {
+                    // sometime 'getStackTrace()' throws a weird AbstractMethodError exception
+                    for (StackTraceElement element : throwable.getStackTrace())
+                        result += "\tat " + element.toString() + "\n";
+                }
+                catch (Throwable t2)
+                {
+                    result += "Error while trying to get exception stack trace...\n";
+                }
             }
 
             throwable = throwable.getCause();
@@ -108,24 +115,15 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     @Override
     public void uncaughtException(Thread t, Throwable e)
     {
-        // final Thread thread = t;
-        final Throwable throwable = e;
-
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                handleException(throwable, true);
-            }
-        });
+        handleException(t, e, true);
     }
 
     /**
      * Handle the specified exception.<br>
      * It actually display a message or report dialog depending the exception type.
      */
-    private static void handleException(PluginDescriptor plugin, String devId, Throwable t, boolean printStackStrace)
+    private static void handleException(Thread thread, PluginDescriptor plugin, String devId, Throwable t,
+            boolean printStackStrace)
     {
         final long current = System.currentTimeMillis();
         final String errMess = (t.getMessage() != null) ? t.getMessage() : "";
@@ -214,7 +212,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      */
     public static void handleException(PluginDescriptor pluginDesc, Throwable t, boolean printStackStrace)
     {
-        handleException(pluginDesc, null, t, printStackStrace);
+        handleException(null, pluginDesc, null, t, printStackStrace);
     }
 
     /**
@@ -223,7 +221,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      */
     public static void handleException(String devId, Throwable t, boolean printStackStrace)
     {
-        handleException(null, devId, t, printStackStrace);
+        handleException(null, null, devId, t, printStackStrace);
     }
 
     /**
@@ -233,28 +231,50 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      */
     public static void handleException(Throwable t, boolean printStackStrace)
     {
+        handleException((Thread) null, t, printStackStrace);
+    }
+
+    /**
+     * Handle the specified exception.<br>
+     * Try to find the origin plugin which thrown the exception.
+     * It actually display a message or report dialog depending the exception type.
+     */
+    private static void handleException(Thread thread, Throwable t, boolean printStackStrace)
+    {
         Throwable throwable = t;
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins();
 
         while (throwable != null)
         {
+            StackTraceElement[] stackTrace;
+
+            try
+            {
+                // sometime 'getStackTrace()' throws a weird AbstractMethodError exception
+                stackTrace = throwable.getStackTrace();
+            }
+            catch (Throwable t2)
+            {
+                stackTrace = new StackTraceElement[0];
+            }
+
             // search plugin class (start from the end of stack trace)
-            final PluginDescriptor plugin = findPluginFromStackTrace(plugins, throwable.getStackTrace());
+            final PluginDescriptor plugin = findPluginFromStackTrace(plugins, stackTrace);
 
             // plugin found --> show the plugin report frame
             if (plugin != null)
             {
                 // only send to last plugin raising the exception
-                handleException(plugin, t, printStackStrace);
+                handleException(thread, plugin, null, t, printStackStrace);
                 return;
             }
 
             // we did not find plugin class so we will search for plugin developer id
-            final String devId = findDevIdFromStackTrace(throwable.getStackTrace());
+            final String devId = findDevIdFromStackTrace(stackTrace);
 
             if (devId != null)
             {
-                handleException(devId, t, printStackStrace);
+                handleException(thread, null, devId, t, printStackStrace);
                 return;
             }
 
@@ -262,7 +282,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         }
 
         // general exception (no plugin information found)
-        handleException(null, null, t, printStackStrace);
+        handleException(thread, null, null, t, printStackStrace);
     }
 
     /**

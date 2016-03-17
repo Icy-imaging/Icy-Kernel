@@ -42,6 +42,7 @@ import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.util.EventUtil;
 import icy.util.StringUtil;
+import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
@@ -149,8 +150,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
-            // nothing to update
+            // canvas was closed
             if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
                 return;
 
             final Sequence seq = canvas.getSequence();
@@ -191,7 +197,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas.lock();
+            vtkPanel.lock();
             try
             {
                 // update outline polygon data
@@ -219,7 +225,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             }
             finally
             {
-                canvas.unlock();
+                vtkPanel.unlock();
             }
 
             // update color and others properties
@@ -238,10 +244,12 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 // final double strk = getStroke();
                 // final float opacity = getOpacity();
 
+                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
                 // we need to lock canvas as actor can be accessed during rendering
-                if (cnv != null)
+                if (vtkPanel != null)
                 {
-                    cnv.lock();
+                    vtkPanel.lock();
                     try
                     {
                         // set actors color
@@ -253,7 +261,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                     }
                     finally
                     {
-                        cnv.unlock();
+                        vtkPanel.unlock();
                     }
                 }
                 else

@@ -40,6 +40,7 @@ import icy.type.point.Point5D;
 import icy.type.point.Point5D.Double;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+import icy.vtk.IcyVtkPanel;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
@@ -147,8 +148,13 @@ public class ROI2DPoint extends ROI2DShape
         protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
-            // nothing to update
+            // canvas was closed
             if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
                 return;
 
             final Sequence seq = canvas.getSequence();
@@ -165,7 +171,7 @@ public class ROI2DPoint extends ROI2DShape
                 curZ = seq.getSizeZ() / 2d;
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas.lock();
+            vtkPanel.lock();
             try
             {
                 vtkSource.SetRadius(getStroke());
@@ -176,7 +182,7 @@ public class ROI2DPoint extends ROI2DShape
             }
             finally
             {
-                canvas.unlock();
+                vtkPanel.unlock();
             }
 
             // need to repaint

@@ -18,9 +18,12 @@
  */
 package icy.vtk;
 
+import icy.canvas.Layer;
 import icy.image.colormap.IcyColorMap;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
+import icy.painter.Overlay;
+import icy.painter.VtkPainter;
 import icy.roi.ROI;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
@@ -28,6 +31,8 @@ import icy.type.collection.array.ArrayUtil;
 import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
@@ -51,7 +56,6 @@ import vtk.vtkPoints;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataConnectivityFilter;
 import vtk.vtkProp;
-import vtk.vtkPropCollection;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
 import vtk.vtkSmoothPolyDataFilter;
@@ -138,7 +142,144 @@ public class VtkUtil
     }
 
     /**
-     * Add an actor to the specified renderer.<br>
+     * Returns the <i>vtkProp</i> from the specified <i>Layer</i> object.<br>
+     * Returns a 0 sized array if the specified layer is <code>null</code> or does not contains any vtkProp.
+     */
+    public static vtkProp[] getLayerProps(Layer layer)
+    {
+        if (layer != null)
+        {
+            // add painter actor from the vtk render
+            final Overlay overlay = layer.getOverlay();
+
+            if (overlay instanceof VtkPainter)
+                return ((VtkPainter) overlay).getProps();
+        }
+
+        return new vtkProp[0];
+    }
+
+    /**
+     * Returns all <i>vtkProp</i> from the specified list of <i>Layer</i> object.<br>
+     * Returns a 0 sized array if specified layers does not contains any vtkProp.
+     */
+    public static vtkProp[] getLayersProps(List<Layer> layers)
+    {
+        final List<vtkProp[]> layersProps = new ArrayList<vtkProp[]>();
+        int totalSize = 0;
+
+        for (Layer layer : layers)
+        {
+            if (layer != null)
+            {
+                // add painter actor from the vtk render
+                final Overlay overlay = layer.getOverlay();
+
+                if (overlay instanceof VtkPainter)
+                {
+                    final vtkProp[] props = ((VtkPainter) overlay).getProps();
+
+                    if (props.length > 0)
+                    {
+                        layersProps.add(props);
+                        totalSize += props.length;
+                    }
+                }
+            }
+        }
+
+        final vtkProp[] result = new vtkProp[totalSize];
+        int ind = 0;
+
+        for (vtkProp[] props : layersProps)
+        {
+            final int size = props.length;
+
+            System.arraycopy(props, 0, result, ind, size);
+            ind += size;
+        }
+
+        return result;
+    }
+
+    /**
+     * Return true if the renderer contains the specified actor
+     */
+    public static boolean hasProp(vtkRenderer renderer, vtkProp actor)
+    {
+        if ((renderer == null) || (actor == null))
+            return false;
+
+        return renderer.HasViewProp(actor) != 0;
+    }
+
+    /**
+     * @deprecated Use {@link #hasProp(vtkRenderer, vtkProp)} instead.
+     */
+    @Deprecated
+    public static boolean findProp(vtkRenderer renderer, vtkProp actor)
+    {
+        return hasProp(renderer, actor);
+    }
+
+    /**
+     * @deprecated Use {@link #hasProp(vtkRenderer, vtkProp)} instead.
+     */
+    @Deprecated
+    public static boolean findActor(vtkRenderer renderer, vtkActor actor)
+    {
+        if ((renderer == null) || (actor == null))
+            return false;
+
+        final vtkActorCollection actors = renderer.GetActors();
+
+        actors.InitTraversal();
+        for (int i = 0; i < actors.GetNumberOfItems(); i++)
+        {
+            final vtkActor curActor = actors.GetNextActor();
+
+            // already present --> exit
+            if (curActor == actor)
+                return true;
+
+            // // search in sub actor
+            // if (findActor(curActor, actor))
+            // return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @deprecated Use {@link #hasProp(vtkRenderer, vtkProp)} instead.
+     */
+    @Deprecated
+    public static boolean findActor2D(vtkRenderer renderer, vtkActor2D actor)
+    {
+        if ((renderer == null) || (actor == null))
+            return false;
+
+        final vtkActor2DCollection actors = renderer.GetActors2D();
+
+        actors.InitTraversal();
+        for (int i = 0; i < actors.GetNumberOfItems(); i++)
+        {
+            final vtkActor2D curActor = actors.GetNextActor2D();
+
+            // already present --> exit
+            if (curActor == actor)
+                return true;
+
+            // // search in sub actor
+            // if (findActor2D(curActor, actor))
+            // return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Add an actor (vtkProp) to the specified renderer.<br>
      * If the actor is already existing in the renderer then no operation is done.
      */
     public static void addProp(vtkRenderer renderer, vtkProp prop)
@@ -147,7 +288,7 @@ public class VtkUtil
             return;
 
         // actor not yet present in renderer ? --> add it
-        if (!VtkUtil.findProp(renderer, prop))
+        if (renderer.HasViewProp(prop) == 0)
             renderer.AddViewProp(prop);
     }
 
@@ -180,90 +321,28 @@ public class VtkUtil
     }
 
     /**
+     * Add an array of actor (vtkProp) to the specified renderer.<br>
+     * If an actor is already existing in the renderer then nothing is done for this actor.
+     */
+    public static void addProps(vtkRenderer renderer, vtkProp[] props)
+    {
+        if ((renderer == null) || (props == null))
+            return;
+
+        for (vtkProp prop : props)
+        {
+            // actor not yet present in renderer ? --> add it
+            if (renderer.HasViewProp(prop) == 0)
+                renderer.AddViewProp(prop);
+        }
+    }
+
+    /**
      * Remove an actor from the specified renderer.
      */
     public static void removeProp(vtkRenderer renderer, vtkProp actor)
     {
         renderer.RemoveViewProp(actor);
-    }
-
-    /**
-     * Return true if the renderer contains the specified actor
-     */
-    public static boolean findProp(vtkRenderer renderer, vtkProp actor)
-    {
-        if ((renderer == null) || (actor == null))
-            return false;
-
-        final vtkPropCollection actors = renderer.GetViewProps();
-
-        actors.InitTraversal();
-        for (int i = 0; i < actors.GetNumberOfItems(); i++)
-        {
-            final vtkProp curActor = actors.GetNextProp();
-
-            // already present --> exit
-            if (curActor == actor)
-                return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @deprecated Use {@link #findProp(vtkRenderer, vtkProp)} instead.
-     */
-    @Deprecated
-    public static boolean findActor(vtkRenderer renderer, vtkActor actor)
-    {
-        if ((renderer == null) || (actor == null))
-            return false;
-
-        final vtkActorCollection actors = renderer.GetActors();
-
-        actors.InitTraversal();
-        for (int i = 0; i < actors.GetNumberOfItems(); i++)
-        {
-            final vtkActor curActor = actors.GetNextActor();
-
-            // already present --> exit
-            if (curActor == actor)
-                return true;
-
-            // // search in sub actor
-            // if (findActor(curActor, actor))
-            // return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @deprecated Use {@link #findProp(vtkRenderer, vtkProp)} instead.
-     */
-    @Deprecated
-    public static boolean findActor2D(vtkRenderer renderer, vtkActor2D actor)
-    {
-        if ((renderer == null) || (actor == null))
-            return false;
-
-        final vtkActor2DCollection actors = renderer.GetActors2D();
-
-        actors.InitTraversal();
-        for (int i = 0; i < actors.GetNumberOfItems(); i++)
-        {
-            final vtkActor2D curActor = actors.GetNextActor2D();
-
-            // already present --> exit
-            if (curActor == actor)
-                return true;
-
-            // // search in sub actor
-            // if (findActor2D(curActor, actor))
-            // return true;
-        }
-
-        return false;
     }
 
     /**
@@ -888,9 +967,11 @@ public class VtkUtil
             data[i + 2] = b;
         }
 
-        if (canvas != null)
+        final IcyVtkPanel vtkPanel = (canvas != null) ? canvas.getVtkPanel() : null;
+
+        if (vtkPanel != null)
         {
-            canvas.lock();
+            vtkPanel.lock();
             try
             {
                 colors.SetJavaArray(data);
@@ -898,7 +979,7 @@ public class VtkUtil
             }
             finally
             {
-                canvas.unlock();
+                vtkPanel.unlock();
             }
         }
         else
@@ -962,10 +1043,11 @@ public class VtkUtil
         }
 
         final vtkPoints points = getPoints(newPoints);
+        final IcyVtkPanel vtkPanel = (canvas != null) ? canvas.getVtkPanel() : null;
 
-        if (canvas != null)
+        if (vtkPanel != null)
         {
-            canvas.lock();
+            vtkPanel.lock();
             try
             {
                 // rebuild points
@@ -978,7 +1060,7 @@ public class VtkUtil
             }
             finally
             {
-                canvas.unlock();
+                vtkPanel.unlock();
             }
         }
         else

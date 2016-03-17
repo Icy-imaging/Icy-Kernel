@@ -66,7 +66,6 @@ import vtk.vtkColorTransferFunction;
 import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
 import vtk.vtkLight;
-import vtk.vtkObjectBase;
 import vtk.vtkOrientationMarkerWidget;
 import vtk.vtkPicker;
 import vtk.vtkPiecewiseFunction;
@@ -410,9 +409,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         renderer.AddViewProp(boundingBox);
         renderer.AddViewProp(rulerBox);
         renderer.AddViewProp(textInfo);
-        // then vtkPainter actors to the renderer
-        for (Layer l : getLayers(false))
-            addLayerActors(l);
 
         // reset camera
         resetCamera();
@@ -433,6 +429,56 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // start the properties updater thread
         propertiesUpdater.start();
 
+        // add layers actors (better to do it in background as it can take a lot of time when we have many layers / ROI)
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final vtkProp[] props = VtkUtil.getLayersProps(getLayers(false));
+                final int len = props.length;
+
+                // do it by packet of 1000
+                for (int i = 0; i < len; i += 1000)
+                {
+                    final int l = Math.min(1000, len - i);
+                    final vtkProp[] propPacket = new vtkProp[l];
+
+                    System.arraycopy(props, i, propPacket, 0, l);
+
+                    invokeOnEDTSilent(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            final IcyVtkPanel vp = getVtkPanel();
+                            final vtkRenderer r = getRenderer();
+
+                            if ((r != null) && (vp != null))
+                            {
+                                final vtkCamera cam = vp.getCamera();
+
+                                for (vtkProp actor : propPacket)
+                                {
+                                    // refresh camera property for this specific kind of actor
+                                    if (actor instanceof vtkCubeAxesActor)
+                                        ((vtkCubeAxesActor) actor).SetCamera(cam);
+                                }
+
+                                // add all actors
+                                VtkUtil.addProps(r, propPacket);
+                            }
+                        }
+                    });
+
+                    // sleep a bit to offer a bit of responsiveness
+                    ThreadUtil.sleep(l);
+                    // and refresh
+                    refresh();
+                }
+            }
+        });
+
         initialized = true;
     }
 
@@ -443,8 +489,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // wait for initialization to complete before shutdown (max 5s)
         while (((System.currentTimeMillis() - st) < 5000L) && !initialized)
             ThreadUtil.sleep(1);
-
-        super.shutDown();
 
         propertiesUpdater.interrupt();
         propertiesToUpdate.clear();
@@ -498,8 +542,19 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         panel3D = null;
         panel = null;
 
+        // do parent shutdown now
+        super.shutDown();
+
         // call VTK GC: better if we can avoid this !
         // vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
+    }
+
+    /**
+     * Returns initialized state of VtkCanvas
+     */
+    public boolean isInitialized()
+    {
+        return initialized;
     }
 
     @Override
@@ -523,8 +578,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     /**
-     * Request exclusive access to VTK rendering.
+     * Request exclusive access to VTK rendering.<br>
+     * 
+     * @deprecated Use <code>getVtkPanel().lock()</code> instead.
      */
+    @Deprecated
     public void lock()
     {
         if (panel3D != null)
@@ -533,7 +591,10 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
     /**
      * Release exclusive access from VTK rendering.
+     * 
+     * @deprecated Use <code>getVtkPanel().unlock()</code> instead.
      */
+    @Deprecated
     public void unlock()
     {
         if (panel3D != null)
@@ -1046,18 +1107,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         return panel3D.pick(x, y);
     }
 
+    /**
+     * @deprecated Use {@link VtkUtil#getLayerProps(Layer)} instead.
+     */
+    @Deprecated
     protected vtkProp[] getLayerActors(Layer layer)
     {
-        if (layer != null)
-        {
-            // add painter actor from the vtk render
-            final Overlay overlay = layer.getOverlay();
-
-            if (overlay instanceof VtkPainter)
-                return ((VtkPainter) overlay).getProps();
-        }
-
-        return new vtkProp[0];
+        return VtkUtil.getLayerProps(layer);
     }
 
     protected void addLayerActors(Layer layer)
@@ -1066,7 +1122,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         if ((renderer == null) || (panel3D == null))
             return;
 
-        final vtkProp[] props = getLayerActors(layer);
+        final vtkProp[] props = VtkUtil.getLayerProps(layer);
 
         if (props.length > 0)
         {
@@ -1086,6 +1142,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 }
             });
         }
+
+        // need refresh
+        refresh();
     }
 
     protected void removeLayerActors(Layer layer)
@@ -1094,7 +1153,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         if ((renderer == null) || (panel3D == null))
             return;
 
-        final vtkProp[] props = getLayerActors(layer);
+        final vtkProp[] props = VtkUtil.getLayerProps(layer);
 
         if (props.length > 0)
         {
@@ -1108,6 +1167,41 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 }
             });
         }
+
+        // need refresh
+        refresh();
+    }
+
+    protected void addLayersActors(List<Layer> layers)
+    {
+        // not yet initialized
+        if ((renderer == null) || (panel3D == null))
+            return;
+
+        final vtkProp[] props = VtkUtil.getLayersProps(layers);
+
+        if (props.length > 0)
+        {
+            invokeOnEDTSilent(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    for (vtkProp actor : props)
+                    {
+                        // refresh camera property for this specific kind of actor
+                        if (actor instanceof vtkCubeAxesActor)
+                            ((vtkCubeAxesActor) actor).SetCamera(panel3D.getCamera());
+                    }
+
+                    // add all actors
+                    VtkUtil.addProps(renderer, props);
+                }
+            });
+        }
+
+        // need refresh
+        refresh();
     }
 
     protected void updateBoundingBoxSize()
@@ -1426,6 +1520,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     @Override
     public BufferedImage getRenderedImage(int t, int c)
     {
+        final CustomVtkPanel vp = panel3D;
+        if (vp == null) return null;
+
         // save position
         final int prevT = getPositionT();
         final int prevC = getPositionC();
@@ -1448,15 +1545,15 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     updateImageData(imageData);
 
                     // force fine rendering here
-                    panel3D.setForceFineRendering(true);
+                    vp.setForceFineRendering(true);
                     try
                     {
                         // render now !
-                        panel3D.paint(panel3D.getGraphics());
+                        vp.paint(vp.getGraphics());
                     }
                     finally
                     {
-                        panel3D.setForceFineRendering(false);
+                        vp.setForceFineRendering(false);
                     }
                 }
             });
@@ -1464,9 +1561,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             try
             {
                 final Robot robot = new Robot();
-                final Rectangle bounds = panel3D.getBounds();
+                final Rectangle bounds = vp.getBounds();
                 // transform in screen coordinates
-                bounds.setLocation(ComponentUtil.convertPointToScreen(bounds.getLocation(), panel3D));
+                bounds.setLocation(ComponentUtil.convertPointToScreen(bounds.getLocation(), vp));
                 // do the capture
                 return robot.createScreenCapture(bounds);
             }
@@ -2046,7 +2143,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         {
             for (Layer l : getLayers())
             {
-                for (vtkProp prop : getLayerActors(l))
+                for (vtkProp prop : VtkUtil.getLayerProps(layer))
                 {
                     // image layer is not impacted by global layer visibility
                     if (l == getImageLayer())
@@ -2071,7 +2168,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         }
         else
         {
-            for (vtkProp prop : getLayerActors(layer))
+            for (vtkProp prop : VtkUtil.getLayerProps(layer))
             {
                 if (layer == getImageLayer())
                 {

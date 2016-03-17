@@ -69,7 +69,6 @@ import java.io.File;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -80,6 +79,7 @@ import javax.swing.WindowConstants;
 import vtk.vtkJavaGarbageCollector;
 import vtk.vtkNativeLibrary;
 import vtk.vtkObjectBase;
+import vtk.vtkVersion;
 
 /**
  * <br>
@@ -363,8 +363,8 @@ public class Icy
         // set LOCI debug level
         loci.common.DebugTools.enableLogging("ERROR");
         // set OGL debug level
-//        SystemUtil.setProperty("jogl.verbose", "TRUE");
-//        SystemUtil.setProperty("jogl.debug", "TRUE");
+        // SystemUtil.setProperty("jogl.verbose", "TRUE");
+        // SystemUtil.setProperty("jogl.debug", "TRUE");
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");
@@ -1246,15 +1246,17 @@ public class Icy
 
         if (vtkLibraryLoaded)
         {
-            System.out.println("VTK library successfully loaded...");
+            final String vv = new vtkVersion().GetVTKVersion();
+
+            System.out.println("VTK " + vv + " library successfully loaded...");
 
             final vtkJavaGarbageCollector vtkJavaGarbageCollector = vtkObjectBase.JAVA_OBJECT_MANAGER
                     .getAutoGarbageCollector();
-            
+
             // set auto garbage collection for VTK (every 20 seconds should be enough)
             // probably not a good idea...
-//            vtkJavaGarbageCollector.SetScheduleTime(5, TimeUnit.SECONDS);
-//            vtkJavaGarbageCollector.SetAutoGarbageCollection(true);
+            // vtkJavaGarbageCollector.SetScheduleTime(5, TimeUnit.SECONDS);
+            // vtkJavaGarbageCollector.SetAutoGarbageCollection(true);
         }
         else
         {

@@ -35,7 +35,7 @@ public class OpenGLUtil
      * 
      * @param version
      *        the version of OpenGL we want to test for (1 to 4)
-     * @param hardware
+     * @param hard
      *        specify if we query about hardware support (GPU) or not
      */
     public static boolean isOpenGLSupported(int version, boolean hard)

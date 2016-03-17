@@ -192,5 +192,14 @@ public abstract class Canvas3D extends IcyCanvas3D
         setVolumeScaleZ(value);
     }
 
+    /**
+     * Returns a RGB or ARGB (depending support) BufferedImage representing the canvas view for
+     * image at position (t, c).<br>
+     * 
+     * @param t
+     *        T position of wanted image (-1 for complete sequence)
+     * @param c
+     *        C position of wanted image (-1 for all channels)
+     */
     public abstract BufferedImage getRenderedImage(int t, int c);
 }

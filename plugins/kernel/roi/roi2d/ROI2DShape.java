@@ -42,6 +42,7 @@ import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.StringUtil;
+import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
 
 import java.awt.AlphaComposite;
@@ -180,8 +181,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
-            // nothing to update
+            // canvas was closed
             if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
                 return;
 
             final Sequence seq = canvas.getSequence();
@@ -300,7 +306,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             vPoints = VtkUtil.getPoints(vertices);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas.lock();
+            vtkPanel.lock();
             try
             {
                 // update outline polygon data
@@ -319,7 +325,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             }
             finally
             {
-                canvas.unlock();
+                vtkPanel.unlock();
             }
 
             // update color and others properties
@@ -339,10 +345,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 final double strk = getStroke();
                 // final float opacity = getOpacity();
 
+                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
                 // we need to lock canvas as actor can be accessed during rendering
-                if (cnv != null)
+                if (vtkPanel != null)
                 {
-                    cnv.lock();
+                    vtkPanel.lock();
                     try
                     {
                         // set actors color
@@ -357,7 +365,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     }
                     finally
                     {
-                        cnv.unlock();
+                        vtkPanel.unlock();
                     }
                 }
                 else

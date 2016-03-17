@@ -686,7 +686,7 @@ public class IcyColorMapComponent implements XMLPersistent
         // sort the list
         Collections.sort(controlPoints);
 
-        final ArrayList<Point> points = new ArrayList<Point>();
+        final List<Point> points = new ArrayList<Point>();
 
         // get position only
         for (ControlPoint point : controlPoints)

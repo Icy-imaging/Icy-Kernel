@@ -20,13 +20,14 @@ package icy.math;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author stephane
  */
 public class Interpolator
 {
-    private static double[][] pointsToXY(ArrayList<Point> points)
+    private static double[][] pointsToXY(List<Point> points)
     {
         final int len = points.size();
         final double[][] xy = new double[2][len];
@@ -58,7 +59,7 @@ public class Interpolator
     /**
      * Return Y linear interpolated coordinates from specified points and given X increment
      */
-    public static double[] doYLinearInterpolation(ArrayList<Point> points, double xinc)
+    public static double[] doYLinearInterpolation(List<Point> points, double xinc)
     {
         final double[][] xy = pointsToXY(points);
         return doYLinearInterpolation(xy[0], xy[1], xinc);
