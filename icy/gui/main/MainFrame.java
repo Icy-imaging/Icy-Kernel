@@ -309,9 +309,17 @@ public class MainFrame extends JRibbonFrame
         // main pane
         mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel, null);
         mainPane.setContinuousLayout(true);
+        mainPane.setOneTouchExpandable(true);
 
-        // take in account the divider and border size
-        lastInspectorWidth = inspector.getPreferredSize().width + 6 + 8;
+        // get saved inspector width
+        lastInspectorWidth = inspector.getPreferredSize().width;
+        // add the divider and border size if inspector was visible
+        if (lastInspectorWidth > 16)
+            lastInspectorWidth += 6 + 8;
+        // just force size for collapsed (divider + minimum border)
+        else
+            lastInspectorWidth = 6 + 4;
+
         if (inspector.isInternalized())
         {
             mainPane.setRightComponent(inspector);

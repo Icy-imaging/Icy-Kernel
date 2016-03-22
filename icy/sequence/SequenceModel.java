@@ -18,7 +18,7 @@
  */
 package icy.sequence;
 
-import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.util.EventListener;
 
 /**
@@ -71,12 +71,12 @@ public interface SequenceModel
     /**
      * Get image at position [T, Z]
      */
-    public Image getImage(int t, int z);
+    public BufferedImage getImage(int t, int z);
 
     /**
      * Get image at position [T, Z, C]
      */
-    public Image getImage(int t, int z, int c);
+    public BufferedImage getImage(int t, int z, int c);
 
     /**
      * fire model image changed event

@@ -33,9 +33,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -59,7 +59,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
          */
         private static final long serialVersionUID = 6307431557815572470L;
 
-        private Image cache;
+        private BufferedImage cache;
 
         public CustomPanel()
         {
@@ -86,8 +86,8 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
             {
                 final int sw = getSizeX();
                 final int sh = getSizeY();
-                final int iw = cache.getWidth(null);
-                final int ih = cache.getHeight(null);
+                final int iw = cache.getWidth();
+                final int ih = cache.getHeight();
                 final int fiw;
                 final int fih;
 
@@ -124,7 +124,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
             if (model != null)
                 return model.getSizeX();
             if (cache != null)
-                return cache.getWidth(null);
+                return cache.getWidth();
             return 0;
         }
 
@@ -133,7 +133,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
             if (model != null)
                 return model.getSizeY();
             if (cache != null)
-                return cache.getHeight(null);
+                return cache.getHeight();
             return 0;
         }
 
@@ -141,7 +141,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
         public void run()
         {
             // rebuild cache and repaint
-            final Image img = getImage();
+            final BufferedImage img = getImage();
 
             if (img instanceof IcyBufferedImage)
                 cache = IcyBufferedImageUtil.getARGBImage((IcyBufferedImage) img);
@@ -475,7 +475,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
         imagePanel.imageChanged();
     }
 
-    Image getImage()
+    BufferedImage getImage()
     {
         if (model == null)
             return null;

@@ -22,7 +22,6 @@ import icy.gui.frame.IcyInternalFrame;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.viewer.Viewer;
-import icy.image.ImageUtil;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
 import icy.resource.ResourceUtil;
@@ -34,6 +33,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -46,7 +46,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,14 +82,12 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     /**
      * Background overlay.
      */
-    public static class BackgroundDesktopOverlay extends AbstractDesktopOverlay // implements Runnable
+    public class BackgroundDesktopOverlay extends AbstractDesktopOverlay implements ImageObserver
     {
         private final static String BACKGROUND_PATH = "background/";
 
-        private final BufferedImage backGround;
-        private final BufferedImage icyLogo;
-        private final int bgImgWidth;
-        private final int bgImgHeight;
+        private final Image backGround;
+        private final Image icyLogo;
         private final Color textColor;
         private final Color bgTextColor;
 
@@ -98,16 +96,13 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             super();
 
             // load random background (nor really random as we have only one right now)
-            backGround = ImageUtil.toGray(ResourceUtil.getImage(BACKGROUND_PATH + Integer.toString(Random.nextInt(1)) + ".jpg"));
+            backGround = ResourceUtil.getImage(BACKGROUND_PATH + Integer.toString(Random.nextInt(1)) + ".jpg");
             // load Icy logo
             icyLogo = ResourceUtil.getImage("logoICY.png");
 
             // default text colors
             textColor = new Color(0, 0, 0, 0.5f);
             bgTextColor = new Color(1, 1, 1, 0.5f);
-
-            bgImgWidth = backGround.getWidth();
-            bgImgHeight = backGround.getHeight();
         }
 
         @Override
@@ -121,6 +116,9 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             else
                 bgColor = Color.lightGray;
 
+            final int bgImgWidth = backGround.getWidth(this);
+            final int bgImgHeight = backGround.getHeight(this);
+
             // compute image scaling
             final double scale = Math.max((double) width / (double) bgImgWidth, (double) height / (double) bgImgHeight);
             final Graphics2D g2 = (Graphics2D) g.create();
@@ -131,7 +129,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
             // paint image over background in transparency
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.2f));
-            g2.drawImage(backGround, 0, 0, (int) (scale * bgImgWidth), (int) (scale * bgImgHeight), bgColor, null);
+            g2.drawImage(backGround, 0, 0, (int) (scale * bgImgWidth), (int) (scale * bgImgHeight), bgColor, this);
 
             final String text = "Version " + Icy.version;
             final int textWidth = (int) GraphicsUtil.getStringBounds(g, text).getWidth();
@@ -143,9 +141,21 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             g2.setColor(textColor);
             g2.drawString(text, width - (textWidth + 30), height - 9);
             // and draw Icy text logo
-            g2.drawImage(icyLogo, width - 220, height - 130, null);
+            g2.drawImage(icyLogo, width - 220, height - 130, this);
 
             g2.dispose();
+        }
+
+        @Override
+        public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height)
+        {
+            if ((infoflags & ImageObserver.ALLBITS) != 0)
+            {
+                repaint();
+                return false;
+            }
+
+            return true;
         }
     }
 

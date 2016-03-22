@@ -446,13 +446,24 @@ public class Icy
 
     static void checkParameters()
     {
-        // we verify that some parameters are incorrect
-        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 256))
+        // we are using a 32 bits JVM with a 64 bits OS --> warn the user
+        if (SystemUtil.isWindows64() && SystemUtil.is32bits())
         {
-            final String text = "Your maximum memory setting is low ! You should increase it in preferences setting.";
+            final String text = "You're using a 32 bits Java with a 64 bits OS, try to upgrade to 64 bits java for better performance !";
 
             if (Icy.getMainInterface().isHeadLess())
-                System.out.println(text);
+                System.out.println("Warning: " + text);
+            else
+                new ToolTipFrame("<html>" + text + "</html>", 15, "badJavaArchTip");
+        }
+
+        // detect bad memory setting
+        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 256))
+        {
+            final String text = "Your maximum memory setting is low, you should increase it in Preferences.";
+
+            if (Icy.getMainInterface().isHeadLess())
+                System.out.println("Warning: " + text);
             else
                 new ToolTipFrame("<html>" + text + "</html>", 15, "lowMemoryTip");
         }

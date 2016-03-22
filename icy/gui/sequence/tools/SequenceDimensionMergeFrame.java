@@ -33,9 +33,9 @@ import icy.sequence.SequenceUtil.MergeZHelper;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 
 import javax.swing.BorderFactory;
 
@@ -112,7 +112,7 @@ public class SequenceDimensionMergeFrame extends ActionDialog
         }
 
         @Override
-        public Image getImage(int t, int z)
+        public BufferedImage getImage(int t, int z)
         {
             final Sequence[] sequences = mergePanel.getSequences();
 
@@ -139,7 +139,7 @@ public class SequenceDimensionMergeFrame extends ActionDialog
         }
 
         @Override
-        public Image getImage(int t, int z, int c)
+        public BufferedImage getImage(int t, int z, int c)
         {
             final IcyBufferedImage img = (IcyBufferedImage) getImage(t, z);
 

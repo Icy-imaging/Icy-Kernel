@@ -42,6 +42,9 @@ public class NetworkPreferences
     private static final String ID_PROXY_FTP_PORT = "proxyFTPPort";
     private static final String ID_PROXY_SOCKS_HOST = "proxySOCKSHost";
     private static final String ID_PROXY_SOCKS_PORT = "proxySOCKSPort";
+    private static final String ID_PROXY_AUTHENTICATION = "proxyAuthentication";
+    private static final String ID_PROXY_USER = "proxyUser";
+    private static final String ID_PROXY_PASSWORD = "proxyPassword";
 
     /**
      * preferences
@@ -150,5 +153,35 @@ public class NetworkPreferences
     public static void setProxySOCKSPort(int value)
     {
         preferences.putInt(ID_PROXY_SOCKS_PORT, value);
+    }
+
+    public static boolean getProxyAuthentication()
+    {
+        return preferences.getBoolean(ID_PROXY_AUTHENTICATION, false);
+    }
+
+    public static void setProxyAuthentication(boolean value)
+    {
+        preferences.putBoolean(ID_PROXY_AUTHENTICATION, value);
+    }
+
+    public static String getProxyUser()
+    {
+        return preferences.get(ID_PROXY_USER, "");
+    }
+
+    public static void setProxyUser(String value)
+    {
+        preferences.put(ID_PROXY_USER, value);
+    }
+
+    public static String getProxyPassword()
+    {
+        return preferences.get(ID_PROXY_PASSWORD, "");
+    }
+
+    public static void setProxyPassword(String value)
+    {
+        preferences.put(ID_PROXY_PASSWORD, value);
     }
 }

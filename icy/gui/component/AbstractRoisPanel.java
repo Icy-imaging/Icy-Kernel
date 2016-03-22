@@ -44,6 +44,7 @@ import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
@@ -104,6 +105,7 @@ import plugins.kernel.roi.descriptor.measure.ROIMassCenterZDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROIPerimeterDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROISurfaceAreaDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
+import plugins.kernel.roi.descriptor.property.ROIColorDescriptor;
 import plugins.kernel.roi.descriptor.property.ROIIconDescriptor;
 import plugins.kernel.roi.descriptor.property.ROINameDescriptor;
 import plugins.kernel.roi.descriptor.property.ROIOpacityDescriptor;
@@ -1350,7 +1352,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         }
         sbf.append("\r\n");
 
-        final List<ROI> rois = filteredRoiList;
+        final List<ROI> rois = new ArrayList<ROI>(filteredRoiList);
 
         // content
         for (ROI roi : rois)
@@ -1427,15 +1429,25 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 if (columnInfo.visible)
                 {
                     final DescriptorResult result = descriptorResults.get(columnInfo);
+                    final String id = columnInfo.descriptor.getId();
                     final Object value;
 
                     if (result != null)
-                        value = results.formatValue(result.getValue(), columnInfo.descriptor.getId());
+                        value = results.formatValue(result.getValue(), id);
                     else
                         value = null;
 
                     if (value != null)
-                        sbf.append(value);
+                    {
+                        // special case of icon --> use the ROI class name
+                        if (StringUtil.equals(id, ROIIconDescriptor.ID))
+                            sbf.append(roi.getSimpleClassName());
+                        // special case of color --> use the color code
+                        else if (StringUtil.equals(id, ROIColorDescriptor.ID))
+                            sbf.append(String.format("%06X", Integer.valueOf(roi.getColor().getRGB() & 0xFFFFFF)));
+                        else
+                            sbf.append(value);
+                    }
 
                     sbf.append("\t");
                 }
@@ -1591,7 +1603,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         {
             final ColumnInfo ci = getColumnInfo(column);
 
-            if (ci != null)
+            if ((ci != null) && (ci.showName))
                 return ci.name;
 
             return "";
@@ -1728,9 +1740,10 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             if (ci != null)
             {
                 final ROIDescriptor descriptor = ci.descriptor;
+                final String id = descriptor.getId();
 
-                // only name descriptor is editable (a bit hacky)
-                return descriptor.getId().equals(ROINameDescriptor.ID);
+                // only name and color descriptor are editable (a bit hacky)
+                return id.equals(ROINameDescriptor.ID) || id.equals(ROIColorDescriptor.ID);
             }
 
             return false;
@@ -1849,10 +1862,13 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             if (ci != null)
             {
                 final ROIDescriptor descriptor = ci.descriptor;
+                final String id = descriptor.getId();
 
                 // only name descriptor is editable (a bit hacky)
-                if (descriptor.getId().equals(ROINameDescriptor.ID))
+                if (id.equals(ROINameDescriptor.ID))
                     roi.setName((String) aValue);
+                else if (id.equals(ROIColorDescriptor.ID))
+                    roi.setColor((Color) aValue);
             }
         }
 
@@ -2075,6 +2091,9 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             if (StringUtil.equals(id, ROIIconDescriptor.ID))
                 return order;
             order++;
+            if (StringUtil.equals(id, ROIColorDescriptor.ID))
+                return order;
+            order++;
             if (StringUtil.equals(id, ROINameDescriptor.ID))
                 return order;
 
@@ -2171,6 +2190,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
             if (StringUtil.equals(id, ROIIconDescriptor.ID))
                 return 22;
+            if (StringUtil.equals(id, ROIColorDescriptor.ID))
+                return 18;
             if (StringUtil.equals(id, ROINameDescriptor.ID))
                 return 60;
 
@@ -2178,6 +2199,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
             if (type == Integer.class)
                 return 30;
+            if (type == Float.class)
+                return 40;
             if (type == Double.class)
                 return 40;
             if (type == String.class)
@@ -2195,6 +2218,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
             if (StringUtil.equals(id, ROIIconDescriptor.ID))
                 return 22;
+            if (StringUtil.equals(id, ROIColorDescriptor.ID))
+                return 18;
 
             return Integer.MAX_VALUE;
         }
@@ -2235,6 +2260,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
     protected class ColumnInfo extends BaseColumnInfo
     {
+        boolean showName;
         String name;
         final int channel;
 
@@ -2264,13 +2290,15 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
         protected void refreshName()
         {
+            name = descriptor.getName() + getSuffix();
+
             final String id = descriptor.getId();
 
             // we don't want to display name for these descriptors
-            if (id.equals(ROIIconDescriptor.ID))
-                name = "";
+            if (StringUtil.equals(id, ROIIconDescriptor.ID) || StringUtil.equals(id, ROIColorDescriptor.ID))
+                showName = false;
             else
-                name = descriptor.getName() + getSuffix();
+                showName = true;
         }
 
         @Override
@@ -2304,21 +2332,21 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
             // column info are sorted on their order
             int index = 0;
-            for (ColumnInfo cp : columnInfos)
+            for (ColumnInfo ci : columnInfos)
             {
-                final ROIDescriptor descriptor = cp.descriptor;
+                final ROIDescriptor descriptor = ci.descriptor;
                 final TableColumnExt column = new TableColumnExt(index++);
 
                 column.setIdentifier(descriptor.getId());
-                column.setMinWidth(cp.minSize);
-                column.setPreferredWidth(cp.defaultSize);
-                if (cp.maxSize != Integer.MAX_VALUE)
-                    column.setMaxWidth(cp.maxSize);
-                if (cp.minSize == cp.maxSize)
+                column.setMinWidth(ci.minSize);
+                column.setPreferredWidth(ci.defaultSize);
+                if (ci.maxSize != Integer.MAX_VALUE)
+                    column.setMaxWidth(ci.maxSize);
+                if (ci.minSize == ci.maxSize)
                     column.setResizable(false);
-                column.setHeaderValue(cp.name);
-                column.setToolTipText(descriptor.getDescription() + cp.getSuffix());
-                column.setVisible(cp.visible);
+                column.setHeaderValue(ci.showName ? ci.name : "");
+                column.setToolTipText(descriptor.getDescription() + ci.getSuffix());
+                column.setVisible(ci.visible);
                 column.setSortable(true);
 
                 final Class<?> type = descriptor.getType();
@@ -2326,6 +2354,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 // image class type column --> use a special renderer
                 if (type == Image.class)
                     column.setCellRenderer(new ImageTableCellRenderer(18));
+                else if (type == Color.class)
+                    column.setCellRenderer(new ImageTableCellRenderer(16));
                 // use the number cell renderer
                 else if (ClassUtil.isSubClass(type, Number.class))
                     column.setCellRenderer(new SubstanceDefaultTableCellRenderer.NumberRenderer());
@@ -2352,7 +2382,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                     // that should be always the case
                     if (StringUtil.equals((String) column.getIdentifier(), descriptor.getId()))
                     {
-                        column.setHeaderValue(ci.name);
+                        column.setHeaderValue(ci.showName ? ci.name : "");
                         if (column instanceof TableColumnExt)
                             ((TableColumnExt) column).setToolTipText(descriptor.getDescription() + ci.getSuffix());
                     }

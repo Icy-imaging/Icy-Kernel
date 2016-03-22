@@ -203,7 +203,7 @@ public class ResourceUtil
     public static final Image ICON_PANEL_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
     public static final Image ICON_PANEL_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
     public static final Image ICON_PIN = ResourceUtil.getAlphaIconAsImage("pin.png");
-    
+
     public static final Image ICON_NODE_EXPANDED = ResourceUtil.getAlphaIconAsImage("node_expanded.png");
     public static final Image ICON_NODE_COLLAPSED = ResourceUtil.getAlphaIconAsImage("node_collapsed.png");
 
@@ -292,6 +292,8 @@ public class ResourceUtil
         // resize if needed
         if ((image != null) && (size != -1))
         {
+            // be sure image data are ready
+            ImageUtil.waitImageReady(image);
             // resize only if image has different size
             if ((image.getWidth(null) != size) || (image.getWidth(null) != size))
                 return ImageUtil.scale(image, size, size);
@@ -306,15 +308,27 @@ public class ResourceUtil
      * 
      * @param name
      */
-    public static BufferedImage getImage(String name)
+    public static Image getImage(String name)
     {
-        final BufferedImage result;
+        final Image result;
         final URL url = ResourceUtil.class.getResource("/" + IMAGE_PATH + name);
+
+        // TODO: this actually return the image asynchronously, check it does not bring problems
+//        if (url != null)
+//            result = ImageUtil.loadAsync(url);
+//        else
+//            result = ImageUtil.loadAsync(ICON_PATH + name);
 
         if (url != null)
             result = ImageUtil.load(url, true);
         else
             result = ImageUtil.load(new File(IMAGE_PATH + name), true);
+
+        if (result == null)
+        {
+            System.out.println("Resource name can't be found: " + name);
+            return null;
+        }
 
         return result;
     }
@@ -354,7 +368,14 @@ public class ResourceUtil
     public static Image getIconAsImage(String name, int size)
     {
         final Image image;
+
         final URL url = ResourceUtil.class.getResource("/" + ICON_PATH + name);
+
+        // TODO: this actually return the image asynchronously, check it does not bring problems
+//        if (url != null)
+//            image = ImageUtil.loadAsync(url);
+//        else
+//            image = ImageUtil.loadAsync(ICON_PATH + name);
 
         if (url != null)
             image = ImageUtil.load(url, true);

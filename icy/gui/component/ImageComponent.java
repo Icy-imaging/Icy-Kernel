@@ -18,6 +18,8 @@
  */
 package icy.gui.component;
 
+import icy.image.ImageUtil;
+
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -50,7 +52,11 @@ public class ImageComponent extends JPanel
         if (d != null)
             dim = d;
         else if (image != null)
-            dim = new Dimension(image.getWidth(this), image.getHeight(this));
+        {
+            // be sure image data are ready
+            ImageUtil.waitImageReady(image);
+            dim = new Dimension(image.getWidth(null), image.getHeight(null));
+        }
         else
             dim = new Dimension(320, 200);
 

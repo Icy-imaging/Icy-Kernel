@@ -18,6 +18,41 @@
  */
 package icy.canvas;
 
+import icy.canvas.CanvasLayerEvent.LayersEventType;
+import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.menu.ToolRibbonTask;
+import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
+import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.image.ImageUtil;
+import icy.main.Icy;
+import icy.math.Interpolator;
+import icy.math.MathUtil;
+import icy.math.MultiSmoothMover;
+import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
+import icy.math.SmoothMover;
+import icy.math.SmoothMover.SmoothMoveType;
+import icy.math.SmoothMover.SmoothMoverAdapter;
+import icy.painter.ImageOverlay;
+import icy.painter.Overlay;
+import icy.preferences.CanvasPreferences;
+import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.roi.ROI;
+import icy.sequence.DimensionId;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.StringUtil;
+
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -52,50 +87,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-
-import icy.canvas.CanvasLayerEvent.LayersEventType;
-import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.menu.ToolRibbonTask;
-import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.GuiUtil;
-import icy.gui.viewer.Viewer;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
-import icy.image.ImageUtil;
-import icy.main.Icy;
-import icy.math.Interpolator;
-import icy.math.MathUtil;
-import icy.math.MultiSmoothMover;
-import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
-import icy.math.SmoothMover;
-import icy.math.SmoothMover.SmoothMoveType;
-import icy.math.SmoothMover.SmoothMoverAdapter;
-import icy.painter.ImageOverlay;
-import icy.painter.Overlay;
-import icy.preferences.CanvasPreferences;
-import icy.preferences.XMLPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.roi.ROI;
-import icy.sequence.DimensionId;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.system.thread.SingleProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.StringUtil;
 
 /**
  * New Canvas 2D : default ICY 2D viewer.<br>
@@ -113,9 +108,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     static final int ICON_SIZE = 20;
     static final int ICON_TARGET_SIZE = 20;
 
-    static final Image ICON_CENTER_IMAGE = ImageUtil.scale(ResourceUtil.ICON_CENTER_IMAGE, ICON_SIZE, ICON_SIZE);
-    static final Image ICON_FIT_IMAGE = ImageUtil.scale(ResourceUtil.ICON_FIT_IMAGE, ICON_SIZE, ICON_SIZE);
-    static final Image ICON_FIT_CANVAS = ImageUtil.scale(ResourceUtil.ICON_FIT_CANVAS, ICON_SIZE, ICON_SIZE);
+    static final Image ICON_CENTER_IMAGE = ResourceUtil.ICON_CENTER_IMAGE;
+    static final Image ICON_FIT_IMAGE = ResourceUtil.ICON_FIT_IMAGE;
+    static final Image ICON_FIT_CANVAS = ResourceUtil.ICON_FIT_CANVAS;
+    // static final Image ICON_CENTER_IMAGE = ImageUtil.scale(ResourceUtil.ICON_CENTER_IMAGE, ICON_SIZE, ICON_SIZE);
+    // static final Image ICON_FIT_IMAGE = ImageUtil.scale(ResourceUtil.ICON_FIT_IMAGE, ICON_SIZE, ICON_SIZE);
+    // static final Image ICON_FIT_CANVAS = ImageUtil.scale(ResourceUtil.ICON_FIT_CANVAS, ICON_SIZE, ICON_SIZE);
 
     static final Image ICON_TARGET = ImageUtil.scale(ResourceUtil.ICON_TARGET, ICON_SIZE, ICON_SIZE);
     static final Image ICON_TARGET_BLACK = ImageUtil.getColorImageFromAlphaImage(ICON_TARGET, Color.black);
@@ -590,8 +588,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         }
     }
 
-    public class CanvasView extends JPanel
-            implements ActionListener, MouseWheelListener, MouseListener, MouseMotionListener
+    public class CanvasView extends JPanel implements ActionListener, MouseWheelListener, MouseListener,
+            MouseMotionListener
     {
         /**
          * 
@@ -804,8 +802,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             extX = (2 * dx2) - dx;
                             extY = (2 * dy2) - dy;
 
-                            setOffset((int) transform.getDestValue(TRANS_X) + dx2,
-                                    (int) transform.getDestValue(TRANS_Y) + dy2, true);
+                            setOffset((int) smoothTransform.getDestValue(TRANS_X) + dx2,
+                                    (int) smoothTransform.getDestValue(TRANS_Y) + dy2, true);
                         }
                     }
 
@@ -1173,9 +1171,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                     // reload current value
                     if (curScaleX == -1)
-                        curScaleX = transform.getDestValue(SCALE_X);
+                        curScaleX = smoothTransform.getDestValue(SCALE_X);
                     if (curScaleY == -1)
-                        curScaleY = transform.getDestValue(SCALE_Y);
+                        curScaleY = smoothTransform.getDestValue(SCALE_Y);
 
                     curScaleX = curScaleX * sx;
                     curScaleY = curScaleY * sy;
@@ -1369,12 +1367,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             super.paintComponent(g);
 
-            final int canvasCenterX = getCanvasSizeX() / 2;
-            final int canvasCenterY = getCanvasSizeY() / 2;
+            final int w = getCanvasSizeX();
+            final int h = getCanvasSizeY();
+            final int canvasCenterX = w / 2;
+            final int canvasCenterY = h / 2;
 
-            // layers
+            // background and layers
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
+
+                // background
+                if (isBackgroundColorEnabled())
+                {
+                    g2.setBackground(getBackgroundColor());
+                    g2.clearRect(0, 0, w, h);
+                }
 
                 // apply filtering
                 if (CanvasPreferences.getFiltering() && ((getScaleX() < 4d) && (getScaleY() < 4d)))
@@ -1721,7 +1728,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      * 
      * @author Stephane
      */
-    private static class Canvas2DSmoothMover extends MultiSmoothMover
+    static class Canvas2DSmoothMover extends MultiSmoothMover
     {
         public Canvas2DSmoothMover(int size, SmoothMoveType type)
         {
@@ -1922,15 +1929,17 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     /**
      * pref ID
      */
-    private static final String PREF_CANVAS2D_ID = "Canvas2D";
+    static final String PREF_CANVAS2D_ID = "Canvas2D";
 
-    private static final String ID_FIT_CANVAS = "fitCanvas";
+    static final String ID_FIT_CANVAS = "fitCanvas";
+    static final String ID_BG_COLOR_ENABLED = "bgColorEnabled";
+    static final String ID_BG_COLOR = "bgColor";
 
-    private final static int TRANS_X = 0;
-    private final static int TRANS_Y = 1;
-    private final static int SCALE_X = 2;
-    private final static int SCALE_Y = 3;
-    private final static int ROT = 4;
+    final static int TRANS_X = 0;
+    final static int TRANS_Y = 1;
+    final static int SCALE_X = 2;
+    final static int SCALE_Y = 3;
+    final static int ROT = 4;
 
     /**
      * view where we draw
@@ -1943,14 +1952,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     final CanvasMap canvasMap;
 
     /**
-     * gui
+     * GUI & setting
      */
-    JComboBox zoomComboBox;
-    JComboBox rotationComboBox;
-
     IcyToggleButton zoomFitCanvasButton;
-    IcyButton zoomFitImageButton;
-    IcyButton centerImageButton;
+    Color bgColor;
 
     /**
      * preferences
@@ -1958,9 +1963,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     final XMLPreferences preferences;
 
     /**
-     * The transform object contains all transform informations<br>
+     * The smoothTransform object contains all transform informations<br>
      */
-    final Canvas2DSmoothMover transform;
+    final Canvas2DSmoothMover smoothTransform;
 
     String textInfos;
     boolean modifyingZoom;
@@ -1982,14 +1987,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         preferences = CanvasPreferences.getPreferences().node(PREF_CANVAS2D_ID);
 
         // init transform (5 values, log transition type)
-        transform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);
+        smoothTransform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);
         // initials transform values
-        transform.setValues(new double[] {0d, 0d, 1d, 1d, 0d});
+        smoothTransform.setValues(new double[] {0d, 0d, 1d, 1d, 0d});
         textInfos = null;
         modifyingZoom = false;
         modifyingRotation = false;
 
-        transform.addListener(new MultiSmoothMoverAdapter()
+        smoothTransform.addListener(new MultiSmoothMoverAdapter()
         {
             @Override
             public void valueChanged(MultiSmoothMover source, int index, double newValue, int pourcent)
@@ -2036,12 +2041,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         });
 
         // want fast transition
-        transform.setMoveTime(400);
+        smoothTransform.setMoveTime(400);
         // and very smooth refresh if possible
-        transform.setUpdateDelay(20);
+        smoothTransform.setUpdateDelay(20);
 
-        // build inspector canvas panel
-        buildCanvasPanel();
+        // build inspector canvas panel & GUI stuff
+        buildSettingGUI();
 
         // set view in center
         add(canvasView, BorderLayout.CENTER);
@@ -2061,9 +2066,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         updateZNav();
         updateTNav();
 
-        // as scale isn't necessary changed (if already 100%)
-        zoomComboBox.setSelectedItem(Integer.toString((int) (getScaleX() * 100)) + " %");
-
         final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
         if (trt != null)
             trt.addListener(this);
@@ -2077,7 +2079,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         canvasView.shutDown();
 
         // shutdown mover object (else internal timer keep a reference to Canvas2D)
-        transform.shutDown();
+        smoothTransform.shutDown();
 
         final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
         if (trt != null)
@@ -2090,153 +2092,22 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         return new Canvas2DImageOverlay();
     }
 
+    public Canvas2DSettingPanel getCanvasSettingPanel()
+    {
+        return (Canvas2DSettingPanel) panel;
+    }
+
     /**
      * Build canvas panel for inspector
      */
-    private void buildCanvasPanel()
+    private void buildSettingGUI()
     {
-        // canvas panel (for inspector)
-        panel = new JPanel();
+        // canvas setting panel (for inspector)
+        panel = new Canvas2DSettingPanel(this);
+        // add the map to it
+        panel.add(canvasMap, BorderLayout.CENTER);
 
-        zoomComboBox = new JComboBox(new String[] {"10", "50", "100", "200", "400", "1000"});
-        zoomComboBox.setEditable(true);
-        zoomComboBox.setToolTipText("Select zoom factor");
-        zoomComboBox.setSelectedIndex(2);
-        ComponentUtil.setFixedWidth(zoomComboBox, 80);
-        zoomComboBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (!modifyingZoom)
-                {
-                    try
-                    {
-                        final double scale = Double.parseDouble((String) zoomComboBox.getSelectedItem()) / 100;
-
-                        // set mouse position on view center
-                        centerMouseOnView();
-                        // set new scale
-                        setScale(scale, scale, true, true);
-                    }
-                    catch (NumberFormatException E)
-                    {
-                        // ignore change
-                    }
-                }
-            }
-        });
-
-        rotationComboBox = new JComboBox(new String[] {"0", "45", "90", "135", "180", "225", "270", "315"});
-        rotationComboBox.setEditable(true);
-        rotationComboBox.setToolTipText("Select rotation angle");
-        rotationComboBox.setSelectedIndex(0);
-        ComponentUtil.setFixedWidth(rotationComboBox, 80);
-        rotationComboBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (!modifyingRotation)
-                {
-                    try
-                    {
-                        final double angle = Double.parseDouble((String) rotationComboBox.getSelectedItem());
-                        // we first apply modulo
-                        setRotation(getRotation(), false);
-                        // then set new angle
-                        setRotation((angle * Math.PI) / 180d, true);
-                    }
-                    catch (NumberFormatException E)
-                    {
-                        // ignore change
-                    }
-                }
-            }
-        });
-
-        final IcyButton zoomPlus = new IcyButton(new IcyIcon(ResourceUtil.ICON_PLUS, ICON_SIZE));
-        zoomPlus.setFlat(true);
-        zoomPlus.setToolTipText("Increase zoom factor");
-        zoomPlus.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final double scale = transform.getDestValue(SCALE_X) * 1.25;
-
-                // set mouse position on view center
-                centerMouseOnView();
-                // apply scale
-                setScale(scale, scale, true, true);
-            }
-        });
-
-        final IcyButton zoomMinus = new IcyButton(new IcyIcon(ResourceUtil.ICON_MINUS, ICON_SIZE));
-        zoomMinus.setFlat(true);
-        zoomMinus.setToolTipText("Reduce zoom factor");
-        zoomMinus.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final double scale = transform.getDestValue(SCALE_X) * 0.8;
-
-                // set mouse position on view center
-                centerMouseOnView();
-                // apply scale
-                setScale(scale, scale, true, true);
-            }
-        });
-
-        final IcyButton rotateUnclock = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROTATE_UNCLOCK, ICON_SIZE));
-        rotateUnclock.setFlat(true);
-        rotateUnclock.setToolTipText("Rotate counter clockwise");
-        rotateUnclock.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                setRotation(transform.getDestValue(ROT) + (Math.PI / 8), true);
-            }
-        });
-
-        final IcyButton rotateClock = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROTATE_CLOCK, ICON_SIZE));
-        rotateClock.setFlat(true);
-        rotateClock.setToolTipText("Rotate clockwise");
-        rotateClock.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                setRotation(transform.getDestValue(ROT) - (Math.PI / 8), true);
-            }
-        });
-
-        zoomFitImageButton = new IcyButton(new IcyIcon(ICON_FIT_IMAGE));
-        zoomFitImageButton.setFocusable(false);
-        zoomFitImageButton.setToolTipText("Fit window to image size");
-        zoomFitImageButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                fitCanvasToImage();
-            }
-        });
-
-        centerImageButton = new IcyButton(new IcyIcon(ICON_CENTER_IMAGE));
-        centerImageButton.setFocusable(false);
-        centerImageButton.setToolTipText("Center image in window");
-        centerImageButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                centerImage();
-            }
-        });
-
+        // fit canvas toggle
         zoomFitCanvasButton = new IcyToggleButton(new IcyIcon(ICON_FIT_CANVAS));
         zoomFitCanvasButton.setSelected(preferences.getBoolean(ID_FIT_CANVAS, false));
         zoomFitCanvasButton.setFocusable(false);
@@ -2250,45 +2121,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 preferences.putBoolean(ID_FIT_CANVAS, selected);
 
-                zoomComboBox.setEnabled(!selected);
-                zoomPlus.setEnabled(!selected);
-                zoomMinus.setEnabled(!selected);
-                zoomFitImageButton.setEnabled(!selected);
-                centerImageButton.setEnabled(!selected);
-
                 // fit if enabled
                 if (selected)
                     fitImageToCanvas(true);
             }
         });
-
-        final boolean selected = zoomFitCanvasButton.isSelected();
-
-        // enabled or not depending checkbox state
-        zoomComboBox.setEnabled(!selected);
-        zoomPlus.setEnabled(!selected);
-        zoomMinus.setEnabled(!selected);
-        zoomFitImageButton.setEnabled(!selected);
-        centerImageButton.setEnabled(!selected);
-
-        // bottom sub panel
-        final JPanel subPanel = new JPanel();
-        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.PAGE_AXIS));
-
-        subPanel.add(
-                GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), GuiUtil.createFixedWidthBoldLabel("Zoom", 70),
-                        zoomComboBox, GuiUtil.createFixedWidthBoldLabel("%", 20), Box.createHorizontalGlue(), zoomMinus,
-                        Box.createHorizontalStrut(4), zoomPlus, Box.createHorizontalStrut(4)));
-        subPanel.add(Box.createVerticalStrut(4));
-        subPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
-                GuiUtil.createFixedWidthBoldLabel("Rotation", 70), rotationComboBox,
-                GuiUtil.createFixedWidthBoldLabel("°", 20), Box.createHorizontalGlue(), rotateUnclock,
-                Box.createHorizontalStrut(4), rotateClock, Box.createHorizontalStrut(4)));
-
-        panel.setLayout(new BorderLayout());
-
-        panel.add(canvasMap, BorderLayout.CENTER);
-        panel.add(subPanel, BorderLayout.SOUTH);
     }
 
     @Override
@@ -2368,8 +2205,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final Point2D.Double newTrans = canvasToImageDelta(canvasCenterX - pt.x, canvasCenterY - pt.y, 1d, 1d,
                 getRotationZ());
 
-        setOffset((int) (transform.getDestValue(TRANS_X) + Math.round(newTrans.x)),
-                (int) (transform.getDestValue(TRANS_Y) + Math.round(newTrans.y)), false);
+        setOffset((int) (smoothTransform.getDestValue(TRANS_X) + Math.round(newTrans.x)),
+                (int) (smoothTransform.getDestValue(TRANS_Y) + Math.round(newTrans.y)), false);
     }
 
     /**
@@ -2397,9 +2234,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         // modify all at once for synchronized change events
         if (smooth)
-            transform.moveTo(values);
+            smoothTransform.moveTo(values);
         else
-            transform.setValues(values);
+            smoothTransform.setValues(values);
     }
 
     /**
@@ -2413,8 +2250,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final int adjX = Math.min(getMaxOffsetX(), Math.max(getMinOffsetX(), x));
         final int adjY = Math.min(getMaxOffsetY(), Math.max(getMinOffsetY(), y));
 
-        setTransform(adjX, adjY, transform.getDestValue(SCALE_X), transform.getDestValue(SCALE_Y),
-                transform.getDestValue(ROT), smooth);
+        setTransform(adjX, adjY, smoothTransform.getDestValue(SCALE_X), smoothTransform.getDestValue(SCALE_Y),
+                smoothTransform.getDestValue(ROT), smooth);
     }
 
     /**
@@ -2454,14 +2291,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             return;
 
         // get destination rot
-        final double rot = transform.getDestValue(ROT);
+        final double rot = smoothTransform.getDestValue(ROT);
         // limit min and max zoom ratio
         final double newScaleX = Math.max(0.01d, Math.min(100d, x));
         final double newScaleY = Math.max(0.01d, Math.min(100d, y));
 
         // get new mouse position on canvas pixel
-        final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY,
-                rot);
+        final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY, rot);
         // new image size
         final int newImgSizeX = (int) Math.ceil(getImageSizeX() * newScaleX);
         final int newImgSizeY = (int) Math.ceil(getImageSizeY() * newScaleY);
@@ -2503,8 +2339,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     public void setScale(double x, double y, boolean smooth)
     {
-        setTransform((int) transform.getDestValue(TRANS_X), (int) transform.getDestValue(TRANS_Y), x, y,
-                transform.getDestValue(ROT), smooth);
+        setTransform((int) smoothTransform.getDestValue(TRANS_X), (int) smoothTransform.getDestValue(TRANS_Y), x, y,
+                smoothTransform.getDestValue(ROT), smooth);
     }
 
     /**
@@ -2528,7 +2364,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     public int getDestImageCanvasSizeX()
     {
-        return (int) Math.ceil(getImageSizeX() * transform.getDestValue(SCALE_X));
+        return (int) Math.ceil(getImageSizeX() * smoothTransform.getDestValue(SCALE_X));
     }
 
     /**
@@ -2536,7 +2372,55 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     public int getDestImageCanvasSizeY()
     {
-        return (int) Math.ceil(getImageSizeY() * transform.getDestValue(SCALE_Y));
+        return (int) Math.ceil(getImageSizeY() * smoothTransform.getDestValue(SCALE_Y));
+    }
+
+    void backgroundColorEnabledChanged()
+    {
+        // save to preference
+        preferences.putBoolean(ID_BG_COLOR_ENABLED, isBackgroundColorEnabled());
+        // and refresh view
+        canvasView.refresh();
+    }
+
+    void backgroundColorChanged()
+    {
+        // save to preference
+        preferences.putInt(ID_BG_COLOR, getBackgroundColor().getRGB());
+        // and refresh view
+        canvasView.refresh();
+    }
+
+    /**
+     * Returns the background color enabled state
+     */
+    public boolean isBackgroundColorEnabled()
+    {
+        return getCanvasSettingPanel().isBackgroundColorEnabled();
+    }
+
+    /**
+     * Sets the background color enabled state
+     */
+    public void setBackgroundColorEnabled(boolean value)
+    {
+        getCanvasSettingPanel().setBackgroundColorEnabled(value);
+    }
+
+    /**
+     * Returns the background color
+     */
+    public Color getBackgroundColor()
+    {
+        return getCanvasSettingPanel().getBackgroundColor();
+    }
+
+    /**
+     * Sets the background color
+     */
+    public void setBackgroundColor(Color color)
+    {
+        getCanvasSettingPanel().setBackgroundColor(color);
     }
 
     @Override
@@ -2569,50 +2453,50 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     public int getOffsetX()
     {
         // can be called before constructor ended
-        if (transform == null)
+        if (smoothTransform == null)
             return 0;
 
-        return (int) transform.getValue(TRANS_X);
+        return (int) smoothTransform.getValue(TRANS_X);
     }
 
     @Override
     public int getOffsetY()
     {
         // can be called before constructor ended
-        if (transform == null)
+        if (smoothTransform == null)
             return 0;
 
-        return (int) transform.getValue(TRANS_Y);
+        return (int) smoothTransform.getValue(TRANS_Y);
     }
 
     @Override
     public double getScaleX()
     {
         // can be called before constructor ended
-        if (transform == null)
+        if (smoothTransform == null)
             return 0d;
 
-        return transform.getValue(SCALE_X);
+        return smoothTransform.getValue(SCALE_X);
     }
 
     @Override
     public double getScaleY()
     {
         // can be called before constructor ended
-        if (transform == null)
+        if (smoothTransform == null)
             return 0d;
 
-        return transform.getValue(SCALE_Y);
+        return smoothTransform.getValue(SCALE_Y);
     }
 
     @Override
     public double getRotationZ()
     {
         // can be called before constructor ended
-        if (transform == null)
+        if (smoothTransform == null)
             return 0d;
 
-        return transform.getValue(ROT);
+        return smoothTransform.getValue(ROT);
     }
 
     /**
@@ -2644,21 +2528,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     protected void setOffsetXInternal(int value)
     {
         // this will automatically call the offsetChanged() event
-        transform.setValue(TRANS_X, Math.min(getMaxOffsetX(), Math.max(getMinOffsetX(), value)));
+        smoothTransform.setValue(TRANS_X, Math.min(getMaxOffsetX(), Math.max(getMinOffsetX(), value)));
     }
 
     @Override
     protected void setOffsetYInternal(int value)
     {
         // this will automatically call the offsetChanged() event
-        transform.setValue(TRANS_Y, Math.min(getMaxOffsetY(), Math.max(getMinOffsetY(), value)));
+        smoothTransform.setValue(TRANS_Y, Math.min(getMaxOffsetY(), Math.max(getMinOffsetY(), value)));
     }
 
     @Override
     protected void setScaleXInternal(double value)
     {
         // this will automatically call the scaledChanged() event
-        transform.setValue(SCALE_X, value);
+        smoothTransform.setValue(SCALE_X, value);
         canvasView.curScaleX = value;
     }
 
@@ -2666,7 +2550,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     protected void setScaleYInternal(double value)
     {
         // this will automatically call the scaledChanged() event
-        transform.setValue(SCALE_Y, value);
+        smoothTransform.setValue(SCALE_Y, value);
         canvasView.curScaleY = value;
     }
 
@@ -2674,7 +2558,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     protected void setRotationZInternal(double value)
     {
         // this will automatically call the rotationChanged() event
-        transform.setValue(ROT, value);
+        smoothTransform.setValue(ROT, value);
     }
 
     /**
@@ -2685,8 +2569,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     public void setRotation(double value, boolean smooth)
     {
-        setTransform((int) transform.getDestValue(TRANS_X), (int) transform.getDestValue(TRANS_Y),
-                transform.getDestValue(SCALE_X), transform.getDestValue(SCALE_Y), value, smooth);
+        setTransform((int) smoothTransform.getDestValue(TRANS_X), (int) smoothTransform.getDestValue(TRANS_Y),
+                smoothTransform.getDestValue(SCALE_X), smoothTransform.getDestValue(SCALE_Y), value, smooth);
     }
 
     @Override
@@ -3090,7 +2974,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             modifyingZoom = true;
                             try
                             {
-                                zoomComboBox.setSelectedItem(zoomInfo);
+                                getCanvasSettingPanel().updateZoomState(zoomInfo);
                             }
                             finally
                             {
@@ -3115,7 +2999,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             modifyingRotation = true;
                             try
                             {
-                                rotationComboBox.setSelectedItem(rotInfo);
+                                getCanvasSettingPanel().updateRotationState(rotInfo);
                             }
                             finally
                             {
@@ -3235,4 +3119,5 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         if (seq != null)
             seq.setSelectedROI(null);
     }
+
 }

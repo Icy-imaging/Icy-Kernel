@@ -24,7 +24,7 @@ import icy.sequence.Sequence;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
-import java.awt.Image;
+import java.awt.image.BufferedImage;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -95,7 +95,7 @@ public class SequenceChooserPreviewPanel extends JPanel implements SequenceChoos
         }
 
         @Override
-        public Image getImage(int t, int z)
+        public BufferedImage getImage(int t, int z)
         {
             final Sequence sequence = sequenceChooser.getSelectedSequence();
 
@@ -106,7 +106,7 @@ public class SequenceChooserPreviewPanel extends JPanel implements SequenceChoos
         }
 
         @Override
-        public Image getImage(int t, int z, int c)
+        public BufferedImage getImage(int t, int z, int c)
         {
             final Sequence sequence = sequenceChooser.getSelectedSequence();
 
@@ -115,7 +115,6 @@ public class SequenceChooserPreviewPanel extends JPanel implements SequenceChoos
 
             return null;
         }
-
     }
 
     /**

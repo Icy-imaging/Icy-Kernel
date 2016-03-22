@@ -186,7 +186,8 @@ public class SystemUtil
 
     /**
      * Launch the system file manager on specified folder (if supported)
-     * @throws IOException 
+     * 
+     * @throws IOException
      */
     public static boolean openFolder(String folder) throws IOException
     {
@@ -647,7 +648,7 @@ public class SystemUtil
      */
     public static String getOSNameId()
     {
-        if (isWindow())
+        if (isWindows())
             return SYSTEM_WINDOWS;
         if (isMac())
             return SYSTEM_MAC_OS;
@@ -668,7 +669,7 @@ public class SystemUtil
     {
         final String javaBit = Integer.toString(getJavaArchDataModel());
 
-        if (isWindow())
+        if (isWindows())
             return SYSTEM_WINDOWS + javaBit;
         if (isMac())
             return SYSTEM_MAC_OS + javaBit;
@@ -703,9 +704,18 @@ public class SystemUtil
     }
 
     /**
+     * @deprecated Use {@link #isWindows()} instead.
+     */
+    @Deprecated
+    public static boolean isWindow()
+    {
+        return isWindows();
+    }
+
+    /**
      * Returns true is the Operating System is Windows based.
      */
-    public static boolean isWindow()
+    public static boolean isWindows()
     {
         return (getOSName().toLowerCase().indexOf("win") >= 0);
     }
@@ -725,6 +735,25 @@ public class SystemUtil
     {
         final String os = getOSName().toLowerCase();
         return (os.indexOf("nix") >= 0) || (os.indexOf("nux") >= 0);
+    }
+
+    /**
+     * Returns true is the Operating System is Windows 64 bits whatever is the JVM installed (32 or 64 bits).
+     */
+    public static boolean isWindows64()
+    {
+        if (!isWindows())
+            return false;
+
+        final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+        if (arch.endsWith("64"))
+            return true;
+
+        final String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
+        if ((wow64Arch != null) && wow64Arch.endsWith("64"))
+            return true;
+
+        return false;
     }
 
     /**

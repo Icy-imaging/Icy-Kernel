@@ -365,8 +365,8 @@ public class PluginDescriptor implements XMLPersistent
         }
 
         // overwrite image and icon url with their local equivalent (keep online for XML url)
-        this.iconUrl = iconUrl.getPath();
-        this.imageUrl = imageUrl.getPath();
+        this.iconUrl = iconUrl.toString();
+        this.imageUrl = imageUrl.toString();
 
         // only descriptor is loaded here
         descriptorLoaded = true;
