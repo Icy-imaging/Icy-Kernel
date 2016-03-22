@@ -272,6 +272,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     {
         final MouseEvent e = event;
 
+        
         ThreadUtil.bgRun(new Runnable()
         {
             @Override
@@ -282,12 +283,6 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
                 // force garbage collector
                 System.gc();
-                // double click --> force VTK garbage collection
-                if (e.getClickCount() > 1)
-                {
-                    vtkObjectBase.JAVA_OBJECT_MANAGER.gc(true);
-                    System.out.println("VTK GC forced");
-                }
 
                 final double freeAfter = SystemUtil.getJavaFreeMemory();
                 final double released = freeAfter - freeBefore;
@@ -299,6 +294,13 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
                         + UnitUtil.getBytesString((released > 0) ? released : 0) + ")");
             }
         });
+        
+        // double click --> force VTK garbage collection (need to be done in EDT or it crashes on OSX)
+        if (e.getClickCount() > 1)
+        {
+            vtkObjectBase.JAVA_OBJECT_MANAGER.gc(true);
+            System.out.println("VTK GC forced");
+        }
     }
 
     @Override
