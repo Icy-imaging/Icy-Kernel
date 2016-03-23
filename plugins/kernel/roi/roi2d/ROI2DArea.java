@@ -296,10 +296,18 @@ public class ROI2DArea extends ROI2D
                     {
                         // set actors color
                         outlineActor.GetProperty().SetColor(r, g, b);
-                        outlineActor.SetVisibility(isSelected() ? 1 : 0);
+                        if (isSelected())
+                        {
+                            outlineActor.GetProperty().SetRepresentationToWireframe();
+                            outlineActor.SetVisibility(1);
+                        }
+                        else
+                        {
+                            outlineActor.GetProperty().SetRepresentationToPoints();
+                            outlineActor.SetVisibility(0);
+                        }
                         surfaceActor.GetProperty().SetColor(r, g, b);
-                        // opacity here is about ROI content, whole actor opacity is handled by
-                        // Layer
+                        // opacity here is about ROI content, global opacity is handled by Layer
                         // surfaceActor.GetProperty().SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
@@ -311,9 +319,18 @@ public class ROI2DArea extends ROI2D
                 else
                 {
                     outlineActor.GetProperty().SetColor(r, g, b);
-                    outlineActor.SetVisibility(isSelected() ? 1 : 0);
+                    if (isSelected())
+                    {
+                        outlineActor.GetProperty().SetRepresentationToWireframe();
+                        outlineActor.SetVisibility(1);
+                    }
+                    else
+                    {
+                        outlineActor.GetProperty().SetRepresentationToPoints();
+                        outlineActor.SetVisibility(0);
+                    }
                     surfaceActor.GetProperty().SetColor(r, g, b);
-                    // opacity here is about ROI content, whole actor opacity is handled by Layer
+                    // opacity here is about ROI content, gobal opacity is handled by Layer
                     // surfaceActor.GetProperty().SetOpacity(opacity);
                     setVtkObjectsColor(col);
                 }

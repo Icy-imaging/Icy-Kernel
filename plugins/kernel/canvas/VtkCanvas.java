@@ -2126,8 +2126,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     @Override
     protected void layersVisibleChanged()
     {
-        // super.layersVisibleChanged();
-
         propertyChange(PROPERTY_LAYERS_VISIBLE, null);
     }
 
@@ -2143,7 +2141,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         {
             for (Layer l : getLayers())
             {
-                for (vtkProp prop : VtkUtil.getLayerProps(layer))
+                for (vtkProp prop : VtkUtil.getLayerProps(l))
                 {
                     // image layer is not impacted by global layer visibility
                     if (l == getImageLayer())

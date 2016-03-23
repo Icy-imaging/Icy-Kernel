@@ -18,15 +18,6 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map.Entry;
-
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
@@ -44,6 +35,16 @@ import icy.util.EventUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map.Entry;
+
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
@@ -254,8 +255,18 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                     {
                         // set actors color
                         outlineActor.GetProperty().SetColor(r, g, b);
-                        outlineActor.SetVisibility(isSelected() ? 1 : 0);
+                        if (isSelected())
+                        {
+                            outlineActor.GetProperty().SetRepresentationToWireframe();
+                            outlineActor.SetVisibility(1);
+                        }
+                        else
+                        {
+                            outlineActor.GetProperty().SetRepresentationToPoints();
+                            outlineActor.SetVisibility(0);
+                        }
                         surfaceActor.GetProperty().SetColor(r, g, b);
+                        // opacity here is about ROI content, global opacity is handled by Layer
                         // surfaceActor.GetProperty().SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
@@ -267,8 +278,18 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 else
                 {
                     outlineActor.GetProperty().SetColor(r, g, b);
-                    outlineActor.SetVisibility(isSelected() ? 1 : 0);
+                    if (isSelected())
+                    {
+                        outlineActor.GetProperty().SetRepresentationToWireframe();
+                        outlineActor.SetVisibility(1);
+                    }
+                    else
+                    {
+                        outlineActor.GetProperty().SetRepresentationToPoints();
+                        outlineActor.SetVisibility(0);
+                    }
                     surfaceActor.GetProperty().SetColor(r, g, b);
+                    // opacity here is about ROI content, global opacity is handled by Layer
                     // surfaceActor.GetProperty().SetOpacity(opacity);
                     setVtkObjectsColor(col);
                 }
@@ -513,8 +534,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * @param roiSlice
      *        the 2D ROI to set
      * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or
-     *        <code>false</code> to
+     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
      *        replace the existing slice.
      */
     public void setSlice(int z, ROI2D roiSlice, boolean merge)
@@ -543,8 +563,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         else if (newSlice instanceof ROI2D)
             setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
         else
-            throw new IllegalArgumentException(
-                    "Can't add the result of the merge operation on 2D slice " + z + ": " + newSlice.getClassName());
+            throw new IllegalArgumentException("Can't add the result of the merge operation on 2D slice " + z + ": "
+                    + newSlice.getClassName());
     }
 
     /**
@@ -561,8 +581,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()}
-     *             instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()} instead.
      */
     @Deprecated
     public Point3D[] getEdgePoints()
@@ -571,8 +590,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()}
-     *             instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()} instead.
      */
     @Deprecated
     public Point3D[] getPoints()

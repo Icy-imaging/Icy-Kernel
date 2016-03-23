@@ -355,11 +355,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     {
                         // set actors color
                         outlineActor.GetProperty().SetColor(r, g, b);
-                        outlineActor.SetVisibility(isSelected() ? 1 : 0);
+                        if (isSelected())
+                        {
+                            outlineActor.GetProperty().SetRepresentationToWireframe();
+                            outlineActor.SetVisibility(1);
+                        }
+                        else
+                        {
+                            outlineActor.GetProperty().SetRepresentationToPoints();
+                            outlineActor.SetVisibility(0);
+                        }
                         vtkProperty.SetColor(r, g, b);
                         vtkProperty.SetPointSize(strk);
-                        // opacity here is about ROI content, whole actor opacity is handled by
-                        // Layer
+                        // opacity here is about ROI content, global opacity is handled by Layer
                         // vtkProperty.SetOpacity(opacity);
                         setVtkObjectsColor(col);
                     }
@@ -371,10 +379,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 else
                 {
                     outlineActor.GetProperty().SetColor(r, g, b);
-                    outlineActor.SetVisibility(isSelected() ? 1 : 0);
+                    if (isSelected())
+                    {
+                        outlineActor.GetProperty().SetRepresentationToWireframe();
+                        outlineActor.SetVisibility(1);
+                    }
+                    else
+                    {
+                        outlineActor.GetProperty().SetRepresentationToPoints();
+                        outlineActor.SetVisibility(0);
+                    }
                     vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
                     vtkProperty.SetPointSize(strk);
-                    // opacity here is about ROI content, whole actor opacity is handled by Layer
+                    // opacity here is about ROI content, global opacity is handled by Layer
                     // vtkProperty.SetOpacity(opacity);
                     setVtkObjectsColor(col);
                 }
