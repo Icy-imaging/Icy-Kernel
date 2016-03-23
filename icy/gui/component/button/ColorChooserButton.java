@@ -29,6 +29,8 @@ import javax.swing.JButton;
 import javax.swing.JColorChooser;
 
 /**
+ * Color button used to select a specific color.
+ * 
  * @author Stephane
  */
 public class ColorChooserButton extends JButton implements ActionListener

@@ -102,6 +102,8 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
     @Override
     public void run()
     {
+        // don't spent too much time in EDT
+        ThreadUtil.sleep(10);
         updateDisplay();
     }
 

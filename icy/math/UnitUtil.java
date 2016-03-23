@@ -70,16 +70,18 @@ public class UnitUtil
     {
         final double absValue = Math.abs(value);
 
+        // TB
+        if (absValue > 549755813888d)
+            return Double.toString(MathUtil.round(value / 1099511627776d, 1)) + " TB";
         // GB
-        if (absValue > 10737418240f)
+        else if (absValue > 536870912d)
             return Double.toString(MathUtil.round(value / 1073741824d, 1)) + " GB";
         // MB
-        else if (absValue > 10485760f)
+        else if (absValue > 524288d)
             return Double.toString(MathUtil.round(value / 1048576d, 1)) + " MB";
         // KB
-        else if (absValue > 10240f)
+        else if (absValue > 512d)
             return Double.toString(MathUtil.round(value / 1024d, 1)) + " KB";
-
         // B
         return Double.toString(MathUtil.round(value, 1)) + " B";
     }

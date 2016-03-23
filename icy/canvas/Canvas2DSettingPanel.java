@@ -9,6 +9,7 @@ import icy.gui.component.button.IcyButton;
 import icy.gui.util.ComponentUtil;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.util.EventUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -18,8 +19,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -50,8 +52,7 @@ public class Canvas2DSettingPanel extends JPanel
     private IcyButton zoomMinus;
     private IcyButton rotateUnclock;
     private IcyButton rotateClock;
-    private ColorChooserButton bgColorButton;
-    private JCheckBox bgColorCheckBox;
+    ColorChooserButton bgColorButton;
 
     public Canvas2DSettingPanel(Canvas2D cnv)
     {
@@ -63,8 +64,8 @@ public class Canvas2DSettingPanel extends JPanel
 
         // as scale isn't necessary changed (if already 100%)
         zoomComboBox.setSelectedItem(Integer.toString((int) (canvas2D.getScaleX() * 100)));
-        bgColorCheckBox.setSelected(canvas2D.preferences.getBoolean(Canvas2D.ID_BG_COLOR_ENABLED, false));
-        bgColorButton.setColor(new Color(canvas2D.preferences.getInt(Canvas2D.ID_BG_COLOR, 0xFFFFFF), true));
+        bgColorButton.setColor(new Color(canvas2D.preferences.getInt(Canvas2D.ID_BG_COLOR, 0xFFFFFF)));
+        bgColorButton.setSelected(canvas2D.preferences.getBoolean(Canvas2D.ID_BG_COLOR_ENABLED, false));
 
         zoomComboBox.addActionListener(new ActionListener()
         {
@@ -169,13 +170,17 @@ public class Canvas2DSettingPanel extends JPanel
                 canvas2D.centerImage();
             }
         });
-        bgColorCheckBox.addActionListener(new ActionListener()
+        bgColorButton.addMouseListener(new MouseAdapter()
         {
             @Override
-            public void actionPerformed(ActionEvent e)
+            public void mouseClicked(MouseEvent e)
             {
-                canvas2D.backgroundColorEnabledChanged();
-            }
+                if (EventUtil.isRightMouseButton(e))
+                {
+                    bgColorButton.setSelected(!bgColorButton.isSelected());
+                    canvas2D.backgroundColorEnabledChanged();
+                }
+            };
         });
         bgColorButton.addColorChangeListener(new ColorChangeListener()
         {
@@ -258,16 +263,6 @@ public class Canvas2DSettingPanel extends JPanel
         gbc_zoomPlus_1.gridy = 0;
         panel.add(zoomPlus, gbc_zoomPlus_1);
 
-        bgColorCheckBox = new JCheckBox("");
-        bgColorCheckBox.setFocusable(false);
-        bgColorCheckBox.setToolTipText("Enable background color");
-        GridBagConstraints gbc_bgColorCheckBox = new GridBagConstraints();
-        gbc_bgColorCheckBox.anchor = GridBagConstraints.EAST;
-        gbc_bgColorCheckBox.insets = new Insets(0, 0, 5, 5);
-        gbc_bgColorCheckBox.gridx = 5;
-        gbc_bgColorCheckBox.gridy = 0;
-        panel.add(bgColorCheckBox, gbc_bgColorCheckBox);
-
         JLabel label_3 = new JLabel("Rotation");
         label_3.setFont(new Font("Tahoma", Font.BOLD, 11));
         GridBagConstraints gbc_label_3 = new GridBagConstraints();
@@ -334,10 +329,11 @@ public class Canvas2DSettingPanel extends JPanel
         panel.add(centerImageButton, gbc_centerImageButton);
 
         bgColorButton = new ColorChooserButton();
-        bgColorButton.setToolTipText("Change background color");
+        bgColorButton
+                .setToolTipText("Left click to change background color, right click to enable/disable background color");
         GridBagConstraints gbc_bgColorButton = new GridBagConstraints();
-        gbc_bgColorButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_bgColorButton.gridwidth = 2;
+        gbc_bgColorButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_bgColorButton.insets = new Insets(0, 0, 5, 0);
         gbc_bgColorButton.gridx = 6;
         gbc_bgColorButton.gridy = 0;
@@ -359,12 +355,12 @@ public class Canvas2DSettingPanel extends JPanel
 
     public boolean isBackgroundColorEnabled()
     {
-        return bgColorCheckBox.isSelected();
+        return bgColorButton.isSelected();
     }
 
     public void setBackgroundColorEnabled(boolean value)
     {
-        bgColorCheckBox.setSelected(value);
+        bgColorButton.setSelected(value);
     }
 
     public Color getBackgroundColor()
