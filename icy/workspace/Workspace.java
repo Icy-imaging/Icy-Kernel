@@ -1124,7 +1124,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
             // install missing plugins (no confirmation needed)
             for (PluginDescriptor plugin : pluginsToInstall)
-                PluginInstaller.install(plugin, false);
+                PluginInstaller.install(plugin, progressFrame != null);
 
             // wait installation completion
             PluginInstaller.waitInstall();

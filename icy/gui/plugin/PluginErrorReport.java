@@ -108,7 +108,7 @@ public class PluginErrorReport
                     // update found and not canceled
                     if (!info.isCancelRequested() && (onlinePlugin != null))
                     {
-                        PluginInstaller.install(onlinePlugin, false);
+                        PluginInstaller.install(onlinePlugin, true);
                         new AnnounceFrame(
                                 "The plugin crashed but a new version has been found, try it again when installation is done",
                                 10);

@@ -947,14 +947,14 @@ public class PluginLoader
                 // install missing plugins
                 for (PluginDescriptor plugin : missings)
                 {
-                    PluginInstaller.install(plugin, pf != null);
+                    PluginInstaller.install(plugin, true);
                     if (pf != null)
                         pf.incPosition();
                 }
                 // and reinstall faulty plugins
                 for (PluginDescriptor plugin : faulties)
                 {
-                    PluginInstaller.install(plugin, pf != null);
+                    PluginInstaller.install(plugin, true);
                     if (pf != null)
                         pf.incPosition();
                 }
