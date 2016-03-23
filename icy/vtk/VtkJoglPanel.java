@@ -2,6 +2,7 @@ package icy.vtk;
 
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.system.IcyExceptionHandler;
 import icy.system.IcyHandledException;
 import icy.system.thread.ThreadUtil;
@@ -156,7 +157,7 @@ public class VtkJoglPanel extends GLJPanel
             if (!IdConfirmDialog
                     .confirm(
                             "Warning",
-                            "Your graphics card driver does not support OpenGL 3, you may experience issues with VTK.\nDo you want to try anyway ?",
+                            "Your graphics card driver does not support OpenGL 3, you may experience issues or crashes with VTK.\nDo you want to try anyway ?",
                             IdConfirmDialog.YES_NO_OPTION, getClass().getName() + ".notCompatibleDialog"))
                 throw new IcyHandledException("Your graphics card driver is not compatible with OpenGL 3 !");
         }
@@ -527,10 +528,8 @@ public class VtkJoglPanel extends GLJPanel
             // it can happen with older video cards
             failed = true;
 
-            MessageDialog
-                    .showDialog("An error occured while initializing OpenGL !\n"
-                            + "You may try to update your graphics card driver to fix this issue.",
-                            MessageDialog.ERROR_MESSAGE);
+            new FailedAnnounceFrame("An error occured while initializing OpenGL !\n"
+                            + "You may try to update your graphics card driver to fix this issue.", 0);
 
             IcyExceptionHandler.handleException(t, true);
         }

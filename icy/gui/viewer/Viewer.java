@@ -684,7 +684,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 	{
                 		// just ignore
                 	}
-                    if (e instanceof UnsupportedOperationException)
+                	else if (e instanceof UnsupportedOperationException)
                     {
                         MessageDialog.showDialog(e.getLocalizedMessage(), MessageDialog.ERROR_MESSAGE);
                     }
