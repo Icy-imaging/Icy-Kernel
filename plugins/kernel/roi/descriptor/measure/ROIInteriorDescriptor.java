@@ -74,7 +74,7 @@ public class ROIInteriorDescriptor extends ROIDescriptor
      * @throws UnsupportedOperationException
      *         if the interior calculation for the specified dimension is not supported by the ROI
      */
-    static double computeInterior(double interiorPoints, ROI roi, Sequence sequence, int dim)
+    public static double computeInterior(double interiorPoints, ROI roi, Sequence sequence, int dim)
             throws UnsupportedOperationException
     {
         final double mul = ROIBasicMeasureDescriptorsPlugin.getMultiplierFactor(sequence, roi, dim);

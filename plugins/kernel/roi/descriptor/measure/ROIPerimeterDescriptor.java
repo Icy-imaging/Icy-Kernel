@@ -84,7 +84,8 @@ public class ROIPerimeterDescriptor extends ROIDescriptor
         if (!(roi instanceof ROI2D))
             throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
 
-        return computePerimeter(ROIContourDescriptor.computeContour(roi), roi, sequence);
+        return ((ROI2D) roi).getPerimeter(sequence);
+        // return computePerimeter(ROIContourDescriptor.computeContour(roi), roi, sequence);
     }
 
     /**
@@ -103,7 +104,7 @@ public class ROIPerimeterDescriptor extends ROIDescriptor
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
-    public static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
+    static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
             throws UnsupportedOperationException
     {
         try

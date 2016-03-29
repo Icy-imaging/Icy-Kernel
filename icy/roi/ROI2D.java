@@ -21,8 +21,10 @@ package icy.roi;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
+import icy.common.CollapsibleEvent;
 import icy.gui.util.FontUtil;
 import icy.preferences.GeneralPreferences;
+import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.edit.PositionROIEdit;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
@@ -30,6 +32,7 @@ import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil.ShapeOperation;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Graphics2D;
@@ -341,6 +344,9 @@ public abstract class ROI2D extends ROI
      */
     protected int c;
 
+    protected double cachedPerimeter;
+    protected boolean perimeterInvalid;
+
     public ROI2D()
     {
         super();
@@ -349,6 +355,9 @@ public abstract class ROI2D extends ROI
         z = -1;
         t = -1;
         c = -1;
+
+        cachedPerimeter = 0d;
+        perimeterInvalid = true;
     }
 
     @Override
@@ -1193,6 +1202,35 @@ public abstract class ROI2D extends ROI
     }
 
     /**
+     * Generic implementation of perimeter computation using the number of contour point (approximation).<br>
+     * This method should be overridden whenever possible to provide faster and accurate calculation.
+     */
+    public double computePerimeter(Sequence sequence)
+    {
+        return sequence.calculateSize(getNumberOfContourPoints(), 2, 1);
+    }
+
+    /**
+     * Returns perimeter of the 2D ROI in the um.<br>
+     * For an accurate calculation of perimeter in um we require to have the pixel size information for both X and Y
+     * axis, the Sequence parameter is here to provide these informations.
+     * 
+     * @see #computePerimeter(Sequence)
+     * @see #getNumberOfContourPoints()
+     */
+    public double getPerimeter(Sequence sequence)
+    {
+        // we need to recompute the perimeter
+        if (perimeterInvalid)
+        {
+            cachedPerimeter = computePerimeter(sequence);
+            perimeterInvalid = false;
+        }
+
+        return cachedPerimeter;
+    }
+
+    /**
      * Return perimeter of the 2D ROI in pixels.<br>
      * This is basically the number of pixel representing ROI contour.<br>
      * 
@@ -1259,6 +1297,21 @@ public abstract class ROI2D extends ROI
         }
 
         return result;
+    }
+
+    @Override
+    public void onChanged(CollapsibleEvent object)
+    {
+        super.onChanged(object);
+
+        final ROIEvent event = (ROIEvent) object;
+
+        if (event.getType() == ROIEventType.ROI_CHANGED)
+        {
+            // need to recompute perimeter
+            if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+                perimeterInvalid = true;
+        }
     }
 
     @Override

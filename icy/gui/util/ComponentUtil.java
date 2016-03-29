@@ -20,6 +20,7 @@ package icy.gui.util;
 
 import icy.gui.frame.IcyFrame;
 import icy.network.NetworkUtil;
+import icy.system.SystemUtil;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -27,6 +28,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.GraphicsDevice;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -34,6 +36,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JMenu;
@@ -237,6 +240,138 @@ public class ComponentUtil
         }
 
         return new Point2D.Double(0d, 0d);
+    }
+
+    /**
+     * Returns all screen device where the specified component is currently displayed.<br>
+     * Can return an empty list if given region do not intersect any screen device.
+     * 
+     * @see #getScreen(Component)
+     * @see SystemUtil#getScreenDevices(Rectangle)
+     */
+    public static List<GraphicsDevice> getScreens(Component c)
+    {
+        return SystemUtil.getScreenDevices(c.getBounds());
+    }
+
+    /**
+     * Returns the main screen device where the specified component is currently displayed.<br>
+     * Can return <code>null</code> if component is not located on any screen device.
+     * 
+     * @see #getScreens(Component)
+     * @see SystemUtil#getScreenDevice(Rectangle)
+     * @see SystemUtil#getScreenDevice(Point)
+     */
+    public static GraphicsDevice getScreen(Component c)
+    {
+        final Point2D.Double pos2d = getCenter(c);
+        final Point pos = new Point((int) pos2d.getX(), (int) pos2d.getY());
+
+        // get screen on Component center first (better for multi screen)
+        GraphicsDevice result = SystemUtil.getScreenDevice(pos);
+
+        // cannot retrieve screen on center, just use component bounds then
+        if (result == null)
+            result = SystemUtil.getScreenDevice(c.getBounds());
+
+        return result;
+    }
+
+    /**
+     * Returns the new location of wanted bounds so it does not go outside the specified screen bounds.<br>
+     * Returns <code>null</code> if the wanted bounds doesn't need position adjustment.
+     */
+    public static Point fixPosition(Rectangle wantedBounds, Rectangle screenBounds)
+    {
+        if (screenBounds.isEmpty())
+            return null;
+
+        final int margeX = 80;
+        final int margeY = 40;
+
+        int x = wantedBounds.x;
+        int y = wantedBounds.y;
+        int sx = screenBounds.x;
+        int sy = screenBounds.y;
+        int minX = (sx - wantedBounds.width) + margeX;
+        int maxX = (sx + screenBounds.width) - margeX;
+        int minY = sy;
+//        int minY = (sy - wantedBounds.height) + margeY;
+        int maxY = (sy + screenBounds.height) - margeY;
+
+        if (y < minY)
+            y = minY;
+        else if (y > maxY)
+            y = maxY;
+        if (x < minX)
+            x = minX;
+        else if (x > maxX)
+            x = maxX;
+
+        final Point pos = wantedBounds.getLocation();
+
+        // position changed ?
+        if ((pos.x != x) || (pos.y != y))
+            return new Point(x, y);
+
+        return null;
+    }
+
+    /**
+     * Fix the given bounds of specified component so it does not go completely off screen.<br>
+     * Returns <code>true</code> if the bounds position has be adjusted.
+     */
+    public static boolean fixPosition(Component component, Rectangle wantedBounds)
+    {
+        final List<GraphicsDevice> screens = getScreens(component);
+        Point newPos = null;
+        boolean useMainScreen = false;
+
+        for (GraphicsDevice screen : screens)
+        {
+            final Point pt = fixPosition(wantedBounds, SystemUtil.getScreenBounds(screen, true));
+
+            // this screen accept current position --> no need to adjust position
+            if (pt == null)
+                return false;
+
+            // we already have an adjusted position ?
+            if (newPos != null)
+                useMainScreen = true;
+            else
+                newPos = pt;
+        }
+
+        // use main screen
+        if (screens.isEmpty())
+            useMainScreen = true;
+
+        // multiple possible position adjustment ? --> use main screen
+        if (useMainScreen)
+            newPos = fixPosition(wantedBounds, SystemUtil.getScreenBounds(getScreen(component), true));
+
+        // got a new position ? --> set it
+        if (newPos != null)
+            wantedBounds.setLocation(newPos);
+
+        return true;
+    }
+
+    /**
+     * Fix the given bounds of specified component so it does not go completely off screen.<br>
+     * Returns <code>true</code> if component position has be adjusted.
+     */
+    public static boolean fixPosition(Component component)
+    {
+        final Rectangle bounds = component.getBounds();
+
+        if (fixPosition(component, bounds))
+        {
+            component.setBounds(bounds);
+            return true;
+        }
+
+        return false;
     }
 
     public static int getComponentIndex(Component c)

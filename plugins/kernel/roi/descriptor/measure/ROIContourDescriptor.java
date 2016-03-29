@@ -74,7 +74,7 @@ public class ROIContourDescriptor extends ROIDescriptor
      * @throws UnsupportedOperationException
      *         if the contour calculation for the specified dimension is not supported by the ROI
      */
-    static double computeContour(double contourPoints, ROI roi, Sequence sequence, int dim)
+    public static double computeContour(double contourPoints, ROI roi, Sequence sequence, int dim)
             throws UnsupportedOperationException
     {
         final double mul = ROIBasicMeasureDescriptorsPlugin.getMultiplierFactor(sequence, roi, dim);

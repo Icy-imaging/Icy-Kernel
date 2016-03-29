@@ -84,7 +84,8 @@ public class ROISurfaceAreaDescriptor extends ROIDescriptor
         if (!(roi instanceof ROI3D))
             throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
 
-        return computeSurfaceArea(ROIContourDescriptor.computeContour(roi), roi, sequence);
+        return ((ROI3D) roi).getSurfaceArea(sequence);
+        // return computeSurfaceArea(ROIContourDescriptor.computeContour(roi), roi, sequence);
     }
 
     /**
@@ -103,7 +104,7 @@ public class ROISurfaceAreaDescriptor extends ROIDescriptor
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
-    public static double computeSurfaceArea(double contourPoints, ROI roi, Sequence sequence)
+    static double computeSurfaceArea(double contourPoints, ROI roi, Sequence sequence)
             throws UnsupportedOperationException
     {
         try

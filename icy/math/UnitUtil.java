@@ -283,30 +283,72 @@ public class UnitUtil
      *        : number of decimals after comma
      * @return <b>Example:</b> "2.5 h", "1.543 min", "15 ms".
      */
-    public static String displayTimeAsStringWithComma(double valueInMs, int precision)
+    public static String displayTimeAsStringWithComma(double valueInMs, int precision, TimeUnit unit)
     {
         String result;
         double v = valueInMs;
 
-        if (v >= 360000d)
+        switch (unit)
         {
-            v /= 360000d;
-            result = StringUtil.toString(valueInMs, precision) + " h";
+            case DAYS:
+                v /= 24d * 60d * 60d * 1000d;
+                result = StringUtil.toString(v, precision) + " d";
+                break;
+
+            case HOURS:
+                v /= 60d * 60d * 1000d;
+                result = StringUtil.toString(v, precision) + " h";
+                break;
+
+            default:
+            case MINUTES:
+                v /= 60d * 1000d;
+                result = StringUtil.toString(v, precision) + " min";
+                break;
+
+            case SECONDS:
+                v /= 1000d;
+                result = StringUtil.toString(v, precision) + " sec";
+                break;
+
+            case MILLISECONDS:
+                result = StringUtil.toString(v, precision) + " ms";
+                break;
+
+            case NANOSECONDS:
+                v *= 1000d;
+                result = StringUtil.toString(v, precision) + " ns";
+                break;
         }
-        else if (v >= 60000d)
-        {
-            v /= 60000d;
-            result = StringUtil.toString(valueInMs, precision) + " min";
-        }
-        else if (v >= 1000d)
-        {
-            v /= 1000d;
-            result = StringUtil.toString(valueInMs, precision) + " sec";
-        }
-        else
-            result = StringUtil.toString(valueInMs, precision) + " ms";
 
         return result;
+    }
+
+    /**
+     * Display the time with a comma and a given precision.
+     * 
+     * @param valueInMs
+     *        : value in milliseconds
+     * @param precision
+     *        : number of decimals after comma
+     * @return <b>Example:</b> "2.5 h", "1.543 min", "15 ms".
+     */
+    public static String displayTimeAsStringWithComma(double valueInMs, int precision)
+    {
+        double v = Math.abs(valueInMs);
+
+        if (v >= 24d * 60d * 60d * 1000d)
+            return displayTimeAsStringWithComma(valueInMs, precision, TimeUnit.DAYS);
+        if (v >= 60d * 60d * 1000d)
+            return displayTimeAsStringWithComma(valueInMs, precision, TimeUnit.HOURS);
+        else if (v >= 60d * 1000d)
+            return displayTimeAsStringWithComma(valueInMs, precision, TimeUnit.MINUTES);
+        else if (v >= 1000d)
+            return displayTimeAsStringWithComma(valueInMs, precision, TimeUnit.SECONDS);
+        else if (v < 1d)
+            return displayTimeAsStringWithComma(valueInMs, precision, TimeUnit.MILLISECONDS);
+        else
+            return displayTimeAsStringWithComma(valueInMs, precision, TimeUnit.NANOSECONDS);
     }
 
     /**
@@ -323,17 +365,24 @@ public class UnitUtil
         String result = "";
         double v = valueInMs;
 
-        if (v >= 3600000d)
+        if (v >= 24d * 60d * 60d * 1000d)
         {
-            result += (int) (v / 3600000d) + "h ";
-            v %= 3600000d;
+            result += (int) (v / (24d * 60d * 60d * 1000d)) + "d ";
+            v %= 24d * 60d * 60d * 1000d;
+        }
+        else if (displayZero)
+            result += "0d ";
+        if (v >= 60d * 60d * 1000d)
+        {
+            result += (int) (v / (60d * 60d * 1000d)) + "h ";
+            v %= 60d * 60d * 1000d;
         }
         else if (displayZero)
             result += "00h ";
-        if (v >= 60000d)
+        if (v >= 60d * 1000d)
         {
-            result += (int) (v / 60000d) + "min ";
-            v %= 60000d;
+            result += (int) (v / (60d * 1000d)) + "min ";
+            v %= 60d * 1000d;
         }
         else if (displayZero)
             result += "00min ";

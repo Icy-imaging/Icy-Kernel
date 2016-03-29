@@ -28,6 +28,7 @@ import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.HeadlessException;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -312,4 +313,30 @@ public class IcyExternalFrame extends JFrame
         }
     }
 
+    @Override
+    public void reshape(int x, int y, int width, int height)
+    {
+        final Rectangle r = new Rectangle(x, y, width, height);
+
+        // prevent to go completely off screen
+        ComponentUtil.fixPosition(this, r);
+
+        super.reshape(r.x, r.y, r.width, r.height);
+    }
+
+//    @Override
+//    public synchronized void setMaximizedBounds(Rectangle bounds)
+//    {
+//        Rectangle bnds = SystemUtil.getScreenBounds(ComponentUtil.getScreen(this), true);
+//
+//        if (bnds.isEmpty())
+//            bnds = bounds;
+//        // at least use the location from original bounds
+//        else if (bounds != null)
+//            bnds.setLocation(bounds.getLocation());
+//        else
+//            bnds.setLocation(0, 0);
+//
+//        super.setMaximizedBounds(bnds);
+//    }
 }

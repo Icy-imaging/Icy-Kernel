@@ -19,10 +19,14 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.common.CollapsibleEvent;
+import icy.roi.ROIEvent.ROIEventType;
+import icy.sequence.Sequence;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Rectangle;
@@ -77,6 +81,9 @@ public abstract class ROI3D extends ROI
      */
     protected int c;
 
+    protected double cachedSurfaceArea;
+    protected boolean surfaceAreaInvalid;
+
     public ROI3D()
     {
         super();
@@ -84,6 +91,9 @@ public abstract class ROI3D extends ROI
         // by default we consider no specific T and C attachment
         t = -1;
         c = -1;
+
+        cachedSurfaceArea = 0d;
+        surfaceAreaInvalid = true;
     }
 
     @Override
@@ -97,8 +107,8 @@ public abstract class ROI3D extends ROI
      * 
      * @param p
      *        the specified <code>Point3D</code> to be tested
-     * @return <code>true</code> if the specified <code>Point3D</code> is inside the boundary of the
-     *         <code>ROI</code>; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point3D</code> is inside the boundary of the <code>ROI</code>;
+     *         <code>false</code> otherwise.
      */
     public boolean contains(Point3D p)
     {
@@ -106,23 +116,23 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * Tests if the interior of the <code>ROI</code> entirely contains the specified
-     * <code>Rectangle3D</code>. The {@code ROI.contains()} method allows a implementation to
+     * Tests if the interior of the <code>ROI</code> entirely contains the specified <code>Rectangle3D</code>. The
+     * {@code ROI.contains()} method allows a implementation to
      * conservatively return {@code false} when:
      * <ul>
      * <li>the <code>intersect</code> method returns <code>true</code> and
      * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the
      * <code>Rectangle3D</code> are prohibitively expensive.
      * </ul>
-     * This means that for some ROIs this method might return {@code false} even though the
-     * {@code ROI} contains the {@code Rectangle3D}.
+     * This means that for some ROIs this method might return {@code false} even though the {@code ROI} contains the
+     * {@code Rectangle3D}.
      * 
      * @param r
      *        The specified <code>Rectangle3D</code>
-     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
-     *         <code>Rectangle3D</code>; <code>false</code> otherwise or, if the <code>ROI</code>
-     *         contains the <code>Rectangle3D</code> and the <code>intersects</code> method returns
-     *         <code>true</code> and the containment calculations would be too expensive to perform.
+     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the <code>Rectangle3D</code>;
+     *         <code>false</code> otherwise or, if the <code>ROI</code> contains the <code>Rectangle3D</code> and the
+     *         <code>intersects</code> method returns <code>true</code> and the containment calculations would be too
+     *         expensive to perform.
      * @see #contains(double, double, double, double, double, double)
      */
     public boolean contains(Rectangle3D r)
@@ -139,8 +149,8 @@ public abstract class ROI3D extends ROI
      *        the specified Y coordinate to be tested
      * @param z
      *        the specified Z coordinate to be tested
-     * @return <code>true</code> if the specified 3D coordinates are inside the <code>ROI</code>
-     *         boundary; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified 3D coordinates are inside the <code>ROI</code> boundary;
+     *         <code>false</code> otherwise.
      */
     public abstract boolean contains(double x, double y, double z);
 
@@ -149,15 +159,15 @@ public abstract class ROI3D extends ROI
      * coordinates that lie inside the rectangular area must lie within the <code>ROI</code> for the
      * entire rectangular area to be considered contained within the <code>ROI</code>.
      * <p>
-     * The {@code ROI.contains()} method allows a {@code ROI} implementation to conservatively
-     * return {@code false} when:
+     * The {@code ROI.contains()} method allows a {@code ROI} implementation to conservatively return {@code false}
+     * when:
      * <ul>
      * <li>the <code>intersect</code> method returns <code>true</code> and
-     * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the
-     * rectangular area are prohibitively expensive.
+     * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the rectangular area are
+     * prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code false} even though the
-     * {@code ROI} contains the rectangular area.
+     * This means that for some {@code ROIs} this method might return {@code false} even though the {@code ROI} contains
+     * the rectangular area.
      * 
      * @param x
      *        the X coordinate of the minimum corner position of the specified rectangular area
@@ -172,9 +182,9 @@ public abstract class ROI3D extends ROI
      * @param sizeZ
      *        size for Z dimension of the specified rectangular area
      * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
-     *         specified 3D rectangular area; <code>false</code> otherwise or, if the
-     *         <code>ROI</code> contains the 3D rectangular area and the <code>intersects</code>
-     *         method returns <code>true</code> and the containment calculations would be too
+     *         specified 3D rectangular area; <code>false</code> otherwise or, if the <code>ROI</code> contains the 3D
+     *         rectangular area and the <code>intersects</code> method returns <code>true</code> and the containment
+     *         calculations would be too
      *         expensive to perform.
      */
     public abstract boolean contains(double x, double y, double z, double sizeX, double sizeY, double sizeZ);
@@ -243,23 +253,21 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
-     * <code>Rectangle3D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
-     * implementation to conservatively return {@code true} when:
+     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified <code>Rectangle3D</code>.
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the <code>Rectangle3D</code> and the <code>ROI</code>
-     * intersect, but
+     * <li>there is a high probability that the <code>Rectangle3D</code> and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * {@code Rectangle3D} does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the {@code Rectangle3D}
+     * does not intersect the {@code ROI}.
      * 
      * @param r
      *        the specified <code>Rectangle3D</code>
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         specified <code>Rectangle3D</code> intersect, or are both highly likely to intersect
-     *         and intersection calculations would be too expensive to perform; <code>false</code>
-     *         otherwise.
+     *         and intersection calculations would be too expensive to perform; <code>false</code> otherwise.
      * @see #intersects(double, double, double,double, double, double)
      */
     public boolean intersects(Rectangle3D r)
@@ -269,19 +277,18 @@ public abstract class ROI3D extends ROI
 
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
-     * 3D rectangular area. The 3D rectangular area is considered to intersect the <code>ROI</code>
-     * if any point is contained in both the interior of the <code>ROI</code> and the specified
+     * 3D rectangular area. The 3D rectangular area is considered to intersect the <code>ROI</code> if any point is
+     * contained in both the interior of the <code>ROI</code> and the specified
      * rectangular area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
-     * return {@code true} when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the 3D rectangular area and the <code>ROI</code>
-     * intersect, but
+     * <li>there is a high probability that the 3D rectangular area and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * 3D rectangular area does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the 3D rectangular area
+     * does not intersect the {@code ROI}.
      * 
      * @param x
      *        the X coordinate of the minimum corner position of the specified rectangular area
@@ -413,8 +420,7 @@ public abstract class ROI3D extends ROI
      * returned {@link Rectangle3D} is the smallest bounding box that encloses the <code>ROI</code>,
      * only that the <code>ROI</code> lies entirely within the indicated <code>Rectangle3D</code>.
      * 
-     * @return an instance of <code>Rectangle3D</code> that is a bounding box of the
-     *         <code>ROI</code>.
+     * @return an instance of <code>Rectangle3D</code> that is a bounding box of the <code>ROI</code>.
      */
     public Rectangle3D getBounds3D()
     {
@@ -453,8 +459,8 @@ public abstract class ROI3D extends ROI
 
     /**
      * Set the <code>ROI</code> 3D bounds.<br>
-     * Note that not all ROI supports bounds modification and you should call
-     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * Note that not all ROI supports bounds modification and you should call {@link #canSetBounds()} first to test if
+     * the operation is supported.<br>
      * 
      * @param bounds
      *        new ROI 3D bounds
@@ -498,8 +504,8 @@ public abstract class ROI3D extends ROI
 
     /**
      * Set the <code>ROI</code> 3D position.<br>
-     * Note that not all ROI supports position modification and you should call
-     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * Note that not all ROI supports position modification and you should call {@link #canSetPosition()} first to test
+     * if the operation is supported.<br>
      * 
      * @param position
      *        new ROI 3D position
@@ -543,8 +549,7 @@ public abstract class ROI3D extends ROI
 
     /**
      * Translate the ROI position by the specified delta X/Y/Z.<br>
-     * Note that not all ROI support this operation so you should test it by calling
-     * {@link #canTranslate()} first.
+     * Note that not all ROI support this operation so you should test it by calling {@link #canTranslate()} first.
      * 
      * @param dx
      *        translation value to apply on X dimension
@@ -751,6 +756,35 @@ public abstract class ROI3D extends ROI
     }
 
     /**
+     * Generic implementation of surface area computation using the number of contour point (approximation).<br>
+     * This method should be overridden whenever possible to provide faster and accurate calculation.
+     */
+    public double computeSurfaceArea(Sequence sequence)
+    {
+        return sequence.calculateSize(getNumberOfContourPoints(), 3, 2);
+    }
+
+    /**
+     * Returns surface area of the 3D ROI in the um2.<br>
+     * For an accurate calculation of surface area in um2 we require to have the pixel size information for both X, Y
+     * and Z axis, the Sequence parameter is here to provide these informations.
+     * 
+     * @see #computeSurfaceArea(Sequence)
+     * @see #getNumberOfContourPoints()
+     */
+    public double getSurfaceArea(Sequence sequence)
+    {
+        // we need to recompute the surface area
+        if (surfaceAreaInvalid)
+        {
+            cachedSurfaceArea = computeSurfaceArea(sequence);
+            surfaceAreaInvalid = false;
+        }
+
+        return cachedSurfaceArea;
+    }
+
+    /**
      * Return surface area of the 3D ROI in pixels.<br>
      * This is basically the number of pixel representing ROI edges.<br>
      * 
@@ -855,6 +889,21 @@ public abstract class ROI3D extends ROI
     public boolean isActiveFor(int t, int c)
     {
         return ((getT() == -1) || (t == -1) || (getT() == t)) && ((getC() == -1) || (c == -1) || (getC() == c));
+    }
+
+    @Override
+    public void onChanged(CollapsibleEvent object)
+    {
+        super.onChanged(object);
+
+        final ROIEvent event = (ROIEvent) object;
+
+        if (event.getType() == ROIEventType.ROI_CHANGED)
+        {
+            // need to recompute surface area
+            if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+                surfaceAreaInvalid = true;
+        }
     }
 
     @Override
