@@ -1033,8 +1033,8 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkCommonTransforms");
                 if (SystemUtil.isMac())
                 {
-                    loadLibrary(vtkLibPath, "vtkhdf5.1.8.13", false);
-                    loadLibrary(vtkLibPath, "vtkhdf5_hl.1.8.13", false);
+                    loadLibrary(vtkLibPath, "vtkhdf5.8.0.2", false);
+                    loadLibrary(vtkLibPath, "vtkhdf5_hl.8.0.2", false);
                 }
                 else
                 {
