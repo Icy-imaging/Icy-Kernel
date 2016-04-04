@@ -447,7 +447,9 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         switch (event.getType())
         {
             case ROI_CHANGED:
-                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
+                // position change of a slice can change global bounds --> transform to 'content changed' event type
+                roiChanged(true);
+//                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:
@@ -589,11 +591,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         return false;
     }
 
+    // default approximated implementation for ROI5DStack
     @Override
     public double computeNumberOfContourPoints()
     {
-        // 3D edge points = first slice points + inter slices edge points + last slice points
-        // TODO: only approximation, fix this to use real 5D edge point
+        // 5D contour points = first slice points + inter slices contour points + last slice points
         double perimeter = 0;
 
         if (slices.size() <= 2)

@@ -18,6 +18,21 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import icy.canvas.IcyCanvas;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayListener;
+import icy.roi.BooleanMask2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROI3D;
+import icy.roi.ROIEvent;
+import icy.roi.ROIListener;
+import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle3D;
+import icy.util.XMLUtil;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -34,22 +49,6 @@ import java.util.concurrent.Semaphore;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import icy.canvas.IcyCanvas;
-import icy.painter.OverlayEvent;
-import icy.painter.OverlayListener;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI3D;
-import icy.roi.ROIEvent;
-import icy.roi.ROIListener;
-import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle3D;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
 
 /**
  * Abstract class defining a generic 3D ROI as a stack of individual 2D ROI slices.
@@ -104,8 +103,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     /**
-     * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and
-     * <code>false</code> if it
+     * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and <code>false</code> if it
      * uses the global 3D ROI color draw property.
      */
     @SuppressWarnings("unchecked")
@@ -115,8 +113,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     /**
-     * Set to <code>true</code> if you want to directly use the 2D slice color draw property and
-     * <code>false</code> to
+     * Set to <code>true</code> if you want to directly use the 2D slice color draw property and <code>false</code> to
      * keep the global 3D ROI color draw property.
      * 
      * @see #setColor(int, Color)
@@ -299,8 +296,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     /**
      * @return The size of this ROI stack along Z.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
-     *         of this ROI, but doesn't guarantee that all slices in-between exist (
-     *         {@link #getSlice(int)} may still
+     *         of this ROI, but doesn't guarantee that all slices in-between exist ( {@link #getSlice(int)} may still
      *         return <code>null</code>.<br>
      */
     public int getSizeZ()
@@ -406,7 +402,9 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         switch (event.getType())
         {
             case ROI_CHANGED:
-                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
+                // position change of a slice can change global bounds --> transform to 'content changed' event type
+                roiChanged(true);
+                // roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:
@@ -546,17 +544,40 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         return false;
     }
 
+    // default approximated implementation for ROI3DStack
+    @Override
+    public double computeSurfaceArea(Sequence sequence) throws UnsupportedOperationException
+    {
+        // 3D contour points = first slice points + all slices perimeter + last slice points
+        double result = 0;
+
+        if (!slices.isEmpty())
+        {
+            final double psx = sequence.getPixelSizeX();
+            final double psy = sequence.getPixelSizeY();
+            final double psz = sequence.getPixelSizeZ();
+
+            result = slices.firstEntry().getValue().getNumberOfPoints() * psx * psy;
+            result += slices.lastEntry().getValue().getNumberOfPoints() * psx * psy;
+
+            for (R slice : slices.values())
+                result += slice.getPerimeter(sequence) * psz;
+        }
+
+        return result;
+    }
+
+    // default approximated implementation for ROI3DStack
     @Override
     public double computeNumberOfContourPoints()
     {
-        // 3D edge points = first slice points + inter slices edge points + last slice points
-        // TODO: only approximation, fix this to use real 3D edge point
-        double perimeter = 0;
+        // 3D contour points = first slice points + inter slices contour points + last slice points
+        double result = 0;
 
         if (slices.size() <= 2)
         {
             for (R slice : slices.values())
-                perimeter += slice.getNumberOfPoints();
+                result += slice.getNumberOfPoints();
         }
         else
         {
@@ -565,15 +586,15 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             final Integer firstKey = firstEntry.getKey();
             final Integer lastKey = lastEntry.getKey();
 
-            perimeter = firstEntry.getValue().getNumberOfPoints();
+            result = firstEntry.getValue().getNumberOfPoints();
 
             for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                perimeter += slice.getNumberOfContourPoints();
+                result += slice.getNumberOfContourPoints();
 
-            perimeter += lastEntry.getValue().getNumberOfPoints();
+            result += lastEntry.getValue().getNumberOfPoints();
         }
 
-        return perimeter;
+        return result;
     }
 
     @Override
@@ -799,8 +820,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         }
 
         /**
-         * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and
-         * <code>false</code> if
+         * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and <code>false</code> if
          * it uses the global 3D ROI color draw property.
          */
         public boolean getUseChildColor()
@@ -809,8 +829,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         }
 
         /**
-         * Set to <code>true</code> if you want to directly use the 2D slice color draw property and
-         * <code>false</code>
+         * Set to <code>true</code> if you want to directly use the 2D slice color draw property and <code>false</code>
          * to keep the global 3D ROI color draw property.
          * 
          * @see #setColor(int, Color)

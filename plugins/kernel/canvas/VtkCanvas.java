@@ -1065,7 +1065,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      * 
      * @see #setPickOnMouseMove(boolean)
      * @see #getPickedObject()
-     * @see #pick(int, int)
+     * @see #pickProp(int, int)
      */
     public boolean getPickOnMouseMove()
     {
@@ -1078,7 +1078,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      * 
      * @see #getPickOnMouseMove()
      * @see #getPickedObject()
-     * @see #pick(int, int)
+     * @see #pickProp(int, int)
      */
     public void setPickOnMouseMove(boolean value)
     {
@@ -1092,7 +1092,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      * {@link #setPickOnMouseMove(boolean)} method.
      * 
      * @see #setPickOnMouseMove(boolean)
-     * @see #pick(int, int)
+     * @see #pickProp(int, int)
      */
     public vtkProp getPickedObject()
     {
@@ -1100,9 +1100,18 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     /**
+     * @deprecated use {@link #pickProp(int, int)} instead.
+     */
+    @Deprecated
+    public vtkActor pick(int x, int y)
+    {
+        return (vtkActor) panel3D.pick(x, y);
+    }
+
+    /**
      * @see icy.vtk.IcyVtkPanel#pick(int, int)
      */
-    public vtkProp pick(int x, int y)
+    public vtkProp pickProp(int x, int y)
     {
         return panel3D.pick(x, y);
     }
@@ -1521,7 +1530,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     public BufferedImage getRenderedImage(int t, int c)
     {
         final CustomVtkPanel vp = panel3D;
-        if (vp == null) return null;
+        if (vp == null)
+            return null;
 
         // save position
         final int prevT = getPositionT();

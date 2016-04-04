@@ -710,6 +710,18 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
+        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // provide backward compatibility
+            if (imagePoint != null)
+                mouseClick(e, imagePoint.toPoint2D(), canvas);
+            else
+                mouseClick(e, (Point2D) null, canvas);
+
+            // cancel the default action of ROIPainter implementation which unselecting ROI on right click
+        }
+
+        @Override
         public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first

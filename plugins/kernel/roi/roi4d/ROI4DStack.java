@@ -473,7 +473,9 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         switch (event.getType())
         {
             case ROI_CHANGED:
-                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
+                // position change of a slice can change global bounds --> transform to 'content changed' event type
+                roiChanged(true);
+//                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:
@@ -615,17 +617,17 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         return false;
     }
 
+    // default approximated implementation for ROI4DStack
     @Override
     public double computeNumberOfContourPoints()
     {
-        // 3D edge points = first slice points + inter slices edge points + last slice points
-        // TODO: only approximation, fix this to use real 4D edge point
-        double perimeter = 0;
+        // 4D contour points = first slice points + inter slices contour points + last slice points
+        double result = 0;
 
         if (slices.size() <= 2)
         {
             for (R slice : slices.values())
-                perimeter += slice.getNumberOfPoints();
+                result += slice.getNumberOfPoints();
         }
         else
         {
@@ -634,15 +636,15 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
             final Integer firstKey = firstEntry.getKey();
             final Integer lastKey = lastEntry.getKey();
 
-            perimeter = firstEntry.getValue().getNumberOfPoints();
+            result = firstEntry.getValue().getNumberOfPoints();
 
             for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                perimeter += slice.getNumberOfContourPoints();
+                result += slice.getNumberOfContourPoints();
 
-            perimeter += lastEntry.getValue().getNumberOfPoints();
+            result += lastEntry.getValue().getNumberOfPoints();
         }
 
-        return perimeter;
+        return result;
     }
 
     @Override

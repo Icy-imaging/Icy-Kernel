@@ -3,8 +3,6 @@ package plugins.kernel.roi.descriptor.measure;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI3D;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
 import icy.type.rectangle.Rectangle5D;
@@ -137,15 +135,7 @@ public class ROIBasicMeasureDescriptorsPlugin extends Plugin implements PluginRO
 
         try
         {
-            final double perimeter;
-
-            // ROI2D ? --> use the specific method for more accurate calculation if available
-            if (roi instanceof ROI2D)
-                perimeter = ((ROI2D) roi).getPerimeter(sequence);
-            else
-                perimeter = ROIPerimeterDescriptor.computePerimeter(contour, roi, sequence);
-
-            result.put(perimeterDescriptor, Double.valueOf(perimeter));
+            result.put(perimeterDescriptor, Double.valueOf(ROIPerimeterDescriptor.computePerimeter(roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {
@@ -163,15 +153,8 @@ public class ROIBasicMeasureDescriptorsPlugin extends Plugin implements PluginRO
         }
         try
         {
-            final double surfaceArea;
-
-            // ROI3D ? --> use the specific method for more accurate calculation if available
-            if (roi instanceof ROI3D)
-                surfaceArea = ((ROI3D) roi).getSurfaceArea(sequence);
-            else
-                surfaceArea = ROISurfaceAreaDescriptor.computeSurfaceArea(contour, roi, sequence);
-
-            result.put(surfaceAreaDescriptor, Double.valueOf(surfaceArea));
+            result.put(surfaceAreaDescriptor,
+                    Double.valueOf(ROISurfaceAreaDescriptor.computeSurfaceArea(roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {

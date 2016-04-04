@@ -85,36 +85,27 @@ public class ROIPerimeterDescriptor extends ROIDescriptor
             throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
 
         return ((ROI2D) roi).getPerimeter(sequence);
-        // return computePerimeter(ROIContourDescriptor.computeContour(roi), roi, sequence);
     }
 
-    /**
-     * Computes and returns the perimeter from a given number of contour points expressed in the
-     * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
-     * 
-     * @param contourPoints
-     *        the number of contour points (override the ROI value)
-     * @param roi
-     *        the ROI we want to compute the perimeter
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size
-     *        information.
-     * @return the perimeter
-     * @throws UnsupportedOperationException
-     *         if the operation is not supported for this ROI
-     */
-    static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
-            throws UnsupportedOperationException
-    {
-        try
-        {
-            return ROIContourDescriptor.computeContour(contourPoints, roi, sequence, 2);
-        }
-        catch (UnsupportedOperationException e)
-        {
-            throw new UnsupportedOperationException("Can't process '" + ID + "' calculation on the ROI: "
-                    + roi.getName());
-        }
-    }
+    // /**
+    // * Computes and returns the perimeter from a given number of contour points expressed in the
+    // * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
+    // * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+    // *
+    // * @param contourPoints
+    // * the number of contour points (override the ROI value)
+    // * @param roi
+    // * the ROI we want to compute the perimeter
+    // * @param sequence
+    // * the input sequence used to retrieve operation unit by using pixel size
+    // * information.
+    // * @return the perimeter
+    // * @throws UnsupportedOperationException
+    // * if the operation is not supported for this ROI
+    // */
+    // static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
+    // throws UnsupportedOperationException
+    // {
+    // return ROIContourDescriptor.computeContour(contourPoints, roi, sequence, 2);
+    // }
 }

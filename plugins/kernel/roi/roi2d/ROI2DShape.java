@@ -1455,7 +1455,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     /**
      * Return total distance of the specified list of points.
      */
-    protected double getTotalDistance(List<Point2D> points, boolean connectLastPoint)
+    protected static double getTotalDistance(List<Point2D> points, double factorX, double factorY,
+            boolean connectLastPoint)
     {
         final int size = points.size();
         double result = 0d;
@@ -1463,23 +1464,43 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         if (size > 1)
         {
             for (int i = 0; i < size - 1; i++)
-                result += points.get(i).distance(points.get(i + 1));
+                result += getDistance(points.get(i), points.get(i + 1), factorX, factorY);
 
             // add last to first point distance
             if (connectLastPoint)
-                result += points.get(size - 1).distance(points.get(0));
+                result += getDistance(points.get(size - 1), points.get(0), factorX, factorY);
         }
 
         return result;
     }
 
+    protected static double getDistance(Point2D pt1, Point2D pt2, double factorX, double factorY)
+    {
+        double px = (pt2.getX() - pt1.getX()) * factorX;
+        double py = (pt2.getY() - pt1.getY()) * factorY;
+        return Math.sqrt(px * px + py * py);
+    }
+
     /**
      * Return total distance of the specified list of points.
      */
-    protected double getTotalDistance(List<Point2D> points)
+    protected double getTotalDistance(List<Point2D> points, double factorX, double factorY)
     {
         // by default the total length need last point connection
-        return getTotalDistance(points, true);
+        return getTotalDistance(points, factorX, factorY, true);
+    }
+
+    @Override
+    public double computePerimeter(Sequence sequence)
+    {
+        return getTotalDistance(getPoints(), sequence.getPixelSizeX(), sequence.getPixelSizeY());
+    }
+
+    // default implementation for ROI2DShape
+    @Override
+    public double computeNumberOfContourPoints()
+    {
+        return getTotalDistance(getPoints(), 1d, 1d);
     }
 
     /**
@@ -1501,7 +1522,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             points.add(i, pos);
 
             // calculate total distance
-            final double d = getTotalDistance(points);
+            final double d = getTotalDistance(points, 1d, 1d);
             // minimum distance ?
             if (d < minDistance)
             {

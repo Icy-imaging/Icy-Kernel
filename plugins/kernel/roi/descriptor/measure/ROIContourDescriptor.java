@@ -51,39 +51,39 @@ public class ROIContourDescriptor extends ROIDescriptor
         return roi.getNumberOfContourPoints();
     }
 
-    /**
-     * Returns the contour size from a given number of contour points in the best unit (see
-     * {@link Sequence#getBestPixelSizeUnit(int, int)}) for the specified sequence and dimension.<br>
-     * <ul>
-     * Ex:
-     * <li>getContourSize(sequence, roi, 2) return the perimeter value</li>
-     * <li>getContourSize(sequence, roi, 3) return the surface area value</li>
-     * </ul>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
-     * 
-     * @param contourPoints
-     *        the number of contour points (override the ROI value)
-     * @param roi
-     *        the ROI we want to compute the contour size
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size information.
-     * @param dim
-     *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
-     * @return the number of contour point
-     * @see Sequence#getBestPixelSizeUnit(int, int)
-     * @throws UnsupportedOperationException
-     *         if the contour calculation for the specified dimension is not supported by the ROI
-     */
-    public static double computeContour(double contourPoints, ROI roi, Sequence sequence, int dim)
-            throws UnsupportedOperationException
-    {
-        final double mul = ROIBasicMeasureDescriptorsPlugin.getMultiplierFactor(sequence, roi, dim);
-
-        // 0 means the operation is not supported for this ROI
-        if (mul == 0d)
-            throw new UnsupportedOperationException("Can't process '" + ID + "' calculation for dimension " + dim
-                    + " on the ROI: " + roi.getName());
-
-        return sequence.calculateSizeBestUnit(contourPoints * mul, dim, dim - 1);
-    }
+//    /**
+//     * Returns the contour size from a given number of contour points in the best unit (see
+//     * {@link Sequence#getBestPixelSizeUnit(int, int)}) for the specified sequence and dimension.<br>
+//     * <ul>
+//     * Ex:
+//     * <li>getContourSize(sequence, roi, 2) return the perimeter value</li>
+//     * <li>getContourSize(sequence, roi, 3) return the surface area value</li>
+//     * </ul>
+//     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+//     * 
+//     * @param contourPoints
+//     *        the number of contour points (override the ROI value)
+//     * @param roi
+//     *        the ROI we want to compute the contour size
+//     * @param sequence
+//     *        the input sequence used to retrieve operation unit by using pixel size information.
+//     * @param dim
+//     *        the dimension for the contour size operation (2 = perimeter, 3 = surface area, ...)
+//     * @return the number of contour point
+//     * @see Sequence#getBestPixelSizeUnit(int, int)
+//     * @throws UnsupportedOperationException
+//     *         if the contour calculation for the specified dimension is not supported by the ROI
+//     */
+//    public static double computeContour(double contourPoints, ROI roi, Sequence sequence, int dim)
+//            throws UnsupportedOperationException
+//    {
+//        final double mul = ROIBasicMeasureDescriptorsPlugin.getMultiplierFactor(sequence, roi, dim);
+//
+//        // 0 means the operation is not supported for this ROI
+//        if (mul == 0d)
+//            throw new UnsupportedOperationException("Can't process '" + ID + "' calculation for dimension " + dim
+//                    + " on the ROI: " + roi.getName());
+//
+//        return sequence.calculateSizeBestUnit(contourPoints * mul, dim, dim - 1);
+//    }
 }

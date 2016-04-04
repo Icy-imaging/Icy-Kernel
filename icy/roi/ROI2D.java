@@ -1172,7 +1172,7 @@ public abstract class ROI2D extends ROI
         return getBooleanMask(x, y, w, h);
     }
 
-    /**
+    /*
      * Generic implementation for ROI2D using the BooleanMask object so the result is just an
      * approximation. This method should be overridden whenever possible to provide more optimal
      * approximations.
@@ -1202,6 +1202,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
+     * Compute the perimeter in um.<br>
      * Generic implementation of perimeter computation using the number of contour point (approximation).<br>
      * This method should be overridden whenever possible to provide faster and accurate calculation.
      */
@@ -1211,7 +1212,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Returns perimeter of the 2D ROI in the um.<br>
+     * Returns perimeter of the 2D ROI in um.<br>
      * For an accurate calculation of perimeter in um we require to have the pixel size information for both X and Y
      * axis, the Sequence parameter is here to provide these informations.
      * 

@@ -397,16 +397,10 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     @Override
-    protected double getTotalDistance(List<Point2D> points)
+    protected double getTotalDistance(List<Point2D> points, double factorX, double factorY)
     {
         // by default the total length don't need last point connection
-        return super.getTotalDistance(points, false);
-    }
-
-    @Override
-    public double computeNumberOfContourPoints()
-    {
-        return getTotalDistance(getPoints());
+        return super.getTotalDistance(points, factorX, factorY, false);
     }
 
     @Override

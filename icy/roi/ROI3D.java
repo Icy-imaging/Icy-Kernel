@@ -727,8 +727,8 @@ public abstract class ROI3D extends ROI
         return new BooleanMask3D(bounds, masks);
     }
 
-    /**
-     * Generic implementation for ROI2D using the BooleanMask object so the result is just an
+    /*
+     * Generic implementation for ROI3D using the BooleanMask object so the result is just an
      * approximation. This method should be overridden whenever possible to provide more optimal
      * approximations.
      */
@@ -756,6 +756,7 @@ public abstract class ROI3D extends ROI
     }
 
     /**
+     * Compute the surface area in um2.<br>
      * Generic implementation of surface area computation using the number of contour point (approximation).<br>
      * This method should be overridden whenever possible to provide faster and accurate calculation.
      */
@@ -765,7 +766,7 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * Returns surface area of the 3D ROI in the um2.<br>
+     * Returns surface area of the 3D ROI in um2.<br>
      * For an accurate calculation of surface area in um2 we require to have the pixel size information for both X, Y
      * and Z axis, the Sequence parameter is here to provide these informations.
      * 

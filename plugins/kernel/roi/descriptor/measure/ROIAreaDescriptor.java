@@ -81,9 +81,6 @@ public class ROIAreaDescriptor extends ROIDescriptor
      */
     public static double computeArea(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        if (!(roi instanceof ROI2D))
-            throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
-
         return computeArea(ROIInteriorDescriptor.computeInterior(roi), roi, sequence);
     }
 
@@ -108,12 +105,16 @@ public class ROIAreaDescriptor extends ROIDescriptor
     {
         try
         {
+            // we restrict to ROI2D only
+            if (!(roi instanceof ROI2D))
+                throw new UnsupportedOperationException();
+
             return ROIInteriorDescriptor.computeInterior(interiorPoints, roi, sequence, 2);
         }
         catch (UnsupportedOperationException e)
         {
-            throw new UnsupportedOperationException("Can't process '" + ID + "' calculation on the ROI: "
-                    + roi.getName());
+            throw new UnsupportedOperationException("Can't process " + ID + " calculation for ROI: '" + roi.getName()
+                    + "'");
         }
     }
 }

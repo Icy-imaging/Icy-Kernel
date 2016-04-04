@@ -932,73 +932,163 @@ public class BooleanMask3D implements Cloneable
      * correctly distance between each contour point.
      * 
      * @author Alexandre Dufour
+     * @author Stephane Dallongeville
      * @return the length of the contour
      */
     public double getContourLength()
     {
-        double perimeter = 0;
+        double result = 0;
 
         final int[] edge = getContourPointsAsIntArray();
-        final int baseX = bounds.x;
-        final int baseY = bounds.y;
-        final int baseZ = bounds.z;
-        final int width = bounds.sizeX;
-        final int height = bounds.sizeY;
-        final int depth = bounds.sizeZ;
 
         // count the edges and corners in 2D/3D
         double sideEdges = 0, cornerEdges = 0;
 
         for (int i = 0; i < edge.length; i += 3)
         {
-            final int x = edge[i + 0] - baseX;
-            final int y = edge[i + 1] - baseY;
-            final int z = edge[i + 2] - baseZ;
-            final int xy = x + (y * width);
-            final BooleanMask2D mask2D = getMask2D(z);
+            final int x = edge[i + 0];
+            final int y = edge[i + 1];
+            final int z = edge[i + 2];
 
-            // count the edges in 4-connectivity
-            int nbEdges = 0;
+            // start on current plan
+            BooleanMask2D mask2D = getMask2D(z);
 
-            if (x == 0 || !mask2D.mask[xy - 1])
-                nbEdges++; // left
-            if (x == width - 1 || !mask2D.mask[xy + 1])
-                nbEdges++; // right
-            if (y == 0 || !mask2D.mask[xy - width])
-                nbEdges++; // north
-            if (y == height - 1 || !mask2D.mask[xy + width])
-                nbEdges++; // south
-            if (z == 0 || !getMask2D(z - 1).mask[xy])
-                nbEdges++;
-            if (z == depth - 1 || !getMask2D(z + 1).mask[xy])
-                nbEdges++;
+            final boolean leftConnected = mask2D.contains(x - 1, y);
+            final boolean rightConnected = mask2D.contains(x + 1, y);
+            final boolean topConnected = mask2D.contains(x, y - 1);
+            final boolean bottomConnected = mask2D.contains(x + 1, y + 1);
+            // lower plan
+            mask2D = getMask2D(z - 1);
+            final boolean southConnected = (mask2D != null) && mask2D.contains(x, y);
+            // upper plan
+            mask2D = getMask2D(z + 1);
+            final boolean northConnected = (mask2D != null) && mask2D.contains(x, y);
 
-            switch (nbEdges)
+            // count the connections (6 max)
+            int connection = 0;
+
+            if (leftConnected)
+                connection++;
+            if (rightConnected)
+                connection++;
+            if (topConnected)
+                connection++;
+            if (bottomConnected)
+                connection++;
+            if (southConnected)
+                connection++;
+            if (northConnected)
+                connection++;
+
+            switch (connection)
             {
-                case 0:
-                    break;
-                case 1:
-                    sideEdges++;
-                    perimeter++;
-                    break;
-                case 2:
-                    cornerEdges++;
-                    perimeter += Math.sqrt(2);
-                    break;
-                case 3:
-                    cornerEdges += 2;
-                    perimeter += 2 * Math.sqrt(2);
-                    break;
+            // case 0: // isolated point
+            // cornerEdges += 3;
+            // sideEdges++;
+            // result += 1 + Math.sqrt(2) + (2 * Math.sqrt(3));
+            // break;
+            //
+            // case 1: // filament end
+            // cornerEdges += 2;
+            // sideEdges++;
+            // result += 1 + (2 * Math.sqrt(3));
+            // break;
+            //
+            // case 2: // filament point
+            // if ((leftConnected && rightConnected) || (topConnected && bottomConnected)
+            // || (northConnected && southConnected))
+            // {
+            // // quadruple "side" edge
+            // sideEdges += 4;
+            // result += 4;
+            // }
+            // else
+            // {
+            // cornerEdges += 3;
+            // result += 3 * Math.sqrt(2);
+            // }
+            // // cornerEdges += 3;
+            // // perimeter += Math.sqrt(3);
+            // break;
+            //
+            // case 3: // "salient" point
+            // if ((leftConnected && rightConnected) || (topConnected && bottomConnected)
+            // || (northConnected && southConnected))
+            // {
+            // // triple "side" edge
+            // sideEdges += 3;
+            // result += 3;
+            // }
+            // else
+            // {
+            // cornerEdges += 2;
+            // result += 2 * Math.sqrt(2);
+            // }
                 default:
-                    cornerEdges += 3;
-                    perimeter += Math.sqrt(3);
+                    cornerEdges++;
+                    result += Math.sqrt(3);
+                    break;
+
+                case 4:
+                    if (leftConnected && rightConnected && topConnected && bottomConnected)
+                    {
+                        // double "side" edge
+                        sideEdges += 2;
+                        result += 2;
+                    }
+                    else if (leftConnected && rightConnected && northConnected && southConnected)
+                    {
+                        // double "side" edge
+                        sideEdges += 2;
+                        result += 2;
+                    }
+                    else if (topConnected && bottomConnected && northConnected && southConnected)
+                    {
+                        // double "side" edge
+                        sideEdges += 2;
+                        result += 2;
+                    }
+                    else
+                    {
+                        // "corner" edge
+                        cornerEdges++;
+                        result += Math.sqrt(2);
+                    }
+                    break;
+
+                case 5: // "side" edge
+                    sideEdges++;
+                    result++;
+                    break;
+
+                // internal point --> should not happen
+                case 6:
+                    break;
             }
+
+            // case 0:
+            // break;
+            // case 1:
+            // sideEdges++;
+            // perimeter++;
+            // break;
+            // case 2:
+            // cornerEdges++;
+            // perimeter += Math.sqrt(2);
+            // break;
+            // case 3:
+            // cornerEdges += 2;
+            // perimeter += 2 * Math.sqrt(2);
+            // break;
+            // default:
+            // cornerEdges += 3;
+            // perimeter += Math.sqrt(3);
         }
 
-        // adjust the perimeter empirically according to the edge distribution
+        // adjust the surface area empirically according to the edge distribution
         double overShoot = Math.min(sideEdges / 10, cornerEdges);
 
-        return perimeter - overShoot;
+        return result - overShoot;
     }
 
     @Override

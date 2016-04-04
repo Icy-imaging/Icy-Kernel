@@ -38,6 +38,7 @@ import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.InstanceProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
@@ -641,6 +642,36 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                                 }
                                 catch (UnsupportedOperationException e)
                                 {
+                                    final List<ROIDescriptor> descriptors = plugin.getDescriptors();
+
+                                    if (descriptors != null)
+                                    {
+                                        // not supported --> clear associated results and set them as computed
+                                        for (ROIDescriptor desc : descriptors)
+                                        {
+                                            // get the column for this result
+                                            final ColumnInfo resultColumnInfo = getColumnInfo(desc, columnInfo.channel);
+                                            final DescriptorResult oResult;
+
+                                            synchronized (results)
+                                            {
+                                                // get corresponding result
+                                                oResult = results.get(resultColumnInfo);
+                                            }
+
+                                            if (oResult != null)
+                                            {
+                                                oResult.setValue(null);
+                                                oResult.setOutdated(false);
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Throwable t)
+                                {
+                                    // show the error
+                                    IcyExceptionHandler.handleException(t, true);
+
                                     final List<ROIDescriptor> descriptors = plugin.getDescriptors();
 
                                     if (descriptors != null)

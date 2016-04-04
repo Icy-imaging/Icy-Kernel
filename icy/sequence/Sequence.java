@@ -933,18 +933,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 break;
         }
 
-        int i = dimResult;
-
-        while (i > dimCompute)
-        {
-            result *= result;
-            i--;
-        }
-        while (i < dimCompute)
-        {
-            result = Math.sqrt(result);
-            i++;
-        }
+        result = Math.pow(result, (double) dimResult / (double) dimCompute);
 
         return result;
     }
@@ -1024,11 +1013,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * dimension order.<br>
      * <br>
      * For the perimeter in µm:<br>
-     * <code>surface = calculateSize(surfaceInPixel, 2, 1)</code><br>
+     * <code>perimeter = calculateSize(contourInPixel, 2, 1)</code><br>
      * For a 2D surface in µm2:<br>
-     * <code>surface = calculateSize(surfaceInPixel, 2, 2)</code><br>
+     * <code>surface = calculateSize(interiorInPixel, 2, 2)</code><br>
+     * For a 2D surface area in µm2:<br>
+     * <code>volume = calculateSize(contourInPixel, 3, 2)</code><br>
      * For a 3D volume in µm3:<br>
-     * <code>volume = calculateSize(volumeInPixel, 3, 3)</code><br>
+     * <code>volume = calculateSize(interiorInPixel, 3, 3)</code><br>
      * 
      * @param pixelNumber
      *        number of pixel
