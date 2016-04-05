@@ -3451,7 +3451,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * Called when ROI has changed its content and/or position.<br>
      * 
      * @param contentChanged
-     *        mean that ROI content has changed otherwise we consider position changed
+     *        mean that ROI content has changed otherwise we consider only a position change
      */
     public void roiChanged(boolean contentChanged)
     {
@@ -3463,8 +3463,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated UCalled when ROI has changed its content.
+     * @deprecated Use {@link #roiChanged(boolean)} instead.
      */
+    @Deprecated
     public void roiChanged()
     {
         // handle with updater

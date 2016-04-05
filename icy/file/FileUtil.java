@@ -18,6 +18,12 @@
  */
 package icy.file;
 
+import icy.network.NetworkUtil;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -28,12 +34,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
-
-import icy.network.NetworkUtil;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
 
 /**
  * @author stephane
@@ -173,6 +173,7 @@ public class FileUtil
             }
             catch (Exception e)
             {
+                System.err.println("Error: can't create file '" + file.getAbsolutePath() + "':");
                 IcyExceptionHandler.showErrorMessage(e, false);
                 return null;
             }
@@ -543,8 +544,8 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println(
-                                "Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                        System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                                + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
                         System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
                         System.err.println("Also check that you have the rights to do this operation.");
@@ -553,8 +554,8 @@ public class FileUtil
                 }
                 else
                 {
-                    System.err.println(
-                            "Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                    System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                            + "'");
                     System.err.println("The destination already exists.");
                     System.err.println("Use the 'force' flag to force the operation.");
                     return false;
@@ -744,8 +745,8 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println(
-                                "Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                        System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                                + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
                         System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
                         System.err.println("Also check that you have the rights to do this operation.");
@@ -973,8 +974,7 @@ public class FileUtil
      * @param filter
      *        A file filter.<br>
      *        If the given <code>filter</code> is <code>null</code> then all pathnames are accepted.
-     *        Otherwise, a pathname satisfies the filter if and only if the value <code>true</code>
-     *        results when the
+     *        Otherwise, a pathname satisfies the filter if and only if the value <code>true</code> results when the
      *        <code>{@link FileFilter#accept(java.io.File)}</code> method of the
      *        filter is invoked on the pathname.
      * @param recursive
@@ -1005,8 +1005,7 @@ public class FileUtil
      * @param filter
      *        A file filter.<br>
      *        If the given <code>filter</code> is <code>null</code> then all files are accepted.
-     *        Otherwise, a file satisfies the filter if and only if the value <code>true</code>
-     *        results when the
+     *        Otherwise, a file satisfies the filter if and only if the value <code>true</code> results when the
      *        <code>{@link FileFilter#accept(java.io.File)}</code> method of the
      *        filter is invoked on the pathname.
      * @param recursive
@@ -1020,8 +1019,7 @@ public class FileUtil
     public static String[] getFiles(String directory, FileFilter filter, boolean recursive, boolean wantDirectory,
             boolean wantHidden)
     {
-        final File[] files = getFiles(new File(getGenericPath(directory)), filter, recursive, wantDirectory,
-                wantHidden);
+        final File[] files = getFiles(new File(getGenericPath(directory)), filter, recursive, wantDirectory, wantHidden);
         final String[] result = new String[files.length];
 
         for (int i = 0; i < files.length; i++)
