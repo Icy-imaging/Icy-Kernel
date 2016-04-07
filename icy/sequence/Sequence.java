@@ -3240,7 +3240,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         // assume unsigned byte by default
         if (colorModel == null)
-            return DataType.UBYTE;
+            // preserve UNDEFINED here for backward compatibility (Math Operation for instance)
+            return DataType.UNDEFINED;
 
         return colorModel.getDataType_();
     }
