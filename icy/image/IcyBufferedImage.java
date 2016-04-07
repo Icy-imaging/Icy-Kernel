@@ -759,7 +759,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, Scaler)} instead.
+     * @deprecated Uses {@link IcyBufferedImageUtil#convertType(IcyBufferedImage, DataType, Scaler[])} instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(DataType dataType, Scaler scaler)
@@ -768,12 +768,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, Scaler)} instead
+     * @deprecated Uses {@link IcyBufferedImageUtil#convertType(IcyBufferedImage,DataType, Scaler[])} instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(int dataType, boolean signed, Scaler scaler)
     {
-        return convertToType(DataType.getDataType(dataType, signed), scaler);
+        return IcyBufferedImageUtil.convertToType(this, DataType.getDataType(dataType, signed), scaler);
     }
 
     /**

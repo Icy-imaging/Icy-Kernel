@@ -620,7 +620,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Use {@link SequenceUtil#convertToType(Sequence, DataType, Scaler)} instead.
+     * @deprecated Use {@link SequenceUtil#convertType(Sequence, DataType, Scaler[])} instead.
      */
     @Deprecated
     public Sequence convertToType(DataType dataType, Scaler scaler)
