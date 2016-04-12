@@ -40,6 +40,7 @@ import vtk.vtkActor2D;
 import vtk.vtkActor2DCollection;
 import vtk.vtkActorCollection;
 import vtk.vtkCellArray;
+import vtk.vtkCollection;
 import vtk.vtkColorTransferFunction;
 import vtk.vtkDataArray;
 import vtk.vtkDecimatePro;
@@ -51,11 +52,13 @@ import vtk.vtkImageData;
 import vtk.vtkIntArray;
 import vtk.vtkLongArray;
 import vtk.vtkMarchingCubes;
+import vtk.vtkObject;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkPoints;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataConnectivityFilter;
 import vtk.vtkProp;
+import vtk.vtkPropCollection;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
 import vtk.vtkSmoothPolyDataFilter;
@@ -141,6 +144,225 @@ public class VtkUtil
         }
     }
 
+    public static vtkDataArray getVtkArray(Object array, boolean signed)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return getUCharArray((byte[]) array);
+            case SHORT:
+                if (signed)
+                    return getUShortArray((short[]) array);
+                return getShortArray((short[]) array);
+            case INT:
+                if (signed)
+                    return getUIntArray((int[]) array);
+                return getIntArray((int[]) array);
+            case LONG:
+                if (signed)
+                    return getULongArray((long[]) array);
+                return getLongArray((long[]) array);
+            case FLOAT:
+                return getFloatArray((float[]) array);
+            case DOUBLE:
+                return getDoubleArray((double[]) array);
+            default:
+                return null;
+        }
+    }
+
+    public static vtkUnsignedCharArray getUCharArray(byte[] array)
+    {
+        final vtkUnsignedCharArray result = new vtkUnsignedCharArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkUnsignedShortArray getUShortArray(short[] array)
+    {
+        final vtkUnsignedShortArray result = new vtkUnsignedShortArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkUnsignedIntArray getUIntArray(int[] array)
+    {
+        final vtkUnsignedIntArray result = new vtkUnsignedIntArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkUnsignedLongArray getULongArray(long[] array)
+    {
+        final vtkUnsignedLongArray result = new vtkUnsignedLongArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkShortArray getShortArray(short[] array)
+    {
+        final vtkShortArray result = new vtkShortArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkIntArray getIntArray(int[] array)
+    {
+        final vtkIntArray result = new vtkIntArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkLongArray getLongArray(long[] array)
+    {
+        final vtkLongArray result = new vtkLongArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkFloatArray getFloatArray(float[] array)
+    {
+        final vtkFloatArray result = new vtkFloatArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkDoubleArray getDoubleArray(double[] array)
+    {
+        final vtkDoubleArray result = new vtkDoubleArray();
+
+        result.SetJavaArray(array);
+
+        return result;
+    }
+
+    public static vtkIdTypeArray getIdTypeArray(int[] array)
+    {
+        final vtkIdTypeArray result = new vtkIdTypeArray();
+        final vtkIntArray iarray = getIntArray(array);
+
+        result.DeepCopy(iarray);
+
+        return result;
+    }
+
+    public static int[] getArray(vtkIdTypeArray array)
+    {
+        final vtkIntArray iarray = new vtkIntArray();
+
+        iarray.DeepCopy(array);
+
+        return iarray.GetJavaArray();
+    }
+
+    /**
+     * Transforms a vtkCollection to an array
+     */
+    public static vtkObject[] vtkCollectionToArray(vtkCollection collection)
+    {
+        final vtkObject[] result = new vtkObject[collection.GetNumberOfItems()];
+
+        collection.InitTraversal();
+        for (int i = 0; i < result.length; i++)
+            result[i] = collection.GetNextItemAsObject();
+
+        return result;
+    }
+
+    /**
+     * Get vtkPoints from double[]
+     */
+    public static vtkPoints getPoints(double[] points)
+    {
+        final vtkPoints result = new vtkPoints();
+        final vtkDoubleArray array = getDoubleArray(points);
+
+        array.SetNumberOfComponents(3);
+        result.SetData(array);
+
+        return result;
+    }
+
+    /**
+     * Get vtkPoints from double[][3]
+     */
+    public static vtkPoints getPoints(double[][] points)
+    {
+        return getPoints(Array2DUtil.toDoubleArray1D(points));
+    }
+
+    /**
+     * Get vtkPoints from float[]
+     */
+    public static vtkPoints getPoints(float[] points)
+    {
+        final vtkPoints result = new vtkPoints();
+        final vtkFloatArray array = getFloatArray(points);
+
+        array.SetNumberOfComponents(3);
+        result.SetData(array);
+
+        return result;
+    }
+
+    /**
+     * Get vtkPoints from float[][3]
+     */
+    public static vtkPoints getPoints(float[][] points)
+    {
+        return getPoints(Array2DUtil.toFloatArray1D(points));
+    }
+
+    /**
+     * Get vtkPoints from int[]
+     */
+    public static vtkPoints getPoints(int[] points)
+    {
+        final vtkPoints result = new vtkPoints();
+        final vtkIntArray array = getIntArray(points);
+
+        array.SetNumberOfComponents(3);
+        result.SetData(array);
+
+        return result;
+    }
+
+    /**
+     * Get vtkPoints from int[][3]
+     */
+    public static vtkPoints getPoints(int[][] points)
+    {
+        return getPoints(Array2DUtil.toIntArray1D(points));
+    }
+
+    /**
+     * Get vtkCellArray from a 1D prepared cells array ( {n, i1, i2, ..., n, i1, i2,...} )
+     */
+    public static vtkCellArray getCells(int numCell, int[] cells)
+    {
+        final vtkCellArray result = new vtkCellArray();
+
+        result.SetCells(numCell, getIdTypeArray(cells));
+
+        return result;
+    }
+
     /**
      * Returns the <i>vtkProp</i> from the specified <i>Layer</i> object.<br>
      * Returns a 0 sized array if the specified layer is <code>null</code> or does not contains any vtkProp.
@@ -203,7 +425,25 @@ public class VtkUtil
     }
 
     /**
-     * Return true if the renderer contains the specified actor
+     * Return all actor / view prop from the specified renderer
+     */
+    public static vtkProp[] getProps(vtkRenderer renderer)
+    {
+        if (renderer == null)
+            return new vtkProp[0];
+
+        final vtkPropCollection collection = renderer.GetViewProps();
+        final vtkProp[] result = new vtkProp[collection.GetNumberOfItems()];
+
+        collection.InitTraversal();
+        for (int i = 0; i < result.length; i++)
+            result[i] = collection.GetNextProp();
+
+        return result;
+    }
+
+    /**
+     * Return true if the renderer contains the specified actor / view prop
      */
     public static boolean hasProp(vtkRenderer renderer, vtkProp actor)
     {
@@ -391,211 +631,6 @@ public class VtkUtil
 
             off_src += numVertexPerCell;
         }
-
-        return result;
-    }
-
-    public static vtkDataArray getVtkArray(Object array, boolean signed)
-    {
-        switch (ArrayUtil.getDataType(array))
-        {
-            case BYTE:
-                return getUCharArray((byte[]) array);
-            case SHORT:
-                if (signed)
-                    return getUShortArray((short[]) array);
-                return getShortArray((short[]) array);
-            case INT:
-                if (signed)
-                    return getUIntArray((int[]) array);
-                return getIntArray((int[]) array);
-            case LONG:
-                if (signed)
-                    return getULongArray((long[]) array);
-                return getLongArray((long[]) array);
-            case FLOAT:
-                return getFloatArray((float[]) array);
-            case DOUBLE:
-                return getDoubleArray((double[]) array);
-            default:
-                return null;
-        }
-    }
-
-    public static vtkUnsignedCharArray getUCharArray(byte[] array)
-    {
-        final vtkUnsignedCharArray result = new vtkUnsignedCharArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkUnsignedShortArray getUShortArray(short[] array)
-    {
-        final vtkUnsignedShortArray result = new vtkUnsignedShortArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkUnsignedIntArray getUIntArray(int[] array)
-    {
-        final vtkUnsignedIntArray result = new vtkUnsignedIntArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkUnsignedLongArray getULongArray(long[] array)
-    {
-        final vtkUnsignedLongArray result = new vtkUnsignedLongArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkShortArray getShortArray(short[] array)
-    {
-        final vtkShortArray result = new vtkShortArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkIntArray getIntArray(int[] array)
-    {
-        final vtkIntArray result = new vtkIntArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkLongArray getLongArray(long[] array)
-    {
-        final vtkLongArray result = new vtkLongArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkFloatArray getFloatArray(float[] array)
-    {
-        final vtkFloatArray result = new vtkFloatArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkDoubleArray getDoubleArray(double[] array)
-    {
-        final vtkDoubleArray result = new vtkDoubleArray();
-
-        result.SetJavaArray(array);
-
-        return result;
-    }
-
-    public static vtkIdTypeArray getIdTypeArray(int[] array)
-    {
-        final vtkIdTypeArray result = new vtkIdTypeArray();
-        final vtkIntArray iarray = getIntArray(array);
-
-        result.DeepCopy(iarray);
-
-        return result;
-    }
-
-    public static int[] getArray(vtkIdTypeArray array)
-    {
-        final vtkIntArray iarray = new vtkIntArray();
-
-        iarray.DeepCopy(array);
-
-        return iarray.GetJavaArray();
-    }
-
-    /**
-     * Get vtkPoints from double[]
-     */
-    public static vtkPoints getPoints(double[] points)
-    {
-        final vtkPoints result = new vtkPoints();
-        final vtkDoubleArray array = getDoubleArray(points);
-
-        array.SetNumberOfComponents(3);
-        result.SetData(array);
-
-        return result;
-    }
-
-    /**
-     * Get vtkPoints from double[][3]
-     */
-    public static vtkPoints getPoints(double[][] points)
-    {
-        return getPoints(Array2DUtil.toDoubleArray1D(points));
-    }
-
-    /**
-     * Get vtkPoints from float[]
-     */
-    public static vtkPoints getPoints(float[] points)
-    {
-        final vtkPoints result = new vtkPoints();
-        final vtkFloatArray array = getFloatArray(points);
-
-        array.SetNumberOfComponents(3);
-        result.SetData(array);
-
-        return result;
-    }
-
-    /**
-     * Get vtkPoints from float[][3]
-     */
-    public static vtkPoints getPoints(float[][] points)
-    {
-        return getPoints(Array2DUtil.toFloatArray1D(points));
-    }
-
-    /**
-     * Get vtkPoints from int[]
-     */
-    public static vtkPoints getPoints(int[] points)
-    {
-        final vtkPoints result = new vtkPoints();
-        final vtkIntArray array = getIntArray(points);
-
-        array.SetNumberOfComponents(3);
-        result.SetData(array);
-
-        return result;
-    }
-
-    /**
-     * Get vtkPoints from int[][3]
-     */
-    public static vtkPoints getPoints(int[][] points)
-    {
-        return getPoints(Array2DUtil.toIntArray1D(points));
-    }
-
-    /**
-     * Get vtkCellArray from a 1D prepared cells array ( {n, i1, i2, ..., n, i1, i2,...} )
-     */
-    public static vtkCellArray getCells(int numCell, int[] cells)
-    {
-        final vtkCellArray result = new vtkCellArray();
-
-        result.SetCells(numCell, getIdTypeArray(cells));
 
         return result;
     }

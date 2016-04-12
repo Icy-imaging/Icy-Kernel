@@ -429,6 +429,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // start the properties updater thread
         propertiesUpdater.start();
 
+        // initialized !
+        initialized = true;
+
         // add layers actors (better to do it in background as it can take a lot of time when we have many layers / ROI)
         ThreadUtil.bgRun(new Runnable()
         {
@@ -443,6 +446,10 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 {
                     final int l = Math.min(1000, len - i);
                     final vtkProp[] propPacket = new vtkProp[l];
+
+                    // VTKCanvas has been closed --> interrupt process
+                    if (!initialized)
+                        break;
 
                     System.arraycopy(props, i, propPacket, 0, l);
 
@@ -478,8 +485,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 }
             }
         });
-
-        initialized = true;
     }
 
     @Override
@@ -2164,7 +2169,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                             prop.SetVisibility(0);
                     }
                     else
-                        prop.SetVisibility((lv && l.isVisible()) ? 1 : 0);
+                    {
+                        // FIXME: ugly method to know visibility flags should not be impacted here
+                        if (prop.GetPropertyKeys() == null)
+                            prop.SetVisibility((lv && l.isVisible()) ? 1 : 0);
+                    }
 
                     // opacity seems to not be correctly handled in VTK ??
                     if (prop instanceof vtkActor)
@@ -2188,7 +2197,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                         prop.SetVisibility(0);
                 }
                 else
-                    prop.SetVisibility((lv && layer.isVisible()) ? 1 : 0);
+                {
+                    // FIXME: ugly method to know visibility flags should not be impacted here
+                    if (prop.GetPropertyKeys() == null)
+                        prop.SetVisibility((lv && layer.isVisible()) ? 1 : 0);
+                }
 
                 // opacity seems to not be correctly handled in VTK ??
                 if (prop instanceof vtkActor)

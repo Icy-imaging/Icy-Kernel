@@ -18,16 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-
-import org.w3c.dom.Node;
-
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -41,9 +31,21 @@ import icy.type.point.Point5D.Double;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.vtk.IcyVtkPanel;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+import org.w3c.dom.Node;
+
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
+import vtk.vtkProperty;
 import vtk.vtkSphereSource;
 
 /**
@@ -57,6 +59,16 @@ public class ROI2DPoint extends ROI2DShape
     public class ROI2DPointPainter extends ROI2DShapePainter
     {
         vtkSphereSource vtkSource;
+
+        @Override
+        protected void finalize() throws Throwable
+        {
+            super.finalize();
+
+            // init 3D painters stuff
+            if (vtkSource != null)
+                vtkSource.Delete();
+        }
 
         @Override
         protected boolean isSmall(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
@@ -106,8 +118,7 @@ public class ROI2DPoint extends ROI2DShape
                 {
                     final Point2D pos = getPoint();
                     final double ray = getAdjustedStroke(canvas);
-                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2,
-                            ray * 2);
+                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2, ray * 2);
 
                     // draw shape
                     g2.setColor(getDisplayColor());
@@ -187,6 +198,43 @@ public class ROI2DPoint extends ROI2DShape
 
             // need to repaint
             painterChanged();
+        }
+
+        @Override
+        protected void updateVtkDisplayProperties()
+        {
+            if (actor != null)
+            {
+                final VtkCanvas cnv = canvas3d.get();
+                final Color col = getDisplayColor();
+                final double r = col.getRed() / 255d;
+                final double g = col.getGreen() / 255d;
+                final double b = col.getBlue() / 255d;
+                // final float opacity = getOpacity();
+
+                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+                // we need to lock canvas as actor can be accessed during rendering
+                if (vtkPanel != null)
+                {
+                    vtkPanel.lock();
+                    try
+                    {
+                        actor.GetProperty().SetColor(r, g, b);
+                    }
+                    finally
+                    {
+                        vtkPanel.unlock();
+                    }
+                }
+                else
+                {
+                    actor.GetProperty().SetColor(r, g, b);
+                }
+
+                // need to repaint
+                painterChanged();
+            }
         }
     }
 

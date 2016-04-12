@@ -805,6 +805,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns pixel size for [X,Y,Z] dimension (in µm to be OME compatible)
+     */
+    public double[] getPixelSize()
+    {
+        return new double[] {getPixelSizeX(), getPixelSizeY(), getPixelSizeZ()};
+    }
+
+    /**
      * Returns X pixel size (in µm to be OME compatible)
      */
     public double getPixelSizeX()
