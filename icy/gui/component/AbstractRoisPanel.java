@@ -67,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.ActionMap;
 import javax.swing.Box;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -1123,9 +1124,12 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             {
                 final int rowCount = roiTable.getRowCount();
 
-                // we use RowsUpdated event to keep selection (DataChanged remove selection)
+                // we use 'RowsUpdated' event to keep selection (DataChanged remove selection)
                 if (rowCount > 0)
                 {
+                    // save anchor index which is lost with 'RowsUpdated' event
+                    final int anchorInd = ((DefaultListSelectionModel) roiSelectionModel).getAnchorSelectionIndex();
+
                     synchronized (roiTableModel)
                     {
                         try
@@ -1137,6 +1141,10 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                             // Sorter don't like when we change data while it's sorting...
                         }
                     }
+
+                    // restore anchor index
+                    if (anchorInd != -1)
+                        ((DefaultListSelectionModel) roiSelectionModel).setAnchorSelectionIndex(anchorInd);
                 }
             }
         });
@@ -1515,26 +1523,28 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
     public void valueChanged(ListSelectionEvent e)
     {
         // currently changing the selection ? --> exit
-        if (roiSelectionModel.getValueIsAdjusting())
+        if (e.getValueIsAdjusting())
             return;
         // currently changing the selection ? --> exit
-        if (!modifySelection.tryAcquire())
+        if (roiSelectionModel.getValueIsAdjusting())
             return;
 
-        // semaphore acquired here
-        try
+        if (modifySelection.tryAcquire())
         {
-            final List<ROI> selectedRois = getSelectedRois();
-            final Sequence sequence = getSequence();
+            // semaphore acquired here
+            try
+            {
+                final List<ROI> selectedRois = getSelectedRois();
+                final Sequence sequence = getSequence();
 
-            // update selected ROI in sequence
-            if (sequence != null)
-                sequence.setSelectedROIs(selectedRois);
-
-        }
-        finally
-        {
-            modifySelection.release();
+                // update selected ROI in sequence
+                if (sequence != null)
+                    sequence.setSelectedROIs(selectedRois);
+            }
+            finally
+            {
+                modifySelection.release();
+            }
         }
 
         refreshRoiNumbers();
@@ -1866,9 +1876,6 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 }
             }
 
-            // // mark it as requested
-            // result.setRequested();
-            //
             // out dated result ? --> request for descriptor computation
             if (result.isOutdated())
                 requestDescriptorComputation(this);

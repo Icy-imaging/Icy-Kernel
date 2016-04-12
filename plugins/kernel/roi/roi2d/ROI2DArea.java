@@ -67,6 +67,7 @@ import org.w3c.dom.Node;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkImageData;
+import vtk.vtkInformation;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
@@ -150,7 +151,10 @@ public class ROI2DArea extends ROI2D
                 polyData.Delete();
             }
             if (outlineActor != null)
+            {
+                outlineActor.GetPropertyKeys().Delete();
                 outlineActor.Delete();
+            }
             if (outlineMapper != null)
                 outlineMapper.Delete();
             if (outline != null)
@@ -171,6 +175,8 @@ public class ROI2DArea extends ROI2D
             outlineActor.SetPickable(0);
             // and set it to wireframe representation
             outlineActor.GetProperty().SetRepresentationToWireframe();
+            // awful hack to know we are outline so visibility flag shouldn't not be affected by VtkCanvas
+            outlineActor.SetPropertyKeys(new vtkInformation());
 
             polyMapper = new vtkPolyDataMapper();
             surfaceActor = new vtkActor();

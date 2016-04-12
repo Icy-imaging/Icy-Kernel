@@ -668,6 +668,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         }
     }
 
+    /**
+     * Global layers visibility changed
+     */
     protected void layersVisibleChanged()
     {
         final Component comp = getViewComponent();

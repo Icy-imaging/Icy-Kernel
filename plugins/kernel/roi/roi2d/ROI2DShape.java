@@ -69,6 +69,7 @@ import java.util.List;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkCellArray;
+import vtk.vtkInformation;
 import vtk.vtkPoints;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
@@ -134,7 +135,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (vCells != null)
                 vCells.Delete();
             if (outlineActor != null)
+            {
+                outlineActor.GetPropertyKeys().Delete();
                 outlineActor.Delete();
+            }
             if (outlineMapper != null)
                 outlineMapper.Delete();
             if (outline != null)
@@ -155,6 +159,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             outlineActor.SetPickable(0);
             // and set it to wireframe representation
             outlineActor.GetProperty().SetRepresentationToWireframe();
+            // awful hack to know we are outline so visibility flag shouldn't not be affected by VtkCanvas
+            outlineActor.SetPropertyKeys(new vtkInformation());
 
             // init poly data object
             polyData = new vtkPolyData();

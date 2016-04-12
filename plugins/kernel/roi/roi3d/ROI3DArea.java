@@ -49,6 +49,7 @@ import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
 import vtk.vtkImageData;
+import vtk.vtkInformation;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
@@ -109,7 +110,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 polyData.Delete();
             }
             if (outlineActor != null)
+            {
+                outlineActor.GetPropertyKeys().Delete();
                 outlineActor.Delete();
+            }
             if (outlineMapper != null)
                 outlineMapper.Delete();
             if (outline != null)
@@ -130,6 +134,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             outlineActor.SetPickable(0);
             // and set it to wireframe representation
             outlineActor.GetProperty().SetRepresentationToWireframe();
+            // awful hack to know we are outline so visibility flag shouldn't not be affected by VtkCanvas
+            outlineActor.SetPropertyKeys(new vtkInformation());
 
             polyMapper = new vtkPolyDataMapper();
             surfaceActor = new vtkActor();
