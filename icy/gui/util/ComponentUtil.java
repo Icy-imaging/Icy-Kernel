@@ -323,38 +323,75 @@ public class ComponentUtil
      */
     public static boolean fixPosition(Component component, Rectangle wantedBounds)
     {
-        final List<GraphicsDevice> screens = getScreens(component);
-        Point newPos = null;
-        boolean useMainScreen = false;
+      final List<GraphicsDevice> screens = SystemUtil.getScreenDevices();
 
-        for (GraphicsDevice screen : screens)
-        {
-            final Point pt = fixPosition(wantedBounds, SystemUtil.getScreenBounds(screen, true));
+      // headless mode probably
+      if (screens.isEmpty())
+          return false;
 
-            // this screen accept current position --> no need to adjust position
-            if (pt == null)
-                return false;
+      Point newPos = null;
+      boolean useMainScreen = false;
 
-            // we already have an adjusted position ?
-            if (newPos != null)
-                useMainScreen = true;
-            else
-                newPos = pt;
-        }
+      for (GraphicsDevice screen : screens)
+      {
+          final Point pt = fixPosition(wantedBounds, SystemUtil.getScreenBounds(screen, true));
 
-        // use main screen
-        if (screens.isEmpty())
-            useMainScreen = true;
+          // this screen accept current position --> no need to adjust position
+          if (pt == null)
+              return false;
+          
+          // we already have an adjusted position ?
+          if (newPos != null)
+              useMainScreen = true;
+          else
+              newPos = pt;
+      }
 
-        // multiple possible position adjustment ? --> use main screen
-        if (useMainScreen)
-            newPos = fixPosition(wantedBounds, SystemUtil.getScreenBounds(getScreen(component), true));
+      // multiple possible position adjustment ? --> use main screen
+      if (useMainScreen)
+          newPos = fixPosition(wantedBounds, SystemUtil.getScreenBounds(getScreen(component), true));
 
-        // got a new position ? --> set it
-        if (newPos != null)
-            wantedBounds.setLocation(newPos);
+      // got a new position ? --> set it
+      if (newPos != null)
+      {
+          wantedBounds.setLocation(newPos);
+          return true;
+      }
 
-        return true;
+      return false;
+
+//        final List<GraphicsDevice> screens = getScreens(component);
+//        Point newPos = null;
+//        boolean useMainScreen = false;
+//
+//        for (GraphicsDevice screen : screens)
+//        {
+//            final Point pt = fixPosition(wantedBounds, SystemUtil.getScreenBounds(screen, true));
+//
+//            // this screen accept current position --> no need to adjust position
+//            if (pt == null)
+//                return false;
+//
+//            // we already have an adjusted position ?
+//            if (newPos != null)
+//                useMainScreen = true;
+//            else
+//                newPos = pt;
+//        }
+//
+//        // use main screen
+//        if (screens.isEmpty())
+//            useMainScreen = true;
+//
+//        // multiple possible position adjustment ? --> use main screen
+//        if (useMainScreen)
+//            newPos = fixPosition(wantedBounds, SystemUtil.getScreenBounds(getScreen(component), true));
+//
+//        // got a new position ? --> set it
+//        if (newPos != null)
+//            wantedBounds.setLocation(newPos);
+//
+//        return true;
     }
 
     /**

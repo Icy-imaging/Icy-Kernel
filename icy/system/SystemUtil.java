@@ -326,6 +326,26 @@ public class SystemUtil
     {
         return getDefaultGraphicsConfiguration();
     }
+    
+    /**
+     * Return all available screen devices.
+     */
+    public static List<GraphicsDevice> getScreenDevices()
+    {
+    	final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
+    	  
+        if (Icy.getMainInterface().isHeadLess())
+            return result;
+
+        try
+        {
+            return CollectionUtil.asList(getLocalGraphicsEnvironment().getScreenDevices());
+        }
+        catch (HeadlessException e)
+        {
+            return result;
+        }
+    }
 
     /**
      * Return the number of screen device.
