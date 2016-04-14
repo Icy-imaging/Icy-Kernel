@@ -36,7 +36,7 @@ public class ROIEvent implements CollapsibleEvent
     {
         FOCUS_CHANGED, SELECTION_CHANGED, /**
                                            * ROI position or/and content change event.<br>
-                                           * property = {@link ROI#ROICHANGED_POSITION} when only
+                                           * property = {@link ROI#ROI_CHANGED_POSITION} when only
                                            * position has changed
                                            */
         ROI_CHANGED, /**
