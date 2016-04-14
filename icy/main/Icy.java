@@ -71,6 +71,7 @@ import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -207,6 +208,16 @@ public class Icy
                 @Override
                 public void run()
                 {
+                    try
+                    {
+                        // HACKY: attempt to load an image as ImageIO may fail on first try...
+                        ImageIO.read(getClass().getResource("/" + ResourceUtil.IMAGE_PATH + "logo.png"));
+                    }
+                    catch (Exception e)
+                    {
+                        // ignore
+                    }
+
                     // force resources loading now so it will eat less time on GUI loading
                     try
                     {
