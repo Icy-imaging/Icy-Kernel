@@ -202,9 +202,6 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
             for (PluginDescriptor plugin : roiPlugins)
             {
-                // load icon first
-                plugin.loadIcon();
-
                 button = PluginCommandButton.createToggleButton(plugin, false);
                 addCommandButton(button, RibbonElementPriority.MEDIUM);
                 if (al != null)

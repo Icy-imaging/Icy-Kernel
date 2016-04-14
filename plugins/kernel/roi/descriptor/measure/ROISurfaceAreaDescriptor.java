@@ -3,6 +3,7 @@
  */
 package plugins.kernel.roi.descriptor.measure;
 
+import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.roi.ROI;
 import icy.roi.ROI3D;
@@ -69,22 +70,27 @@ public class ROISurfaceAreaDescriptor extends ROIDescriptor
     /**
      * Computes and returns the surface area expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * for the specified ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+     * It may thrown an <code>UnsupportedOperationException</code> if the operation is not supported for that ROI.
      * 
      * @param roi
      *        the ROI on which we want to compute the surface area
      * @param sequence
-     *        an optional sequence where the pixel size can be retrieved
-     * @return the surface area
+     *        the sequence from which the pixel size can be retrieved
+     * @return the surface area expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
     public static double computeSurfaceArea(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         if (!(roi instanceof ROI3D))
-            throw new UnsupportedOperationException("Surface area not supported for ROI" + roi.getDimension() + "D !");
+            throw new UnsupportedOperationException("Surface area not supported on " + roi.getDimension() + "D ROI !");
+        if (sequence == null)
+            throw new UnsupportedOperationException("Cannot compute Surface area with null Sequence parameter !");
 
-        return ((ROI3D) roi).getSurfaceArea(sequence);
+        final UnitPrefix bestUnit = sequence.getBestPixelSizeUnit(3, 2);
+        final double surfaceArea = ((ROI3D) roi).getSurfaceArea(sequence);
+
+        return UnitUtil.getValueInUnit(surfaceArea, UnitPrefix.MICRO, bestUnit, 2);
     }
 
     // /**

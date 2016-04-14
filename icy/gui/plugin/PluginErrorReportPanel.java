@@ -162,11 +162,7 @@ public class PluginErrorReportPanel extends JPanel
     private void initialize()
     {
         if (plugin != null)
-        {
-            // load icon first
-            plugin.loadIcon();
             label = new JLabel("", plugin.getIcon(), SwingConstants.CENTER);
-        }
         else
             label = new JLabel("", SwingConstants.CENTER);
 

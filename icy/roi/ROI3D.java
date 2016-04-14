@@ -756,7 +756,7 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * Compute the surface area in um2.<br>
+     * Compute the surface area in um2 given the pixel size informations from the specified Sequence.<br>
      * Generic implementation of surface area computation using the number of contour point (approximation).<br>
      * This method should be overridden whenever possible to provide faster and accurate calculation.
      */
@@ -766,9 +766,7 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * Returns surface area of the 3D ROI in um2.<br>
-     * For an accurate calculation of surface area in um2 we require to have the pixel size information for both X, Y
-     * and Z axis, the Sequence parameter is here to provide these informations.
+     * Returns surface area of the 3D ROI in um2 given the pixel size informations from the specified Sequence.
      * 
      * @see #computeSurfaceArea(Sequence)
      * @see #getNumberOfContourPoints()

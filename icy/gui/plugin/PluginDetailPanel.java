@@ -142,7 +142,7 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
         final JScrollPane scDescription = new JScrollPane(pluginDescriptionText);
         scDescription.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
-        pluginImage = new ImageComponent(plugin.getImage());
+        pluginImage = new ImageComponent(plugin.isImageLoaded() ? plugin.getImage() : PluginDescriptor.DEFAULT_IMAGE);
 
         imagePanel = new JPanel(new BorderLayout());
         imagePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
@@ -245,7 +245,6 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
                 }
             });
         }
-
     }
 
     void updateGui()

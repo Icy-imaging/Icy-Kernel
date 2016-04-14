@@ -24,11 +24,10 @@ import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.resource.icon.BasicResizableIcon;
+import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.ImageIcon;
 
 import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
 
@@ -42,19 +41,27 @@ public class PluginCommandButton
     /**
      * Set a plugin button with specified action
      */
-    public static void setButton(AbstractCommandButton button, PluginDescriptor plugin, boolean doAction)
+    public static void setButton(final AbstractCommandButton button, final PluginDescriptor plugin, boolean doAction)
     {
         final String name = plugin.getName();
         final String className = plugin.getClassName();
-        final ImageIcon plugIcon = plugin.getIcon();
 
         // update text & icon
         button.setText(name);
-        button.setIcon(new BasicResizableIcon(plugIcon));
+        // set icon
+        button.setIcon(new BasicResizableIcon(plugin.getIcon()));
         // save class name here
         button.setName(className);
 
-        button.setActionRichTooltip(new PluginRichToolTip(plugin));
+        // do it asynchronously as image loading can take sometime
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                button.setActionRichTooltip(new PluginRichToolTip(plugin));
+            }
+        });
 
         // remove previous listener on button
         final ActionListener[] listeners = button.getListeners(ActionListener.class);

@@ -192,9 +192,6 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 importPanel.addButtonGroup("Sequence importer");
                 for (PluginDescriptor plugin : sequenceImporterPlugins)
                 {
-                    // load icon first
-                    plugin.loadIcon();
-                    
                     final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
 
                     button.addActionListener(new ActionListener()

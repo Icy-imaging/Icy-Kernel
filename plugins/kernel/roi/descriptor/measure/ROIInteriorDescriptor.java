@@ -59,7 +59,7 @@ public class ROIInteriorDescriptor extends ROIDescriptor
      * <li>computeInterior(sequence, roi, 2) return the area value</li>
      * <li>computeInterior(sequence, roi, 3) return the volume value</li>
      * </ul>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+     * It may thrown an <code>UnsupportedOperationException</code> if the operation is not supported for that ROI.
      * 
      * @param interiorPoints
      *        the number of interior points (override the ROI value)

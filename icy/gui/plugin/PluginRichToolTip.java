@@ -42,8 +42,6 @@ public class PluginRichToolTip extends RichTooltip
         final String description = plugin.getDescription();
         final String website = plugin.getWeb();
         final String author = plugin.getAuthor();
-        // load images first
-        plugin.loadImages();
         final ImageIcon plugIcon = plugin.getIcon();
         final Image plugImg = plugin.getImage();
 

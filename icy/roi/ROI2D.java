@@ -1202,7 +1202,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Compute the perimeter in um.<br>
+     * Compute the perimeter in um given the pixel size informations from the specified Sequence.<br>
      * Generic implementation of perimeter computation using the number of contour point (approximation).<br>
      * This method should be overridden whenever possible to provide faster and accurate calculation.
      */
@@ -1212,9 +1212,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Returns perimeter of the 2D ROI in um.<br>
-     * For an accurate calculation of perimeter in um we require to have the pixel size information for both X and Y
-     * axis, the Sequence parameter is here to provide these informations.
+     * Returns perimeter of the 2D ROI in um given the pixel size informations from the specified Sequence.
      * 
      * @see #computePerimeter(Sequence)
      * @see #getNumberOfContourPoints()

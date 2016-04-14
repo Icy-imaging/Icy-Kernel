@@ -49,6 +49,7 @@ import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
 import icy.preferences.PluginPreferences;
+import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.system.AppleUtil;
 import icy.system.IcyExceptionHandler;
@@ -174,7 +175,7 @@ public class Icy
             // initialize preferences
             IcyPreferences.init();
 
-            // check if Icy is already running.
+            // check if Icy is already running
             lock = SingleInstanceCheck.lock("icy");
             if (lock == null)
             {
@@ -201,6 +202,24 @@ public class Icy
                 }
             }
 
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // force resources loading now so it will eat less time on GUI loading
+                    try
+                    {
+                        Class.forName(ResourceUtil.class.getName());
+                    }
+                    catch (ClassNotFoundException e)
+                    {
+                        // ignore
+
+                    }
+                }
+            });
+
             if (!headless && !noSplash)
             {
                 // prepare splashScreen (ok to create it here as we are not yet in substance laf)
@@ -224,7 +243,6 @@ public class Icy
 
             // initialize network (need preferences)
             NetworkUtil.init();
-
             // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reloadAsynch();

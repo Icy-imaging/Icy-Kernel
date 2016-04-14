@@ -191,8 +191,6 @@ public class PluginErrorReport
         if (plugin != null)
         {
             str = "<html><br>The plugin named <b>" + plugin.getName() + "</b> has encountered a problem";
-            // load icon first
-            plugin.loadIcon();
             icon = plugin.getIcon();
         }
         else if (!StringUtil.isEmpty(devId))

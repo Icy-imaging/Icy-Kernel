@@ -423,13 +423,17 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Load descriptor informations (xmlUrl field should be correctly filled)
+     * Load descriptor informations (xmlUrl field should be correctly filled).<br>
+     * Returns <code>false</code> if the operation failed.
      */
     public boolean loadDescriptor(boolean reload)
     {
         // already loaded ?
         if (descriptorLoaded && !reload)
             return true;
+
+        // just to avoid retry indefinitely if it fails
+        descriptorLoaded = true;
 
         // retrieve document
         final Document document = XMLUtil.loadDocument(xmlUrl,
@@ -444,8 +448,6 @@ public class PluginDescriptor implements XMLPersistent
                         + ident.getClassName() + "'");
                 return false;
             }
-
-            descriptorLoaded = true;
 
             return true;
         }
@@ -467,6 +469,9 @@ public class PluginDescriptor implements XMLPersistent
         if (changeLogLoaded)
             return true;
 
+        // just to avoid retry indefinitely if it fails
+        changeLogLoaded = true;
+
         // retrieve document
         final Document document = XMLUtil.loadDocument(xmlUrl,
                 (repository != null) ? repository.getAuthenticationInfo() : null, true);
@@ -478,18 +483,16 @@ public class PluginDescriptor implements XMLPersistent
             if (node != null)
             {
                 setChangeLog(XMLUtil.getElementValue(node, ID_CHANGELOG, ""));
-                changeLogLoaded = true;
+                return true;
             }
-        }
 
-        if (!changeLogLoaded)
-        {
-            System.err.println("Warning: can't find valid XML file from '" + xmlUrl + "' for plugin class '"
+            System.err.println("Can't find valid XML file from '" + xmlUrl + "' for plugin class '"
                     + ident.getClassName() + "'");
-            return false;
         }
 
-        return true;
+        System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
+
+        return false;
     }
 
     /**
@@ -497,19 +500,17 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean loadIcon()
     {
-        // can't load images if descriptor is not yet loaded
-        if (!loadDescriptor())
-            return false;
         // already loaded ?
         if (iconLoaded)
             return true;
 
-        // load icon
-        loadIcon(URLUtil.getURL(iconUrl));
-
+        // need descriptor to be loaded first
+        loadDescriptor();
+        // just to avoid retry indefinitely if it fails
         iconLoaded = true;
 
-        return true;
+        // load icon
+        return loadIcon(URLUtil.getURL(iconUrl));
     }
 
     /**
@@ -517,19 +518,17 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean loadImage()
     {
-        // can't load images if descriptor is not yet loaded
-        if (!loadDescriptor())
-            return false;
         // already loaded ?
         if (imageLoaded)
             return true;
 
-        // load image
-        loadImage(URLUtil.getURL(imageUrl));
-
+        // need descriptor to be loaded first
+        loadDescriptor();
+        // just to avoid retry indefinitely if it fails
         imageLoaded = true;
 
-        return true;
+        // load image
+        return loadImage(URLUtil.getURL(imageUrl));
     }
 
     /**
@@ -537,7 +536,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean loadImages()
     {
-        return loadIcon() && loadImage();
+        return loadIcon() & loadImage();
     }
 
     /**
@@ -545,13 +544,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean loadAll()
     {
-        if (loadDescriptor())
-        {
-            loadChangeLog();
-            return loadImages();
-        }
-
-        return false;
+        return loadDescriptor() & loadChangeLog() & loadImages();
     }
 
     /**
@@ -621,7 +614,7 @@ public class PluginDescriptor implements XMLPersistent
         return getClassName().startsWith(PluginLoader.PLUGIN_KERNEL_PACKAGE + ".");
     }
 
-    void loadIcon(URL url)
+    boolean loadIcon(URL url)
     {
         // load icon
         if (url != null)
@@ -629,12 +622,18 @@ public class PluginDescriptor implements XMLPersistent
                     ImageUtil.load(NetworkUtil.getInputStream(url,
                             (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
                     ICON_SIZE);
+
         // get default icon
         if (icon == null)
+        {
             icon = DEFAULT_ICON;
+            return false;
+        }
+
+        return true;
     }
 
-    void loadImage(URL url)
+    boolean loadImage(URL url)
     {
         // load image
         if (url != null)
@@ -642,9 +641,15 @@ public class PluginDescriptor implements XMLPersistent
                     ImageUtil.load(NetworkUtil.getInputStream(url,
                             (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
                     IMAGE_SIZE, IMAGE_SIZE);
+
         // get default image
         if (image == null)
+        {
             image = DEFAULT_IMAGE;
+            return false;
+        }
+
+        return true;
     }
 
     // public void save()
@@ -904,6 +909,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public ImageIcon getIcon()
     {
+        loadIcon();
         return icon;
     }
 
@@ -912,8 +918,10 @@ public class PluginDescriptor implements XMLPersistent
      */
     public Image getIconAsImage()
     {
-        if (icon != null)
-            return icon.getImage();
+        final ImageIcon i = getIcon();
+
+        if (i != null)
+            return i.getImage();
 
         return null;
     }
@@ -923,6 +931,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public Image getImage()
     {
+        loadImage();
         return image;
     }
 

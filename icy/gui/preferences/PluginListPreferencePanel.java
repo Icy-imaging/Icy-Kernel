@@ -158,7 +158,6 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
                 });
             }
         };
-
         repositoryActionListener = new ActionListener()
         {
             @Override
@@ -312,8 +311,11 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
                     switch (column)
                     {
                         case 0:
+                            if (plugin.isIconLoaded())
+                                return ResourceUtil.scaleIcon(plugin.getIcon(), 32);
+
                             loadIconAsync(plugin);
-                            return ResourceUtil.scaleIcon(plugin.getIcon(), 32);
+                            return ResourceUtil.scaleIcon(PluginDescriptor.DEFAULT_ICON, 32);
 
                         case 1:
                             return plugin.getName();
@@ -458,19 +460,16 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected void loadIconAsync(final PluginDescriptor plugin)
     {
-        if (!plugin.isIconLoaded())
+        ThreadUtil.bgRun(new Runnable()
         {
-            ThreadUtil.bgRun(new Runnable()
+            @Override
+            public void run()
             {
-                @Override
-                public void run()
-                {
-                    // icon correctly loaded ?
-                    if (plugin.loadIcon())
-                        refreshTableData();
-                }
-            });
-        }
+                // icon correctly loaded ?
+                if (plugin.loadIcon())
+                    refreshTableData();
+            }
+        });
     }
 
     @Override

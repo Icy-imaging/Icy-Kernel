@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
@@ -81,6 +82,23 @@ public class XMLUtil
     // static Inflater
     // private static Inflater inflater = new Inflater(true);
     private static Inflater inflater = new Inflater();
+
+    static
+    {
+        try
+        {
+            docBuilderFactory.setNamespaceAware(false);
+            docBuilderFactory.setValidating(false);
+            docBuilderFactory.setFeature("http://xml.org/sax/features/namespaces", false);
+            docBuilderFactory.setFeature("http://xml.org/sax/features/validation", false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        }
+        catch (Exception e)
+        {
+            // ignore this
+        }
+    }
 
     // private static synchronized void init()
     // {
@@ -236,7 +254,7 @@ public class XMLUtil
         final URL url = URLUtil.getURL(path);
 
         // load from URL
-        if ((url != null) && URLUtil.isNetworkURL(url))
+        if (url != null)
             return loadDocument(url, auth, showError);
 
         // try to load from file instead (no authentication needed then)
@@ -311,6 +329,23 @@ public class XMLUtil
      */
     public static Document loadDocument(URL url, AuthenticationInfo auth, boolean showError)
     {
+        // use file loading if possible
+        if (URLUtil.isFileURL(url))
+        {
+            File f;
+
+            try
+            {
+                f = new File(url.toURI());
+            }
+            catch (URISyntaxException e)
+            {
+                f = new File(url.getPath());
+            }
+
+            return loadDocument(f);
+        }
+
         final DocumentBuilder builder = createDocumentBuilder();
 
         if (builder != null)

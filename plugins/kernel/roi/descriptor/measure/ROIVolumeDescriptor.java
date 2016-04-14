@@ -69,13 +69,13 @@ public class ROIVolumeDescriptor extends ROIDescriptor
     /**
      * Computes and returns the volume expressed in the unit of the descriptor (see {@link #getUnit(Sequence)}) for the
      * specified ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+     * It may thrown an <code>UnsupportedOperationException</code> if the operation is not supported for that ROI.
      * 
      * @param roi
      *        the ROI on which we want to compute the volume
      * @param sequence
      *        an optional sequence where the pixel size can be retrieved
-     * @return the area
+     * @return the volume expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
@@ -96,7 +96,7 @@ public class ROIVolumeDescriptor extends ROIDescriptor
      * @param sequence
      *        the input sequence used to retrieve operation unit by using pixel size
      *        information.
-     * @return the volume
+     * @return the volume expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
