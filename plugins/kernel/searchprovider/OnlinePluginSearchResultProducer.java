@@ -195,7 +195,8 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                 tmpResults.add(result);
         }
 
-        results = tmpResults;
+        // use a copy to avoid future concurrent accesses
+        results = new ArrayList<SearchResult>(tmpResults);
         consumer.resultsChanged(this);
 
         // load descriptions

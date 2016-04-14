@@ -104,7 +104,8 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
                 tmpResults.add(new LocalPluginResult(this, plugin, plugin.getDescription(), words, prio));
         }
 
-        results = tmpResults;
+        // use a copy to avoid future concurrent accesses
+        results = new ArrayList<SearchResult>(tmpResults);
         consumer.resultsChanged(this);
         
         // load descriptions
