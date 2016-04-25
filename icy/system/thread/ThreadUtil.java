@@ -114,7 +114,7 @@ public class ThreadUtil
 
         bgProcessor.setPriority(MIN_PRIORITY);
         bgProcessor.setThreadName("Background processor");
-        bgProcessor.setKeepAliveTime(3, TimeUnit.DAYS);
+        bgProcessor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         for (int i = 0; i < instanceProcessors.length; i++)
         {
