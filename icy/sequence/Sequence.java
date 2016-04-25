@@ -3236,6 +3236,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void setColormap(int channel, IcyColorMap map, boolean setAlpha)
     {
         final LUT lut = getUserLUT();
+        
+        // we want to preserve the custom colormap
+        if (userLut == null)
+            userLut = lut;        
 
         if (channel < lut.getNumChannel())
             lut.getLutChannel(channel).setColorMap(map, setAlpha);

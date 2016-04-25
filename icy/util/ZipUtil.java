@@ -92,7 +92,6 @@ public class ZipUtil
 
         // return packed data
         return bos.toByteArray();
-
     }
 
     /**

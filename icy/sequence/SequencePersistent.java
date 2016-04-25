@@ -327,17 +327,21 @@ public class SequencePersistent implements XMLPersistent
 
     private void saveLUTToXML(Node node)
     {
-        final LUT lut = sequence.getUserLUT();
-
-        // something to save ?
-        if (lut != null)
+        // save only if we have a custom LUT
+        if (sequence.hasUserLUT())
         {
-            final Node nodeLut = XMLUtil.setElement(node, ID_LUT);
+            final LUT lut = sequence.getUserLUT();
 
-            if (nodeLut != null)
+            // something to save ?
+            if (lut != null)
             {
-                XMLUtil.removeAllChildren(nodeLut);
-                lut.saveToXML(nodeLut);
+                final Node nodeLut = XMLUtil.setElement(node, ID_LUT);
+
+                if (nodeLut != null)
+                {
+                    XMLUtil.removeAllChildren(nodeLut);
+                    lut.saveToXML(nodeLut);
+                }
             }
         }
     }

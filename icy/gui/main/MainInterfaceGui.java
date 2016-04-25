@@ -1551,8 +1551,8 @@ public class MainInterfaceGui implements MainInterface
      * 
      * @param sequence
      *        the sequence which has been closed.
-     * @param viewer
-     *        the viewer which has been closed.
+     * @param userLut
+     *        the viewer's LUT used when sequence has been closed.
      */
     private void sequenceClosed(Sequence sequence, LUT userLut)
     {

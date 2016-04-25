@@ -3165,9 +3165,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         // use XML persistence for cloning
         final Node node = XMLUtil.createDocument(true).getDocumentElement();
+        int retry;
 
+        // XML methods sometime fails, better to offer retry (hacky)
+        retry = 3;
         // save
-        if (!saveToXML(node))
+        while ((retry > 0) && !saveToXML(node))
+            retry--;
+
+        if (retry <= 0)
         {
             System.err.println("Cannot get a copy of roi " + getName() + ": XML save operation failed.");
             // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": XML save
@@ -3175,7 +3181,17 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return null;
         }
 
-        final ROI result = createFromXML(node);
+        ROI result;
+
+        // XML methods sometime fails, better to offer retry (hacky)
+        retry = 3;
+        result = null;
+        while ((retry > 0) && (result == null))
+        {
+            result = createFromXML(node);
+            retry--;
+        }
+
         if (result == null)
         {
             System.err.println("Cannot get a copy of roi " + getName() + ": creation from XML failed.");

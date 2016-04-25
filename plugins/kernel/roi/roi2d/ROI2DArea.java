@@ -2439,7 +2439,8 @@ public class ROI2DArea extends ROI2D
 
         synchronized (maskData)
         {
-            data = maskData;
+            // need to duplicate to avoid array change during XML saving (ZIP packing don't like that) 
+            data = maskData.clone();
             bnds = bounds;
         }
 
