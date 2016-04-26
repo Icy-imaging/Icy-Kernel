@@ -67,6 +67,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         protected vtkPolyData outline;
         protected vtkPolyDataMapper outlineMapper;
         protected vtkActor outlineActor;
+        protected vtkInformation vtkInfo;
         protected vtkPolyData polyData;
         protected vtkPolyDataMapper polyMapper;
         protected vtkActor surfaceActor;
@@ -82,6 +83,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             outline = null;
             outlineMapper = null;
             outlineActor = null;
+            vtkInfo = null;
             polyData = null;
             polyMapper = null;
             surfaceActor = null;
@@ -111,8 +113,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             }
             if (outlineActor != null)
             {
-                outlineActor.GetPropertyKeys().Delete();
+                outlineActor.SetPropertyKeys(null);
                 outlineActor.Delete();
+            }
+            if (vtkInfo != null)
+            {
+                vtkInfo.Remove(VtkCanvas.outlineVisibilityKey);
+                vtkInfo.Delete();
             }
             if (outlineMapper != null)
                 outlineMapper.Delete();
@@ -134,8 +141,11 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             outlineActor.SetPickable(0);
             // and set it to wireframe representation
             outlineActor.GetProperty().SetRepresentationToWireframe();
-            // awful hack to know we are outline so visibility flag shouldn't not be affected by VtkCanvas
-            outlineActor.SetPropertyKeys(new vtkInformation());
+            // use vtkInformations to store outline visibility state (hacky)
+            vtkInfo = new vtkInformation();
+            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+            // VtkCanvas use this to restore correctly outline visibility flag
+            outlineActor.SetPropertyKeys(vtkInfo);
 
             polyMapper = new vtkPolyDataMapper();
             surfaceActor = new vtkActor();
@@ -265,11 +275,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                         {
                             outlineActor.GetProperty().SetRepresentationToWireframe();
                             outlineActor.SetVisibility(1);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
                         }
                         else
                         {
                             outlineActor.GetProperty().SetRepresentationToPoints();
                             outlineActor.SetVisibility(0);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
                         }
                         surfaceActor.GetProperty().SetColor(r, g, b);
                         // opacity here is about ROI content, global opacity is handled by Layer
@@ -288,11 +300,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                     {
                         outlineActor.GetProperty().SetRepresentationToWireframe();
                         outlineActor.SetVisibility(1);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
                     }
                     else
                     {
                         outlineActor.GetProperty().SetRepresentationToPoints();
                         outlineActor.SetVisibility(0);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
                     }
                     surfaceActor.GetProperty().SetColor(r, g, b);
                     // opacity here is about ROI content, global opacity is handled by Layer

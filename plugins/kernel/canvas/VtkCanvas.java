@@ -65,6 +65,8 @@ import vtk.vtkCamera;
 import vtk.vtkColorTransferFunction;
 import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
+import vtk.vtkInformation;
+import vtk.vtkInformationIntegerKey;
 import vtk.vtkLight;
 import vtk.vtkOrientationMarkerWidget;
 import vtk.vtkPicker;
@@ -91,12 +93,12 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     /**
      * icons
      */
-    protected static final Image ICON_AXES3D = ResourceUtil.getAlphaIconAsImage("axes3d.png");
-    protected static final Image ICON_BOUNDINGBOX = ResourceUtil.getAlphaIconAsImage("bbox.png");
-    protected static final Image ICON_GRID = ResourceUtil.getAlphaIconAsImage("3x3_grid.png");
-    protected static final Image ICON_RULER = ResourceUtil.getAlphaIconAsImage("ruler.png");
-    protected static final Image ICON_RULERLABEL = ResourceUtil.getAlphaIconAsImage("ruler_label.png");
-    protected static final Image ICON_TARGET = ResourceUtil.getAlphaIconAsImage("target.png");
+    public static final Image ICON_AXES3D = ResourceUtil.getAlphaIconAsImage("axes3d.png");
+    public static final Image ICON_BOUNDINGBOX = ResourceUtil.getAlphaIconAsImage("bbox.png");
+    public static final Image ICON_GRID = ResourceUtil.getAlphaIconAsImage("3x3_grid.png");
+    public static final Image ICON_RULER = ResourceUtil.getAlphaIconAsImage("ruler.png");
+    public static final Image ICON_RULERLABEL = ResourceUtil.getAlphaIconAsImage("ruler_label.png");
+    public static final Image ICON_TARGET = ResourceUtil.getAlphaIconAsImage("target.png");
 
     /**
      * properties
@@ -111,6 +113,12 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     public static final String PROPERTY_SCALE = "scale";
     public static final String PROPERTY_BOUNDS = "bounds";
 
+    /**
+     * Used for outline visibility information in vtkActor
+     */
+
+    public static final vtkInformationIntegerKey outlineVisibilityKey = new vtkInformationIntegerKey().MakeKey(
+            "Visibility", "Outline");
     /**
      * preferences id
      */
@@ -2170,9 +2178,19 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     }
                     else
                     {
-                        // FIXME: ugly method to know visibility flags should not be impacted here
-                        if (prop.GetPropertyKeys() == null)
-                            prop.SetVisibility((lv && l.isVisible()) ? 1 : 0);
+                        boolean visible = lv && l.isVisible();
+                        // FIXME: hacky method to know visibility flags should not be impacted here
+                        final vtkInformation vtkInfo = prop.GetPropertyKeys();
+
+                        if (vtkInfo != null)
+                        {
+                            // pick the visibility info
+                            if ((vtkInfo.Has(outlineVisibilityKey) != 0) && (vtkInfo.Get(outlineVisibilityKey) == 0))
+                                visible = false;
+                        }
+
+                        // finally set the visibility state
+                        prop.SetVisibility(visible ? 1 : 0);
                     }
 
                     // opacity seems to not be correctly handled in VTK ??
@@ -2198,9 +2216,19 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 }
                 else
                 {
-                    // FIXME: ugly method to know visibility flags should not be impacted here
-                    if (prop.GetPropertyKeys() == null)
-                        prop.SetVisibility((lv && layer.isVisible()) ? 1 : 0);
+                    boolean visible = lv && layer.isVisible();
+                    // FIXME: hacky method to know visibility flags should not be impacted here
+                    final vtkInformation vtkInfo = prop.GetPropertyKeys();
+
+                    if (vtkInfo != null)
+                    {
+                        // pick the visibility info
+                        if ((vtkInfo.Has(outlineVisibilityKey) != 0) && (vtkInfo.Get(outlineVisibilityKey) == 0))
+                            visible = false;
+                    }
+
+                    // finally set the visibility state
+                    prop.SetVisibility(visible ? 1 : 0);
                 }
 
                 // opacity seems to not be correctly handled in VTK ??

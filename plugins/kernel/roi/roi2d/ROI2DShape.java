@@ -87,6 +87,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         protected vtkPolyData outline;
         protected vtkPolyDataMapper outlineMapper;
         protected vtkActor outlineActor;
+        protected vtkInformation vtkInfo;
         protected vtkCellArray vCells;
         protected vtkPoints vPoints;
         protected vtkPolyData polyData;
@@ -105,6 +106,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             outline = null;
             outlineMapper = null;
             outlineActor = null;
+            vtkInfo = null;
             vCells = null;
             vPoints = null;
             polyData = null;
@@ -136,8 +138,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 vCells.Delete();
             if (outlineActor != null)
             {
-                outlineActor.GetPropertyKeys().Delete();
+                outlineActor.SetPropertyKeys(null);
                 outlineActor.Delete();
+            }
+            if (vtkInfo != null)
+            {
+                vtkInfo.Remove(VtkCanvas.outlineVisibilityKey);
+                vtkInfo.Delete();
             }
             if (outlineMapper != null)
                 outlineMapper.Delete();
@@ -159,8 +166,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             outlineActor.SetPickable(0);
             // and set it to wireframe representation
             outlineActor.GetProperty().SetRepresentationToWireframe();
-            // awful hack to know we are outline so visibility flag shouldn't not be affected by VtkCanvas
-            outlineActor.SetPropertyKeys(new vtkInformation());
+            // use vtkInformations to store outline visibility state (hacky)
+            vtkInfo = new vtkInformation();
+            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+            // VtkCanvas use this to restore correctly outline visibility flag
+            outlineActor.SetPropertyKeys(vtkInfo);
 
             // init poly data object
             polyData = new vtkPolyData();
@@ -365,11 +375,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         {
                             outlineActor.GetProperty().SetRepresentationToWireframe();
                             outlineActor.SetVisibility(1);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
                         }
                         else
                         {
                             outlineActor.GetProperty().SetRepresentationToPoints();
                             outlineActor.SetVisibility(0);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
                         }
                         vtkProperty.SetColor(r, g, b);
                         vtkProperty.SetPointSize(strk);
@@ -389,11 +401,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     {
                         outlineActor.GetProperty().SetRepresentationToWireframe();
                         outlineActor.SetVisibility(1);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
                     }
                     else
                     {
                         outlineActor.GetProperty().SetRepresentationToPoints();
                         outlineActor.SetVisibility(0);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
                     }
                     vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
                     vtkProperty.SetPointSize(strk);
