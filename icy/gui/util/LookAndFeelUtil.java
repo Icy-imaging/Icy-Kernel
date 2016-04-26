@@ -133,7 +133,7 @@ public class LookAndFeelUtil
         // UIManager.put(SubstanceLookAndFeel.SHOW_EXTRA_WIDGETS, Boolean.TRUE);
         // UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
-        // SubstanceLookAndFeel.setWidgetVisible(null, false, SubstanceWidgetType.MENU_SEARCH);
+        // SubstanceLookAndFeel.setWidgetVisible(null, true, SubstanceWidgetType.MENU_SEARCH);
         // SubstanceLookAndFeel.setWidgetVisible(null, false,
         // SubstanceWidgetType.TITLE_PANE_HEAP_STATUS);
 
@@ -162,20 +162,7 @@ public class LookAndFeelUtil
 
         // replace system LAF by substance LAF
         UIManager.setInstalledLookAndFeels(lafInfos);
-
-        // get default LAF
-        // String lookAndFeelToLoad = GeneralPreferences.getGuiLookAndFeel();
-
-        // try
-        // {
-        // UIManager.setLookAndFeel(lookAndFeelToLoad);
-        // }
-        // catch (Exception e)
-        // {
-        // System.err.println("Look & Feel not found : " + lookAndFeelToLoad);
-        // }
-
-        // get default skin
+        // set default skin
         setSkin(GeneralPreferences.getGuiSkin());
 
         // get default font size

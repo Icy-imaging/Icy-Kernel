@@ -49,6 +49,7 @@ import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
 import icy.preferences.PluginPreferences;
+import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.system.AppleUtil;
 import icy.system.IcyExceptionHandler;
@@ -70,13 +71,17 @@ import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
+import vtk.vtkJavaGarbageCollector;
 import vtk.vtkNativeLibrary;
+import vtk.vtkObjectBase;
+import vtk.vtkVersion;
 
 /**
  * <br>
@@ -97,7 +102,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.7.3.0");
+    public static Version version = new Version("1.8.0.0");
 
     /**
      * Main interface
@@ -171,7 +176,7 @@ public class Icy
             // initialize preferences
             IcyPreferences.init();
 
-            // check if Icy is already running.
+            // check if Icy is already running
             lock = SingleInstanceCheck.lock("icy");
             if (lock == null)
             {
@@ -198,6 +203,34 @@ public class Icy
                 }
             }
 
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    try
+                    {
+                        // HACKY: attempt to load an image as ImageIO may fail on first try...
+                        ImageIO.read(getClass().getResource("/" + ResourceUtil.IMAGE_PATH + "logo.png"));
+                    }
+                    catch (Exception e)
+                    {
+                        // ignore
+                    }
+
+                    // force resources loading now so it will eat less time on GUI loading
+                    try
+                    {
+                        Class.forName(ResourceUtil.class.getName());
+                    }
+                    catch (ClassNotFoundException e)
+                    {
+                        // ignore
+
+                    }
+                }
+            });
+
             if (!headless && !noSplash)
             {
                 // prepare splashScreen (ok to create it here as we are not yet in substance laf)
@@ -221,7 +254,6 @@ public class Icy
 
             // initialize network (need preferences)
             NetworkUtil.init();
-
             // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reloadAsynch();
@@ -359,6 +391,9 @@ public class Icy
         ApplicationPreferences.setVersion(Icy.version);
         // set LOCI debug level
         loci.common.DebugTools.enableLogging("ERROR");
+        // set OGL debug level
+        // SystemUtil.setProperty("jogl.verbose", "TRUE");
+        // SystemUtil.setProperty("jogl.debug", "TRUE");
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");
@@ -440,13 +475,24 @@ public class Icy
 
     static void checkParameters()
     {
-        // we verify that some parameters are incorrect
-        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 256))
+        // we are using a 32 bits JVM with a 64 bits OS --> warn the user
+        if (SystemUtil.isWindows64() && SystemUtil.is32bits())
         {
-            final String text = "Your maximum memory setting is low ! You should increase it in preferences setting.";
+            final String text = "You're using a 32 bits Java with a 64 bits OS, try to upgrade to 64 bits java for better performance !";
 
             if (Icy.getMainInterface().isHeadLess())
-                System.out.println(text);
+                System.out.println("Warning: " + text);
+            else
+                new ToolTipFrame("<html>" + text + "</html>", 15, "badJavaArchTip");
+        }
+
+        // detect bad memory setting
+        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 256))
+        {
+            final String text = "Your maximum memory setting is low, you should increase it in Preferences.";
+
+            if (Icy.getMainInterface().isHeadLess())
+                System.out.println("Warning: " + text);
             else
                 new ToolTipFrame("<html>" + text + "</html>", 15, "lowMemoryTip");
         }
@@ -994,14 +1040,20 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkoggtheora", false);
                 loadLibrary(vtkLibPath, "vtkverdict");
                 loadLibrary(vtkLibPath, "vtkpng");
-                loadLibrary(vtkLibPath, "vtkgl2ps");
+
+                loadLibrary(vtkLibPath, "vtkgl2ps", false); //
+
                 loadLibrary(vtkLibPath, "vtktiff");
                 loadLibrary(vtkLibPath, "vtklibxml2");
                 loadLibrary(vtkLibPath, "vtkproj4");
                 loadLibrary(vtkLibPath, "vtksys");
                 loadLibrary(vtkLibPath, "vtkfreetype");
                 loadLibrary(vtkLibPath, "vtkmetaio");
-                loadLibrary(vtkLibPath, "vtkftgl");
+                loadLibrary(vtkLibPath, "vtkftgl", false);
+
+                loadLibrary(vtkLibPath, "vtkftgl2", false); //
+
+                loadLibrary(vtkLibPath, "vtkglew", false);
                 loadLibrary(vtkLibPath, "vtkCommonCore");
                 loadLibrary(vtkLibPath, "vtkWrappingJava");
                 loadLibrary(vtkLibPath, "vtkCommonSystem");
@@ -1010,8 +1062,8 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkCommonTransforms");
                 if (SystemUtil.isMac())
                 {
-                    loadLibrary(vtkLibPath, "vtkhdf5.1.8.5", false);
-                    loadLibrary(vtkLibPath, "vtkhdf5_hl.1.8.5", false);
+                    loadLibrary(vtkLibPath, "vtkhdf5.8.0.2", false);
+                    loadLibrary(vtkLibPath, "vtkhdf5_hl.8.0.2", false);
                 }
                 else
                 {
@@ -1077,6 +1129,9 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkRenderingImage");
                 loadLibrary(vtkLibPath, "vtkRenderingFreeType");
                 loadLibrary(vtkLibPath, "vtkDomainsChemistry");
+
+                loadLibrary(vtkLibPath, "vtkDomainsChemistryOpenGL2", false);
+
                 loadLibrary(vtkLibPath, "vtkInteractionStyle");
                 loadLibrary(vtkLibPath, "vtkIOImport");
                 loadLibrary(vtkLibPath, "vtkRenderingAnnotation");
@@ -1091,13 +1146,23 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkInteractionWidgets");
                 loadLibrary(vtkLibPath, "vtkInteractionImage");
                 loadLibrary(vtkLibPath, "vtkViewsCore");
-                loadLibrary(vtkLibPath, "vtkRenderingOpenGL");
-                loadLibrary(vtkLibPath, "vtkRenderingFreeTypeOpenGL");
-                loadLibrary(vtkLibPath, "vtkRenderingLIC");
-                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL");
+
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGL", false); //
+
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGL2", false);
+
+                loadLibrary(vtkLibPath, "vtkRenderingLIC", false); //
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL", false); //
+
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL2", false);
+
                 loadLibrary(vtkLibPath, "vtkRenderingContext2D");
-                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL", false);
-                loadLibrary(vtkLibPath, "vtkRenderingGL2PS");
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL", false); //
+
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL2", false);
+
+                loadLibrary(vtkLibPath, "vtkRenderingGL2PS", false); //
+
                 loadLibrary(vtkLibPath, "vtkViewsContext2D");
                 loadLibrary(vtkLibPath, "vtkGeovisCore");
                 loadLibrary(vtkLibPath, "vtkIOExport");
@@ -1166,6 +1231,9 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkRenderingImageJava");
                 loadLibrary(vtkLibPath, "vtkRenderingFreeTypeJava");
                 loadLibrary(vtkLibPath, "vtkDomainsChemistryJava");
+
+                loadLibrary(vtkLibPath, "vtkDomainsChemistryOpenGL2Java", false);
+
                 loadLibrary(vtkLibPath, "vtkInteractionStyleJava");
                 loadLibrary(vtkLibPath, "vtkIOImportJava");
                 loadLibrary(vtkLibPath, "vtkRenderingAnnotationJava");
@@ -1180,13 +1248,23 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkInteractionWidgetsJava");
                 loadLibrary(vtkLibPath, "vtkInteractionImageJava");
                 loadLibrary(vtkLibPath, "vtkViewsCoreJava");
-                loadLibrary(vtkLibPath, "vtkRenderingOpenGLJava");
-                loadLibrary(vtkLibPath, "vtkRenderingFreeTypeOpenGLJava");
-                loadLibrary(vtkLibPath, "vtkRenderingLICJava");
-                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGLJava");
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGLJava", false); //
+
+                loadLibrary(vtkLibPath, "vtkRenderingOpenGL2Java", false);
+
+                loadLibrary(vtkLibPath, "vtkRenderingLICJava", false); //
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGLJava", false); //
+
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL2Java", false);
+
                 loadLibrary(vtkLibPath, "vtkRenderingContext2DJava");
-                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGLJava", false);
-                loadLibrary(vtkLibPath, "vtkRenderingGL2PSJava");
+
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGLJava", false); //
+
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL2Java", false);
+
+                loadLibrary(vtkLibPath, "vtkRenderingGL2PSJava", false); //
+
                 loadLibrary(vtkLibPath, "vtkViewsContext2DJava");
                 loadLibrary(vtkLibPath, "vtkGeovisCoreJava");
                 loadLibrary(vtkLibPath, "vtkIOExportJava");
@@ -1207,9 +1285,32 @@ public class Icy
         }
 
         if (vtkLibraryLoaded)
-            System.out.println("VTK library successfully loaded...");
+        {
+            final String vv = new vtkVersion().GetVTKVersion();
+
+            System.out.println("VTK " + vv + " library successfully loaded...");
+
+            final vtkJavaGarbageCollector vtkJavaGarbageCollector = vtkObjectBase.JAVA_OBJECT_MANAGER
+                    .getAutoGarbageCollector();
+
+            // set auto garbage collection for VTK (every 20 seconds should be enough)
+            // probably not a good idea...
+            // vtkJavaGarbageCollector.SetScheduleTime(5, TimeUnit.SECONDS);
+            // vtkJavaGarbageCollector.SetAutoGarbageCollection(true);
+        }
         else
+        {
             System.out.println("Cannot load VTK library...");
+
+            if (SystemUtil.isMac())
+            {
+                final String osVer = SystemUtil.getOSVersion();
+
+                if (osVer.startsWith("10.6") || osVer.startsWith("10.5"))
+                    System.out.println("VTK 6.3 is not supported on OSX " + osVer
+                            + ", version 10.7 or above is required.");
+            }
+        }
     }
 
     private static void loadItkLibrary(String osDir)

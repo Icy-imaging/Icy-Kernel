@@ -20,6 +20,7 @@ package plugins.kernel.roi.roi2d;
 
 import icy.math.ArrayMath;
 import icy.resource.ResourceUtil;
+import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 
 import java.awt.geom.Ellipse2D;
@@ -116,6 +117,21 @@ public class ROI2DEllipse extends ROI2DRectShape
         setBounds2D(ellipse.getBounds2D());
     }
 
+    @Override
+    public double computePerimeter(Sequence sequence)
+    {
+        final Ellipse2D ellipse = getEllipse();
+        return computeEllipsePerimeter(ellipse.getWidth() * 0.5d * sequence.getPixelSizeX(), ellipse.getHeight() * 0.5d
+                * sequence.getPixelSizeY());
+    }
+
+    @Override
+    public double computeNumberOfContourPoints()
+    {
+        final Ellipse2D ellipse = getEllipse();
+        return computeEllipsePerimeter(ellipse.getWidth() * 0.5d, ellipse.getHeight() * 0.5d);
+    }
+
     /**
      * Calculating the perimeter of an ellipse is non-trivial. Here we follow the approximation
      * proposed in:<br/>
@@ -124,16 +140,13 @@ public class ROI2DEllipse extends ROI2DRectShape
      * 
      * @since Icy 1.5.3.2
      */
-    @Override
-    public double computeNumberOfContourPoints()
+    public static double computeEllipsePerimeter(double w, double h)
     {
-        final Ellipse2D ellipse = getEllipse();
-        double a = ellipse.getWidth() * 0.5d;
-        double b = ellipse.getHeight() * 0.5d;
-        double h = (a - b) / (a + b);
-        h *= h;
+        double result = (w - h) / (w + h);
+        result *= result;
 
-        return Math.PI * (a + b) * (1 + (h / 4) + ((h * h) / 64) + ((h * h * h) / 256));
+        return Math.PI * (w + h) * (1 + (result / 4) + ((result * result) / 64) + ((result * result * result) / 256));
+
     }
 
     @Override

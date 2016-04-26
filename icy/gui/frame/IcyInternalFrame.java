@@ -190,8 +190,7 @@ public class IcyInternalFrame extends JInternalFrame
      * Close the frame.
      * 
      * @param force
-     *        if <code>true</code> the frame is close even if {@link #isClosable()} return
-     *        <code>false</code>
+     *        if <code>true</code> the frame is close even if {@link #isClosable()} return <code>false</code>
      */
     public void close(boolean force)
     {

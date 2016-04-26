@@ -147,8 +147,8 @@ public class IcyBufferedImageUtil
     /**
      * Draw the source {@link IcyBufferedImage} into the destination ARGB {@link BufferedImage}<br>
      * If <code>dest</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
-     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
-     * but the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} but the output
+     * {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
      * 
      * @param source
      *        source image
@@ -164,7 +164,7 @@ public class IcyBufferedImageUtil
 
         // use image lut when no specific lut
         if (lut == null)
-            return argbImageBuilder.buildARGBImage(source, source.getLUT(), dest);
+            return argbImageBuilder.buildARGBImage(source, source.createCompatibleLUT(false), dest);
 
         return argbImageBuilder.buildARGBImage(source, lut, dest);
     }
@@ -218,10 +218,57 @@ public class IcyBufferedImageUtil
      *        source image
      * @param dataType
      *        data type wanted
-     * @param scaler
-     *        scaler for scaling internal data during conversion
+     * @param scalers
+     *        scalers for scaling internal data during conversion (1 scaler per channel).<br>
+     *        Can be set to <code>null</code> to avoid value conversion.
      * @return converted image
      */
+    public static IcyBufferedImage convertType(IcyBufferedImage source, DataType dataType, Scaler[] scalers)
+    {
+        if (source == null)
+            return null;
+
+        final DataType srcDataType = source.getDataType_();
+
+        // can't convert
+        if ((srcDataType == null) || (srcDataType == DataType.UNDEFINED) || (dataType == null)
+                || (dataType == DataType.UNDEFINED))
+            return null;
+
+        final boolean srcSigned = srcDataType.isSigned();
+        final boolean dstSigned = dataType.isSigned();
+        final int sizeC = source.getSizeC();
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), sizeC, dataType);
+
+        for (int c = 0; c < sizeC; c++)
+        {
+            // no rescale ?
+            if ((scalers == null) || (c >= scalers.length) || scalers[c].isNull())
+                // simple type change
+                ArrayUtil.arrayToSafeArray(source.getDataXY(c), result.getDataXY(c), srcSigned, dstSigned);
+            else
+            {
+                // first we convert in double
+                final double[] darray = Array1DUtil.arrayToDoubleArray(source.getDataXY(c), srcSigned);
+                // then we scale data
+                scalers[c].scale(darray);
+                // and finally we convert in wanted datatype
+                Array1DUtil.doubleArrayToSafeArray(darray, result.getDataXY(c), dstSigned);
+            }
+        }
+
+        // copy colormap from source image
+        result.setColorMaps(source);
+        // notify we modified data
+        result.dataChanged();
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #convertType(IcyBufferedImage, DataType, Scaler[])} instead.
+     */
+    @Deprecated
     public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, Scaler scaler)
     {
         if (source == null)
@@ -279,21 +326,32 @@ public class IcyBufferedImageUtil
     public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, boolean rescale,
             boolean useDataBounds)
     {
+        if (source == null)
+            return null;
+
         if (!rescale)
-            return convertToType(source, dataType, null);
+            return convertType(source, dataType, null);
 
         // convert with rescale
-        final double boundsSrc[];
         final double boundsDst[] = dataType.getDefaultBounds();
+        final int sizeC = source.getSizeC();
+        final Scaler[] scalers = new Scaler[sizeC];
 
-        if (useDataBounds)
-            boundsSrc = source.getChannelsGlobalBounds();
-        else
-            boundsSrc = source.getChannelsGlobalTypeBounds();
+        // build scalers
+        for (int c = 0; c < sizeC; c++)
+        {
+            final double boundsSrc[];
+
+            if (useDataBounds)
+                boundsSrc = source.getChannelBounds(c);
+            else
+                boundsSrc = source.getChannelTypeBounds(c);
+
+            scalers[c] = new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false);
+        }
 
         // use scaler to scale data
-        return convertToType(source, dataType,
-                new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false));
+        return convertType(source, dataType, scalers);
     }
 
     /**
@@ -589,7 +647,6 @@ public class IcyBufferedImageUtil
                 break;
         }
 
-        
         // use JAI scaler (use a copy to avoid source alteration)
         final RenderedOp renderedOp = RotateDescriptor.create(getCopy(source), Float.valueOf((float) xOrigin), Float
                 .valueOf((float) yOrigin), Float.valueOf((float) angle), interpolation, null, new RenderingHints(

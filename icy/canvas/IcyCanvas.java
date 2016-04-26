@@ -25,7 +25,7 @@ import icy.action.WindowActions;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer.LayerListener;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.ProgressListener;
@@ -225,7 +225,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name.<br>
+     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name. <br>
      * Returns <code>null</code> if we can't find retrieve the corresponding canvas class name.
      */
     public static String getCanvasClassName(String pluginClassName)
@@ -367,6 +367,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * internal updater
      */
     protected final UpdateEventHandler updater;
+    /**
+     * listeners
+     */
+    protected final List<IcyCanvasListener> listeners;
+    protected final List<CanvasLayerListener> layerListeners;
 
     /**
      * Current X position (should be -1 when canvas handle multi X dimension view).
@@ -432,6 +437,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         // GUI stuff
         panel = new JPanel();
+
+        listeners = new ArrayList<IcyCanvasListener>();
+        layerListeners = new ArrayList<CanvasLayerListener>();
 
         // Z navigation
         zNav = new ZNavigationPanel();
@@ -589,15 +597,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         // release layers
         orderedLayers.clear();
 
-        // remove all IcyCanvas listeners
-        final IcyCanvasListener[] canvasListenters = listenerList.getListeners(IcyCanvasListener.class);
-        for (IcyCanvasListener listener : canvasListenters)
-            removeCanvasListener(listener);
-
-        // remove all Layers listeners
-        final CanvasLayerListener[] layersListenters = listenerList.getListeners(CanvasLayerListener.class);
-        for (CanvasLayerListener listener : layersListenters)
-            removeLayerListener(listener);
+        // remove all IcyCanvas & Layer listeners
+        listeners.clear();
+        layerListeners.clear();
     }
 
     /**
@@ -666,6 +668,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         }
     }
 
+    /**
+     * Global layers visibility changed
+     */
     protected void layersVisibleChanged()
     {
         final Component comp = getViewComponent();
@@ -3739,7 +3744,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Returns a RGB or ARGB (depending support) BufferedImage representing the canvas view for
-     * image at position (t, z, c).
+     * image at position (t, z, c).<br>
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t
@@ -4192,7 +4197,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void addLayerListener(CanvasLayerListener listener)
     {
-        listenerList.add(CanvasLayerListener.class, listener);
+        layerListeners.add(listener);
     }
 
     /**
@@ -4202,12 +4207,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void removeLayerListener(CanvasLayerListener listener)
     {
-        listenerList.remove(CanvasLayerListener.class, listener);
+        layerListeners.remove(listener);
     }
 
     protected void fireLayerChangedEvent(CanvasLayerEvent event)
     {
-        for (CanvasLayerListener listener : getListeners(CanvasLayerListener.class))
+        for (CanvasLayerListener listener : new ArrayList<CanvasLayerListener>(layerListeners))
             listener.canvasLayerChanged(event);
     }
 
@@ -4218,7 +4223,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void addCanvasListener(IcyCanvasListener listener)
     {
-        listenerList.add(IcyCanvasListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -4228,12 +4233,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void removeCanvasListener(IcyCanvasListener listener)
     {
-        listenerList.remove(IcyCanvasListener.class, listener);
+        listeners.remove(listener);
     }
 
     protected void fireCanvasChangedEvent(IcyCanvasEvent event)
     {
-        for (IcyCanvasListener listener : getListeners(IcyCanvasListener.class))
+        for (IcyCanvasListener listener : new ArrayList<IcyCanvasListener>(listeners))
             listener.canvasChanged(event);
     }
 
@@ -4606,7 +4611,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker event)
+    public void onChanged(CollapsibleEvent event)
     {
         if (event instanceof CanvasLayerEvent)
             layerChanged((CanvasLayerEvent) event);

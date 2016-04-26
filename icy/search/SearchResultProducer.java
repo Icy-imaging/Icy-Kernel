@@ -96,7 +96,7 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
         super();
 
         results = new ArrayList<SearchResult>();
-        processor = new SingleProcessor(true);
+        processor = new SingleProcessor(true, this.getClass().getSimpleName());
     }
 
     /** Returns the result producer order */

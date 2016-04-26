@@ -19,7 +19,7 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
@@ -48,6 +48,7 @@ import icy.util.XMLUtil;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
@@ -55,8 +56,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
 
@@ -139,6 +138,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String PROPERTY_COLOR = ID_COLOR;
     public static final String PROPERTY_STROKE = ID_STROKE;
     public static final String PROPERTY_OPACITY = ID_OPACITY;
+
+    // special properties for ROI_CHANGED event
+    public static final String ROI_CHANGED_POSITION = "position";
+    public static final String ROI_CHANGED_ALL = "all";
 
     /**
      * Create a ROI from its class name or {@link PluginROI} class name.
@@ -313,6 +316,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return null;
 
         final String className = XMLUtil.getElementValue(node, ID_CLASSNAME, "");
+        if (StringUtil.isEmpty(className))
+            return null;
 
         final ROI roi = create(className);
         // load properties from XML
@@ -392,6 +397,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (node != null)
         {
             final List<Node> nodesROI = XMLUtil.getChildren(node, ID_ROI);
+
             if (nodesROI != null)
                 return nodesROI.size();
         }
@@ -420,7 +426,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 {
                     final ROI roi = createFromXML(n);
 
-                    // add to sequence
                     if (roi != null)
                         result.add(roi);
                 }
@@ -458,7 +463,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 if (!roi.saveToXML(nodeROI))
                 {
                     XMLUtil.removeNode(node, nodeROI);
-                    System.err.println("Error: the roi " + roi.getName() + "s was not correctly saved to XML !");
+                    System.err.println("Error: the roi " + roi.getName() + " was not correctly saved to XML !");
                 }
             }
         }
@@ -682,7 +687,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (stroke != value)
             {
                 stroke = value;
-                painterChanged();
+                // painter changed event is done on property changed
                 ROI.this.propertyChanged(PROPERTY_STROKE);
             }
         }
@@ -703,7 +708,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (opacity != value)
             {
                 opacity = value;
-                painterChanged();
+                // painter changed event is done on property changed
                 ROI.this.propertyChanged(PROPERTY_OPACITY);
             }
         }
@@ -757,7 +762,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if ((color != null) && (color != value))
             {
                 color = value;
-                painterChanged();
+                // painter changed event is done on property changed
                 ROI.this.propertyChanged(PROPERTY_COLOR);
             }
         }
@@ -839,6 +844,64 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             // modifying layer name modify ROI name
             ROI.this.setName(name);
+        }
+
+        /**
+         * Update the focus state of the ROI
+         */
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // empty implementation by default
+            return false;
+        }
+
+        /**
+         * Update the selection state of the ROI (default implementation)
+         */
+        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // nothing to do if the ROI does not have focus
+            if (!isFocused())
+                return false;
+
+            // union selection
+            if (EventUtil.isShiftDown(e))
+            {
+                // not already selected --> add ROI to selection
+                if (!isSelected())
+                {
+                    setSelected(true);
+                    return true;
+                }
+            }
+            else if (EventUtil.isControlDown(e))
+            // switch selection
+            {
+                // inverse state
+                setSelected(!isSelected());
+                return true;
+            }
+            else
+            // exclusive selection
+            {
+                // not selected --> exclusive ROI selection
+                if (!isSelected())
+                {
+                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
+                    if (!canvas.getSequence().setSelectedROI(ROI.this))
+                        ROI.this.setSelected(true);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        protected boolean updateDrag(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // empty implementation by default
+            return false;
         }
 
         @Override
@@ -1027,10 +1090,93 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         @Override
+        public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.keyReleased(e, imagePoint, canvas);
+
+            if (isActiveFor(canvas))
+            {
+                // just for the shift key state change
+                if (!isReadOnly())
+                    updateDrag(e, imagePoint, canvas);
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.mousePressed(e, imagePoint, canvas);
+
+            // not yet consumed...
+            if (!e.isConsumed())
+            {
+                if (isActiveFor(canvas))
+                {
+                    // left button action
+                    if (EventUtil.isLeftMouseButton(e))
+                    {
+                        ROI.this.beginUpdate();
+                        try
+                        {
+                            // update selection
+                            if (updateSelect(e, imagePoint, canvas))
+                                e.consume();
+                            // always consume when focused to enable dragging
+                            else if (isFocused())
+                                e.consume();
+                        }
+                        finally
+                        {
+                            ROI.this.endUpdate();
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.mouseReleased(e, imagePoint, canvas);
+        }
+
+        @Override
+        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // this allow to keep the backward compatibility
+            super.mouseClick(e, imagePoint, canvas);
+
+            // not yet consumed...
+            if (!e.isConsumed())
+            {
+                // and process ROI stuff now
+                if (isActiveFor(canvas))
+                {
+                    // single click
+                    if (e.getClickCount() == 1)
+                    {
+                        // right click action
+                        if (EventUtil.isRightMouseButton(e))
+                        {
+                            // unselect (don't consume event)
+                            if (isSelected())
+                                ROI.this.setSelected(false);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // this allow to keep the backward compatibility
             super.mouseDrag(e, imagePoint, canvas);
+
+            // nothing here by default, should be implemented in deriving classes...
         }
 
         @Override
@@ -1038,6 +1184,16 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             // this allow to keep the backward compatibility
             super.mouseMove(e, imagePoint, canvas);
+
+            // update focus
+            if (!e.isConsumed())
+            {
+                if (isActiveFor(canvas))
+                {
+                    if (updateFocus(e, imagePoint, canvas))
+                        e.consume();
+                }
+            }
         }
 
         @Override
@@ -1108,7 +1264,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * listeners
      */
-    protected final EventListenerList listeners;
+    protected final List<ROIListener> listeners;
     /**
      * internal updater
      */
@@ -1134,7 +1290,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         numberOfPointsInvalid = true;
         numberOfContourPointsInvalid = true;
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<ROIListener>();
         updater = new UpdateEventHandler(this, false);
 
         // default icon
@@ -1155,12 +1311,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * generate unique id
      */
-    private static int generateId()
+    private static synchronized int generateId()
     {
-        synchronized (ROI.class)
-        {
-            return id_generator++;
-        }
+        return id_generator++;
     }
 
     /**
@@ -1777,6 +1930,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public abstract void setPosition5D(Point5D position);
 
     /**
+     * Returns <code>true</code> if the ROI is empty (does not contains anything).
+     */
+    public boolean isEmpty()
+    {
+        return getBounds5D().isEmpty();
+    }
+
+    /**
      * Tests if a specified 5D point is inside the ROI.
      * 
      * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the <code>ROI</code>;
@@ -1837,7 +1998,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      *        the C size of the specified rectangular area
      * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
      *         specified rectangular area; <code>false</code> otherwise or, if the <code>ROI</code> contains the
-     *         rectangular area and the <code>intersects</code> method returns <code>true</code> and the containment
+     *         rectangular area and the <code>intersects</code> method returns <code>true</code> and
+     *         the containment
      *         calculations would be too expensive to perform.
      */
     public abstract boolean contains(double x, double y, double z, double t, double c, double sizeX, double sizeY,
@@ -1858,7 +2020,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      *        The specified <code>Rectangle5D</code>
      * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the <code>Rectangle5D</code>;
      *         <code>false</code> otherwise or, if the <code>ROI</code> contains the <code>Rectangle5D</code> and the
-     *         <code>intersects</code> method returns <code>true</code> and the containment calculations would be too
+     *         <code>intersects</code> method returns <code>true</code> and the containment
+     *         calculations would be too
      *         expensive to perform.
      * @see #contains(double, double, double, double, double, double, double, double, double, double)
      */
@@ -1884,10 +2047,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final Rectangle5D.Integer bounds = getBounds5D().toInteger();
         final Rectangle5D.Integer roiBounds = roi.getBounds5D().toInteger();
 
+        // --> trivial optimization
+        if (bounds.isEmpty() || roiBounds.isEmpty())
+            return false;
+
         // simple bounds contains test
         if (bounds.contains(roiBounds))
         {
             final Rectangle5D.Integer intersection = bounds.createIntersection(roiBounds).toInteger();
+            final Rectangle intersection2D = (Rectangle) intersection.toRectangle2D();
             int minZ;
             int maxZ;
             int minT;
@@ -1935,15 +2103,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     for (int z = minZ; z <= maxZ; z++)
                     {
                         BooleanMask2D mask;
+                        BooleanMask2D roiMask;
+
+                        // take content first
+                        mask = new BooleanMask2D(intersection2D, getBooleanMask2D(intersection2D, z, t, c, false));
+                        roiMask = new BooleanMask2D(intersection2D,
+                                roi.getBooleanMask2D(intersection2D, z, t, c, false));
 
                         // test first only on content
-                        mask = roi.getBooleanMask2D(z, t, c, false);
-                        if (!mask.isEmpty() && !getBooleanMask2D(z, t, c, false).contains(mask))
+                        if (!roiMask.isEmpty() && !mask.contains(roiMask))
                             return false;
 
+                        // take content and edge
+                        mask = new BooleanMask2D(intersection2D, getBooleanMask2D(intersection2D, z, t, c, true));
+                        roiMask = new BooleanMask2D(intersection2D, roi.getBooleanMask2D(intersection2D, z, t, c, true));
+
                         // then test on content and edge
-                        mask = roi.getBooleanMask2D(z, t, c, true);
-                        if (!mask.isEmpty() && !getBooleanMask2D(z, t, c, true).contains(mask))
+                        if (!roiMask.isEmpty() && !mask.contains(roiMask))
                             return false;
                     }
                 }
@@ -2128,7 +2304,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Get the boolean bitmap mask for the specified rectangular area of the roi and for the
      * specified Z,T position.<br>
-     * if the pixel (x,y) is contained in the roi Z,T position then result[(y * width) + x] = true<br>
+     * if the pixel (x,y) is contained in the roi Z,T position then result[(y * width) + x] = true <br>
      * if the pixel (x,y) is not contained in the roi Z,T position then result[(y * width) + x] =
      * false
      * 
@@ -2387,18 +2563,22 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Same as {@link #merge(ROI, BooleanOperator)} except it modifies the current <code>ROI</code> to reflect the
      * result of the boolean operation with specified <code>ROI</code>.<br>
-     * Note that this operation work only if the 2 ROIs are compatible for that type of operation. If that is not
+     * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
+     * If that is not
      * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new created ROI.
+     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
+     * in a new created ROI.
      * 
      * @param roi
      *        the <code>ROI</code> to merge with current <code>ROI</code>
      * @param op
      *        the boolean operation to process
      * @param allowCreate
-     *        if set to <code>true</code> the method will create a new ROI to return the result of the operation if it
+     *        if set to <code>true</code> the method will create a new ROI to return the result of
+     *        the operation if it
      *        cannot be directly processed on the current <code>ROI</code>
-     * @return the modified ROI or a new created ROI if the operation cannot be directly processed on the current ROI
+     * @return the modified ROI or a new created ROI if the operation cannot be directly processed
+     *         on the current ROI
      *         and <code>allowCreate</code> parameter was set to <code>true</code>
      * @throws UnsupportedOperationException
      *         if the two ROI cannot be merged together.
@@ -2425,9 +2605,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * Adds content of specified <code>ROI</code> into this <code>ROI</code>.
      * The resulting content of this <code>ROI</code> will include
      * the union of both ROI's contents.<br>
-     * Note that this operation work only if the 2 ROIs are compatible for that type of operation. If that is not
+     * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
+     * If that is not
      * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new created ROI.
+     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
+     * in a new created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2446,9 +2628,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * @param roi
      *        the <code>ROI</code> to be added to the current <code>ROI</code>
      * @param allowCreate
-     *        if set to <code>true</code> the method will create a new ROI to return the result of the operation if it
+     *        if set to <code>true</code> the method will create a new ROI to return the result of
+     *        the operation if it
      *        cannot be directly processed on the current <code>ROI</code>
-     * @return the modified ROI or a new created ROI if the operation cannot be directly processed on the current ROI
+     * @return the modified ROI or a new created ROI if the operation cannot be directly processed
+     *         on the current ROI
      *         and <code>allowCreate</code> parameter was set to <code>true</code>
      * @throws UnsupportedOperationException
      *         if the two ROI cannot be added together.
@@ -2470,9 +2654,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * Sets the content of this <code>ROI</code> to the intersection of
      * its current content and the content of the specified <code>ROI</code>.
      * The resulting ROI will include only contents that were contained in both ROI.<br>
-     * Note that this operation work only if the 2 ROIs are compatible for that type of operation. If that is not
+     * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
+     * If that is not
      * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new created ROI.
+     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
+     * in a new created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2491,9 +2677,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * @param roi
      *        the <code>ROI</code> to be intersected to the current <code>ROI</code>
      * @param allowCreate
-     *        if set to <code>true</code> the method will create a new ROI to return the result of the operation if it
+     *        if set to <code>true</code> the method will create a new ROI to return the result of
+     *        the operation if it
      *        cannot be directly processed on the current <code>ROI</code>
-     * @return the modified ROI or a new created ROI if the operation cannot be directly processed on the current ROI
+     * @return the modified ROI or a new created ROI if the operation cannot be directly processed
+     *         on the current ROI
      *         and <code>allowCreate</code> parameter was set to <code>true</code>
      * @throws UnsupportedOperationException
      *         if the two ROI cannot be intersected together.
@@ -2512,13 +2700,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Sets the content of this <code>ROI</code> to be the union of its current content and the content of the specified
-     * <code>ROI</code>, minus their intersection.
+     * Sets the content of this <code>ROI</code> to be the union of its current content and the
+     * content of the specified <code>ROI</code>, minus their intersection.
      * The resulting <code>ROI</code> will include only content that were contained in either this <code>ROI</code> or
      * in the specified <code>ROI</code>, but not in both.<br>
-     * Note that this operation work only if the 2 ROIs are compatible for that type of operation. If that is not
+     * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
+     * If that is not
      * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new created ROI.
+     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
+     * in a new created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2537,9 +2727,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * @param roi
      *        the <code>ROI</code> to be exclusively added to the current <code>ROI</code>
      * @param allowCreate
-     *        if set to <code>true</code> the method will create a new ROI to return the result of the operation if it
+     *        if set to <code>true</code> the method will create a new ROI to return the result of
+     *        the operation if it
      *        cannot be directly processed on the current <code>ROI</code>
-     * @return the modified ROI or a new created ROI if the operation cannot be directly processed on the current ROI
+     * @return the modified ROI or a new created ROI if the operation cannot be directly processed
+     *         on the current ROI
      *         and <code>allowCreate</code> parameter was set to <code>true</code>
      * @throws UnsupportedOperationException
      *         if the two ROI cannot be exclusively added together.
@@ -2559,16 +2751,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Subtract the specified <code>ROI</code> content from current <code>ROI</code>.<br>
-     * Note that this operation work only if the 2 ROIs are compatible for that type of operation. If that is not
+     * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
+     * If that is not
      * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new created ROI.
+     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
+     * in a new created ROI.
      * 
      * @param roi
      *        the <code>ROI</code> to subtract from the current <code>ROI</code>
      * @param allowCreate
-     *        if set to <code>true</code> the method will create a new ROI to return the result of the operation if it
+     *        if set to <code>true</code> the method will create a new ROI to return the result of
+     *        the operation if it
      *        cannot be directly processed on the current <code>ROI</code>
-     * @return the modified ROI or a new created ROI if the operation cannot be directly processed on the current ROI
+     * @return the modified ROI or a new created ROI if the operation cannot be directly processed
+     *         on the current ROI
      *         and <code>allowCreate</code> parameter was set to <code>true</code>
      * @throws UnsupportedOperationException
      *         if we can't subtract the specified <code>ROI</code> from this <code>ROI</code>
@@ -2731,7 +2927,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         // we want integer bounds now
         final Rectangle5D.Integer bounds = bounds5D.toInteger();
         final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
-        // get 3D and 4D bounds
+        // get 2D, 3D and 4D bounds
+        final Rectangle bounds2D = (Rectangle) bounds.toRectangle2D();
         final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
         final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
 
@@ -2747,9 +2944,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                 for (int z = 0; z < roiSize.sizeZ; z++)
                 {
-                    mask3D[z] = BooleanMask2D.getIntersection(
-                            roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
-                            getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D mask2D = new BooleanMask2D(bounds2D, getBooleanMask2D(bounds2D, bounds.z + z,
+                            bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D roiMask2D = new BooleanMask2D(bounds2D, roi.getBooleanMask2D(bounds2D, bounds.z
+                            + z, bounds.t + t, bounds.c + c, true));
+
+                    mask3D[z] = BooleanMask2D.getIntersection(mask2D, roiMask2D);
                 }
 
                 mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
@@ -2965,31 +3165,50 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         // use XML persistence for cloning
         final Node node = XMLUtil.createDocument(true).getDocumentElement();
+        int retry;
 
+        // XML methods sometime fails, better to offer retry (hacky)
+        retry = 3;
         // save
-        if (!saveToXML(node))
+        while ((retry > 0) && !saveToXML(node))
+            retry--;
+
+        if (retry <= 0)
         {
             System.err.println("Cannot get a copy of roi " + getName() + ": XML save operation failed.");
-            // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": XML save operation failed !");
+            // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": XML save
+            // operation failed !");
             return null;
         }
 
-        final ROI result = createFromXML(node);
+        ROI result;
+
+        // XML methods sometime fails, better to offer retry (hacky)
+        retry = 3;
+        result = null;
+        while ((retry > 0) && (result == null))
+        {
+            result = createFromXML(node);
+            retry--;
+        }
+
         if (result == null)
         {
             System.err.println("Cannot get a copy of roi " + getName() + ": creation from XML failed.");
-            // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": creation from XML failed !");
+            // throw new RuntimeException("Cannot get a copy of roi " + getName() + ": creation from
+            // XML failed !");
             return null;
         }
 
-        // then generate id and modify name
+        // then generate new id
         result.id = generateId();
 
         return result;
     }
 
     /**
-     * Returns the name suffix when we want to obtain only a sub part of the ROI (always in Z,T,C order).<br/>
+     * Returns the name suffix when we want to obtain only a sub part of the ROI (always in Z,T,C
+     * order).<br/>
      * For instance if we use for z=1, t=5 and c=-1 this method will return <code>[Z=1, T=5]</code>
      * 
      * @param z
@@ -3157,7 +3376,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Copy all properties from the given ROI.<br>
-     * All compatible properties from the source ROI are copied into current ROI except the internal id.<br>
+     * All compatible properties from the source ROI are copied into current ROI except the internal
+     * id.<br>
      * Return <code>false</code> if the operation failed
      */
     public boolean copyFrom(ROI roi)
@@ -3172,7 +3392,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         return false;
         // if (tries == 0)
-        // throw new RuntimeException("Cannot copy roi from " + roi.getName() + ": XML load operation failed !");
+        // throw new RuntimeException("Cannot copy roi from " + roi.getName() + ": XML load
+        // operation failed !");
     }
 
     public boolean loadFromXML(Node node, boolean preserveId)
@@ -3185,7 +3406,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             // FIXME : this can make duplicate id but it is also important to preserve id
             if (!preserveId)
+            {
                 id = XMLUtil.getElementIntValue(node, ID_ID, 0);
+                synchronized (ROI.class)
+                {
+                    // avoid having same id
+                    if (id_generator <= id)
+                        id_generator = id + 1;
+                }
+            }
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
@@ -3225,7 +3454,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Use {@link #roiChanged()} instead
+     * @deprecated Use {@link #roiChanged(boolean)} instead
      */
     @Deprecated
     public void roiChanged(ROIPointEventType pointEventType, Object point)
@@ -3235,12 +3464,28 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Called when ROI has changed its content.
+     * Called when ROI has changed its content and/or position.<br>
+     * 
+     * @param contentChanged
+     *        mean that ROI content has changed otherwise we consider only a position change
      */
+    public void roiChanged(boolean contentChanged)
+    {
+        // handle with updater
+        if (contentChanged)
+            updater.changed(new ROIEvent(this, ROIEventType.ROI_CHANGED, ROI_CHANGED_ALL));
+        else
+            updater.changed(new ROIEvent(this, ROIEventType.ROI_CHANGED, ROI_CHANGED_POSITION));
+    }
+
+    /**
+     * @deprecated Use {@link #roiChanged(boolean)} instead.
+     */
+    @Deprecated
     public void roiChanged()
     {
         // handle with updater
-        updater.changed(new ROIEvent(this, ROIEventType.ROI_CHANGED));
+        roiChanged(true);
     }
 
     /**
@@ -3305,7 +3550,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void addListener(ROIListener listener)
     {
-        listeners.add(ROIListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -3315,12 +3560,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void removeListener(ROIListener listener)
     {
-        listeners.remove(ROIListener.class, listener);
+        listeners.remove(listener);
     }
 
     private void fireChangedEvent(ROIEvent event)
     {
-        for (ROIListener listener : listeners.getListeners(ROIListener.class))
+        for (ROIListener listener : new ArrayList<ROIListener>(listeners))
             listener.roiChanged(event);
     }
 
@@ -3342,7 +3587,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -3352,8 +3597,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             case ROI_CHANGED:
                 // cached properties need to be recomputed
                 boundsInvalid = true;
-                numberOfContourPointsInvalid = true;
-                numberOfPointsInvalid = true;
+                // need to recompute points
+                if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+                {
+                    numberOfContourPointsInvalid = true;
+                    numberOfPointsInvalid = true;
+                }
                 painter.painterChanged();
                 break;
 
@@ -3367,9 +3616,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             case PROPERTY_CHANGED:
                 final String property = event.getPropertyName();
 
-                // painter can display name so repaint
+                // painter affecting display
                 if (StringUtil.isEmpty(property) || StringUtil.equals(property, PROPERTY_NAME)
-                        || StringUtil.equals(property, PROPERTY_SHOWNAME))
+                        || StringUtil.equals(property, PROPERTY_SHOWNAME)
+                        || StringUtil.equals(property, PROPERTY_COLOR) || StringUtil.equals(property, PROPERTY_OPACITY)
+                        || StringUtil.equals(property, PROPERTY_SHOWNAME)
+                        || StringUtil.equals(property, PROPERTY_STROKE))
                     painter.painterChanged();
                 break;
 

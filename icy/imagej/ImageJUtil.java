@@ -67,6 +67,24 @@ import plugins.kernel.roi.roi2d.ROI2DShape;
 public class ImageJUtil
 {
     /**
+     * Convert the specified native 1D array to supported ImageJ native data array.
+     */
+    private static Object convertToIJType(Object array, boolean signed)
+    {
+        // double[] not supported in ImageJ
+        if (array instanceof double[])
+            return Array1DUtil.arrayToFloatArray(array, signed);
+        // long[] not supported in ImageJ
+        if (array instanceof long[])
+            return Array1DUtil.arrayToShortArray(array, signed);
+        // int[] means Color image for ImageJ
+        if (array instanceof int[])
+            return Array1DUtil.arrayToShortArray(array, signed);
+
+        return Array1DUtil.copyOf(array);
+    }
+
+    /**
      * Append the specified {@link IcyBufferedImage} to the given ImageJ {@link ImageStack}.<br>
      * If input {@link ImageStack} is <code>null</code> then a new {@link ImageStack} is returned.
      */
@@ -80,7 +98,7 @@ public class ImageJUtil
             result = stack;
 
         for (int c = 0; c < img.getSizeC(); c++)
-            result.addSlice(null, Array1DUtil.copyOf(img.getDataXY(c)));
+            result.addSlice(null, convertToIJType(img.getDataXY(c), img.isSignedDataType()));
 
         return result;
     }

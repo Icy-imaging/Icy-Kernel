@@ -40,6 +40,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
@@ -321,7 +322,7 @@ public class IcyUpdater
         splitPane.setDividerLocation(0.5d);
     }
 
-    static boolean prepareUpdate(ArrayList<ElementDescriptor> elements, boolean showProgress)
+    static boolean prepareUpdate(List<ElementDescriptor> elements, boolean showProgress)
     {
         final DownloadFrame downloadingFrame;
 

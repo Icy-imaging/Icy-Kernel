@@ -18,7 +18,7 @@
  */
 package icy.image.colorspace;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.image.colormap.FromRGBColorMap;
@@ -34,8 +34,8 @@ import icy.util.ColorUtil;
 
 import java.awt.color.ColorSpace;
 import java.awt.image.ColorModel;
-
-import javax.swing.event.EventListenerList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author stephane
@@ -43,8 +43,8 @@ import javax.swing.event.EventListenerList;
 public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColorMapListener
 {
     /**
-	 * 
-	 */
+     * 
+     */
     private static final long serialVersionUID = 6413334779215415163L;
 
     /**
@@ -64,7 +64,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    private final List<IcyColorSpaceListener> listeners;
 
     /**
      * internal updater
@@ -99,7 +99,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
         for (int i = 0; i < 4; i++)
             fromRGBmaps[i] = new FromRGBColorMap(numComponents);
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<IcyColorSpaceListener>();
         updater = new UpdateEventHandler(this, false);
 
         // // alpha is enabled by default
@@ -748,6 +748,9 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
                                 map.setBlue(index, (short) cm.getBlue(dvalues));
                                 break;
                             }
+
+                            default:
+                                break;
                         }
                     }
                 }
@@ -849,7 +852,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      */
     public void addListener(IcyColorSpaceListener listener)
     {
-        listeners.add(IcyColorSpaceListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -859,7 +862,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      */
     public void removeListener(IcyColorSpaceListener listener)
     {
-        listeners.remove(IcyColorSpaceListener.class, listener);
+        listeners.remove(listener);
     }
 
     /**
@@ -867,7 +870,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      */
     public void fireEvent(IcyColorSpaceEvent e)
     {
-        for (IcyColorSpaceListener listener : listeners.getListeners(IcyColorSpaceListener.class))
+        for (IcyColorSpaceListener listener : new ArrayList<IcyColorSpaceListener>(listeners))
             listener.colorSpaceChanged(e);
     }
 
@@ -906,7 +909,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      * process on colorspace change
      */
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final IcyColorSpaceEvent event = (IcyColorSpaceEvent) compare;
 

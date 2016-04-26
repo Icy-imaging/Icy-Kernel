@@ -1485,6 +1485,7 @@ public class BooleanMask2D implements Cloneable
      * correctly distance between each contour point.
      * 
      * @author Alexandre Dufour
+     * @author Stephane Dallongeville
      * @return the length of the contour
      */
     public double getContourLength()
@@ -1506,36 +1507,142 @@ public class BooleanMask2D implements Cloneable
             final int y = edge[i + 1] - baseY;
             final int xy = x + (y * width);
 
-            // count the edges in 4-connectivity
-            int nbEdges = 0;
+            final boolean topLeftConnected;
+            final boolean topConnected;
+            final boolean topRightConnected;
+            final boolean bottomLeftConnected;
+            final boolean bottomConnected;
+            final boolean bottomRightConnected;
 
-            if (x == 0 || !mask[xy - 1])
-                nbEdges++; // left
-            if (x == width - 1 || !mask[xy + 1])
-                nbEdges++; // right
-            if (y == 0 || !mask[xy - width])
-                nbEdges++; // north
-            if (y == height - 1 || !mask[xy + width])
-                nbEdges++; // south
-
-            switch (nbEdges)
+            if (y != 0)
             {
-                case 0:
+                topLeftConnected = (x != 0) && mask[(xy - 1) - width];
+                topConnected = mask[(xy + 0) - width];
+                topRightConnected = (x != (width - 1)) && mask[(xy + 1) - width];
+            }
+            else
+            {
+                topLeftConnected = false;
+                topConnected = false;
+                topRightConnected = false;
+            }
+
+            final boolean leftConnected = (x != 0) && mask[xy - 1];
+            final boolean rightConnected = (x != (width - 1)) && mask[xy + 1];
+
+            if (y != (height - 1))
+            {
+                bottomLeftConnected = (x != 0) && mask[(xy - 1) + width];
+                bottomConnected = mask[(xy + 0) + width];
+                bottomRightConnected = (x != (width - 1)) && mask[(xy + 1) + width];
+            }
+            else
+            {
+                bottomLeftConnected = false;
+                bottomConnected = false;
+                bottomRightConnected = false;
+            }
+
+            // count the connections
+            int directConnection = 0;
+            int diagConnection = 0;
+
+            if (topLeftConnected)
+                diagConnection++;
+            if (topConnected)
+                directConnection++;
+            if (topRightConnected)
+                diagConnection++;
+            if (leftConnected)
+                directConnection++;
+            if (rightConnected)
+                directConnection++;
+            if (bottomLeftConnected)
+                diagConnection++;
+            if (bottomConnected)
+                directConnection++;
+            if (bottomRightConnected)
+                diagConnection++;
+
+            switch (directConnection)
+            {
+                case 0: // no direct connection
+                    switch (diagConnection)
+                    {
+                        case 0: // isolated point
+                            perimeter += Math.PI;
+                            break;
+
+                        case 1: // ending point (diagonal)
+                            cornerEdges++;
+                            perimeter += Math.sqrt(2) + (Math.PI / 2);
+                            break;
+
+                        default: // diagonal angle line
+                            cornerEdges += 2;
+                            perimeter += 2 * Math.sqrt(2);
+                            break;
+                    }
                     break;
-                case 1: // "side" edge
-                    sideEdges++;
-                    perimeter++;
+
+                case 1: // ending point
+                    switch (diagConnection)
+                    {
+                        case 0: // ending point straight
+                            sideEdges++;
+                            perimeter += 1 + (Math.PI / 2);
+                            break;
+
+                        default: // assume triangle with 45° angle
+                            cornerEdges++;
+                            sideEdges++;
+                            perimeter += 1 + Math.sqrt(2);
+                            break;
+                    }
                     break;
-                case 2: // "corner" edge
-                    cornerEdges++;
-                    perimeter += Math.sqrt(2);
+
+                case 2:
+                    if ((leftConnected && rightConnected) || (topConnected && bottomConnected))
+                    {
+                        final double dgc = diagConnection * 0.5;
+                        final double dtc = 2 - dgc;
+
+                        cornerEdges += dgc;
+                        sideEdges += dtc;
+                        perimeter += dtc + (dgc * Math.sqrt(2));
+                    }
+                    else
+                    {
+                        // consider 90° corner
+                        cornerEdges++;
+                        perimeter += Math.sqrt(2);
+                    }
                     break;
-                case 3: // "salient" point
-                    cornerEdges += 2;
-                    perimeter += 2 * Math.sqrt(2);
+
+                case 3: // classic border (180°)
+                    switch (diagConnection)
+                    {
+                        default: // classic border
+                            sideEdges++;
+                            perimeter++;
+                            break;
+
+                        case 3:
+                            // consider 225° interior corner
+                            cornerEdges += 0.5;
+                            sideEdges += 0.5;
+                            perimeter += 0.5 + (Math.sqrt(2) / 2);
+                            break;
+
+                        case 4: // hole inside contour
+                            cornerEdges++;
+                            perimeter += Math.sqrt(2);
+                            break;
+                    }
                     break;
-                default: // single pixel, weird, but happens...
-                    perimeter++;
+
+                case 4: // internal point --> should not happen
+                    break;
             }
         }
 

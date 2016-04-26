@@ -135,8 +135,7 @@ public class ROIBasicMeasureDescriptorsPlugin extends Plugin implements PluginRO
 
         try
         {
-            result.put(perimeterDescriptor,
-                    Double.valueOf(ROIPerimeterDescriptor.computePerimeter(contour, roi, sequence)));
+            result.put(perimeterDescriptor, Double.valueOf(ROIPerimeterDescriptor.computePerimeter(roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {
@@ -155,7 +154,7 @@ public class ROIBasicMeasureDescriptorsPlugin extends Plugin implements PluginRO
         try
         {
             result.put(surfaceAreaDescriptor,
-                    Double.valueOf(ROISurfaceAreaDescriptor.computeSurfaceArea(contour, roi, sequence)));
+                    Double.valueOf(ROISurfaceAreaDescriptor.computeSurfaceArea(roi, sequence)));
         }
         catch (UnsupportedOperationException e)
         {

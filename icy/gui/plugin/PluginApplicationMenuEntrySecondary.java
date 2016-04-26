@@ -18,7 +18,6 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonApplicationMenuEntrySecondary
  */
 public class PluginApplicationMenuEntrySecondary extends RibbonApplicationMenuEntrySecondary
 {
-
     public PluginApplicationMenuEntrySecondary(PluginDescriptor plugin, String description, ActionListener action)
     {
         super(new BasicResizableIcon(plugin.getIcon()), description, action, CommandButtonKind.ACTION_ONLY);
@@ -45,5 +44,4 @@ public class PluginApplicationMenuEntrySecondary extends RibbonApplicationMenuEn
     {
         this(plugin, plugin.getName());
     }
-
 }

@@ -20,7 +20,7 @@ package plugins.kernel.roi.roi2d;
 
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DPositionListener;
 import icy.painter.OverlayEvent;
@@ -41,6 +41,8 @@ import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
+import icy.util.StringUtil;
+import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
 
 import java.awt.AlphaComposite;
@@ -49,6 +51,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -58,15 +61,20 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
+import vtk.vtkCellArray;
+import vtk.vtkInformation;
+import vtk.vtkPoints;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
+import vtk.vtkProperty;
 
 /**
  * @author Stephane
@@ -75,21 +83,33 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 {
     public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter, Runnable
     {
-        // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        Object vtkSource;
-        Object polyMapper;
-        Object actor;
+        // VTK 3D objects
+        protected vtkPolyData outline;
+        protected vtkPolyDataMapper outlineMapper;
+        protected vtkActor outlineActor;
+        protected vtkInformation vtkInfo;
+        protected vtkCellArray vCells;
+        protected vtkPoints vPoints;
+        protected vtkPolyData polyData;
+        protected vtkPolyDataMapper polyMapper;
+        protected vtkActor actor;
         // 3D internal
-        boolean needRebuild;
-        double scaling[];
-        VtkCanvas canvas3d;
+        protected boolean needRebuild;
+        protected double scaling[];
+        protected WeakReference<VtkCanvas> canvas3d;
 
         public ROI2DShapePainter()
         {
             super();
 
             // don't create VTK object on constructor
-            vtkSource = null;
+            outline = null;
+            outlineMapper = null;
+            outlineActor = null;
+            vtkInfo = null;
+            vCells = null;
+            vPoints = null;
+            polyData = null;
             polyMapper = null;
             actor = null;
 
@@ -100,16 +120,75 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             canvas3d = null;
         }
 
+        @Override
+        protected void finalize() throws Throwable
+        {
+            super.finalize();
+
+            // release allocated VTK resources
+            if (actor != null)
+                actor.Delete();
+            if (polyMapper != null)
+                polyMapper.Delete();
+            if (polyData != null)
+                polyData.Delete();
+            if (vPoints != null)
+                vPoints.Delete();
+            if (vCells != null)
+                vCells.Delete();
+            if (outlineActor != null)
+            {
+                outlineActor.SetPropertyKeys(null);
+                outlineActor.Delete();
+            }
+            if (vtkInfo != null)
+            {
+                vtkInfo.Remove(VtkCanvas.outlineVisibilityKey);
+                vtkInfo.Delete();
+            }
+            if (outlineMapper != null)
+                outlineMapper.Delete();
+            if (outline != null)
+            {
+                outline.GetPointData().GetScalars().Delete();
+                outline.GetPointData().Delete();
+                outline.Delete();
+            }
+        };
+
         protected void initVtkObjects()
         {
-            // init 3D painters stuff
-            vtkSource = new vtkPolyData();
+            outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
+            outlineMapper = new vtkPolyDataMapper();
+            outlineActor = new vtkActor();
+            outlineActor.SetMapper(outlineMapper);
+            // disable picking on the outline
+            outlineActor.SetPickable(0);
+            // and set it to wireframe representation
+            outlineActor.GetProperty().SetRepresentationToWireframe();
+            // use vtkInformations to store outline visibility state (hacky)
+            vtkInfo = new vtkInformation();
+            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+            // VtkCanvas use this to restore correctly outline visibility flag
+            outlineActor.SetPropertyKeys(vtkInfo);
 
+            // init poly data object
+            polyData = new vtkPolyData();
             polyMapper = new vtkPolyDataMapper();
-            ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) vtkSource);
-
+            polyMapper.SetInputData(polyData);
             actor = new vtkActor();
-            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            actor.SetMapper(polyMapper);
+
+            // initialize color and stroke
+            final Color col = getColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+
+            outlineActor.GetProperty().SetColor(r, g, b);
+            final vtkProperty property = actor.GetProperty();
+            property.SetPointSize(getStroke());
+            property.SetColor(r, g, b);
         }
 
         /**
@@ -117,9 +196,14 @@ public abstract class ROI2DShape extends ROI2D implements Shape
          */
         protected void rebuildVtkObjects()
         {
-            final VtkCanvas canvas = canvas3d;
-            // nothing to update
+            final VtkCanvas canvas = canvas3d.get();
+            // canvas was closed
             if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
                 return;
 
             final Sequence seq = canvas.getSequence();
@@ -127,6 +211,33 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (seq == null)
                 return;
 
+            // get bounds
+            final Rectangle2D bounds = getBounds2D();
+            double z0, z1;
+            final double curZ = getZ();
+
+            // all slices ?
+            if (curZ == -1)
+            {
+                // set object depth on whole volume
+                z0 = 0;
+                z1 = seq.getSizeZ() * scaling[2];
+            }
+            // fixed Z position
+            else
+            {
+                // set Z position
+                z0 = curZ * scaling[2];
+                z1 = (curZ + 1d) * scaling[2];
+                // z0 = (curZ - 0.5) * scaling[2];
+                // z1 = (curZ + 0.5) * scaling[2];
+            }
+
+            // update outline
+            VtkUtil.setOutlineBounds(outline, bounds.getMinX() * scaling[0], bounds.getMaxX() * scaling[0],
+                    bounds.getMinY() * scaling[1], bounds.getMaxY() * scaling[1], z0, z1, canvas);
+
+            // update polydata object
             final List<double[]> point3DList = new ArrayList<double[]>();
             final List<int[]> polyList = new ArrayList<int[]>();
             final double[] coords = new double[6];
@@ -138,25 +249,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             double y0 = 0d;
             double x1 = 0d;
             double y1 = 0d;
-            double z0, z1;
+            double xs = scaling[0];
+            double ys = scaling[1];
             int ind;
-
-            final double curZ = getZ();
-
-            // all slices ?
-            if (curZ == -1)
-            {
-                // set object depth on whole volume
-                z0 = 0;
-                z1 = seq.getSizeZ();
-            }
-            // fixed Z position
-            else
-            {
-                // set Z position
-                z0 = curZ - 0.5;
-                z1 = curZ + 0.5;
-            }
 
             // use flat path
             final PathIterator path = getPathIterator(null, 0.5d);
@@ -167,13 +262,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 switch (path.currentSegment(coords))
                 {
                     case PathIterator.SEG_MOVETO:
-                        x0 = xm = coords[0];
-                        y0 = ym = coords[1];
+                        x0 = xm = coords[0] * xs;
+                        y0 = ym = coords[1] * ys;
                         break;
 
                     case PathIterator.SEG_LINETO:
-                        x1 = coords[0];
-                        y1 = coords[1];
+                        x1 = coords[0] * xs;
+                        y1 = coords[1] * ys;
 
                         ind = point3DList.size();
 
@@ -221,30 +316,186 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             for (int[] poly : polyList)
                 indexes[ind++] = poly;
 
+            final vtkCellArray previousCells = vCells;
+            final vtkPoints previousPoints = vPoints;
+            vCells = VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes));
+            vPoints = VtkUtil.getPoints(vertices);
+
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas3d.lock();
+            vtkPanel.lock();
             try
             {
-                ((vtkPolyData) vtkSource).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
-                ((vtkPolyData) vtkSource).SetPoints(VtkUtil.getPoints(vertices));
-                ((vtkPolyDataMapper) polyMapper).Update();
+                // update outline polygon data
+                outlineMapper.SetInputData(outline);
+                outlineMapper.Update();
+                // update polygon data from cell and points
+                polyData.SetPolys(vCells);
+                polyData.SetPoints(vPoints);
+                polyMapper.Update();
 
-                ((vtkActor) actor).SetScale(scaling);
-                ((vtkActor) actor).GetProperty().SetPointSize(getStroke());
-                final Color color = getColor();
-                ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
-                        color.getBlue() / 255d);
-                // opacity is for interior only, contour can be done with layer opacity information
-                // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
+                // release previous allocated VTK objects
+                if (previousCells != null)
+                    previousCells.Delete();
+                if (previousPoints != null)
+                    previousPoints.Delete();
             }
             finally
             {
-                canvas3d.unlock();
+                vtkPanel.unlock();
             }
 
-            // no more pending request
-            if (!ThreadUtil.hasWaitingSingleTask(this))
-                canvas3d = null;
+            // update color and others properties
+            updateVtkDisplayProperties();
+        }
+
+        protected void updateVtkDisplayProperties()
+        {
+            if (actor != null)
+            {
+                final VtkCanvas cnv = canvas3d.get();
+                final vtkProperty vtkProperty = actor.GetProperty();
+                final Color col = getDisplayColor();
+                final double r = col.getRed() / 255d;
+                final double g = col.getGreen() / 255d;
+                final double b = col.getBlue() / 255d;
+                final double strk = getStroke();
+                // final float opacity = getOpacity();
+
+                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+                // we need to lock canvas as actor can be accessed during rendering
+                if (vtkPanel != null)
+                {
+                    vtkPanel.lock();
+                    try
+                    {
+                        // set actors color
+                        outlineActor.GetProperty().SetColor(r, g, b);
+                        if (isSelected())
+                        {
+                            outlineActor.GetProperty().SetRepresentationToWireframe();
+                            outlineActor.SetVisibility(1);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
+                        }
+                        else
+                        {
+                            outlineActor.GetProperty().SetRepresentationToPoints();
+                            outlineActor.SetVisibility(0);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+                        }
+                        vtkProperty.SetColor(r, g, b);
+                        vtkProperty.SetPointSize(strk);
+                        // opacity here is about ROI content, global opacity is handled by Layer
+                        // vtkProperty.SetOpacity(opacity);
+                        setVtkObjectsColor(col);
+                    }
+                    finally
+                    {
+                        vtkPanel.unlock();
+                    }
+                }
+                else
+                {
+                    outlineActor.GetProperty().SetColor(r, g, b);
+                    if (isSelected())
+                    {
+                        outlineActor.GetProperty().SetRepresentationToWireframe();
+                        outlineActor.SetVisibility(1);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
+                    }
+                    else
+                    {
+                        outlineActor.GetProperty().SetRepresentationToPoints();
+                        outlineActor.SetVisibility(0);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+                    }
+                    vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
+                    vtkProperty.SetPointSize(strk);
+                    // opacity here is about ROI content, global opacity is handled by Layer
+                    // vtkProperty.SetOpacity(opacity);
+                    setVtkObjectsColor(col);
+                }
+
+                // need to repaint
+                painterChanged();
+            }
+        }
+
+        protected void setVtkObjectsColor(Color color)
+        {
+            if (outline != null)
+                VtkUtil.setPolyDataColor(outline, color, canvas3d.get());
+            if (polyData != null)
+                VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
+        }
+
+        @Override
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // specific VTK canvas processing
+            if (canvas instanceof VtkCanvas)
+            {
+                final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
+                final boolean focused = (actor != null) && vtkCanvas.getPickOnMouseMove()
+                        && (actor == vtkCanvas.getPickedObject());
+
+                setFocused(focused);
+
+                return focused;
+            }
+
+            return super.updateFocus(e, imagePoint, canvas);
+        }
+
+        @Override
+        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            boolean hasFocus;
+
+            // mouse cursor is over the actor ? --> focus the ROI
+            if (canvas instanceof VtkCanvas)
+                hasFocus = (actor != null) && (actor == ((VtkCanvas) canvas).getPickedObject());
+            else
+                hasFocus = isFocused();
+
+            // nothing to do if the ROI does not have focus
+            if (!hasFocus)
+                return false;
+
+            // union selection
+            if (EventUtil.isShiftDown(e))
+            {
+                // not already selected --> add ROI to selection
+                if (!isSelected())
+                {
+                    setSelected(true);
+                    return true;
+                }
+            }
+            else if (EventUtil.isControlDown(e))
+            // switch selection
+            {
+                // inverse state
+                setSelected(!isSelected());
+                return true;
+            }
+            else
+            // exclusive selection
+            {
+                // not selected --> exclusive ROI selection
+                if (!isSelected())
+                {
+                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
+                    if (!canvas.getSequence().setSelectedROI(ROI2DShape.this))
+                        ROI2DShape.this.setSelected(true);
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
@@ -254,52 +505,47 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             {
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    ROI2DShape.this.beginUpdate();
+                    try
                     {
-                        ROI2DShape.this.beginUpdate();
-                        try
+                        // get control points list
+                        final List<Anchor2D> controlPoints = getControlPoints();
+
+                        // send event to controls points first
+                        for (Anchor2D pt : controlPoints)
+                            pt.keyPressed(e, imagePoint, canvas);
+
+                        // specific action for ROI2DShape
+                        if (!e.isConsumed())
                         {
-                            // get control points list
-                            final List<Anchor2D> controlPoints = getControlPoints();
+                            final Sequence sequence = canvas.getSequence();
 
-                            // send event to controls points first
-                            for (Anchor2D pt : controlPoints)
-                                pt.keyPressed(e, imagePoint, canvas);
-
-                            // specific action for ROI2DShape
-                            if (!e.isConsumed())
+                            switch (e.getKeyCode())
                             {
-                                final Sequence sequence = canvas.getSequence();
+                                case KeyEvent.VK_DELETE:
+                                case KeyEvent.VK_BACK_SPACE:
+                                    final Anchor2D selectedPoint = getSelectedPoint();
 
-                                switch (e.getKeyCode())
-                                {
-                                    case KeyEvent.VK_DELETE:
-                                    case KeyEvent.VK_BACK_SPACE:
-                                        final Anchor2D selectedPoint = getSelectedPoint();
+                                    // try to remove selected point
+                                    if (removeSelectedPoint(canvas))
+                                    {
+                                        // consume event
+                                        e.consume();
 
-                                        // try to remove selected point
-                                        if (removeSelectedPoint(canvas))
-                                        {
-                                            // consume event
-                                            e.consume();
-
-                                            // add undo operation
-                                            if (sequence != null)
-                                                sequence.addUndoableEdit(new Point2DRemovedROIEdit(ROI2DShape.this,
-                                                        controlPoints, selectedPoint));
-                                        }
-                                        break;
-                                }
+                                        // add undo operation
+                                        if (sequence != null)
+                                            sequence.addUndoableEdit(new Point2DRemovedROIEdit(ROI2DShape.this,
+                                                    controlPoints, selectedPoint));
+                                    }
+                                    break;
                             }
                         }
-                        finally
-                        {
-                            ROI2DShape.this.endUpdate();
-                        }
+                    }
+                    finally
+                    {
+                        ROI2DShape.this.endUpdate();
                     }
                 }
-
             }
 
             // then send event to parent
@@ -314,7 +560,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    if (imagePoint != null)
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -341,26 +587,25 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         @Override
         public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isSelected() && !isReadOnly())
+            if (isActiveFor(canvas))
             {
-                // send event to controls points first
-                if (isActiveFor(canvas))
+                // check we can do the action
+                if (isSelected() && !isReadOnly())
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    ROI2DShape.this.beginUpdate();
+                    try
                     {
-                        ROI2DShape.this.beginUpdate();
-                        try
+                        // send event to controls points first
+                        synchronized (controlPoints)
                         {
-                            // default anchor action on mouse pressed
-                            synchronized (controlPoints)
-                            {
-                                for (Anchor2D pt : controlPoints)
-                                    pt.mousePressed(e, imagePoint, canvas);
-                            }
+                            for (Anchor2D pt : controlPoints)
+                                pt.mousePressed(e, imagePoint, canvas);
+                        }
 
-                            // specific action for this ROI
-                            if (!e.isConsumed())
+                        // specific action for this ROI
+                        if (!e.isConsumed())
+                        {
+                            if (imagePoint != null)
                             {
                                 // left button action
                                 if (EventUtil.isLeftMouseButton(e))
@@ -394,10 +639,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                                 }
                             }
                         }
-                        finally
-                        {
-                            ROI2DShape.this.endUpdate();
-                        }
+                    }
+                    finally
+                    {
+                        ROI2DShape.this.endUpdate();
                     }
                 }
             }
@@ -417,30 +662,26 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 // send event to controls points first
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    final Sequence sequence = canvas.getSequence();
+
+                    ROI2DShape.this.beginUpdate();
+                    try
                     {
-                        final Sequence sequence = canvas.getSequence();
-
-                        ROI2DShape.this.beginUpdate();
-                        try
+                        // default anchor action on mouse release
+                        synchronized (controlPoints)
                         {
-                            // default anchor action on mouse release
-                            synchronized (controlPoints)
-                            {
-                                for (Anchor2D pt : controlPoints)
-                                    pt.mouseReleased(e, imagePoint, canvas);
-                            }
+                            for (Anchor2D pt : controlPoints)
+                                pt.mouseReleased(e, imagePoint, canvas);
                         }
-                        finally
-                        {
-                            ROI2DShape.this.endUpdate();
-                        }
-
-                        // prevent undo operation merging
-                        if (sequence != null)
-                            sequence.getUndoManager().noMergeForNextEdit();
                     }
+                    finally
+                    {
+                        ROI2DShape.this.endUpdate();
+                    }
+
+                    // prevent undo operation merging
+                    if (sequence != null)
+                        sequence.getUndoManager().noMergeForNextEdit();
                 }
             }
 
@@ -456,100 +697,69 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 // send event to controls points first
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    ROI2DShape.this.beginUpdate();
+                    try
                     {
-                        ROI2DShape.this.beginUpdate();
-                        try
+                        // default anchor action on mouse click
+                        synchronized (controlPoints)
                         {
-                            // default anchor action on mouse click
-                            synchronized (controlPoints)
-                            {
-                                for (Anchor2D pt : controlPoints)
-                                    pt.mouseClick(e, imagePoint, canvas);
-                            }
+                            for (Anchor2D pt : controlPoints)
+                                pt.mouseClick(e, imagePoint, canvas);
                         }
-                        finally
-                        {
-                            ROI2DShape.this.endUpdate();
-                        }
+                    }
+                    finally
+                    {
+                        ROI2DShape.this.endUpdate();
                     }
                 }
             }
 
             // then send event to parent
             super.mouseClick(e, imagePoint, canvas);
-
-            // not yet consumed...
-            if (!e.isConsumed())
-            {
-                // and process ROI stuff now
-                if (isActiveFor(canvas))
-                {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
-                    {
-                        // single click
-                        if (e.getClickCount() == 1)
-                        {
-                            // right click action
-                            if (EventUtil.isRightMouseButton(e))
-                            {
-                                // unselect (don't consume event)
-                                if (isSelected())
-                                    ROI2DShape.this.setSelected(false);
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isSelected() && !isReadOnly())
+            if (isActiveFor(canvas))
             {
-                // send event to controls points first
-                if (isActiveFor(canvas))
+                // check we can do the action
+                if (isSelected() && !isReadOnly())
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    final Sequence sequence = canvas.getSequence();
+
+                    // send event to controls points first
+                    ROI2DShape.this.beginUpdate();
+                    try
                     {
-                        final Sequence sequence = canvas.getSequence();
-
-                        ROI2DShape.this.beginUpdate();
-                        try
+                        // default anchor action on mouse drag
+                        synchronized (controlPoints)
                         {
-                            // default anchor action on mouse drag
-                            synchronized (controlPoints)
+                            for (Anchor2D pt : controlPoints)
                             {
-                                for (Anchor2D pt : controlPoints)
-                                {
-                                    final Point2D savedPosition;
+                                final Point2D savedPosition;
 
-                                    // don't want to undo position change on first creation movement
-                                    if ((sequence != null) && (!isCreating() || !firstMove))
-                                        savedPosition = pt.getPosition();
-                                    else
-                                        savedPosition = null;
+                                // don't want to undo position change on first creation movement
+                                if ((sequence != null) && (!isCreating() || !firstMove))
+                                    savedPosition = pt.getPosition();
+                                else
+                                    savedPosition = null;
 
-                                    pt.mouseDrag(e, imagePoint, canvas);
+                                pt.mouseDrag(e, imagePoint, canvas);
 
-                                    // position changed and undo supported --> add undo operation
-                                    if ((sequence != null) && (savedPosition != null)
-                                            && !savedPosition.equals(pt.getPosition()))
-                                        sequence.addUndoableEdit(new Point2DMovedROIEdit(ROI2DShape.this, pt,
-                                                savedPosition));
-                                }
+                                // position changed and undo supported --> add undo operation
+                                if ((sequence != null) && (savedPosition != null)
+                                        && !savedPosition.equals(pt.getPosition()))
+                                    sequence.addUndoableEdit(new Point2DMovedROIEdit(ROI2DShape.this, pt, savedPosition));
                             }
                         }
-                        finally
-                        {
-                            ROI2DShape.this.endUpdate();
-                        }
+                    }
+                    finally
+                    {
+                        ROI2DShape.this.endUpdate();
                     }
                 }
+
             }
 
             // then send event to parent
@@ -559,28 +769,25 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         @Override
         public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isSelected() && !isReadOnly())
+            if (isActiveFor(canvas))
             {
-                // send event to controls points first
-                if (isActiveFor(canvas))
+                // check we can do the action
+                if (isSelected() && !isReadOnly())
                 {
-                    // check we can do the action
-                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
+                    // send event to controls points first
+                    ROI2DShape.this.beginUpdate();
+                    try
                     {
-                        ROI2DShape.this.beginUpdate();
-                        try
+                        // refresh control point state
+                        synchronized (controlPoints)
                         {
-                            // refresh control point state
-                            synchronized (controlPoints)
-                            {
-                                for (Anchor2D pt : controlPoints)
-                                    pt.mouseMove(e, imagePoint, canvas);
-                            }
+                            for (Anchor2D pt : controlPoints)
+                                pt.mouseMove(e, imagePoint, canvas);
                         }
-                        finally
-                        {
-                            ROI2DShape.this.endUpdate();
-                        }
+                    }
+                    finally
+                    {
+                        ROI2DShape.this.endUpdate();
                     }
                 }
             }
@@ -744,22 +951,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         initVtkObjects();
 
                     // request rebuild 3D objects
-                    canvas3d = cnv;
+                    canvas3d = new WeakReference<VtkCanvas>(cnv);
                     ThreadUtil.runSingle(this);
                     needRebuild = false;
-                }
-
-                // actor can be accessed in canvas3d for rendering so we need to synchronize access
-                cnv.lock();
-                try
-                {
-                    // update visibility
-                    if (actor != null)
-                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
-                }
-                finally
-                {
-                    cnv.unlock();
                 }
             }
         }
@@ -812,36 +1006,21 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 super.setColor(value);
 
                 // also change colors of controls points
-                final Color color = getColor();
                 final Color focusedColor = getFocusedColor();
 
                 synchronized (controlPoints)
                 {
                     for (Anchor2D anchor : controlPoints)
                     {
-                        anchor.setColor(color);
+                        anchor.setColor(value);
                         anchor.setSelectedColor(focusedColor);
                     }
                 }
-
-                if (actor != null)
-                    ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
-                            color.getBlue() / 255d);
             }
             finally
             {
                 endUpdate();
             }
-        }
-
-        @Override
-        public void setOpacity(float value)
-        {
-            // opacity is for interior only, contour can be done with layer opacity information
-            // if (actor != null)
-            // ((vtkActor) actor).GetProperty().SetOpacity(value);
-
-            super.setOpacity(value);
         }
 
         @Override
@@ -851,7 +1030,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (actor == null)
                 initVtkObjects();
 
-            return new vtkProp[] {(vtkProp) actor};
+            return new vtkActor[] {actor, outlineActor};
         }
 
         @Override
@@ -1039,7 +1218,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         else
             controlPoints.add(index, pt);
 
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1112,7 +1291,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         if (empty)
             remove();
         else
-            roiChanged();
+            roiChanged(true);
 
         return true;
     }
@@ -1296,7 +1475,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     /**
      * Return total distance of the specified list of points.
      */
-    protected double getTotalDistance(List<Point2D> points, boolean connectLastPoint)
+    protected static double getTotalDistance(List<Point2D> points, double factorX, double factorY,
+            boolean connectLastPoint)
     {
         final int size = points.size();
         double result = 0d;
@@ -1304,23 +1484,43 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         if (size > 1)
         {
             for (int i = 0; i < size - 1; i++)
-                result += points.get(i).distance(points.get(i + 1));
+                result += getDistance(points.get(i), points.get(i + 1), factorX, factorY);
 
             // add last to first point distance
             if (connectLastPoint)
-                result += points.get(size - 1).distance(points.get(0));
+                result += getDistance(points.get(size - 1), points.get(0), factorX, factorY);
         }
 
         return result;
     }
 
+    protected static double getDistance(Point2D pt1, Point2D pt2, double factorX, double factorY)
+    {
+        double px = (pt2.getX() - pt1.getX()) * factorX;
+        double py = (pt2.getY() - pt1.getY()) * factorY;
+        return Math.sqrt(px * px + py * py);
+    }
+
     /**
      * Return total distance of the specified list of points.
      */
-    protected double getTotalDistance(List<Point2D> points)
+    protected double getTotalDistance(List<Point2D> points, double factorX, double factorY)
     {
         // by default the total length need last point connection
-        return getTotalDistance(points, true);
+        return getTotalDistance(points, factorX, factorY, true);
+    }
+
+    @Override
+    public double computePerimeter(Sequence sequence)
+    {
+        return getTotalDistance(getPoints(), sequence.getPixelSizeX(), sequence.getPixelSizeY());
+    }
+
+    // default implementation for ROI2DShape
+    @Override
+    public double computeNumberOfContourPoints()
+    {
+        return getTotalDistance(getPoints(), 1d, 1d);
     }
 
     /**
@@ -1342,7 +1542,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             points.add(i, pos);
 
             // calculate total distance
-            final double d = getTotalDistance(points);
+            final double d = getTotalDistance(points, 1d, 1d);
             // minimum distance ?
             if (d < minDistance)
             {
@@ -1437,6 +1637,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     @Override
     public boolean[] getBooleanMask(int x, int y, int width, int height, boolean inclusive)
     {
+        if ((width <= 0) || (height <= 0))
+            return new boolean[0];
+
         final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         final Graphics2D g = img.createGraphics();
         final DataBuffer dataBuffer = img.getRaster().getDataBuffer();
@@ -1657,7 +1860,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     public void controlPointPositionChanged(Anchor2D source)
     {
         // anchor(s) position changed --> ROI changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -1691,7 +1894,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      * roi changed
      */
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -1701,6 +1904,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             case ROI_CHANGED:
                 // refresh shape
                 updateShape();
+                break;
+
+            case FOCUS_CHANGED:
+            case SELECTION_CHANGED:
+                ((ROI2DShapePainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            case PROPERTY_CHANGED:
+                final String property = event.getPropertyName();
+
+                if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
+                        || StringUtil.equals(property, PROPERTY_OPACITY))
+                    ((ROI2DShapePainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 

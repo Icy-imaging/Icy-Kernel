@@ -181,6 +181,8 @@ public class PluginErrorReportPanel extends JPanel
         // comment pane
         commentTextPane = new JTextPane();
         commentTextPane.setEditable(true);
+        commentTextPane
+                .setToolTipText("Give here some informations about the context or how to reproduce the bug to help the developer in resolving the issue");
 
         final JScrollPane scComment = new JScrollPane(commentTextPane);
         scComment.setPreferredSize(new Dimension(23, 60));

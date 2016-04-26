@@ -18,6 +18,7 @@
  */
 package icy.gui.dialog;
 
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 
@@ -26,6 +27,7 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -268,5 +270,16 @@ public class ActionDialog extends JDialog implements ActionListener
             if (closeAfterAction)
                 dispose();
         }
+    }
+
+    @Override
+    public void reshape(int x, int y, int width, int height)
+    {
+        final Rectangle r = new Rectangle(x, y, width, height);
+
+        // prevent to go completely off screen
+        ComponentUtil.fixPosition(this, r);
+
+        super.reshape(r.x, r.y, r.width, r.height);
     }
 }

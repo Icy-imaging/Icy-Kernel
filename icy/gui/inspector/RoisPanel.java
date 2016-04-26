@@ -106,6 +106,16 @@ public class RoisPanel extends AbstractRoisPanel
     {
         super.valueChanged(e);
 
+        // currently changing the selection ? --> exit
+        if (e.getValueIsAdjusting())
+            return;
+        // currently changing the selection ? --> exit
+        if (roiSelectionModel.getValueIsAdjusting())
+            return;
+        // currently changing the selection ? --> exit
+        if (modifySelection.availablePermits() <= 0)
+            return;
+
         // notify the ROI control panel that selection changed
         roiControlPanel.selectionChanged();
     }

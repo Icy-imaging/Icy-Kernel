@@ -114,4 +114,42 @@ public class DateUtil
     {
         return new SimpleDateFormat(format).format(date);
     }
+    
+    /**
+     * Returns given time in ms in in international time String format.
+     * 
+     * @param valueInMs
+     *        : value in milliseconds
+     * @return <b>Example:</b> "2:21:18.345" for 2h21mn, "1.543" for 1 second and 543 ms
+     */
+    public static String getTimeAsString(double valueInMs)
+    {
+        String result = "";
+        double v = valueInMs;
+
+        if (v >= 3600000d)
+        {
+            result += (int) (v / 3600000d);
+            v %= 3600000d;
+        }
+        if (v >= 60000d)
+        {
+            if (StringUtil.isEmpty(result)) result += ":";
+            result += (int) (v / 60000d);
+            v %= 60000d;
+        }
+        if (v >= 1000d)
+        {
+            if (StringUtil.isEmpty(result)) result += ":";
+            result += (int) (v / 1000d);
+            v %= 1000d;
+        }
+        if (v != 0d)
+        {
+            if (StringUtil.isEmpty(result)) result += ".";
+            result += (int) v;
+        }
+
+        return result;
+    }
 }

@@ -33,10 +33,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -109,13 +109,13 @@ public abstract class SequenceBaseResizePanel extends JPanel
         }
 
         @Override
-        public Image getImage(int t, int z)
+        public BufferedImage getImage(int t, int z)
         {
             return sequence.getImage(t, z);
         }
 
         @Override
-        public Image getImage(int t, int z, int c)
+        public BufferedImage getImage(int t, int z, int c)
         {
             return sequence.getImage(t, z, c);
         }
@@ -159,7 +159,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         }
 
         @Override
-        public Image getImage(int t, int z)
+        public BufferedImage getImage(int t, int z)
         {
             try
             {
@@ -173,7 +173,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         }
 
         @Override
-        public Image getImage(int t, int z, int c)
+        public BufferedImage getImage(int t, int z, int c)
         {
             return ((IcyBufferedImage) getImage(t, z)).getImage(c);
         }

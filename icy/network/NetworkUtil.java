@@ -42,8 +42,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -256,7 +258,24 @@ public class NetworkUtil
         }
         else
         {
+            final String user = NetworkPreferences.getProxyUser();
+            final String pass = NetworkPreferences.getProxyPassword();
+            final boolean auth = NetworkPreferences.getProxyAuthentication() && (!StringUtil.isEmpty(user))
+                    && (!StringUtil.isEmpty(pass));
             String host;
+
+            // authentication enabled ?
+            if (auth)
+            {
+                Authenticator.setDefault(new Authenticator()
+                {
+                    @Override
+                    public PasswordAuthentication getPasswordAuthentication()
+                    {
+                        return new PasswordAuthentication(user, pass.toCharArray());
+                    }
+                });
+            }
 
             // manual proxy
             disableSystemProxy();
@@ -271,7 +290,11 @@ public class NetworkUtil
                 setProxyPort(port);
                 setHTTPProxyHost(host);
                 setHTTPProxyPort(port);
-
+                if (auth)
+                {
+                    setHTTPProxyUser(user);
+                    setHTTPProxyPassword(pass);
+                }
                 enableProxySetting();
                 enableHTTPProxySetting();
             }
@@ -287,6 +310,11 @@ public class NetworkUtil
             {
                 setHTTPSProxyHost(host);
                 setHTTPSProxyPort(NetworkPreferences.getProxyHTTPSPort());
+                if (auth)
+                {
+                    setHTTPSProxyUser(user);
+                    setHTTPSProxyPassword(pass);
+                }
                 enableHTTPSProxySetting();
             }
             else
@@ -298,6 +326,11 @@ public class NetworkUtil
             {
                 setFTPProxyHost(host);
                 setFTPProxyPort(NetworkPreferences.getProxyFTPPort());
+                if (auth)
+                {
+                    setFTPProxyUser(user);
+                    setFTPProxyPassword(pass);
+                }
                 enableFTPProxySetting();
             }
             else
@@ -309,6 +342,11 @@ public class NetworkUtil
             {
                 setSOCKSProxyHost(host);
                 setSOCKSProxyPort(NetworkPreferences.getProxySOCKSPort());
+                if (auth)
+                {
+                    setSOCKSProxyUser(user);
+                    setSOCKSProxyPassword(pass);
+                }
                 enableSOCKSProxySetting();
             }
             else
@@ -450,7 +488,7 @@ public class NetworkUtil
                 Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[] {String.class});
                 openURL.invoke(null, new Object[] {url});
             }
-            else if (SystemUtil.isWindow())
+            else if (SystemUtil.isWindows())
                 Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
             else
             {
@@ -600,6 +638,17 @@ public class NetworkUtil
             }
 
             return null;
+        }
+        finally
+        {
+            try
+            {
+                ip.close();
+            }
+            catch (IOException e)
+            {
+                // ignore...
+            }
         }
     }
 

@@ -122,13 +122,19 @@ public class AuthenticationInfo
     }
 
     @Override
+    public int hashCode()
+    {
+        return login.hashCode() ^ password.hashCode();
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
         if (obj instanceof AuthenticationInfo)
         {
             final AuthenticationInfo auth = (AuthenticationInfo) obj;
 
-            return (StringUtil.equals(auth.login, login) && StringUtil.equals(auth.password, password) && (auth.enabled == enabled));
+            return StringUtil.equals(auth.login, login) && StringUtil.equals(auth.password, password);
         }
 
         return super.equals(obj);

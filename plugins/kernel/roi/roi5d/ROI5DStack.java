@@ -34,6 +34,7 @@ import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -107,8 +108,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     }
 
     /**
-     * Returns <code>true</code> if the ROI directly uses the 4D slice color draw property and
-     * <code>false</code> if it uses the global 5D ROI color draw property.
+     * Returns <code>true</code> if the ROI directly uses the 4D slice color draw property and <code>false</code> if it
+     * uses the global 5D ROI color draw property.
      */
     public boolean getUseChildColor()
     {
@@ -116,8 +117,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     }
 
     /**
-     * Set to <code>true</code> if you want to directly use the 4D slice color draw property and
-     * <code>false</code> to keep the global 5D ROI color draw property.
+     * Set to <code>true</code> if you want to directly use the 4D slice color draw property and <code>false</code> to
+     * keep the global 5D ROI color draw property.
      * 
      * @see #setColor(int, Color)
      */
@@ -342,8 +343,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     /**
      * @return The size of this ROI stack along C.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
-     *         of this ROI, but doesn't guarantee that all slices in-between exist (
-     *         {@link #getSlice(int)} may still return <code>null</code>.<br>
+     *         of this ROI, but doesn't guarantee that all slices in-between exist ( {@link #getSlice(int)} may still
+     *         return <code>null</code>.<br>
      */
     public int getSizeC()
     {
@@ -395,7 +396,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         slices.put(Integer.valueOf(c), roi4d);
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -414,7 +415,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         }
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(true);
 
         return result;
     }
@@ -446,7 +447,9 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         switch (event.getType())
         {
             case ROI_CHANGED:
-                roiChanged();
+                // position change of a slice can change global bounds --> transform to 'content changed' event type
+                roiChanged(true);
+//                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:
@@ -588,11 +591,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         return false;
     }
 
+    // default approximated implementation for ROI5DStack
     @Override
     public double computeNumberOfContourPoints()
     {
-        // 3D edge points = first slice points + inter slices edge points + last slice points
-        // TODO: only approximation, fix this to use real 5D edge point
+        // 5D contour points = first slice points + inter slices contour points + last slice points
         double perimeter = 0;
 
         if (slices.size() <= 2)
@@ -665,7 +668,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         }
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(false);
     }
 
     @Override
@@ -692,6 +695,10 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             {
                 modifyingSlice.release();
             }
+
+            // notify ROI changed because we modified slice 'internally'
+            if ((dx != 0d) || (dy != 0d) || (dz != 0d) || (dt != 0d))
+                roiChanged(false);
         }
         finally
         {

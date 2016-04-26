@@ -30,9 +30,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -73,6 +76,29 @@ public class XMLUtil
     private static DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
     // static transformer factory
     private static TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    // static Deflater
+    // private static Deflater deflater = new Deflater(2, true);
+    private static Deflater deflater = new Deflater(2);
+    // static Inflater
+    // private static Inflater inflater = new Inflater(true);
+    private static Inflater inflater = new Inflater();
+
+    static
+    {
+        try
+        {
+            docBuilderFactory.setNamespaceAware(false);
+            docBuilderFactory.setValidating(false);
+            docBuilderFactory.setFeature("http://xml.org/sax/features/namespaces", false);
+            docBuilderFactory.setFeature("http://xml.org/sax/features/validation", false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            docBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        }
+        catch (Exception e)
+        {
+            // ignore this
+        }
+    }
 
     // private static synchronized void init()
     // {
@@ -220,7 +246,7 @@ public class XMLUtil
         if (StringUtil.isEmpty(path))
         {
             if (showError)
-                System.err.println("XMLUtil.loadDocument('" + path + "') error : empty path !");
+                System.err.println("XMLUtil.loadDocument('" + path + "') error: empty path !");
 
             return null;
         }
@@ -228,7 +254,7 @@ public class XMLUtil
         final URL url = URLUtil.getURL(path);
 
         // load from URL
-        if ((url != null) && URLUtil.isNetworkURL(url))
+        if (url != null)
             return loadDocument(url, auth, showError);
 
         // try to load from file instead (no authentication needed then)
@@ -253,7 +279,7 @@ public class XMLUtil
         if ((f == null) || !f.exists())
         {
             if (showError)
-                System.err.println("XMLUtil.loadDocument('" + f + "') error : file not found !");
+                System.err.println("XMLUtil.loadDocument('" + f + "') error: file not found !");
 
             return null;
         }
@@ -270,7 +296,7 @@ public class XMLUtil
             {
                 if (showError)
                 {
-                    System.err.println("XMLUtil.loadDocument('" + f.getPath() + "') error :");
+                    System.err.println("XMLUtil.loadDocument('" + f.getPath() + "') error:");
                     IcyExceptionHandler.showErrorMessage(e, false);
                 }
             }
@@ -303,6 +329,23 @@ public class XMLUtil
      */
     public static Document loadDocument(URL url, AuthenticationInfo auth, boolean showError)
     {
+        // use file loading if possible
+        if (URLUtil.isFileURL(url))
+        {
+            File f;
+
+            try
+            {
+                f = new File(url.toURI());
+            }
+            catch (URISyntaxException e)
+            {
+                f = new File(url.getPath());
+            }
+
+            return loadDocument(f);
+        }
+
         final DocumentBuilder builder = createDocumentBuilder();
 
         if (builder != null)
@@ -354,6 +397,13 @@ public class XMLUtil
      */
     public static boolean saveDocument(Document doc, File f)
     {
+        if ((doc == null) || (f == null))
+        {
+            System.err.println("XMLUtil.saveDocument(...) error: specified document or file is null !");
+
+            return false;
+        }
+
         final Transformer transformer = createTransformer();
 
         // an error occurred
@@ -976,8 +1026,11 @@ public class XMLUtil
         // get packed byte data
         final byte[] result = (byte[]) ArrayUtil.stringToArray1D(value, DataType.BYTE, true, ":");
 
-        // unpack and return
-        return ZipUtil.unpack(result);
+        synchronized (inflater)
+        {
+            // unpack and return
+            return ZipUtil.unpack(inflater, result);
+        }
     }
 
     private static String toString(boolean value)
@@ -1007,8 +1060,15 @@ public class XMLUtil
 
     private static String toString(byte[] value)
     {
+        final byte[] packed;
+
+        synchronized (deflater)
+        {
+            packed = ZipUtil.pack(deflater, value, -1);
+        }
+
         // pack data and convert to string
-        return ArrayUtil.array1DToString(ZipUtil.pack(value), false, true, ":", -1);
+        return ArrayUtil.array1DToString(packed, false, true, ":", -1);
     }
 
     /**

@@ -18,7 +18,7 @@
  */
 package icy.common.listener;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * Common interface for change notification
@@ -30,5 +30,5 @@ public interface ChangeListener
     /**
      * fire changed event
      */
-    public void onChanged(EventHierarchicalChecker object);
+    public void onChanged(CollapsibleEvent event);
 }

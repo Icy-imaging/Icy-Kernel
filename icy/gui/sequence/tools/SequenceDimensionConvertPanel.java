@@ -26,10 +26,10 @@ import icy.sequence.SequenceUtil;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultBoundedRangeModel;
@@ -57,7 +57,7 @@ public class SequenceDimensionConvertPanel extends JPanel
         }
 
         @Override
-        public Image getImage(int t, int z)
+        public BufferedImage getImage(int t, int z)
         {
             return SequenceUtil.AdjustZTHelper
                     .getImage(sequence, t, z, getNewSizeZ(), getNewSizeT(), isOrderReversed());
@@ -94,7 +94,7 @@ public class SequenceDimensionConvertPanel extends JPanel
         }
 
         @Override
-        public Image getImage(int t, int z, int c)
+        public BufferedImage getImage(int t, int z, int c)
         {
             return ((IcyBufferedImage) getImage(t, z)).getImage(c);
         }

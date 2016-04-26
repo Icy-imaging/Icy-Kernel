@@ -21,8 +21,8 @@ package icy.plugin;
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.progress.CancelableProgressFrame;
+import icy.gui.frame.progress.DownloadFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
-import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.frame.progress.SuccessfullAnnounceFrame;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
@@ -388,7 +388,7 @@ public class PluginInstaller implements Runnable
     /**
      * Return an empty string if no error else return error message
      */
-    private String downloadAndSavePlugin(PluginDescriptor plugin, CancelableProgressFrame taskFrame)
+    private String downloadAndSavePlugin(PluginDescriptor plugin, DownloadFrame taskFrame)
     {
         String result;
 
@@ -449,10 +449,13 @@ public class PluginInstaller implements Runnable
      * Return an empty string if no error else return error message
      */
     private String downloadAndSave(URL downloadPath, String savePath, String login, String pass, boolean displayError,
-            ProgressFrame taskFrame)
+            DownloadFrame downloadFrame)
     {
+        if (downloadFrame != null)
+            downloadFrame.setPath(FileUtil.getFileName(savePath));
+
         // load data
-        final byte[] data = NetworkUtil.download(downloadPath, login, pass, taskFrame, displayError);
+        final byte[] data = NetworkUtil.download(downloadPath, login, pass, downloadFrame, displayError);
         if (data == null)
             return ERROR_DOWNLOAD + downloadPath.toString();
 
@@ -702,7 +705,7 @@ public class PluginInstaller implements Runnable
 
     private void installInternal()
     {
-        CancelableProgressFrame taskFrame = null;
+        DownloadFrame taskFrame = null;
 
         try
         {
@@ -726,7 +729,10 @@ public class PluginInstaller implements Runnable
             }
 
             if (showProgress && !Icy.getMainInterface().isHeadLess())
-                taskFrame = new CancelableProgressFrame("initializing...");
+            {
+                taskFrame = new DownloadFrame();
+                taskFrame.setMessage("Initializing...");
+            }
 
             List<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
             final List<PluginDescriptor> pluginsOk = new ArrayList<PluginDescriptor>();

@@ -18,13 +18,12 @@
  */
 package icy.gui.viewer;
 
-import icy.common.EventHierarchicalChecker;
 import icy.sequence.DimensionId;
 
 /**
  * @author stephane
  */
-public class ViewerEvent implements EventHierarchicalChecker
+public class ViewerEvent
 {
     public enum ViewerEventType
     {
@@ -72,16 +71,21 @@ public class ViewerEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public int hashCode()
     {
-        if (event instanceof ViewerEvent)
-        {
-            final ViewerEvent ve = (ViewerEvent) event;
-
-            return (ve.getSource() == source) && (ve.getType() == type) && (ve.getDim() == dim);
-        }
-
-        return false;
+        return source.hashCode() ^ type.hashCode() ^ dim.hashCode();
     }
 
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof ViewerEvent)
+        {
+            final ViewerEvent e = (ViewerEvent) obj;
+
+            return (e.getSource() == source) && (e.getType() == type) && (e.getDim() == dim);
+        }
+
+        return super.equals(obj);
+    }
 }

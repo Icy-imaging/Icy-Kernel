@@ -87,7 +87,7 @@ public class ROI2DRectangle extends ROI2DRectShape
     public ROI2DRectangle(Point5D pt)
     {
         this(pt.toPoint2D());
-//        getOverlay().setMousePos(pt);
+        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DRectangle()
@@ -103,12 +103,6 @@ public class ROI2DRectangle extends ROI2DRectShape
     public void setRectangle(Rectangle2D rectangle)
     {
         setBounds2D(rectangle);
-    }
-
-    @Override
-    public double computeNumberOfContourPoints()
-    {
-        return getTotalDistance(getPoints());
     }
 
     @Override

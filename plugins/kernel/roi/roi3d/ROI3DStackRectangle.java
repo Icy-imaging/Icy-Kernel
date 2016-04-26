@@ -20,7 +20,6 @@ public class ROI3DStackRectangle extends ROI3DStack<ROI2DRectangle>
         this();
 
         final Rectangle2D rect2d = rect.toRectangle2D();
-
         
         if (rect.isInfiniteZ())
             setSlice(-1, new ROI2DRectangle(rect2d));

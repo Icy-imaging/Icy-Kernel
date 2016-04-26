@@ -19,7 +19,7 @@
 package plugins.kernel.roi.roi3d;
 
 import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
@@ -31,11 +31,16 @@ import icy.system.thread.ThreadUtil;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
+import icy.util.EventUtil;
+import icy.util.StringUtil;
+import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -43,10 +48,11 @@ import java.util.Map.Entry;
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
+import vtk.vtkImageData;
+import vtk.vtkInformation;
+import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
-import vtk.vtkStructuredGrid;
-import vtk.vtkStructuredGridOutlineFilter;
 
 /**
  * 3D Area ROI.
@@ -57,48 +63,102 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 {
     public class ROI3DAreaPainter extends ROI3DStackPainter implements VtkPainter, Runnable
     {
-        // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        Object grid;
-        Object gridOutline;
-        // final Object polyData;
-        Object polyMapper;
-        Object actor;
+        // VTK 3D objects
+        protected vtkPolyData outline;
+        protected vtkPolyDataMapper outlineMapper;
+        protected vtkActor outlineActor;
+        protected vtkInformation vtkInfo;
+        protected vtkPolyData polyData;
+        protected vtkPolyDataMapper polyMapper;
+        protected vtkActor surfaceActor;
         // 3D internal
-        boolean needRebuild;
-        double scaling[];
-        VtkCanvas canvas3d;
+        protected boolean needRebuild;
+        protected double scaling[];
+        protected WeakReference<VtkCanvas> canvas3d;
 
         public ROI3DAreaPainter()
         {
-            // polyData = null;
-            grid = null;
-            gridOutline = null;
+            super();
+
+            outline = null;
+            outlineMapper = null;
+            outlineActor = null;
+            vtkInfo = null;
+            polyData = null;
             polyMapper = null;
-            actor = null;
+            surfaceActor = null;
 
             scaling = new double[3];
             Arrays.fill(scaling, 1d);
 
             needRebuild = true;
-            canvas3d = null;
+            canvas3d = new WeakReference<VtkCanvas>(null);
         }
+
+        @Override
+        protected void finalize() throws Throwable
+        {
+            super.finalize();
+
+            // release allocated VTK resources
+            if (surfaceActor != null)
+                surfaceActor.Delete();
+            if (polyMapper != null)
+                polyMapper.Delete();
+            if (polyData != null)
+            {
+                polyData.GetPointData().GetScalars().Delete();
+                polyData.GetPointData().Delete();
+                polyData.Delete();
+            }
+            if (outlineActor != null)
+            {
+                outlineActor.SetPropertyKeys(null);
+                outlineActor.Delete();
+            }
+            if (vtkInfo != null)
+            {
+                vtkInfo.Remove(VtkCanvas.outlineVisibilityKey);
+                vtkInfo.Delete();
+            }
+            if (outlineMapper != null)
+                outlineMapper.Delete();
+            if (outline != null)
+            {
+                outline.GetPointData().GetScalars().Delete();
+                outline.GetPointData().Delete();
+                outline.Delete();
+            }
+        };
 
         protected void initVtkObjects()
         {
-            // init 3D painters stuff
-            // polyData = new vtkPolyData();
-            grid = new vtkStructuredGrid();
-            gridOutline = new vtkStructuredGridOutlineFilter();
-
-            ((vtkStructuredGridOutlineFilter) gridOutline).SetInputData((vtkStructuredGrid) grid);
+            outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
+            outlineMapper = new vtkPolyDataMapper();
+            outlineActor = new vtkActor();
+            outlineActor.SetMapper(outlineMapper);
+            // disable picking on the outline
+            outlineActor.SetPickable(0);
+            // and set it to wireframe representation
+            outlineActor.GetProperty().SetRepresentationToWireframe();
+            // use vtkInformations to store outline visibility state (hacky)
+            vtkInfo = new vtkInformation();
+            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+            // VtkCanvas use this to restore correctly outline visibility flag
+            outlineActor.SetPropertyKeys(vtkInfo);
 
             polyMapper = new vtkPolyDataMapper();
-            // ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
-            ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkStructuredGridOutlineFilter) gridOutline)
-                    .GetOutputPort());
+            surfaceActor = new vtkActor();
+            surfaceActor.SetMapper(polyMapper);
 
-            actor = new vtkActor();
-            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            final Color col = getColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+
+            // set actors color
+            outlineActor.GetProperty().SetColor(r, g, b);
+            surfaceActor.GetProperty().SetColor(r, g, b);
         }
 
         /**
@@ -106,9 +166,14 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
          */
         protected void rebuildVtkObjects()
         {
-            final VtkCanvas canvas = canvas3d;
-            // nothing to update
+            final VtkCanvas canvas = canvas3d.get();
+            // canvas was closed
             if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
                 return;
 
             final Sequence seq = canvas.getSequence();
@@ -116,51 +181,150 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (seq == null)
                 return;
 
-            int width = seq.getSizeX();
-            int height = seq.getSizeY();
-
-            final ArrayList<double[]> verticesArray = new ArrayList<double[]>();
-
-            for (ROI2DArea area : ROI3DArea.this)
+            // get bounds
+            final Rectangle3D bounds = getBounds3D();
+            // apply scaling on bounds
+            bounds.setX(bounds.getX() * scaling[0]);
+            bounds.setSizeX(bounds.getSizeX() * scaling[0]);
+            bounds.setY(bounds.getY() * scaling[1]);
+            bounds.setSizeY(bounds.getSizeY() * scaling[1]);
+            if (bounds.isInfiniteZ())
             {
-                int k = area.getZ();
-
-                verticesArray.ensureCapacity(verticesArray.size() + width * height);
-
-                boolean[] mask = area.getBooleanMask(0, 0, width, height, true);
-
-                int offset = 0;
-                for (int j = 0; j < height; j++)
-                {
-                    for (int i = 0; i < width; i++, offset++)
-                    {
-                        if (mask[offset])
-                            verticesArray.add(new double[] {i, j, k});
-                    }
-                }
+                bounds.setZ(0);
+                bounds.setSizeZ(seq.getSizeZ() * scaling[2]);
+            }
+            else
+            {
+                bounds.setZ(bounds.getZ() * scaling[2]);
+                bounds.setSizeZ(bounds.getSizeZ() * scaling[2]);
             }
 
-            double[][] points = new double[verticesArray.size()][3];
-            verticesArray.toArray(points);
+            // get previous polydata object
+            final vtkPolyData previousPolyData = polyData;
+
+            // update outline
+            VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY(),
+                    bounds.getMinZ(), bounds.getMaxZ(), canvas);
+            // get VTK binary image from ROI mask
+            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI3DArea.this, seq.getSizeZ(),
+                    canvas.getPositionT());
+            // adjust spacing
+            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
+            // get VTK polygon data representing the surface of the binary image
+            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
-            canvas3d.lock();
+            vtkPanel.lock();
             try
             {
-                ((vtkStructuredGrid) grid).SetDimensions(width, height, getSizeZ());
-                ((vtkStructuredGrid) grid).SetPoints(VtkUtil.getPoints(points));
+                // update outline polygon data
+                outlineMapper.SetInputData(outline);
+                outlineMapper.Update();
+                // update surface polygon data
+                polyMapper.SetInputData(polyData);
+                polyMapper.Update();
 
-                ((vtkStructuredGridOutlineFilter) gridOutline).Update();
-                ((vtkPolyDataMapper) polyMapper).Update();
+                // update actor position
+                surfaceActor.SetPosition(bounds.getX(), bounds.getY(), bounds.getZ());
+
+                // release image data
+                imageData.GetPointData().GetScalars().Delete();
+                imageData.GetPointData().Delete();
+                imageData.Delete();
+
+                // release previous polydata
+                if (previousPolyData != null)
+                {
+                    previousPolyData.GetPointData().GetScalars().Delete();
+                    previousPolyData.GetPointData().Delete();
+                    previousPolyData.Delete();
+                }
             }
             finally
             {
-                canvas3d.unlock();
+                vtkPanel.unlock();
             }
 
-            // no more pending request
-            if (!ThreadUtil.hasWaitingSingleTask(this))
-                canvas3d = null;
+            // update color and others properties
+            updateVtkDisplayProperties();
+        }
+
+        protected void updateVtkDisplayProperties()
+        {
+            if (surfaceActor != null)
+            {
+                final VtkCanvas cnv = canvas3d.get();
+                final Color col = getDisplayColor();
+                final double r = col.getRed() / 255d;
+                final double g = col.getGreen() / 255d;
+                final double b = col.getBlue() / 255d;
+                // final double strk = getStroke();
+                // final float opacity = getOpacity();
+
+                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+                // we need to lock canvas as actor can be accessed during rendering
+                if (vtkPanel != null)
+                {
+                    vtkPanel.lock();
+                    try
+                    {
+                        // set actors color
+                        outlineActor.GetProperty().SetColor(r, g, b);
+                        if (isSelected())
+                        {
+                            outlineActor.GetProperty().SetRepresentationToWireframe();
+                            outlineActor.SetVisibility(1);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
+                        }
+                        else
+                        {
+                            outlineActor.GetProperty().SetRepresentationToPoints();
+                            outlineActor.SetVisibility(0);
+                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+                        }
+                        surfaceActor.GetProperty().SetColor(r, g, b);
+                        // opacity here is about ROI content, global opacity is handled by Layer
+                        // surfaceActor.GetProperty().SetOpacity(opacity);
+                        setVtkObjectsColor(col);
+                    }
+                    finally
+                    {
+                        vtkPanel.unlock();
+                    }
+                }
+                else
+                {
+                    outlineActor.GetProperty().SetColor(r, g, b);
+                    if (isSelected())
+                    {
+                        outlineActor.GetProperty().SetRepresentationToWireframe();
+                        outlineActor.SetVisibility(1);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
+                    }
+                    else
+                    {
+                        outlineActor.GetProperty().SetRepresentationToPoints();
+                        outlineActor.SetVisibility(0);
+                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+                    }
+                    surfaceActor.GetProperty().SetColor(r, g, b);
+                    // opacity here is about ROI content, global opacity is handled by Layer
+                    // surfaceActor.GetProperty().SetOpacity(opacity);
+                    setVtkObjectsColor(col);
+                }
+
+                // need to repaint
+                painterChanged();
+            }
+        }
+
+        protected void setVtkObjectsColor(Color color)
+        {
+            if (outline != null)
+                VtkUtil.setPolyDataColor(outline, color, canvas3d.get());
+            if (polyData != null)
+                VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
 
         @Override
@@ -189,11 +353,11 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                     if (needRebuild)
                     {
                         // initialize VTK objects if not yet done
-                        if (actor == null)
+                        if (surfaceActor == null)
                             initVtkObjects();
 
                         // request rebuild 3D objects
-                        canvas3d = cnv;
+                        canvas3d = new WeakReference<VtkCanvas>(cnv);
                         ThreadUtil.runSingle(this);
                         needRebuild = false;
                     }
@@ -204,9 +368,82 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         }
 
         @Override
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // specific VTK canvas processing
+            if (canvas instanceof VtkCanvas)
+            {
+                final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
+                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
+                // focus the ROI
+                final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
+                        && (surfaceActor == vtkCanvas.getPickedObject());
+
+                setFocused(focused);
+
+                return focused;
+            }
+
+            return super.updateFocus(e, imagePoint, canvas);
+        }
+
+        @Override
+        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            boolean hasFocus;
+
+            // mouse cursor is over the actor ? --> focus the ROI
+            if (canvas instanceof VtkCanvas)
+                hasFocus = (surfaceActor != null) && (surfaceActor == ((VtkCanvas) canvas).getPickedObject());
+            else
+                hasFocus = isFocused();
+
+            // nothing to do if the ROI does not have focus
+            if (!hasFocus)
+                return false;
+
+            // union selection
+            if (EventUtil.isShiftDown(e))
+            {
+                // not already selected --> add ROI to selection
+                if (!isSelected())
+                {
+                    setSelected(true);
+                    return true;
+                }
+            }
+            else if (EventUtil.isControlDown(e))
+            // switch selection
+            {
+                // inverse state
+                setSelected(!isSelected());
+                return true;
+            }
+            else
+            // exclusive selection
+            {
+                // not selected --> exclusive ROI selection
+                if (!isSelected())
+                {
+                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
+                    if (!canvas.getSequence().setSelectedROI(ROI3DArea.this))
+                        ROI3DArea.this.setSelected(true);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
         public vtkProp[] getProps()
         {
-            return new vtkActor[] {(vtkActor) actor};
+            // initialize VTK objects if not yet done
+            if (surfaceActor == null)
+                initVtkObjects();
+
+            return new vtkActor[] {surfaceActor, outlineActor};
         }
 
         @Override
@@ -477,7 +714,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 else
                 {
                     if (roi.optimizeBounds())
-                        roi.roiChanged();
+                        roi.roiChanged(true);
                 }
             }
         }
@@ -491,7 +728,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * roi changed
      */
     @Override
-    public void onChanged(EventHierarchicalChecker object)
+    public void onChanged(CollapsibleEvent object)
     {
         final ROIEvent event = (ROIEvent) object;
 
@@ -501,6 +738,22 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             case ROI_CHANGED:
                 // the painter need to be rebuild
                 ((ROI3DAreaPainter) painter).needRebuild = true;
+                break;
+
+            case FOCUS_CHANGED:
+            case SELECTION_CHANGED:
+                ((ROI3DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            case PROPERTY_CHANGED:
+                final String property = event.getPropertyName();
+
+                if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
+                        || StringUtil.equals(property, PROPERTY_OPACITY))
+                    ((ROI3DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                break;
+
+            default:
                 break;
         }
 

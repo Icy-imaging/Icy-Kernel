@@ -19,6 +19,7 @@
 package icy.system;
 
 import icy.file.FileUtil;
+import icy.main.Icy;
 import icy.type.collection.CollectionUtil;
 import icy.util.ReflectionUtil;
 
@@ -32,8 +33,12 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.ImageCapabilities;
+import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Transparency;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.VolatileImage;
@@ -42,9 +47,8 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-
-import sun.java2d.SunGraphicsEnvironment;
 
 import com.sun.management.OperatingSystemMXBean;
 
@@ -158,22 +162,47 @@ public class SystemUtil
 
     public static BufferedImage createCompatibleImage(int width, int height)
     {
-        return getDefaultGraphicsConfiguration().createCompatibleImage(width, height);
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        return defaultGC.createCompatibleImage(width, height);
     }
 
     public static BufferedImage createCompatibleImage(int width, int height, int transparency)
     {
-        return getDefaultGraphicsConfiguration().createCompatibleImage(width, height, transparency);
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+        {
+            if (transparency == Transparency.OPAQUE)
+                return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+            return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        }
+
+        return defaultGC.createCompatibleImage(width, height, transparency);
     }
 
     public static VolatileImage createCompatibleVolatileImage(int width, int height)
     {
-        return getDefaultGraphicsConfiguration().createCompatibleVolatileImage(width, height);
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return null;
+
+        return defaultGC.createCompatibleVolatileImage(width, height);
     }
 
     public static VolatileImage createCompatibleVolatileImage(int width, int height, int transparency)
     {
-        return getDefaultGraphicsConfiguration().createCompatibleVolatileImage(width, height, transparency);
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return null;
+
+        return defaultGC.createCompatibleVolatileImage(width, height, transparency);
     }
 
     public static Desktop getDesktop()
@@ -186,7 +215,8 @@ public class SystemUtil
 
     /**
      * Launch the system file manager on specified folder (if supported)
-     * @throws IOException 
+     * 
+     * @throws IOException
      */
     public static boolean openFolder(String folder) throws IOException
     {
@@ -269,14 +299,10 @@ public class SystemUtil
      */
     public static GraphicsDevice getDefaultScreenDevice()
     {
-        try
-        {
-            return getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        }
-        catch (HeadlessException e)
-        {
+        if (Icy.getMainInterface().isHeadLess())
             return null;
-        }
+
+        return getLocalGraphicsEnvironment().getDefaultScreenDevice();
     }
 
     /**
@@ -284,14 +310,12 @@ public class SystemUtil
      */
     public static GraphicsConfiguration getDefaultGraphicsConfiguration()
     {
-        try
-        {
-            return getDefaultScreenDevice().getDefaultConfiguration();
-        }
-        catch (Exception e)
-        {
-            return null;
-        }
+        final GraphicsDevice screenDevice = getDefaultScreenDevice();
+
+        if (screenDevice != null)
+            return screenDevice.getDefaultConfiguration();
+
+        return null;
     }
 
     /**
@@ -302,12 +326,35 @@ public class SystemUtil
     {
         return getDefaultGraphicsConfiguration();
     }
+    
+    /**
+     * Return all available screen devices.
+     */
+    public static List<GraphicsDevice> getScreenDevices()
+    {
+    	final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
+    	  
+        if (Icy.getMainInterface().isHeadLess())
+            return result;
+
+        try
+        {
+            return CollectionUtil.asList(getLocalGraphicsEnvironment().getScreenDevices());
+        }
+        catch (HeadlessException e)
+        {
+            return result;
+        }
+    }
 
     /**
      * Return the number of screen device.
      */
     public static int getScreenDeviceCount()
     {
+        if (Icy.getMainInterface().isHeadLess())
+            return 0;
+
         try
         {
             return getLocalGraphicsEnvironment().getScreenDevices().length;
@@ -323,6 +370,9 @@ public class SystemUtil
      */
     public static GraphicsDevice getScreenDevice(int index)
     {
+        if (Icy.getMainInterface().isHeadLess())
+            return null;
+
         try
         {
             return getLocalGraphicsEnvironment().getScreenDevices()[index];
@@ -331,6 +381,73 @@ public class SystemUtil
         {
             return null;
         }
+    }
+
+    /**
+     * Returns all screen device intersecting the given region.<br>
+     * Can return an empty list if given region do not intersect any screen device.
+     */
+    public static List<GraphicsDevice> getScreenDevices(Rectangle region)
+    {
+        final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
+
+        if (Icy.getMainInterface().isHeadLess())
+            return result;
+
+        for (GraphicsDevice gd : getLocalGraphicsEnvironment().getScreenDevices())
+            if (getScreenBounds(gd, true).intersects(region))
+                result.add(gd);
+
+        return result;
+    }
+
+    /**
+     * Returns the main screen device corresponding to the given region.<br>
+     * If the given region intersect multiple screen, it return screen containing the largest area.<br>
+     * Can return <code>null</code> if given region do not intersect any screen device.
+     */
+    public static GraphicsDevice getScreenDevice(Rectangle region)
+    {
+        if (Icy.getMainInterface().isHeadLess())
+            return null;
+
+        GraphicsDevice result = null;
+        Rectangle2D largest = null;
+
+        for (GraphicsDevice gd : getLocalGraphicsEnvironment().getScreenDevices())
+        {
+            final Rectangle2D intersection = getScreenBounds(gd, true).createIntersection(region);
+
+            if (!intersection.isEmpty())
+            {
+                // bigger intersection ?
+                if ((largest == null)
+                        || ((intersection.getWidth() * intersection.getHeight()) > (largest.getWidth() * largest
+                                .getHeight())))
+                {
+                    largest = intersection;
+                    result = gd;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns the screen device corresponding to the given position.<br>
+     * Can return <code>null</code> if given position is not located in any screen device.
+     */
+    public static GraphicsDevice getScreenDevice(Point position)
+    {
+        if (Icy.getMainInterface().isHeadLess())
+            return null;
+
+        for (GraphicsDevice gd : getLocalGraphicsEnvironment().getScreenDevices())
+            if (getScreenBounds(gd, false).contains(position))
+                return gd;
+
+        return null;
     }
 
     /**
@@ -353,36 +470,96 @@ public class SystemUtil
 
     public static BufferCapabilities getSystemBufferCapabilities()
     {
-        return getDefaultGraphicsConfiguration().getBufferCapabilities();
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return null;
+
+        return defaultGC.getBufferCapabilities();
     }
 
     public static ImageCapabilities getSystemImageCapabilities()
     {
-        return getDefaultGraphicsConfiguration().getImageCapabilities();
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return null;
+
+        return defaultGC.getImageCapabilities();
     }
 
     public static ColorModel getSystemColorModel()
     {
-        return getDefaultGraphicsConfiguration().getColorModel();
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return null;
+
+        return defaultGC.getColorModel();
     }
 
     public static ColorModel getSystemColorModel(int transparency)
     {
-        return getDefaultGraphicsConfiguration().getColorModel(transparency);
+        final GraphicsConfiguration defaultGC = getDefaultGraphicsConfiguration();
+
+        if (defaultGC == null)
+            return null;
+
+        return defaultGC.getColorModel(transparency);
+    }
+
+    /**
+     * Return bounds for specified screen.
+     * 
+     * @param removeInsets
+     *        remove any existing taskbars and menubars from the result
+     */
+    public static Rectangle getScreenBounds(GraphicsDevice graphicsDevice, boolean removeInsets)
+    {
+        if (graphicsDevice == null)
+            return new Rectangle();
+
+        final GraphicsConfiguration graphicsConfiguration = graphicsDevice.getDefaultConfiguration();
+        final Rectangle bounds = graphicsConfiguration.getBounds();
+        final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(graphicsConfiguration);
+
+        bounds.x += insets.left;
+        bounds.y += insets.top;
+        bounds.width -= (insets.left + insets.right);
+        bounds.height -= (insets.top + insets.bottom);
+
+        return bounds;
+    }
+
+    /**
+     * Return the entire desktop bounds (take multi screens in account).
+     * 
+     * @param removeInsets
+     *        remove any existing taskbars and menubars from the result
+     */
+    public static Rectangle getDesktopBounds(boolean removeInsets)
+    {
+        Rectangle result = new Rectangle();
+
+        if (Icy.getMainInterface().isHeadLess())
+            return result;
+
+        final GraphicsDevice[] gs = getLocalGraphicsEnvironment().getScreenDevices();
+
+        for (int j = 0; j < gs.length; j++)
+            result = result.union(getScreenBounds(gs[j], removeInsets));
+
+        return result;
     }
 
     /**
      * Return the entire desktop bounds (take multi screens in account)
+     * 
+     * @see #getDesktopBounds(boolean)
      */
     public static Rectangle getDesktopBounds()
     {
-        Rectangle result = new Rectangle();
-        final GraphicsDevice[] gs = getLocalGraphicsEnvironment().getScreenDevices();
-
-        for (int j = 0; j < gs.length; j++)
-            result = result.union(SunGraphicsEnvironment.getUsableBounds(gs[j]));
-
-        return result;
+        return getDesktopBounds(true);
     }
 
     /**
@@ -390,12 +567,23 @@ public class SystemUtil
      */
     public static Rectangle getMaximumWindowBounds()
     {
+        if (Icy.getMainInterface().isHeadLess())
+            return new Rectangle();
+
         return getLocalGraphicsEnvironment().getMaximumWindowBounds();
     }
 
+    /**
+     * {@link GraphicsDevice#getDisplayMode()}
+     */
     public static DisplayMode getSystemDisplayMode()
     {
-        return getDefaultScreenDevice().getDisplayMode();
+        final GraphicsDevice screenDevice = getDefaultScreenDevice();
+
+        if (screenDevice != null)
+            return screenDevice.getDisplayMode();
+
+        return null;
     }
 
     /**
@@ -647,7 +835,7 @@ public class SystemUtil
      */
     public static String getOSNameId()
     {
-        if (isWindow())
+        if (isWindows())
             return SYSTEM_WINDOWS;
         if (isMac())
             return SYSTEM_MAC_OS;
@@ -668,7 +856,7 @@ public class SystemUtil
     {
         final String javaBit = Integer.toString(getJavaArchDataModel());
 
-        if (isWindow())
+        if (isWindows())
             return SYSTEM_WINDOWS + javaBit;
         if (isMac())
             return SYSTEM_MAC_OS + javaBit;
@@ -703,9 +891,18 @@ public class SystemUtil
     }
 
     /**
+     * @deprecated Use {@link #isWindows()} instead.
+     */
+    @Deprecated
+    public static boolean isWindow()
+    {
+        return isWindows();
+    }
+
+    /**
      * Returns true is the Operating System is Windows based.
      */
-    public static boolean isWindow()
+    public static boolean isWindows()
     {
         return (getOSName().toLowerCase().indexOf("win") >= 0);
     }
@@ -725,6 +922,25 @@ public class SystemUtil
     {
         final String os = getOSName().toLowerCase();
         return (os.indexOf("nix") >= 0) || (os.indexOf("nux") >= 0);
+    }
+
+    /**
+     * Returns true is the Operating System is Windows 64 bits whatever is the JVM installed (32 or 64 bits).
+     */
+    public static boolean isWindows64()
+    {
+        if (!isWindows())
+            return false;
+
+        final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+        if (arch.endsWith("64"))
+            return true;
+
+        final String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
+        if ((wow64Arch != null) && wow64Arch.endsWith("64"))
+            return true;
+
+        return false;
     }
 
     /**

@@ -18,12 +18,12 @@
  */
 package icy.image.lut;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @author stephane
  */
-public class LUTEvent implements EventHierarchicalChecker
+public class LUTEvent implements CollapsibleEvent
 {
     public enum LUTEventType
     {
@@ -31,8 +31,8 @@ public class LUTEvent implements EventHierarchicalChecker
     }
 
     private final LUT lut;
-    private final int component;
     private final LUTEventType type;
+    private int component;
 
     /**
      * @param lut
@@ -72,15 +72,38 @@ public class LUTEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof LUTEvent)
+        if (equals(event))
         {
             final LUTEvent e = (LUTEvent) event;
 
-            return (type == e.getType()) && ((component == -1) || (component == e.getComponent()));
+            // set all component
+            if (e.getComponent() != component)
+                component = -1;
+
+            return true;
         }
 
         return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return lut.hashCode() ^ type.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof LUTEvent)
+        {
+            final LUTEvent e = (LUTEvent) obj;
+
+            return (lut == e.getLut()) && (type == e.getType());
+        }
+
+        return super.equals(obj);
     }
 }

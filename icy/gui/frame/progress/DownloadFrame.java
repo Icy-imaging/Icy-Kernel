@@ -37,6 +37,11 @@ public class DownloadFrame extends CancelableProgressFrame
      */
     private final RateMeter meter;
 
+    public DownloadFrame()
+    {
+        this("", 0);
+    }
+
     public DownloadFrame(String path)
     {
         this(path, 0);
@@ -44,7 +49,7 @@ public class DownloadFrame extends CancelableProgressFrame
 
     public DownloadFrame(String path, double length)
     {
-        super(StringUtil.limit("Downloading " + path, 64));
+        super(StringUtil.isEmpty(path) ? "" : StringUtil.limit("Downloading " + path, 64));
 
         meter = new RateMeter();
         this.length = length;
@@ -94,7 +99,7 @@ public class DownloadFrame extends CancelableProgressFrame
     @Override
     public void setLength(double length)
     {
-        if (this.length != length)
+        if (getLength() != length)
             meter.reset();
 
         super.setLength(length);
@@ -104,7 +109,7 @@ public class DownloadFrame extends CancelableProgressFrame
     public void setPosition(double position)
     {
         // update rate
-        if (this.position <= position)
+        if (getPosition() < position)
             rate = meter.updateFromTotal(position);
         else
             rate = 0;

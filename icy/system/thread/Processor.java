@@ -87,7 +87,7 @@ public class Processor extends ThreadPoolExecutor
             String result = name;
 
             if (showNumber)
-                result += " (thread #" + threadCount + ")";
+                result += " - thread " + threadCount;
 
             return result;
         }
@@ -98,6 +98,8 @@ public class Processor extends ThreadPoolExecutor
             final Thread result = new Thread(r, getThreadName());
 
             result.setPriority(priority);
+
+            threadCount++;
 
             return result;
         }
@@ -574,12 +576,11 @@ public class Processor extends ThreadPoolExecutor
      * Future's <tt>get</tt> method will return the task's result upon
      * successful completion.
      * <p>
-     * If you would like to immediately block waiting for a task, you can use constructions of the
-     * form <tt>result = exec.submit(aCallable).get();</tt>
+     * If you would like to immediately block waiting for a task, you can use constructions of the form
+     * <tt>result = exec.submit(aCallable).get();</tt>
      * <p>
-     * Note: The {@link Executors} class includes a set of methods that can convert some other
-     * common closure-like objects, for example, {@link java.security.PrivilegedAction} to
-     * {@link Callable} form so they can be submitted.
+     * Note: The {@link Executors} class includes a set of methods that can convert some other common closure-like
+     * objects, for example, {@link java.security.PrivilegedAction} to {@link Callable} form so they can be submitted.
      * 
      * @param handleException
      *        if set to <code>true</code> then any occurring exception during the runnable
@@ -801,8 +802,7 @@ public class Processor extends ThreadPoolExecutor
 
     /**
      * @deprecated Not anymore supported.<br>
-     *             Use {@link #getWaitingTasksCount(Callable)} or
-     *             {@link #getWaitingTasksCount(Runnable)} instead.
+     *             Use {@link #getWaitingTasksCount(Callable)} or {@link #getWaitingTasksCount(Runnable)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -849,8 +849,7 @@ public class Processor extends ThreadPoolExecutor
 
     /**
      * @deprecated Not anymore supported.<br>
-     *             Use {@link #hasWaitingTasks(Callable)} or {@link #hasWaitingTasks(Runnable)}
-     *             instead.
+     *             Use {@link #hasWaitingTasks(Callable)} or {@link #hasWaitingTasks(Runnable)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -860,8 +859,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Return true if we have at least one task in queue for the specified <tt>Runnable</tt>
-     * instance.
+     * Return true if we have at least one task in queue for the specified <tt>Runnable</tt> instance.
      */
     public boolean hasWaitingTasks(Runnable task)
     {
@@ -874,8 +872,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Return true if we have at least one task in queue for the specified <tt>Callable</tt>
-     * instance.
+     * Return true if we have at least one task in queue for the specified <tt>Callable</tt> instance.
      */
     public boolean hasWaitingTasks(Callable<?> task)
     {
@@ -889,8 +886,7 @@ public class Processor extends ThreadPoolExecutor
 
     /**
      * @deprecated Not anymore supported.<br>
-     *             USe {@link #removeFirstWaitingTask(Runnable)} or
-     *             {@link #removeFirstWaitingTask(Callable)} instead.
+     *             USe {@link #removeFirstWaitingTask(Runnable)} or {@link #removeFirstWaitingTask(Callable)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -958,8 +954,7 @@ public class Processor extends ThreadPoolExecutor
 
     /**
      * @deprecated Not anymore supported.<br>
-     *             USe {@link #removeWaitingTasks(Runnable)} or
-     *             {@link #removeWaitingTasks(Callable)} instead.
+     *             USe {@link #removeWaitingTasks(Runnable)} or {@link #removeWaitingTasks(Callable)} instead.
      */
     @Deprecated
     @SuppressWarnings("unused")

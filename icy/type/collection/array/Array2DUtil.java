@@ -402,9 +402,18 @@ public class Array2DUtil
     }
 
     /**
+     * @deprecated Use {@link #toIntArray1D(int[][])} instead
+     */
+    @Deprecated
+    public static int[] toIntArray(int[][] in)
+    {
+        return toIntArray1D(in, null, 0);
+    }
+
+    /**
      * Return the multi dimension 'in' array as a single dimension int array.
      */
-    public static int[] toIntArray(int[][] in)
+    public static int[] toIntArray1D(int[][] in)
     {
         return toIntArray1D(in, null, 0);
     }
@@ -1934,9 +1943,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeArray(long[][], int, Object, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #longArrayToSafeArray(long[][], int, Object, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static Object longArrayToSafeArray(long[][] in, int inOffset, Object out, int outOffset, int length,
@@ -1982,9 +1989,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #intArrayToSafeArray(int[][], int, Object, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #intArrayToSafeArray(int[][], int, Object, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static Object intArrayToSafeArray(int[][] in, int inOffset, Object out, int outOffset, int length,
@@ -2031,9 +2036,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #shortArrayToSafeArray(short[][], int, Object, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #shortArrayToSafeArray(short[][], int, Object, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static Object shortArrayToSafeArray(short[][] in, int inOffset, Object out, int outOffset, int length,
@@ -2107,9 +2110,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeLongArray(Object, int, long[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #arrayToSafeLongArray(Object, int, long[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static long[][] arrayToSafeLongArray(Object in, int inOffset, long[][] out, int outOffset, int length,
@@ -2155,9 +2156,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeIntArray(Object, int, int[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #arrayToSafeIntArray(Object, int, int[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static int[][] arrayToSafeIntArray(Object in, int inOffset, int[][] out, int outOffset, int length,
@@ -2204,9 +2203,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeShortArray(Object, int, short[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #arrayToSafeShortArray(Object, int, short[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static short[][] arrayToSafeShortArray(Object in, int inOffset, short[][] out, int outOffset, int length,
@@ -2252,9 +2249,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #arrayToSafeByteArray(Object, int, byte[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #arrayToSafeByteArray(Object, int, byte[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static byte[][] arrayToSafeByteArray(Object in, int inOffset, byte[][] out, int outOffset, int length,
@@ -2438,9 +2433,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeIntArray(long[][], int, int[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #longArrayToSafeIntArray(long[][], int, int[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static int[][] longArrayToSafeIntArray(long[][] in, int inOffset, int[][] out, int outOffset, int length,
@@ -2450,9 +2443,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeShortArray(long[][], int, short[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #longArrayToSafeShortArray(long[][], int, short[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static short[][] longArrayToSafeShortArray(long[][] in, int inOffset, short[][] out, int outOffset,
@@ -2463,9 +2454,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #longArrayToSafeByteArray(long[][], int, byte[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #longArrayToSafeByteArray(long[][], int, byte[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static byte[][] longArrayToSafeByteArray(long[][] in, int inOffset, byte[][] out, int outOffset, int length,
@@ -2514,9 +2503,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #intArrayToSafeShortArray(int[][], int, short[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #intArrayToSafeShortArray(int[][], int, short[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static short[][] intArrayToSafeShortArray(int[][] in, int inOffset, short[][] out, int outOffset,
@@ -2526,9 +2513,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #intArrayToSafeByteArray(int[][], int, byte[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #intArrayToSafeByteArray(int[][], int, byte[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static byte[][] intArrayToSafeByteArray(int[][] in, int inOffset, byte[][] out, int outOffset, int length,
@@ -2564,9 +2549,7 @@ public class Array2DUtil
     }
 
     /**
-     * @deprecated Use
-     *             {@link #shortArrayToSafeByteArray(short[][], int, byte[][], int, int, boolean, boolean)}
-     *             instead
+     * @deprecated Use {@link #shortArrayToSafeByteArray(short[][], int, byte[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
     public static byte[][] shortArrayToSafeByteArray(short[][] in, int inOffset, byte[][] out, int outOffset,

@@ -57,7 +57,7 @@ class ARGBImageBuilder
             this.image = image;
             // use internal lut if specified lut is null
             if (lut == null)
-                this.lut = image.getLUT();
+                this.lut = image.createCompatibleLUT(false);
             else
                 this.lut = lut;
             this.dest = dest;
@@ -66,7 +66,7 @@ class ARGBImageBuilder
 
             numChannel = image.getSizeC();
 
-            if (lut.getNumChannel() != numChannel)
+            if (this.lut.getNumChannel() != numChannel)
                 throw new IllegalArgumentException("ARGBImageBuilder.prepare(...): LUT.numChannel != IMAGE.numChannel");
         }
 
@@ -194,6 +194,12 @@ class ARGBImageBuilder
         catch (IllegalArgumentException e)
         {
             // image has changed in the meantime, just ignore
+        }
+
+        // release working buffer memory
+        synchronized (buffers)
+        {
+            buffers.clear();
         }
 
         return result;

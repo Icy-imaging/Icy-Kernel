@@ -18,6 +18,10 @@
  */
 package icy.file;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
 import icy.gui.menu.ApplicationMenu;
@@ -31,11 +35,6 @@ import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.IFormatWriter;
@@ -60,7 +59,8 @@ import loci.formats.out.TiffWriter;
 public class Saver
 {
     /**
-     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
+     *             instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
@@ -70,7 +70,8 @@ public class Saver
     }
 
     /**
-     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
+     *             instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
@@ -280,7 +281,8 @@ public class Saver
     /**
      * Return the closest compatible {@link IcyColorModel} supported by writer
      * from the specified image description.<br>
-     * That means the writer is able to save the data described by the returned {@link IcyColorModel} without any loss
+     * That means the writer is able to save the data described by the returned
+     * {@link IcyColorModel} without any loss
      * or conversion.<br>
      * 
      * @param writer
@@ -340,7 +342,8 @@ public class Saver
     /**
      * Return the closest compatible {@link IcyColorModel} supported by writer
      * from the specified {@link IcyColorModel}.<br>
-     * That means the writer is able to save the data described by the returned {@link IcyColorModel} without any loss
+     * That means the writer is able to save the data described by the returned
+     * {@link IcyColorModel} without any loss
      * or conversion.<br>
      * 
      * @param writer
@@ -370,7 +373,8 @@ public class Saver
     }
 
     /**
-     * Return true if the specified writer is compatible with the specified {@link IcyColorModel}.<br>
+     * Return true if the specified writer is compatible with the specified {@link IcyColorModel}.
+     * <br>
      * That means the writer is able to save the data described by the colorModel without any loss
      * or conversion.<br>
      * The color map data are never preserved, they are always restored to their default.<br>
@@ -444,7 +448,8 @@ public class Saver
     }
 
     /**
-     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)} instead.
+     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)}
+     *             instead.
      */
     @Deprecated
     public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
@@ -485,7 +490,8 @@ public class Saver
     }
 
     /**
-     * @deprecated Use {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
+     * @deprecated Use
+     *             {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
      *             instead.
      */
     @Deprecated
@@ -506,7 +512,8 @@ public class Saver
      *        writer used to save sequence (define the image format).<br>
      *        If set to <code>null</code> then writer is determined from the file extension.<br>
      *        If destination file does not have a valid extension (for folder for instance) then you
-     *        have to specify a valid Writer to write the image file (see {@link #getWriter(ImageFileFormat)})
+     *        have to specify a valid Writer to write the image file (see
+     *        {@link #getWriter(ImageFileFormat)})
      * @param sequence
      *        sequence to save
      * @param file
@@ -534,7 +541,7 @@ public class Saver
     public static void save(IFormatWriter formatWriter, Sequence sequence, File file, int zMin, int zMax, int tMin,
             int tMax, int fps, boolean multipleFile, boolean showProgress, boolean addToRecent)
     {
-        final String filePath = FileUtil.getGenericPath(file.getAbsolutePath());
+        final String filePath = FileUtil.cleanPath(FileUtil.getGenericPath(file.getAbsolutePath()));
         final int sizeT = (tMax - tMin) + 1;
         final int sizeZ = (zMax - zMin) + 1;
         final int numImages = sizeT * sizeZ;
@@ -675,23 +682,25 @@ public class Saver
     private static void saveImage(IFormatWriter formatWriter, byte[] data, int width, int height, int numChannel,
             DataType dataType, File file, boolean force) throws FormatException, IOException
     {
-        if (file.exists())
+        final String filePath = FileUtil.cleanPath(FileUtil.getGenericPath(file.getAbsolutePath()));
+
+        if (FileUtil.exists(filePath))
         {
             // forced ? first delete the file else LOCI won't save it
             if (force)
-                file.delete();
+                FileUtil.delete(filePath, true);
             else
                 throw new IOException("File already exists");
         }
         // ensure parent directory exist
-        FileUtil.ensureParentDirExist(file);
+        FileUtil.ensureParentDirExist(filePath);
 
         final IFormatWriter writer;
 
         if (formatWriter == null)
         {
             // get the writer
-            writer = getWriter(file, ImageFileFormat.TIFF);
+            writer = getWriter(FileUtil.getFileExtension(filePath, false), ImageFileFormat.TIFF);
 
             // prepare the metadata
             try
@@ -709,9 +718,10 @@ public class Saver
             // ready to use writer (metadata already prepared)
             writer = formatWriter;
 
-        // we never interleaved data even if some image viewer need it to correctly read image (win XP viewer)
+        // we never interleaved data even if some image viewer need it to correctly read image (win
+        // XP viewer)
         writer.setInterleaved(false);
-        writer.setId(file.getAbsolutePath());
+        writer.setId(filePath);
         writer.setSeries(0);
         try
         {
@@ -760,8 +770,8 @@ public class Saver
 
         try
         {
-            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(image,
-                    getSeparateChannelFlag(writer, image.getIcyColorModel())));
+            writer.setMetadataRetrieve(
+                    MetaDataUtil.generateMetaData(image, getSeparateChannelFlag(writer, image.getIcyColorModel())));
         }
         catch (ServiceException e)
         {
@@ -843,10 +853,9 @@ public class Saver
         // set settings
         writer.setFramesPerSecond(fps);
         // generate metadata
-        writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
-                separateChannel));
-        // no interleave (even if some image viewer needs interleaved channel data to correctly read image as XP default
-        // viewer)
+        writer.setMetadataRetrieve(
+                MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1, separateChannel));
+        // no interleave (XP default viewer want interleaved channel to correctly read image)
         writer.setInterleaved(false);
         // set id
         writer.setId(filePath);

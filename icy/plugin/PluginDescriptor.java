@@ -102,11 +102,13 @@ public class PluginDescriptor implements XMLPersistent
     protected String web;
     protected String email;
     protected String desc;
-    protected String changesLog;
+    protected String changeLog;
 
     protected boolean enabled;
     protected boolean descriptorLoaded;
-    protected boolean imagesLoaded;
+    protected boolean iconLoaded;
+    protected boolean imageLoaded;
+    protected boolean changeLogLoaded;
     // boolean checkingForUpdate;
     // boolean updateChecked;
     // PluginDescriptor onlineDescriptor;
@@ -116,10 +118,6 @@ public class PluginDescriptor implements XMLPersistent
 
     // only for online descriptor
     protected RepositoryInfo repository;
-
-    // private static final DateFormat dateFormatter = DateFormat.getDateInstance();
-    // private static final GregorianCalendar calendar = (GregorianCalendar)
-    // GregorianCalendar.getInstance();
 
     // /**
     // * Get online plugin of specified PluginIdent<br>
@@ -315,7 +313,7 @@ public class PluginDescriptor implements XMLPersistent
         web = "";
         email = "";
         desc = "";
-        changesLog = "";
+        changeLog = "";
 
         required = new ArrayList<PluginIdent>();
         repository = null;
@@ -323,7 +321,9 @@ public class PluginDescriptor implements XMLPersistent
         // default
         enabled = true;
         descriptorLoaded = true;
-        imagesLoaded = true;
+        changeLogLoaded = true;
+        iconLoaded = true;
+        imageLoaded = true;
     }
 
     /**
@@ -337,27 +337,26 @@ public class PluginDescriptor implements XMLPersistent
 
         final String baseResourceName = clazz.getSimpleName();
         final String baseLocalName = ClassUtil.getPathFromQualifiedName(clazz.getName());
-        URL url;
 
         // load icon
-        url = clazz.getResource(baseResourceName + getIconExtension());
-        if (url == null)
-            url = URLUtil.getURL(baseLocalName + getIconExtension());
-        loadIcon(url);
+        URL iconUrl = clazz.getResource(baseResourceName + getIconExtension());
+        if (iconUrl == null)
+            iconUrl = URLUtil.getURL(baseLocalName + getIconExtension());
+        // loadIcon(url);
 
         // load image
-        url = clazz.getResource(baseResourceName + getImageExtension());
-        if (url == null)
-            url = URLUtil.getURL(baseLocalName + getImageExtension());
-        loadImage(url);
+        URL imageUrl = clazz.getResource(baseResourceName + getImageExtension());
+        if (imageUrl == null)
+            imageUrl = URLUtil.getURL(baseLocalName + getImageExtension());
+        // loadImage(url);
 
         // load xml
-        url = clazz.getResource(baseResourceName + getXMLExtension());
-        if (url == null)
-            url = URLUtil.getURL(baseLocalName + getXMLExtension());
+        URL xmlUrl = clazz.getResource(baseResourceName + getXMLExtension());
+        if (xmlUrl == null)
+            xmlUrl = URLUtil.getURL(baseLocalName + getXMLExtension());
 
         // can't load XML from specified URL ?
-        if (!loadFromXML(url))
+        if (!loadFromXML(xmlUrl))
         {
             // xml is absent or incorrect, we set default informations
             ident.setClassName(pluginClass.getName());
@@ -365,9 +364,15 @@ public class PluginDescriptor implements XMLPersistent
             desc = name + " plugin";
         }
 
-        // mark descriptor and images as loaded
+        // overwrite image and icon url with their local equivalent (keep online for XML url)
+        this.iconUrl = iconUrl.toString();
+        this.imageUrl = imageUrl.toString();
+
+        // only descriptor is loaded here
         descriptorLoaded = true;
-        imagesLoaded = true;
+        changeLogLoaded = false;
+        iconLoaded = false;
+        imageLoaded = false;
     }
 
     /**
@@ -388,7 +393,9 @@ public class PluginDescriptor implements XMLPersistent
 
         // mark descriptor and images as not yet loaded
         descriptorLoaded = false;
-        imagesLoaded = false;
+        changeLogLoaded = false;
+        iconLoaded = false;
+        imageLoaded = false;
     }
 
     /**
@@ -398,8 +405,11 @@ public class PluginDescriptor implements XMLPersistent
     public boolean load(boolean loadImages)
     {
         if (loadDescriptor())
+        {
+            loadChangeLog();
             if (loadImages)
                 return loadImages();
+        }
 
         return false;
     }
@@ -413,7 +423,8 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Load descriptor informations (xmlUrl field should be correctly filled)
+     * Load descriptor informations (xmlUrl field should be correctly filled).<br>
+     * Returns <code>false</code> if the operation failed.
      */
     public boolean loadDescriptor(boolean reload)
     {
@@ -421,8 +432,12 @@ public class PluginDescriptor implements XMLPersistent
         if (descriptorLoaded && !reload)
             return true;
 
+        // just to avoid retry indefinitely if it fails
+        descriptorLoaded = true;
+
         // retrieve document
-        final Document document = XMLUtil.loadDocument(xmlUrl, repository.getAuthenticationInfo(), true);
+        final Document document = XMLUtil.loadDocument(xmlUrl,
+                (repository != null) ? repository.getAuthenticationInfo() : null, true);
 
         if (document != null)
         {
@@ -433,8 +448,6 @@ public class PluginDescriptor implements XMLPersistent
                         + ident.getClassName() + "'");
                 return false;
             }
-
-            descriptorLoaded = true;
 
             return true;
         }
@@ -448,25 +461,82 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
+     * Load change log field (xmlUrl field should be correctly filled)
+     */
+    public boolean loadChangeLog()
+    {
+        // already loaded ?
+        if (changeLogLoaded)
+            return true;
+
+        // just to avoid retry indefinitely if it fails
+        changeLogLoaded = true;
+
+        // retrieve document
+        final Document document = XMLUtil.loadDocument(xmlUrl,
+                (repository != null) ? repository.getAuthenticationInfo() : null, true);
+
+        if (document != null)
+        {
+            final Element node = document.getDocumentElement();
+
+            if (node != null)
+            {
+                setChangeLog(XMLUtil.getElementValue(node, ID_CHANGELOG, ""));
+                return true;
+            }
+
+            System.err.println("Can't find valid XML file from '" + xmlUrl + "' for plugin class '"
+                    + ident.getClassName() + "'");
+        }
+
+        System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
+
+        return false;
+    }
+
+    /**
+     * Load 64x64 icon (icon url field should be correctly filled)
+     */
+    public boolean loadIcon()
+    {
+        // already loaded ?
+        if (iconLoaded)
+            return true;
+
+        // need descriptor to be loaded first
+        loadDescriptor();
+        // just to avoid retry indefinitely if it fails
+        iconLoaded = true;
+
+        // load icon
+        return loadIcon(URLUtil.getURL(iconUrl));
+    }
+
+    /**
+     * Load 256x256 image (image url field should be correctly filled)
+     */
+    public boolean loadImage()
+    {
+        // already loaded ?
+        if (imageLoaded)
+            return true;
+
+        // need descriptor to be loaded first
+        loadDescriptor();
+        // just to avoid retry indefinitely if it fails
+        imageLoaded = true;
+
+        // load image
+        return loadImage(URLUtil.getURL(imageUrl));
+    }
+
+    /**
      * Load icon and image (both icon and image url fields should be correctly filled)
      */
     public boolean loadImages()
     {
-        // can't load images if descriptor is not yet loaded
-        if (!descriptorLoaded)
-            return false;
-        // already loaded ?
-        if (imagesLoaded)
-            return true;
-
-        // load icon
-        loadIcon(URLUtil.getURL(iconUrl));
-        // load image
-        loadImage(URLUtil.getURL(imageUrl));
-
-        imagesLoaded = true;
-
-        return true;
+        return loadIcon() & loadImage();
     }
 
     /**
@@ -474,16 +544,11 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean loadAll()
     {
-        if (loadDescriptor())
-            return loadImages();
-
-        return false;
+        return loadDescriptor() & loadChangeLog() & loadImages();
     }
 
     /**
      * Check if the plugin class is an instance of (or subclass of) the specified class.
-     * 
-     * @param clazz
      */
     public boolean isInstanceOf(Class<?> baseClazz)
     {
@@ -549,7 +614,7 @@ public class PluginDescriptor implements XMLPersistent
         return getClassName().startsWith(PluginLoader.PLUGIN_KERNEL_PACKAGE + ".");
     }
 
-    void loadIcon(URL url)
+    boolean loadIcon(URL url)
     {
         // load icon
         if (url != null)
@@ -557,12 +622,18 @@ public class PluginDescriptor implements XMLPersistent
                     ImageUtil.load(NetworkUtil.getInputStream(url,
                             (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
                     ICON_SIZE);
+
         // get default icon
         if (icon == null)
+        {
             icon = DEFAULT_ICON;
+            return false;
+        }
+
+        return true;
     }
 
-    void loadImage(URL url)
+    boolean loadImage(URL url)
     {
         // load image
         if (url != null)
@@ -570,9 +641,15 @@ public class PluginDescriptor implements XMLPersistent
                     ImageUtil.load(NetworkUtil.getInputStream(url,
                             (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
                     IMAGE_SIZE, IMAGE_SIZE);
+
         // get default image
         if (image == null)
+        {
             image = DEFAULT_IMAGE;
+            return false;
+        }
+
+        return true;
     }
 
     // public void save()
@@ -600,6 +677,11 @@ public class PluginDescriptor implements XMLPersistent
     @Override
     public boolean loadFromXML(Node node)
     {
+        return loadFromXML(node, false);
+    }
+
+    public boolean loadFromXML(Node node, boolean loadChangeLog)
+    {
         if (node == null)
             return false;
 
@@ -615,7 +697,10 @@ public class PluginDescriptor implements XMLPersistent
         setWeb(XMLUtil.getElementValue(node, ID_WEB, ""));
         setEmail(XMLUtil.getElementValue(node, ID_EMAIL, ""));
         setDescription(XMLUtil.getElementValue(node, ID_DESCRIPTION, ""));
-        setChangesLog(XMLUtil.getElementValue(node, ID_CHANGELOG, ""));
+        if (loadChangeLog)
+            setChangeLog(XMLUtil.getElementValue(node, ID_CHANGELOG, ""));
+        else
+            setChangeLog("");
 
         final Node nodeDependances = XMLUtil.getElement(node, ID_DEPENDENCIES);
         if (nodeDependances != null)
@@ -824,6 +909,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public ImageIcon getIcon()
     {
+        loadIcon();
         return icon;
     }
 
@@ -832,8 +918,10 @@ public class PluginDescriptor implements XMLPersistent
      */
     public Image getIconAsImage()
     {
-        if (icon != null)
-            return icon.getImage();
+        final ImageIcon i = getIcon();
+
+        if (i != null)
+            return i.getImage();
 
         return null;
     }
@@ -843,6 +931,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public Image getImage()
     {
+        loadImage();
         return image;
     }
 
@@ -1037,11 +1126,20 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @return the changesLog
+     * @return the changeLog
      */
+    public String getChangeLog()
+    {
+        return changeLog;
+    }
+
+    /**
+     * @deprecated Use {@link #getChangeLog()} instead
+     */
+    @Deprecated
     public String getChangesLog()
     {
-        return changesLog;
+        return getChangeLog();
     }
 
     /**
@@ -1070,11 +1168,35 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
+     * Returns true if change log is loaded.
+     */
+    public boolean isChangeLogLoaded()
+    {
+        return changeLogLoaded;
+    }
+
+    /**
+     * Returns true if icon is loaded.
+     */
+    public boolean isIconLoaded()
+    {
+        return iconLoaded;
+    }
+
+    /**
+     * Returns true if image is loaded.
+     */
+    public boolean isImageLoaded()
+    {
+        return imageLoaded;
+    }
+
+    /**
      * Returns true if image and icon are loaded.
      */
     public boolean isImagesLoaded()
     {
-        return descriptorLoaded;
+        return iconLoaded && imageLoaded;
     }
 
     /**
@@ -1082,7 +1204,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean isAllLoaded()
     {
-        return descriptorLoaded && imagesLoaded;
+        return descriptorLoaded && changeLogLoaded && iconLoaded && imageLoaded;
     }
 
     /**
@@ -1234,12 +1356,21 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @param changesLog
-     *        the changesLog to set
+     * @param value
+     *        the changeLog to set
      */
-    public void setChangesLog(String changesLog)
+    public void setChangeLog(String value)
     {
-        this.changesLog = changesLog;
+        this.changeLog = value;
+    }
+
+    /**
+     * @deprecated use {@link #setChangeLog(String)}
+     */
+    @Deprecated
+    public void setChangesLog(String value)
+    {
+        setChangeLog(value);
     }
 
     /**
