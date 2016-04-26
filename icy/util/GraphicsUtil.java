@@ -18,6 +18,7 @@
  */
 package icy.util;
 
+import icy.image.ImageUtil;
 import icy.util.ShapeUtil.ShapeConsumer;
 
 import java.awt.AlphaComposite;
@@ -123,6 +124,8 @@ public class GraphicsUtil
     public static void paintIcyBackGround(Image image)
     {
         final Graphics g = image.getGraphics();
+        // be sure image data are ready
+        ImageUtil.waitImageReady(image);
         // draw background in image
         paintIcyBackGround(image.getWidth(null), image.getHeight(null), g);
         g.dispose();

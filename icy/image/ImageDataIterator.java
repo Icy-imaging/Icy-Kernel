@@ -88,7 +88,7 @@ public class ImageDataIterator implements DataIterator
         else
         {
             imageBounds = new Rectangle();
-            dataType = DataType.UNDEFINED;
+            dataType = DataType.UBYTE;
             c = 0;
         }
 

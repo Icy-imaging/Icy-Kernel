@@ -21,12 +21,14 @@ package icy.sequence;
 import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.image.lut.LUT;
+import icy.painter.Overlay;
 import icy.roi.ROI;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.w3c.dom.Document;
@@ -39,6 +41,7 @@ public class SequencePersistent implements XMLPersistent
 {
     private final static String ID_META = "meta";
     private final static String ID_ROIS = "rois";
+    private final static String ID_OVERLAYS = "overlays";
     private final static String ID_LUT = "lut";
 
     private final Sequence sequence;
@@ -173,6 +176,8 @@ public class SequencePersistent implements XMLPersistent
             result = false;
         if (!loadROIsFromXML(node))
             result = false;
+        // some overlays does not support persistence so we can ignore errors...
+        loadOverlaysFromXML(node);
         if (!loadLUTFromXML(node))
             result = false;
 
@@ -220,6 +225,25 @@ public class SequencePersistent implements XMLPersistent
         return (roiCount == rois.size());
     }
 
+    private boolean loadOverlaysFromXML(Node node)
+    {
+        final Node overlaysNode = XMLUtil.getElement(node, ID_OVERLAYS);
+
+        // no node --> nothing to load...
+        if (overlaysNode == null)
+            return true;
+
+        final int overlayCount = Overlay.getOverlayCount(overlaysNode);
+        final List<Overlay> overlays = Overlay.loadOverlaysFromXML(overlaysNode);
+
+        // add to sequence
+        for (Overlay overlay : overlays)
+            sequence.addOverlay(overlay);
+
+        // return true if we got the expected number of ROI
+        return (overlayCount == overlays.size());
+    }
+
     private boolean loadLUTFromXML(Node node)
     {
         final Node nodeLut = XMLUtil.getElement(node, ID_LUT);
@@ -244,6 +268,7 @@ public class SequencePersistent implements XMLPersistent
 
         saveMetaDataToXML(node);
         saveROIsToXML(node);
+        saveOverlaysToXML(node);
         saveLUTToXML(node);
 
         return true;
@@ -281,19 +306,42 @@ public class SequencePersistent implements XMLPersistent
         }
     }
 
+    private void saveOverlaysToXML(Node node)
+    {
+        final Node nodeOverlays = XMLUtil.setElement(node, ID_OVERLAYS);
+
+        if (nodeOverlays != null)
+        {
+            XMLUtil.removeAllChildren(nodeOverlays);
+
+            // get overlays in linked list for faster remove operation
+            final List<Overlay> overlays = new LinkedList<Overlay>(sequence.getOverlays());
+            // remove overlays from ROI as they are be automatically created from ROI
+            for (ROI roi : sequence.getROIs(false))
+                overlays.remove(roi.getOverlay());
+
+            // set overlays in the XML node
+            Overlay.saveOverlaysToXML(nodeOverlays, overlays);
+        }
+    }
+
     private void saveLUTToXML(Node node)
     {
-        final LUT lut = sequence.getUserLUT();
-
-        // something to save ?
-        if (lut != null)
+        // save only if we have a custom LUT
+        if (sequence.hasUserLUT())
         {
-            final Node nodeLut = XMLUtil.setElement(node, ID_LUT);
+            final LUT lut = sequence.getUserLUT();
 
-            if (nodeLut != null)
+            // something to save ?
+            if (lut != null)
             {
-                XMLUtil.removeAllChildren(nodeLut);
-                lut.saveToXML(nodeLut);
+                final Node nodeLut = XMLUtil.setElement(node, ID_LUT);
+
+                if (nodeLut != null)
+                {
+                    XMLUtil.removeAllChildren(nodeLut);
+                    lut.saveToXML(nodeLut);
+                }
             }
         }
     }

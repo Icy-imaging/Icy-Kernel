@@ -27,9 +27,9 @@ import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 
 import javax.swing.BorderFactory;
 
@@ -96,7 +96,7 @@ public class SequenceDimensionAdjustFrame extends ActionDialog
         }
 
         @Override
-        public Image getImage(int t, int z)
+        public BufferedImage getImage(int t, int z)
         {
             if (sequence != null)
                 return sequence.getImage(t, z);
@@ -105,7 +105,7 @@ public class SequenceDimensionAdjustFrame extends ActionDialog
         }
 
         @Override
-        public Image getImage(int t, int z, int c)
+        public BufferedImage getImage(int t, int z, int c)
         {
             if (sequence != null)
                 return sequence.getImage(t, z, c);

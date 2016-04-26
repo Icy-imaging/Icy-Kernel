@@ -197,7 +197,12 @@ public class RoiActions
                 {
                     // need to get a copy of the ROI (as it can change meanwhile)
                     for (int i = 0; i < rois.size(); i++)
-                        rois.set(i, rois.get(i).getCopy());
+                    {
+                        final ROI roi = rois.get(i).getCopy();
+
+                        if (roi != null)
+                            rois.set(i, roi);
+                    }
 
                     // save in the Icy clipboard
                     Clipboard.put(Clipboard.TYPE_ROILIST, rois);
@@ -283,6 +288,7 @@ public class RoiActions
 
                 if ((rois != null) && (rois.size() > 0))
                 {
+                    final List<ROI> copyRois = new ArrayList<ROI>();
                     sequence.beginUpdate();
                     try
                     {
@@ -293,10 +299,16 @@ public class RoiActions
                         for (ROI roi : rois)
                         {
                             final ROI newROI = roi.getCopy();
-                            // select the ROI
-                            newROI.setSelected(true);
-                            // and add it
-                            sequence.addROI(newROI);
+
+                            if (newROI != null)
+                            {
+                                copyRois.add(newROI);
+
+                                // select the ROI
+                                newROI.setSelected(true);
+                                // and add it
+                                sequence.addROI(newROI);
+                            }
                         }
                     }
                     finally
@@ -305,7 +317,7 @@ public class RoiActions
                     }
 
                     // add to undo manager
-                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, copyRois)
                     {
                         @Override
                         public String getPresentationName()

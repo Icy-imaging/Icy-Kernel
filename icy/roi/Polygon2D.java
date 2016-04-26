@@ -406,24 +406,29 @@ public class Polygon2D implements Shape, Cloneable
         if (npoints <= 2 || !bounds.contains(x, y))
             return false;
 
-        updateComputingPath();
-
-        return closedPath.contains(x, y);
+        return updateComputingPath().contains(x, y);
     }
 
-    private void updateComputingPath()
+    private Path2D.Double updateComputingPath()
     {
-        if (closedPath == null)
+        Path2D.Double result = closedPath;
+
+        // need to recompute it ?
+        if (result == null)
         {
             if (path != null)
             {
-                closedPath = (Path2D.Double) path.clone();
-                closedPath.closePath();
+                result = (Path2D.Double) path.clone();
+                result.closePath();
             }
             else
                 // empty path
-                closedPath = new Path2D.Double();
+                result = new Path2D.Double();
+
+            closedPath = result;
         }
+
+        return result;
     }
 
     /**
@@ -465,9 +470,7 @@ public class Polygon2D implements Shape, Cloneable
         if (npoints <= 0 || !bounds.intersects(x, y, w, h))
             return false;
 
-        updateComputingPath();
-
-        return closedPath.intersects(x, y, w, h);
+        return updateComputingPath().intersects(x, y, w, h);
     }
 
     /**
@@ -509,9 +512,7 @@ public class Polygon2D implements Shape, Cloneable
         if (npoints <= 0 || !bounds.intersects(x, y, w, h))
             return false;
 
-        updateComputingPath();
-
-        return closedPath.contains(x, y, w, h);
+        return updateComputingPath().contains(x, y, w, h);
     }
 
     /**
@@ -545,9 +546,7 @@ public class Polygon2D implements Shape, Cloneable
     @Override
     public PathIterator getPathIterator(AffineTransform at)
     {
-        updateComputingPath();
-
-        return closedPath.getPathIterator(at);
+        return updateComputingPath().getPathIterator(at);
     }
 
     /**

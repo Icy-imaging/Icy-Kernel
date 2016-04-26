@@ -30,18 +30,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPasswordField;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * @author stephane
  */
 public class NetworkPreferencePanel extends PreferencePanel implements ActionListener, TextChangeListener,
-        ChangeListener
+        ChangeListener, DocumentListener
 {
     /**
      * 
@@ -59,14 +63,19 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
     private JSpinner ftpPortField;
     private IcyTextField socksHostField;
     private JSpinner socksPortField;
+    private JCheckBox useAuthenticationChkBox;
+    private JLabel lblLogin;
+    private JLabel lblPassword;
+    private IcyTextField userField;
+    private JPasswordField passwordField;
 
     public NetworkPreferencePanel(PreferenceFrame parent)
     {
         super(parent, NODE_NAME, PreferenceFrame.NODE_NAME);
 
         initialize();
-        validate();
 
+        validate();
         load();
 
         updateComponentsState();
@@ -80,15 +89,20 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
         ftpPortField.addChangeListener(this);
         socksHostField.addTextChangeListener(this);
         socksPortField.addChangeListener(this);
+
+        userField.addTextChangeListener(this);
+        passwordField.getDocument().addDocumentListener(this);
+
+        useAuthenticationChkBox.addActionListener(this);
     }
 
     void initialize()
     {
         GridBagLayout gridBagLayout = new GridBagLayout();
         gridBagLayout.columnWidths = new int[] {69, 239, 97, 0, 0};
-        gridBagLayout.rowHeights = new int[] {0, 0, 0, 0, 0, 0, 0};
-        gridBagLayout.columnWeights = new double[] {0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+        gridBagLayout.rowHeights = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
         mainPanel.setLayout(gridBagLayout);
 
         JLabel lblProxy = new JLabel("Proxy");
@@ -221,6 +235,47 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
         gbc_socksPortField.gridx = 2;
         gbc_socksPortField.gridy = 4;
         mainPanel.add(socksPortField, gbc_socksPortField);
+
+        useAuthenticationChkBox = new JCheckBox("Use authentication");
+        GridBagConstraints gbc_chckbxUseAuthentication = new GridBagConstraints();
+        gbc_chckbxUseAuthentication.anchor = GridBagConstraints.WEST;
+        gbc_chckbxUseAuthentication.insets = new Insets(0, 0, 5, 5);
+        gbc_chckbxUseAuthentication.gridx = 1;
+        gbc_chckbxUseAuthentication.gridy = 5;
+        mainPanel.add(useAuthenticationChkBox, gbc_chckbxUseAuthentication);
+
+        lblLogin = new JLabel("User");
+        GridBagConstraints gbc_lblLogin = new GridBagConstraints();
+        gbc_lblLogin.anchor = GridBagConstraints.EAST;
+        gbc_lblLogin.insets = new Insets(0, 0, 5, 5);
+        gbc_lblLogin.gridx = 0;
+        gbc_lblLogin.gridy = 6;
+        mainPanel.add(lblLogin, gbc_lblLogin);
+
+        userField = new IcyTextField();
+        GridBagConstraints gbc_userField = new GridBagConstraints();
+        gbc_userField.insets = new Insets(0, 0, 5, 5);
+        gbc_userField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_userField.gridx = 1;
+        gbc_userField.gridy = 6;
+        mainPanel.add(userField, gbc_userField);
+        userField.setColumns(10);
+
+        lblPassword = new JLabel("Password");
+        GridBagConstraints gbc_lblPassword = new GridBagConstraints();
+        gbc_lblPassword.anchor = GridBagConstraints.EAST;
+        gbc_lblPassword.insets = new Insets(0, 0, 5, 5);
+        gbc_lblPassword.gridx = 0;
+        gbc_lblPassword.gridy = 7;
+        mainPanel.add(lblPassword, gbc_lblPassword);
+
+        passwordField = new JPasswordField();
+        GridBagConstraints gbc_passwordField = new GridBagConstraints();
+        gbc_passwordField.insets = new Insets(0, 0, 5, 5);
+        gbc_passwordField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_passwordField.gridx = 1;
+        gbc_passwordField.gridy = 7;
+        mainPanel.add(passwordField, gbc_passwordField);
     }
 
     private void updateComponentsState()
@@ -235,12 +290,20 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
         ftpPortField.setEnabled(enabled);
         socksHostField.setEnabled(enabled);
         socksPortField.setEnabled(enabled);
+        useAuthenticationChkBox.setEnabled(enabled);
+
+        final boolean authEnabled = enabled && useAuthenticationChkBox.isSelected();
+
+        userField.setEnabled(authEnabled);
+        passwordField.setEnabled(authEnabled);
     }
 
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        if (e.getSource() == proxySettingComboBox)
+        final Object source = e.getSource();
+
+        if ((source == proxySettingComboBox) || (source == useAuthenticationChkBox))
             updateComponentsState();
 
         // network setting changed, restart needed
@@ -274,6 +337,9 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
         ftpPortField.setValue(Integer.valueOf(NetworkPreferences.getProxyFTPPort()));
         socksHostField.setText(NetworkPreferences.getProxySOCKSHost());
         socksPortField.setValue(Integer.valueOf(NetworkPreferences.getProxySOCKSPort()));
+        useAuthenticationChkBox.setSelected(NetworkPreferences.getProxyAuthentication());
+        userField.setText(NetworkPreferences.getProxyUser());
+        passwordField.setText(NetworkPreferences.getProxyPassword());
     }
 
     @Override
@@ -288,8 +354,31 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
         NetworkPreferences.setProxyFTPPort(((Integer) ftpPortField.getValue()).intValue());
         NetworkPreferences.setProxySOCKSHost(socksHostField.getText());
         NetworkPreferences.setProxySOCKSPort(((Integer) socksPortField.getValue()).intValue());
+        NetworkPreferences.setProxyAuthentication(useAuthenticationChkBox.isSelected());
+        NetworkPreferences.setProxyUser(userField.getText());
+        NetworkPreferences.setProxyPassword(new String(passwordField.getPassword()));
 
         NetworkUtil.updateNetworkSetting();
     }
 
+    @Override
+    public void insertUpdate(DocumentEvent e)
+    {
+        // network setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e)
+    {
+        // network setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e)
+    {
+        // network setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+    }
 }

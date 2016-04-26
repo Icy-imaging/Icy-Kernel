@@ -3,6 +3,7 @@
  */
 package plugins.kernel.roi.descriptor.measure;
 
+import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.roi.ROI;
 import icy.roi.ROI3D;
@@ -69,51 +70,48 @@ public class ROISurfaceAreaDescriptor extends ROIDescriptor
     /**
      * Computes and returns the surface area expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * for the specified ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+     * It may thrown an <code>UnsupportedOperationException</code> if the operation is not supported for that ROI.
      * 
      * @param roi
      *        the ROI on which we want to compute the surface area
      * @param sequence
-     *        an optional sequence where the pixel size can be retrieved
-     * @return the surface area
+     *        the sequence from which the pixel size can be retrieved
+     * @return the surface area expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
     public static double computeSurfaceArea(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         if (!(roi instanceof ROI3D))
-            throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
+            throw new UnsupportedOperationException("Surface area not supported on " + roi.getDimension() + "D ROI !");
+        if (sequence == null)
+            throw new UnsupportedOperationException("Cannot compute Surface area with null Sequence parameter !");
 
-        return computeSurfaceArea(ROIContourDescriptor.computeContour(roi), roi, sequence);
+        final UnitPrefix bestUnit = sequence.getBestPixelSizeUnit(3, 2);
+        final double surfaceArea = ((ROI3D) roi).getSurfaceArea(sequence);
+
+        return UnitUtil.getValueInUnit(surfaceArea, UnitPrefix.MICRO, bestUnit, 2);
     }
 
-    /**
-     * Computes and returns the surface area from a given number of contour points expressed in the
-     * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
-     * 
-     * @param contourPoints
-     *        the number of contour points (override the ROI value)
-     * @param roi
-     *        the ROI we want to compute the surface area
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size
-     *        information.
-     * @return the surface area
-     * @throws UnsupportedOperationException
-     *         if the operation is not supported for this ROI
-     */
-    public static double computeSurfaceArea(double contourPoints, ROI roi, Sequence sequence)
-            throws UnsupportedOperationException
-    {
-        try
-        {
-            return ROIContourDescriptor.computeContour(contourPoints, roi, sequence, 3);
-        }
-        catch (UnsupportedOperationException e)
-        {
-            throw new UnsupportedOperationException("Can't process '" + ID + "' calculation on the ROI: "
-                    + roi.getName());
-        }
-    }
+    // /**
+    // * Computes and returns the surface area from a given number of contour points expressed in the
+    // * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
+    // * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+    // *
+    // * @param contourPoints
+    // * the number of contour points (override the ROI value)
+    // * @param roi
+    // * the ROI we want to compute the surface area
+    // * @param sequence
+    // * the input sequence used to retrieve operation unit by using pixel size
+    // * information.
+    // * @return the surface area
+    // * @throws UnsupportedOperationException
+    // * if the operation is not supported for this ROI
+    // */
+    // static double computeSurfaceArea(double contourPoints, ROI roi, Sequence sequence)
+    // throws UnsupportedOperationException
+    // {
+    // return ROIContourDescriptor.computeContour(contourPoints, roi, sequence, 3);
+    // }
 }

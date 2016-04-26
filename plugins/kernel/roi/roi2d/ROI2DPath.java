@@ -262,7 +262,7 @@ public class ROI2DPath extends ROI2DShape
                 path.append(openPath, false);
 
                 rebuildControlPointsFromPath();
-                roiChanged();
+                roiChanged(true);
 
                 return this;
             }
@@ -306,7 +306,7 @@ public class ROI2DPath extends ROI2DShape
                 path.append(closedArea, false);
 
                 rebuildControlPointsFromPath();
-                roiChanged();
+                roiChanged(true);
 
                 return this;
             }
@@ -351,7 +351,7 @@ public class ROI2DPath extends ROI2DShape
                 path.append(openPath, false);
 
                 rebuildControlPointsFromPath();
-                roiChanged();
+                roiChanged(true);
 
                 return this;
             }
@@ -403,7 +403,7 @@ public class ROI2DPath extends ROI2DShape
                 path.append(openPath, false);
 
                 rebuildControlPointsFromPath();
-                roiChanged();
+                roiChanged(true);
 
                 return this;
             }

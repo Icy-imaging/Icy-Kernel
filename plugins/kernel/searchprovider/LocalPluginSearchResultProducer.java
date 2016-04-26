@@ -29,6 +29,8 @@ import icy.search.SearchResultProducer;
 import java.util.ArrayList;
 import java.util.List;
 
+import plugins.kernel.searchprovider.OnlinePluginSearchResultProducer.OnlinePluginResult;
+
 /**
  * This class is used to provide installed plugin elements to the search engine.
  * 
@@ -102,7 +104,30 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
                 tmpResults.add(new LocalPluginResult(this, plugin, plugin.getDescription(), words, prio));
         }
 
-        results = tmpResults;
+        // use a copy to avoid future concurrent accesses
+        results = new ArrayList<SearchResult>(tmpResults);
         consumer.resultsChanged(this);
+        
+        // load descriptions
+        for (SearchResult result : tmpResults)
+        {
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            ((LocalPluginResult) result).getPlugin().loadDescriptor();
+            consumer.resultChanged(this, result);
+        }
+
+        // load images
+        for (SearchResult result : tmpResults)
+        {
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            ((LocalPluginResult) result).getPlugin().loadImages();
+            consumer.resultChanged(this, result);
+        }        
     }
 }

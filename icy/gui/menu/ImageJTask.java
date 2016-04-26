@@ -37,7 +37,7 @@ import ij.ImageJ;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 
-import java.awt.image.BufferedImage;
+import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -53,7 +53,7 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
  */
 public class ImageJTask extends RibbonTask implements PropertyChangeListener
 {
-    static final BufferedImage detachForIJ = ResourceUtil.getImage("help/ij_detached.jpg");
+    static final Image detachForIJ = ResourceUtil.getImage("help/ij_detached.jpg");
 
     private static class ImageJRibbonBand extends JRibbonBand
     {

@@ -27,11 +27,13 @@ public class ROIPropertyDescriptorsPlugin extends Plugin implements PluginROIDes
 {
     public static final String ID_ICON = ROIIconDescriptor.ID;
     public static final String ID_NAME = ROINameDescriptor.ID;
+    public static final String ID_COLOR = ROIColorDescriptor.ID;
     public static final String ID_OPACITY = ROIOpacityDescriptor.ID;
     public static final String ID_READONLY = ROIReadOnlyDescriptor.ID;
 
     public static final ROIIconDescriptor iconDescriptor = new ROIIconDescriptor();
     public static final ROINameDescriptor nameDescriptor = new ROINameDescriptor();
+    public static final ROIColorDescriptor colorDescriptor = new ROIColorDescriptor();
     public static final ROIOpacityDescriptor opacityDescriptor = new ROIOpacityDescriptor();
     public static final ROIReadOnlyDescriptor readOnlyDescriptor = new ROIReadOnlyDescriptor();
 
@@ -42,6 +44,7 @@ public class ROIPropertyDescriptorsPlugin extends Plugin implements PluginROIDes
 
         result.add(iconDescriptor);
         result.add(nameDescriptor);
+        result.add(colorDescriptor);
         result.add(opacityDescriptor);
         result.add(readOnlyDescriptor);
 
@@ -58,6 +61,7 @@ public class ROIPropertyDescriptorsPlugin extends Plugin implements PluginROIDes
             // compute descriptors
             result.put(iconDescriptor, ROIIconDescriptor.getIcon(roi));
             result.put(nameDescriptor, ROINameDescriptor.getName(roi));
+            result.put(colorDescriptor, ROIColorDescriptor.getColor(roi));
             result.put(opacityDescriptor, Float.valueOf(ROIOpacityDescriptor.getOpacity(roi)));
             result.put(readOnlyDescriptor, Boolean.valueOf(ROIReadOnlyDescriptor.getReadOnly(roi)));
         }

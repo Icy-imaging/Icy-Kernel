@@ -18,7 +18,21 @@
  */
 package icy.plugin;
 
-import icy.common.EventHierarchicalChecker;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.swing.event.EventListenerList;
+
 import icy.file.Loader;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.main.Icy;
@@ -34,21 +48,6 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EventListener;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javax.swing.event.EventListenerList;
 
 /**
  * Plugin Loader class.<br>
@@ -259,8 +258,8 @@ public class PluginLoader
             {
                 // fatal error
                 System.err.println("Class '" + className + "' cannot be loaded :");
-                System.err.println("Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage())
-                        + "' not found.");
+                System.err.println(
+                        "Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage()) + "' not found.");
             }
             catch (OutOfMemoryError e)
             {
@@ -271,7 +270,7 @@ public class PluginLoader
             catch (UnsupportedClassVersionError e)
             {
                 // java version error
-                System.err.println("Unsupported java version for class '" + className + "' (discarded)");
+                System.err.println("Newer java version required for class '" + className + "' (discarded)");
             }
             catch (Error e)
             {
@@ -720,7 +719,8 @@ public class PluginLoader
 
     /**
      * Try to load and returns the specified class from the {@link PluginLoader}.<br>
-     * This method is equivalent to call {@link #getLoader()} then call <code>loadClass(String)</code> method from it.
+     * This method is equivalent to call {@link #getLoader()} then call
+     * <code>loadClass(String)</code> method from it.
      * 
      * @param className
      *        class name of the class we want to load.
@@ -752,6 +752,10 @@ public class PluginLoader
                 // then try to load the plugin class as Plugin class
                 instance.loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
             }
+            catch (UnsupportedClassVersionError e)
+            {
+                return mess + "Newer java version required.";
+            }
             catch (Error e)
             {
                 return mess + e.toString();
@@ -759,7 +763,7 @@ public class PluginLoader
             catch (ClassCastException e)
             {
                 return mess + IcyExceptionHandler.getErrorMessage(e, false)
-                        + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
+                        + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class.";
             }
             catch (ClassNotFoundException e)
             {
@@ -894,7 +898,7 @@ public class PluginLoader
             else
                 pf = null;
 
-            PluginRepositoryLoader.waitBasicLoaded();
+            PluginRepositoryLoader.waitLoaded();
 
             // get list of required and faulty plugins
             for (PluginDescriptor plugin : plugins)
@@ -943,14 +947,14 @@ public class PluginLoader
                 // install missing plugins
                 for (PluginDescriptor plugin : missings)
                 {
-                    PluginInstaller.install(plugin, pf != null);
+                    PluginInstaller.install(plugin, true);
                     if (pf != null)
                         pf.incPosition();
                 }
                 // and reinstall faulty plugins
                 for (PluginDescriptor plugin : faulties)
                 {
-                    PluginInstaller.install(plugin, pf != null);
+                    PluginInstaller.install(plugin, true);
                     if (pf != null)
                         pf.incPosition();
                 }
@@ -1025,7 +1029,7 @@ public class PluginLoader
         public void pluginLoaderChanged(PluginLoaderEvent e);
     }
 
-    public static class PluginLoaderEvent implements EventHierarchicalChecker
+    public static class PluginLoaderEvent
     {
         public PluginLoaderEvent()
         {
@@ -1033,9 +1037,12 @@ public class PluginLoader
         }
 
         @Override
-        public boolean isEventRedundantWith(EventHierarchicalChecker event)
+        public boolean equals(Object obj)
         {
-            return (event instanceof PluginLoaderEvent);
+            if (obj instanceof PluginLoaderEvent)
+                return true;
+
+            return super.equals(obj);
         }
     }
 }

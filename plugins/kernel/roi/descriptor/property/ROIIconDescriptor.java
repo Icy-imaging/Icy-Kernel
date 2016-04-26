@@ -54,6 +54,7 @@ public class ROIIconDescriptor extends ROIDescriptor
         if (roi == null)
             return null;
 
+        // return ImageUtil.getColorImageFromAlphaImage(roi.getIcon(), ColorUtil.mix(Color.gray, roi.getColor()));
         return roi.getIcon();
     }
 }

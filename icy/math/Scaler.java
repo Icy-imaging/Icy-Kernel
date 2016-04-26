@@ -18,6 +18,7 @@
  */
 package icy.math;
 
+import icy.common.CollapsibleEvent;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
@@ -1230,7 +1231,7 @@ public class Scaler implements ChangeListener, XMLPersistent
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final ScalerEvent event = (ScalerEvent) compare;
 

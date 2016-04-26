@@ -19,6 +19,7 @@
 
 package icy.resource.icon;
 
+import icy.image.ImageUtil;
 import icy.resource.ResourceUtil;
 
 import java.awt.Component;
@@ -48,7 +49,11 @@ public class BasicResizableIcon implements ResizableIcon
         this.image = image;
 
         if (image != null)
+        {
+            // be sure image data are ready
+            ImageUtil.waitImageReady(image);
             dim = new Dimension(image.getWidth(null), image.getHeight(null));
+        }
         else
             dim = new Dimension();
 

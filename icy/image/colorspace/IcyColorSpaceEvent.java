@@ -18,12 +18,12 @@
  */
 package icy.image.colorspace;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @author stephane
  */
-public class IcyColorSpaceEvent implements EventHierarchicalChecker
+public class IcyColorSpaceEvent implements CollapsibleEvent
 {
     @Deprecated
     public enum IcyColorSpaceEventType
@@ -32,7 +32,7 @@ public class IcyColorSpaceEvent implements EventHierarchicalChecker
     }
 
     private final IcyColorSpace colorSpace;
-    private final int component;
+    private int component;
 
     public IcyColorSpaceEvent(IcyColorSpace colorSpace, int component)
     {
@@ -67,16 +67,38 @@ public class IcyColorSpaceEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof IcyColorSpaceEvent)
+        if (equals(event))
         {
             final IcyColorSpaceEvent e = (IcyColorSpaceEvent) event;
 
-            return (component == -1) || (component == e.getComponent());
+            // set all component
+            if (e.getComponent() != component)
+                component = -1;
+
+            return true;
         }
 
         return false;
     }
 
+    @Override
+    public int hashCode()
+    {
+        return colorSpace.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyColorSpaceEvent)
+        {
+            final IcyColorSpaceEvent e = (IcyColorSpaceEvent) obj;
+
+            return (colorSpace == e.getColorSpace());
+        }
+
+        return super.equals(obj);
+    }
 }

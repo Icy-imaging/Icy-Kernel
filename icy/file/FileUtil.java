@@ -44,6 +44,27 @@ public class FileUtil
     public static final String separator = "/";
 
     /**
+     * Cleanup the file path (replace some problematic character by "_")
+     */
+    public static String cleanPath(String filePath)
+    {
+        String result = filePath;
+
+        if (result != null)
+        {
+            // remove ':' other than for drive separation
+            if (result.length() >= 2)
+                result = result.substring(0, 2) + result.substring(2).replaceAll(":", "_");
+            // remove '!' characters
+            result = result.replaceAll("!", "_");
+            // remove '#' characters
+            result = result.replaceAll("#", "_");
+        }
+
+        return result;
+    }
+
+    /**
      * Transform any system specific path in java generic path form.<br>
      * Ex: "C:\windows" --> "C:/windows"
      */
@@ -152,6 +173,7 @@ public class FileUtil
             }
             catch (Exception e)
             {
+                System.err.println("Error: can't create file '" + file.getAbsolutePath() + "':");
                 IcyExceptionHandler.showErrorMessage(e, false);
                 return null;
             }
@@ -1206,16 +1228,20 @@ public class FileUtil
         {
             final File[] files = f.listFiles();
 
-            // delete files
-            for (File file : files)
+            // can return null...
+            if (files != null)
             {
-                if (file.isDirectory())
+                // delete files
+                for (File file : files)
                 {
-                    if (recursive)
-                        result = result & delete(file, true);
+                    if (file.isDirectory())
+                    {
+                        if (recursive)
+                            result = result & delete(file, true);
+                    }
+                    else
+                        result = result & file.delete();
                 }
-                else
-                    result = result & file.delete();
             }
 
             // then delete empty directory

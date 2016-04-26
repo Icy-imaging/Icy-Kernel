@@ -162,7 +162,7 @@ public class ImageJWrapper extends ImageJ
                     swingPanel.validate();
                 }
             }
-        });
+        }, true);
     }
 
     public void setActiveImage(ImageWindow iw)

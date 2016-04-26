@@ -27,8 +27,6 @@ import icy.util.StringUtil;
 
 import java.awt.Image;
 
-import javax.swing.ImageIcon;
-
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 
 public abstract class PluginSearchResult extends SearchResult
@@ -82,12 +80,10 @@ public abstract class PluginSearchResult extends SearchResult
     @Override
     public Image getImage()
     {
-        final ImageIcon icon = plugin.getIcon();
+        if (plugin.isIconLoaded())
+            return plugin.getIconAsImage();
 
-        if (icon != null)
-            return icon.getImage();
-
-        return null;
+        return PluginDescriptor.DEFAULT_ICON.getImage();
     }
 
     @Override

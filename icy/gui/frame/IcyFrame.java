@@ -238,11 +238,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     {
         super();
 
-        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-        // listen main frame mode change
-        if (mainFrame != null)
-            mainFrame.addPropertyChangeListener(MainFrame.PROPERTY_DETACHEDMODE, this);
-
         frameEventListeners = new EventListenerList();
         defaultSystemMenuCallback = new MenuCallback()
         {
@@ -300,6 +295,11 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 }
             }
         }, waitCreate);
+        
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+        // listen main frame mode change
+        if (mainFrame != null)
+            mainFrame.addPropertyChangeListener(MainFrame.PROPERTY_DETACHEDMODE, this);
     }
 
     /**

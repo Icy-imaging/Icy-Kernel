@@ -18,7 +18,7 @@
  */
 package icy.image.colormodel;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.image.colormap.IcyColorMap;
@@ -33,6 +33,7 @@ import icy.math.ScalerListener;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
+import icy.util.ReflectionUtil;
 
 import java.awt.image.BandedSampleModel;
 import java.awt.image.ColorModel;
@@ -46,8 +47,9 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-
-import javax.swing.event.EventListenerList;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author stephane
@@ -72,12 +74,11 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * overridden variables
      */
     protected final int numComponents;
-    protected final IcyColorSpace colorSpace;
 
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    private final List<IcyColorModelListener> listeners;
 
     /**
      * internal updater
@@ -97,9 +98,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
 
         // overridden variable
         this.numComponents = numComponents;
-        colorSpace = (IcyColorSpace) getColorSpace();
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<IcyColorModelListener>();
         updater = new UpdateEventHandler(this, false);
 
         // data type information
@@ -127,7 +127,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         }
 
         // add the listener to colorSpace
-        colorSpace.addListener(this);
+        getIcyColorSpace().addListener(this);
     }
 
     /**
@@ -448,8 +448,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     public abstract int getRGB(Object pixel, LUT lut);
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getBlue(Object pixel)
     {
@@ -457,8 +457,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getGreen(Object pixel)
     {
@@ -466,8 +466,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getRed(Object pixel)
     {
@@ -475,8 +475,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public int getAlpha(Object pixel)
     {
@@ -568,7 +568,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     @Override
     public Object getDataElements(int rgb, Object pixel)
     {
-        return getDataElements(colorSpace.fromRGB(rgb), 0, pixel);
+        return getDataElements(getIcyColorSpace().fromRGB(rgb), 0, pixel);
     }
 
     /**
@@ -578,8 +578,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     public abstract Object getDataElements(float[] normComponents, int normOffset, Object obj);
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public ColorModel coerceData(WritableRaster raster, boolean isAlphaPremultiplied)
     {
@@ -601,9 +601,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * 
      * @param obj
      *        the <code>Object</code> to test for equality
-     * @return <code>true</code> if the specified <code>Object</code> is an instance of
-     *         <code>ColorModel</code> and equals this <code>ColorModel</code>; <code>false</code>
-     *         otherwise.
+     * @return <code>true</code> if the specified <code>Object</code> is an instance of <code>ColorModel</code> and
+     *         equals this <code>ColorModel</code>; <code>false</code> otherwise.
      */
     @Override
     public boolean equals(Object obj)
@@ -623,8 +622,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public boolean isCompatibleRaster(Raster raster)
     {
@@ -647,8 +646,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     @Override
     public boolean isCompatibleSampleModel(SampleModel sm)
     {
@@ -666,7 +665,35 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public IcyColorSpace getIcyColorSpace()
     {
-        return colorSpace;
+        return (IcyColorSpace) getColorSpace();
+    }
+
+    /**
+     * Change the colorspace of the color model.<br/>
+     * <b>You should never use this method directly (internal use only)</b>
+     */
+    public void setColorSpace(IcyColorSpace cs)
+    {
+        final IcyColorSpace currentCS = getIcyColorSpace();
+
+        if (currentCS != cs)
+        {
+            try
+            {
+                final Field csField = ReflectionUtil.getField(ColorModel.class, "colorSpace", true);
+                // set new colorSpace value
+                csField.set(this, cs);
+
+                currentCS.removeListener(this);
+                cs.addListener(this);
+            }
+            catch (Exception e)
+            {
+                System.err.println("Warning: Couldn't change colorspace of IcyColorModel...");
+            }
+        }
+
+        // do not notify about the change here as this method is only called internally
     }
 
     /**
@@ -921,17 +948,15 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Returns the <code>String</code> representation of the contents of this
-     * <code>ColorModel</code>object.
+     * Returns the <code>String</code> representation of the contents of this <code>ColorModel</code>object.
      * 
-     * @return a <code>String</code> representing the contents of this <code>ColorModel</code>
-     *         object.
+     * @return a <code>String</code> representing the contents of this <code>ColorModel</code> object.
      */
     @Override
     public String toString()
     {
         return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents
-                + " color space = " + colorSpace);
+                + " color space = " + getColorSpace());
     }
 
     /**
@@ -941,7 +966,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public void addListener(IcyColorModelListener listener)
     {
-        listeners.add(IcyColorModelListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -951,7 +976,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public void removeListener(IcyColorModelListener listener)
     {
-        listeners.remove(IcyColorModelListener.class, listener);
+        listeners.remove(listener);
     }
 
     /**
@@ -961,7 +986,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public void fireEvent(IcyColorModelEvent e)
     {
-        for (IcyColorModelListener listener : listeners.getListeners(IcyColorModelListener.class))
+        for (IcyColorModelListener listener : new ArrayList<IcyColorModelListener>(listeners))
             listener.colorModelChanged(e);
     }
 
@@ -969,7 +994,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * process on colormodel change
      */
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(CollapsibleEvent compare)
     {
         final IcyColorModelEvent event = (IcyColorModelEvent) compare;
 

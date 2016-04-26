@@ -19,16 +19,16 @@
 package icy.canvas;
 
 import icy.gui.viewer.Viewer;
+import icy.vtk.IcyVtkPanel;
 
 import java.awt.image.BufferedImage;
 
 import plugins.kernel.canvas.VtkCanvas;
-import vtk.vtkPanel;
 import vtk.vtkRenderer;
 
 /**
  * @deprecated Use {@link VtkCanvas} instead.
- * @author Fabrice de Chaumont & Stephane
+ * @author Stephane
  */
 @Deprecated
 public abstract class Canvas3D extends IcyCanvas3D
@@ -52,7 +52,7 @@ public abstract class Canvas3D extends IcyCanvas3D
      */
     public abstract void setVolumeDistanceSample(int value);
 
-    public abstract vtkPanel getPanel3D();
+    public abstract IcyVtkPanel getPanel3D();
 
     public abstract vtkRenderer getRenderer();
 
@@ -192,5 +192,14 @@ public abstract class Canvas3D extends IcyCanvas3D
         setVolumeScaleZ(value);
     }
 
+    /**
+     * Returns a RGB or ARGB (depending support) BufferedImage representing the canvas view for
+     * image at position (t, c).<br>
+     * 
+     * @param t
+     *        T position of wanted image (-1 for complete sequence)
+     * @param c
+     *        C position of wanted image (-1 for all channels)
+     */
     public abstract BufferedImage getRenderedImage(int t, int c);
 }

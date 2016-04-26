@@ -23,7 +23,6 @@ package icy.image.colormap;
  */
 public class FromRGBColorMap
 {
-
     /**
      * define colormap size
      */

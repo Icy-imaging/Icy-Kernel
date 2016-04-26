@@ -37,11 +37,29 @@ import java.util.zip.ZipFile;
 public class ZipUtil
 {
     /**
-     * Compress the specified array of byte and return packed data
+     * Compress the specified array of byte with given level of compression and return packed data.<br/>
+     * 
+     * @param packer
+     *        the packer object, can be <code>null</code> in which case we create a new Deflater object
+     * @param rawData
+     *        raw data to compress
+     * @param level
+     *        level of compression where 0 is low and 9 is high (use -1 to keep current / use default level)
      */
-    public static byte[] pack(byte[] rawData)
+    public static byte[] pack(Deflater packer, byte[] rawData, int level)
     {
-        final Deflater compressor = new Deflater();
+        final Deflater compressor;
+
+        if (packer != null)
+        {
+            compressor = packer;
+            compressor.reset();
+        }
+        else
+            compressor = new Deflater();
+
+        if (level != -1)
+            compressor.setLevel(level);
 
         // give data to compress
         compressor.setInput(rawData);
@@ -49,12 +67,17 @@ public class ZipUtil
 
         // create an expandable byte array to hold the compressed data.
         final ByteArrayOutputStream bos = new ByteArrayOutputStream(rawData.length);
-        final byte[] buf = new byte[4096];
+        final byte[] buf = new byte[65536];
 
         // pack data
         while (!compressor.finished())
         {
             final int count = compressor.deflate(buf);
+
+            // nothing more to do ? --> end here
+            if (count == 0)
+                break;
+
             bos.write(buf, 0, count);
         }
 
@@ -72,25 +95,50 @@ public class ZipUtil
     }
 
     /**
+     * Compress the specified array of byte and return packed data
+     */
+    public static byte[] pack(byte[] rawData)
+    {
+        return pack(null, rawData, -1);
+    }
+
+    /**
      * Uncompress the specified array of byte and return unpacked data
      * 
+     * @param unpacker
+     *        the unpacker object, can be <code>null</code> in which case we create a new Inflater object
+     * @param packedData
+     *        packed data to uncompress
      * @throws DataFormatException
      */
-    public static byte[] unpack(byte[] packedData) throws DataFormatException
+    public static byte[] unpack(Inflater unpacker, byte[] packedData) throws DataFormatException
     {
-        final Inflater decompressor = new Inflater();
+        final Inflater decompressor;
+
+        if (unpacker != null)
+        {
+            decompressor = unpacker;
+            decompressor.reset();
+        }
+        else
+            decompressor = new Inflater();
 
         // give the data to uncompress
         decompressor.setInput(packedData);
 
         // create an expandable byte array to hold the uncompressed data
         final ByteArrayOutputStream bos = new ByteArrayOutputStream(packedData.length);
-        final byte[] buf = new byte[4096];
+        final byte[] buf = new byte[65536];
 
         // unpack data
         while (!decompressor.finished())
         {
             final int count = decompressor.inflate(buf);
+
+            // nothing more to do ? --> end here
+            if (count == 0)
+                break;
+
             bos.write(buf, 0, count);
         }
         try
@@ -104,6 +152,16 @@ public class ZipUtil
 
         // return unpacked data
         return bos.toByteArray();
+    }
+
+    /**
+     * Uncompress the specified array of byte and return unpacked data
+     * 
+     * @throws DataFormatException
+     */
+    public static byte[] unpack(byte[] packedData) throws DataFormatException
+    {
+        return unpack(null, packedData);
     }
 
     /**

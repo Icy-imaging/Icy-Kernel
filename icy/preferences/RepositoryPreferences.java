@@ -23,7 +23,9 @@ import icy.network.NetworkUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Stephane
@@ -256,14 +258,19 @@ public class RepositoryPreferences
         }
 
         @Override
+        public int hashCode()
+        {
+            return name.hashCode() ^ location.hashCode() ^ authInf.hashCode();
+        }
+
+        @Override
         public boolean equals(Object obj)
         {
             if (obj instanceof RepositoryInfo)
             {
                 final RepositoryInfo repoInf = (RepositoryInfo) obj;
 
-                return StringUtil.equals(repoInf.toString(), toString()) && (repoInf.enabled == enabled)
-                        && repoInf.authInf.equals(authInf);
+                return StringUtil.equals(repoInf.toString(), toString()) && repoInf.authInf.equals(authInf);
             }
 
             return super.equals(obj);
@@ -300,7 +307,7 @@ public class RepositoryPreferences
 
     public static ArrayList<RepositoryInfo> getRepositeries()
     {
-        final ArrayList<RepositoryInfo> result = new ArrayList<RepositoryInfo>();
+        final Set<RepositoryInfo> result = new HashSet<RepositoryInfo>();
         final List<String> childs = preferences.childrenNames();
 
         for (String child : childs)
@@ -312,22 +319,10 @@ public class RepositoryPreferences
                 result.add(reposInf);
         }
 
-        // remove default repository
-        boolean defaultOk = false;
-        for (int i = result.size() - 1; i >= 0; i--)
-        {
-            if (result.get(i).isDefault())
-            {
-                defaultOk = true;
-                break;
-            }
-        }
+        // add default repository if needed
+        result.add(new RepositoryInfo(DEFAULT_REPOSITERY_NAME, DEFAULT_REPOSITERY_LOCATION, true));
 
-        // add default repository if neeeded
-        if (!defaultOk)
-            result.add(new RepositoryInfo(DEFAULT_REPOSITERY_NAME, DEFAULT_REPOSITERY_LOCATION, true));
-
-        return result;
+        return new ArrayList<RepositoryInfo>(result);
     }
 
     public static void setRepositeries(ArrayList<RepositoryInfo> values)

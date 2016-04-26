@@ -1617,21 +1617,32 @@ public class SequenceUtil
      */
     public static Sequence convertToType(Sequence source, DataType dataType, boolean rescale, boolean useDataBounds)
     {
+        if (source == null)
+            return null;
+
         if (!rescale)
-            return convertToType(source, dataType, null);
+            return convertType(source, dataType, null);
 
         // convert with rescale
-        final double boundsSrc[];
         final double boundsDst[] = dataType.getDefaultBounds();
+        final int sizeC = source.getSizeC();
+        final Scaler[] scalers = new Scaler[sizeC];
 
-        if (useDataBounds)
-            boundsSrc = source.getChannelsGlobalBounds();
-        else
-            boundsSrc = source.getChannelsGlobalTypeBounds();
+        // build scalers
+        for (int c = 0; c < sizeC; c++)
+        {
+            final double boundsSrc[];
+
+            if (useDataBounds)
+                boundsSrc = source.getChannelBounds(c);
+            else
+                boundsSrc = source.getChannelTypeBounds(c);
+
+            scalers[c] = new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false);
+        }
 
         // use scaler to scale data
-        return convertToType(source, dataType,
-                new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false));
+        return convertType(source, dataType, scalers);
     }
 
     /**
@@ -1652,17 +1663,9 @@ public class SequenceUtil
     }
 
     /**
-     * Converts the source sequence to the specified data type.<br>
-     * This method returns a new sequence (the source sequence is not modified).
-     * 
-     * @param source
-     *        Source sequence to convert
-     * @param dataType
-     *        data type wanted.
-     * @param scaler
-     *        scaler for scaling internal data during conversion.
-     * @return converted image
+     * @deprecated Use {@link #convertType(Sequence, DataType, Scaler[])} instead.
      */
+    @Deprecated
     public static Sequence convertToType(Sequence source, DataType dataType, Scaler scaler)
     {
         final Sequence output = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
@@ -1676,6 +1679,57 @@ public class SequenceUtil
                 {
                     final IcyBufferedImage converted = IcyBufferedImageUtil.convertToType(source.getImage(t, z),
                             dataType, scaler);
+
+                    // FIXME : why we did that ??
+                    // this is not a good idea to force bounds when rescale = false
+
+                    // set bounds manually for the converted image
+                    // for (int c = 0; c < getSizeC(); c++)
+                    // {
+                    // converted.setComponentBounds(c, boundsDst);
+                    // converted.setComponentUserBounds(c, boundsDst);
+                    // }
+
+                    output.setImage(t, z, converted);
+                }
+            }
+
+            output.setName(source.getName() + " (" + output.getDataType_() + ")");
+        }
+        finally
+        {
+            output.endUpdate();
+        }
+
+        return output;
+    }
+
+    /**
+     * Converts the source sequence to the specified data type.<br>
+     * This method returns a new sequence (the source sequence is not modified).
+     * 
+     * @param source
+     *        Source sequence to convert
+     * @param dataType
+     *        data type wanted.
+     * @param scalers
+     *        scalers for scaling internal data during conversion (1 scaler per channel).<br>
+     *        Can be set to <code>null</code> to avoid value conversion.
+     * @return converted image
+     */
+    public static Sequence convertType(Sequence source, DataType dataType, Scaler[] scalers)
+    {
+        final Sequence output = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        output.beginUpdate();
+        try
+        {
+            for (int t = 0; t < source.getSizeT(); t++)
+            {
+                for (int z = 0; z < source.getSizeZ(); z++)
+                {
+                    final IcyBufferedImage converted = IcyBufferedImageUtil.convertType(source.getImage(t, z),
+                            dataType, scalers);
 
                     // FIXME : why we did that ??
                     // this is not a good idea to force bounds when rescale = false
@@ -1930,8 +1984,7 @@ public class SequenceUtil
     }
 
     /**
-     * @deprecated Use {@link #getSubSequence(Sequence, icy.type.rectangle.Rectangle5D.Integer)}
-     *             instead.
+     * @deprecated Use {@link #getSubSequence(Sequence, icy.type.rectangle.Rectangle5D.Integer)} instead.
      */
     @Deprecated
     public static Sequence getSubSequence(Sequence source, int startX, int startY, int startC, int startZ, int startT,
@@ -1942,8 +1995,7 @@ public class SequenceUtil
     }
 
     /**
-     * @deprecated Use {@link #getSubSequence(Sequence, icy.type.rectangle.Rectangle5D.Integer)}
-     *             instead.
+     * @deprecated Use {@link #getSubSequence(Sequence, icy.type.rectangle.Rectangle5D.Integer)} instead.
      */
     @Deprecated
     public static Sequence getSubSequence(Sequence source, int startX, int startY, int startZ, int startT, int sizeX,
@@ -1953,8 +2005,7 @@ public class SequenceUtil
     }
 
     /**
-     * Creates a new sequence which is a sub part of the source sequence defined by the specified
-     * {@link ROI} bounds.<br>
+     * Creates a new sequence which is a sub part of the source sequence defined by the specified {@link ROI} bounds.<br>
      * 
      * @param source
      *        the source sequence
@@ -2010,8 +2061,7 @@ public class SequenceUtil
     }
 
     /**
-     * Creates a new sequence which is a sub part of the source sequence defined by the specified
-     * {@link ROI} bounds.
+     * Creates a new sequence which is a sub part of the source sequence defined by the specified {@link ROI} bounds.
      */
     public static Sequence getSubSequence(Sequence source, ROI roi)
     {

@@ -102,6 +102,8 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
     @Override
     public void run()
     {
+        // don't spent too much time in EDT
+        ThreadUtil.sleep(10);
         updateDisplay();
     }
 
@@ -119,7 +121,6 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
             @Override
             public void run()
             {
-
                 // position information
                 if ((position != -1d) && (length > 0d))
                 {
@@ -246,13 +247,8 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
     @Override
     public boolean notifyProgress(double position, double length)
     {
-        if ((this.position != position) || (this.length != length))
-        {
-            this.length = length;
-            this.position = position;
-
-            refresh();
-        }
+        setPosition(position);
+        setLength(length);
 
         return true;
     }

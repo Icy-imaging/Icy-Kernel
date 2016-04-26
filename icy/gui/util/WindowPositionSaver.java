@@ -30,11 +30,9 @@ import icy.gui.frame.IcyFrameEvent;
 import icy.gui.main.MainFrame;
 import icy.preferences.IcyPreferences;
 import icy.preferences.XMLPreferences;
-import icy.system.SystemUtil;
 
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -50,8 +48,6 @@ import javax.swing.JFrame;
  */
 public class WindowPositionSaver
 {
-    final private static int DESKTOP_MARGIN = 100;
-
     final private static String ID_EXTERNALIZED = "Externalized";
     final private static String ID_PANELIZED = "Panelized";
 
@@ -80,6 +76,9 @@ public class WindowPositionSaver
     final private JFrame jFrame;
     final private JComponent component;
 
+    final private boolean hasLoc;
+    final private boolean hasDim;
+
     final WindowAdapter windowAdapter;
     final IcyFrameAdapter icyFrameAdapter;
     final ComponentAdapter componentAdapter;
@@ -97,28 +96,15 @@ public class WindowPositionSaver
         this.jFrame = jFrame;
         this.component = component;
 
+        hasLoc = defLoc != null;
+        hasDim = defDim != null;
+
         // directly load location and dimension
-        if (defLoc != null)
+        if (hasLoc)
             loadLocation(defLoc);
-        if (defDim != null)
+        if (hasDim)
             loadDimension(defDim);
         loadState();
-
-        checkPosition();
-
-        // code for save frame informations
-        final Runnable saver = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                if (defLoc != null)
-                    saveLocation();
-                if (defDim != null)
-                    saveDimension();
-                saveState();
-            }
-        };
 
         // keep hard reference on it
         componentAdapter = new ComponentAdapter()
@@ -126,54 +112,31 @@ public class WindowPositionSaver
             @Override
             public void componentResized(ComponentEvent e)
             {
-                if (extPanel != null)
-                {
-                    // event comes from panel itself
-                    if (e.getSource() == extPanel)
-                        saver.run();
-                    else
-                        checkPosition();
-                }
-                else
-                {
-                    checkPosition();
-                    saver.run();
-                }
+                // event comes from panel itself
+                if ((extPanel == null) || (e.getSource() == extPanel))
+                    saveAll();
             }
 
             @Override
             public void componentMoved(ComponentEvent e)
             {
-                if (extPanel != null)
-                {
-                    // event comes from panel itself
-                    if (e.getSource() == extPanel)
-                        saver.run();
-                	// REMOVED: multiple workspace (linux) don't like that
-                    //else
-                      //  checkPosition();
-                }
-                else
-                {
-                	// REMOVED: multiple workspace (linux) don't like that
-                    //checkPosition();
-                	
-                    saver.run();
-                }
+                // event comes from panel itself
+                if ((extPanel == null) || (e.getSource() == extPanel))
+                    saveAll();
             }
 
             @Override
             public void componentShown(ComponentEvent e)
             {
                 // correctly save internalized / externalized state
-                saver.run();
+                saveAll();
             }
 
             @Override
             public void componentHidden(ComponentEvent e)
             {
                 // correctly save internalized / externalized state
-                saver.run();
+                saveAll();
             }
         };
 
@@ -183,7 +146,7 @@ public class WindowPositionSaver
             @Override
             public void windowClosing(WindowEvent e)
             {
-                saver.run();
+                saveAll();
             }
         };
 
@@ -193,7 +156,7 @@ public class WindowPositionSaver
             @Override
             public void icyFrameClosing(IcyFrameEvent e)
             {
-                saver.run();
+                saveAll();
             }
         };
 
@@ -203,7 +166,7 @@ public class WindowPositionSaver
             @Override
             public void stateChanged(ExternalizablePanel source, boolean externalized)
             {
-                saver.run();
+                saveAll();
             }
         };
 
@@ -310,95 +273,103 @@ public class WindowPositionSaver
         this(null, null, null, null, component, key, null, defDim);
     }
 
-    void checkPosition()
+    // void checkPosition()
+    // {
+    // final Rectangle rect;
+    //
+    // ComponentUtil.fixPosition(rect, rect);
+    //
+    // // only for frame
+    // if (mainFrame != null)
+    // ComponentUtil.fixP
+    // rect = mainFrame.getBounds();
+    // else if (icyFrame != null)
+    // rect = icyFrame.getBounds();
+    // // check position only for frame
+    // else if ((extPanel != null) && extPanel.isExternalized())
+    // rect = extPanel.getFrame().getBounds();
+    // else if (jFrame != null)
+    // rect = jFrame.getBounds();
+    // else
+    // return;
+    //
+    // if (fixPosition(rect))
+    // {
+    // if (mainFrame != null)
+    // mainFrame.setBounds(rect);
+    // else if (icyFrame != null)
+    // icyFrame.setBounds(rect);
+    // // check position only for frame
+    // else if ((extPanel != null) && extPanel.isExternalized())
+    // extPanel.getFrame().setBounds(rect);
+    // else if (jFrame != null)
+    // jFrame.setBounds(rect);
+    // }
+    // }
+    //
+    // public static boolean fixPosition(Rectangle rect)
+    // {
+    // Rectangle desktopRect = SystemUtil.getDesktopBounds();
+    // boolean result = false;
+    // int limit;
+    //
+    // limit = (int) (desktopRect.getMaxX() - DESKTOP_MARGIN);
+    // if (rect.x >= limit)
+    // {
+    // rect.x = limit;
+    // result = true;
+    // }
+    // else
+    // {
+    // limit = (int) desktopRect.getMinX();
+    // if (((rect.x + rect.width) - DESKTOP_MARGIN) < limit)
+    // {
+    // rect.x = DESKTOP_MARGIN - rect.width;
+    // result = true;
+    // }
+    // }
+    // limit = (int) (desktopRect.getMaxY() - DESKTOP_MARGIN);
+    // if (rect.y >= limit)
+    // {
+    // rect.y = limit;
+    // result = true;
+    // }
+    // else
+    // {
+    // limit = (int) desktopRect.getMinY();
+    // if (rect.y < limit)
+    // {
+    // rect.y = limit;
+    // result = true;
+    // }
+    // }
+    //
+    // return result;
+    // }
+
+    public XMLPreferences getPreferences()
     {
-        final Rectangle rect;
-
-        // only for frame
-        if (mainFrame != null)
-            rect = mainFrame.getBounds();
-        else if (icyFrame != null)
-            rect = icyFrame.getBounds();
-        // check position only for frame
-        else if ((extPanel != null) && extPanel.isExternalized())
-            rect = extPanel.getFrame().getBounds();
-        else if (jFrame != null)
-            rect = jFrame.getBounds();
-        else
-            return;
-
-        if (fixPosition(rect))
-        {
-            if (mainFrame != null)
-                mainFrame.setBounds(rect);
-            else if (icyFrame != null)
-                icyFrame.setBounds(rect);
-            // check position only for frame
-            else if ((extPanel != null) && extPanel.isExternalized())
-                extPanel.getFrame().setBounds(rect);
-            else if (jFrame != null)
-                jFrame.setBounds(rect);
-        }
+        return preferences;
     }
 
-    boolean fixPosition(Rectangle rect)
+    public void loadLocation(Point defaultPos)
     {
-        Rectangle desktopRect = SystemUtil.getDesktopBounds();
-        boolean result = false;
-        int limit;
+        final int x, y;
 
-        limit = (int) (desktopRect.getMaxX() - DESKTOP_MARGIN);
-        if (rect.x >= limit)
+        if (defaultPos == null)
         {
-            rect.x = limit;
-            result = true;
+            x = 0;
+            y = 0;
         }
         else
         {
-            limit = (int) desktopRect.getMinX();
-            if (((rect.x + rect.width) - DESKTOP_MARGIN) < limit)
-            {
-                rect.x = DESKTOP_MARGIN - rect.width;
-                result = true;
-            }
-        }
-        limit = (int) (desktopRect.getMaxY() - DESKTOP_MARGIN);
-        if (rect.y >= limit)
-        {
-            rect.y = limit;
-            result = true;
-        }
-        else
-        {
-            limit = (int) desktopRect.getMinY();
-            if (rect.y < limit)
-            {
-                rect.y = limit;
-                result = true;
-            }
+            x = defaultPos.x;
+            y = defaultPos.y;
         }
 
-        return result;
-    }
-
-    public void loadLocation(Point defLoc)
-    {
-        final int defX, defY;
-
-        if (defLoc == null)
-        {
-            defX = 0;
-            defY = 0;
-        }
-        else
-        {
-            defX = defLoc.x;
-            defY = defLoc.y;
-        }
-
-        final Point positionC = new Point(preferences.getInt(ID_XC, defX), preferences.getInt(ID_YC, defY));
-        final Point positionI = new Point(preferences.getInt(ID_XI, defX), preferences.getInt(ID_YI, defY));
-        final Point positionE = new Point(preferences.getInt(ID_XE, defX), preferences.getInt(ID_YE, defY));
+        final Point positionC = new Point(preferences.getInt(ID_XC, x), preferences.getInt(ID_YC, y));
+        final Point positionI = new Point(preferences.getInt(ID_XI, x), preferences.getInt(ID_YI, y));
+        final Point positionE = new Point(preferences.getInt(ID_XE, x), preferences.getInt(ID_YE, y));
 
         if (mainFrame != null)
         {
@@ -429,33 +400,28 @@ public class WindowPositionSaver
         }
     }
 
-    public XMLPreferences getPreferences()
+    public void loadDimension(Dimension defaultDim)
     {
-        return preferences;
-    }
+        final int w, h;
 
-    public void loadDimension(Dimension defDim)
-    {
-        final int defW, defH;
-
-        if (defDim == null)
+        if (defaultDim == null)
         {
-            defW = 300;
-            defH = 300;
+            w = 300;
+            h = 300;
         }
         else
         {
-            defW = defDim.width;
-            defH = defDim.height;
+            w = defaultDim.width;
+            h = defaultDim.height;
         }
 
         // minimum size is 10 pixels
-        int widthC = Math.max(preferences.getInt(ID_WC, defW), 10);
-        int heightC = Math.max(preferences.getInt(ID_HC, defH), 10);
-        int widthI = Math.max(preferences.getInt(ID_WI, defW), 10);
-        int heightI = Math.max(preferences.getInt(ID_HI, defH), 10);
-        int widthE = Math.max(preferences.getInt(ID_WE, defW), 10);
-        int heightE = Math.max(preferences.getInt(ID_HE, defH), 10);
+        int widthC = Math.max(preferences.getInt(ID_WC, w), 10);
+        int heightC = Math.max(preferences.getInt(ID_HC, h), 10);
+        int widthI = Math.max(preferences.getInt(ID_WI, w), 10);
+        int heightI = Math.max(preferences.getInt(ID_HI, h), 10);
+        int widthE = Math.max(preferences.getInt(ID_WE, w), 10);
+        int heightE = Math.max(preferences.getInt(ID_HE, h), 10);
 
         final Dimension dimC = new Dimension(widthC, heightC);
         final Dimension dimI = new Dimension(widthI, heightI);
@@ -695,5 +661,14 @@ public class WindowPositionSaver
         {
             preferences.putBoolean(ID_MAXIMIZEDE, ComponentUtil.isMaximized(jFrame));
         }
+    }
+
+    public void saveAll()
+    {
+        if (hasLoc)
+            saveLocation();
+        if (hasDim)
+            saveDimension();
+        saveState();
     }
 }

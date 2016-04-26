@@ -195,6 +195,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                 tmpResults.add(result);
         }
 
+        // use a copy to avoid future concurrent accesses
         results = new ArrayList<SearchResult>(tmpResults);
         consumer.resultsChanged(this);
 
@@ -221,15 +222,15 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
         }
     }
 
-    private boolean ensureOnlineLoaderLoaded()
+    private static boolean ensureOnlineLoaderLoaded()
     {
-        PluginRepositoryLoader.waitBasicLoaded();
+        PluginRepositoryLoader.waitLoaded();
 
         // repository loader failed --> retry once
         if (PluginRepositoryLoader.failed() && NetworkUtil.hasInternetAccess())
         {
             PluginRepositoryLoader.reload();
-            PluginRepositoryLoader.waitBasicLoaded();
+            PluginRepositoryLoader.waitLoaded();
         }
 
         return !PluginRepositoryLoader.failed();

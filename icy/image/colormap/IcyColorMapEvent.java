@@ -18,12 +18,12 @@
  */
 package icy.image.colormap;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @author stephane
  */
-public class IcyColorMapEvent implements EventHierarchicalChecker
+public class IcyColorMapEvent implements CollapsibleEvent
 {
     public enum IcyColorMapEventType
     {
@@ -58,15 +58,33 @@ public class IcyColorMapEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof IcyColorMapEvent)
+        if (equals(event))
         {
-            final IcyColorMapEvent e = (IcyColorMapEvent) event;
+            // nothing to change here
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return colormap.hashCode() ^ type.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyColorMapEvent)
+        {
+            final IcyColorMapEvent e = (IcyColorMapEvent) obj;
 
             return (colormap == e.getColormap()) && (type == e.getType());
         }
 
-        return false;
+        return super.equals(obj);
     }
 }

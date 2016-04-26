@@ -52,7 +52,6 @@ import ij.IJ;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.HeadlessException;
@@ -309,9 +308,17 @@ public class MainFrame extends JRibbonFrame
         // main pane
         mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel, null);
         mainPane.setContinuousLayout(true);
+        mainPane.setOneTouchExpandable(true);
 
-        // take in account the divider and border size
-        lastInspectorWidth = inspector.getPreferredSize().width + 6 + 8;
+        // get saved inspector width
+        lastInspectorWidth = inspector.getPreferredSize().width;
+        // add the divider and border size if inspector was visible
+        if (lastInspectorWidth > 16)
+            lastInspectorWidth += 6 + 8;
+        // just force size for collapsed (divider + minimum border)
+        else
+            lastInspectorWidth = 6 + 4;
+
         if (inspector.isInternalized())
         {
             mainPane.setRightComponent(inspector);
@@ -925,22 +932,44 @@ public class MainFrame extends JRibbonFrame
     }
 
     @Override
-    public void paint(Graphics g)
+    public void reshape(int x, int y, int width, int height)
     {
-        // new size arrives sometime in paint before resize event
-        if (detachedMode)
+        final Rectangle r = new Rectangle(x, y, width, height);
+        final boolean detached;
+
+        // test detached mode by using mainPane parent as resize is called inside setDetachedMode(..) and
+        // detachedMode variable is not yet updated
+        if (mainPane == null)
+            detached = detachedMode;
+        else
+            detached = mainPane.getParent() == null;
+
+        if (detached)
         {
             // fix height
             final int prefH = getPreferredSize().height;
 
-            if (getHeight() > prefH)
-            {
-                setSize(getWidth(), prefH);
-                return;
-            }
+            if (r.height > prefH)
+                r.height = prefH;
         }
 
-        super.paint(g);
+        ComponentUtil.fixPosition(this, r);
+
+        super.reshape(r.x, r.y, r.width, r.height);
     }
 
+//    @Override
+//    public synchronized void setMaximizedBounds(Rectangle bounds)
+//    {
+//        Rectangle bnds = SystemUtil.getScreenBounds(ComponentUtil.getScreen(this), true);
+//
+//        if (bnds.isEmpty())
+//            bnds = bounds;
+//        // at least use the location from original bounds
+//        else if (bounds != null)
+//            bnds.setLocation(bounds.getLocation());
+//        else bnds.setLocation(0, 0);
+//
+//        super.setMaximizedBounds(bnds);
+//    }
 }

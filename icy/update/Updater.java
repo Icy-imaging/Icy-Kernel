@@ -176,8 +176,8 @@ public class Updater
 
         if (document != null)
         {
-            // first we normalize the document
-            document.normalizeDocument();
+            // TODO: check if we can really remove that
+            // document.normalizeDocument();
 
             // get obsoletes node
             final Node obsoletes = XMLUtil.getElement(document.getDocumentElement(), ID_OBSOLETES);
@@ -206,8 +206,8 @@ public class Updater
 
         if (document != null)
         {
-            // first we normalize the document
-            document.normalizeDocument();
+            // TODO: check if we can really remove that
+            // document.normalizeDocument();
 
             // get elements node
             final Node elements = XMLUtil.getElement(document.getDocumentElement(), ID_ELEMENTS);

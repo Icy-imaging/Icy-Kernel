@@ -20,15 +20,18 @@ package icy.image;
 
 import icy.gui.util.FontUtil;
 import icy.network.URLUtil;
+import icy.system.thread.ThreadUtil;
 import icy.util.GraphicsUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -105,6 +108,24 @@ public class ImageUtil
     }
 
     /**
+     * Wait for dimension information of specified image being loaded.
+     * 
+     * @param image
+     *        image we are waiting informations for.
+     */
+    public static void waitImageReady(Image image)
+    {
+        if (image != null)
+        {
+            final long st = System.currentTimeMillis();
+
+            // wait 2 seconds max
+            while ((image.getWidth(null) == -1) && ((System.currentTimeMillis() - st) < 2000))
+                ThreadUtil.sleep(1);
+        }
+    }
+
+    /**
      * Create a 8 bits indexed buffered image from specified <code>IndexColorModel</code><br>
      * and byte array data.
      */
@@ -121,7 +142,7 @@ public class ImageUtil
      */
     public static BufferedImage load(String path, boolean displayError)
     {
-        return loadImage(URLUtil.getURL(path), displayError);
+        return load(URLUtil.getURL(path), displayError);
     }
 
     /**
@@ -129,7 +150,7 @@ public class ImageUtil
      */
     public static BufferedImage load(String path)
     {
-        return loadImage(path, true);
+        return load(path, true);
     }
 
     /**
@@ -154,11 +175,29 @@ public class ImageUtil
     }
 
     /**
+     * Asynchronously load an image from specified url.<br/>
+     * Use {@link #waitImageReady(Image)} to know if width and height property
+     */
+    public static Image loadAsync(URL url)
+    {
+        return Toolkit.getDefaultToolkit().createImage(url);
+    }
+
+    /**
+     * Asynchronously load an image from specified path.<br/>
+     * Use {@link #waitImageReady(Image)} to know if width and height property
+     */
+    public static Image loadAsync(String path)
+    {
+        return Toolkit.getDefaultToolkit().createImage(path);
+    }
+
+    /**
      * Load an image from specified url
      */
-    public static Image load(URL url)
+    public static BufferedImage load(URL url)
     {
-        return loadImage(url, true);
+        return load(url, true);
     }
 
     /**
@@ -216,7 +255,7 @@ public class ImageUtil
      */
     public static BufferedImage load(InputStream input)
     {
-        return loadImage(input, true);
+        return load(input, true);
     }
 
     /**
@@ -360,7 +399,7 @@ public class ImageUtil
     }
 
     /**
-     * Return a BufferedImage from the given Image object.
+     * Return a ARGB BufferedImage from the given Image object.
      * If the image is already a BufferedImage image then it's directly returned
      */
     public static BufferedImage toBufferedImage(Image image)
@@ -368,6 +407,8 @@ public class ImageUtil
         if (image instanceof BufferedImage)
             return (BufferedImage) image;
 
+        // be sure image data are ready
+        waitImageReady(image);
         final BufferedImage bufImage = new BufferedImage(image.getWidth(null), image.getHeight(null),
                 BufferedImage.TYPE_INT_ARGB);
 
@@ -407,6 +448,10 @@ public class ImageUtil
         if (image != null)
         {
             Image current = image;
+
+            // be sure image data are ready
+            waitImageReady(image);
+
             int w = image.getWidth(null);
             int h = image.getHeight(null);
 
@@ -457,13 +502,18 @@ public class ImageUtil
     {
         final BufferedImage result;
 
+        // be sure image data are ready
+        waitImageReady(in);
+
         // no output type specified ? use ARGB
         if (out == null)
             result = new BufferedImage(in.getWidth(null), in.getHeight(null), BufferedImage.TYPE_INT_ARGB);
         else
             result = out;
 
-        result.getGraphics().drawImage(in, 0, 0, null);
+        final Graphics g = result.getGraphics();
+        g.drawImage(in, 0, 0, null);
+        g.dispose();
 
         return result;
     }
@@ -505,8 +555,12 @@ public class ImageUtil
     public static BufferedImage toGray(Image image)
     {
         if (image != null)
+        {
+            // be sure image data are ready
+            waitImageReady(image);
             return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
                     BufferedImage.TYPE_BYTE_GRAY));
+        }
 
         return null;
     }
@@ -517,8 +571,12 @@ public class ImageUtil
     public static BufferedImage toRGBImage(Image image)
     {
         if (image != null)
+        {
+            // be sure image data are ready
+            waitImageReady(image);
             return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
                     BufferedImage.TYPE_INT_RGB));
+        }
 
         return null;
     }
@@ -529,8 +587,12 @@ public class ImageUtil
     public static BufferedImage toARGBImage(Image image)
     {
         if (image != null)
+        {
+            // be sure image data are ready
+            waitImageReady(image);
             return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
                     BufferedImage.TYPE_INT_ARGB));
+        }
 
         return null;
     }
@@ -595,6 +657,9 @@ public class ImageUtil
     {
         if (image != null)
         {
+            // be sure image data are ready
+            waitImageReady(image);
+
             // should be Graphics2D compatible
             final Graphics2D g = (Graphics2D) image.getGraphics();
             final Rectangle rect = new Rectangle(image.getWidth(null), image.getHeight(null));
@@ -625,6 +690,9 @@ public class ImageUtil
 
         if (out == null)
         {
+            // be sure image data are ready
+            waitImageReady(alphaImage);
+
             w = alphaImage.getWidth(null);
             h = alphaImage.getHeight(null);
 
@@ -635,6 +703,9 @@ public class ImageUtil
         }
         else
         {
+            // be sure image data are ready
+            waitImageReady(out);
+
             w = out.getWidth(null);
             h = out.getHeight(null);
 
@@ -650,6 +721,8 @@ public class ImageUtil
         g.setBackground(new Color(0x00000000, true));
         g.clearRect(0, 0, w, h);
 
+        // be sure image data are ready
+        waitImageReady(alphaImage);
         // draw icon
         g.drawImage(alphaImage, 0, 0, null);
 
@@ -686,7 +759,6 @@ public class ImageUtil
      */
     public static void drawTextTopRight(Image image, String text, int size, boolean bold, Color color)
     {
-        final float w = image.getWidth(null);
         final Graphics2D g = (Graphics2D) image.getGraphics();
 
         // prepare setting
@@ -698,6 +770,11 @@ public class ImageUtil
 
         // get string bounds
         final Rectangle2D bounds = GraphicsUtil.getStringBounds(g, text);
+
+        // be sure image data are ready
+        waitImageReady(image);
+
+        final float w = image.getWidth(null);
 
         // draw text
         g.drawString(text, w - ((float) bounds.getWidth()), 0 - (float) bounds.getY());

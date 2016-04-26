@@ -100,6 +100,14 @@ public class BooleanMask5D
      */
     public static BooleanMask5D getUnion(BooleanMask5D mask1, BooleanMask5D mask2)
     {
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask5D();
+
+        if ((mask1 == null) || mask1.isEmpty())
+            return (BooleanMask5D) mask2.clone();
+        if ((mask2 == null) || mask2.isEmpty())
+            return (BooleanMask5D) mask1.clone();
+
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -158,6 +166,9 @@ public class BooleanMask5D
      */
     public static BooleanMask5D getIntersection(BooleanMask5D mask1, BooleanMask5D mask2)
     {
+        if ((mask1 == null) || (mask2 == null))
+            return new BooleanMask5D();
+
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -216,6 +227,14 @@ public class BooleanMask5D
      */
     public static BooleanMask5D getExclusiveUnion(BooleanMask5D mask1, BooleanMask5D mask2)
     {
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask5D();
+
+        if ((mask1 == null) || mask1.isEmpty())
+            return (BooleanMask5D) mask2.clone();
+        if ((mask2 == null) || mask2.isEmpty())
+            return (BooleanMask5D) mask1.clone();
+
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
         if (!bounds.isEmpty())
@@ -274,6 +293,11 @@ public class BooleanMask5D
      */
     public static BooleanMask5D getSubtraction(BooleanMask5D mask1, BooleanMask5D mask2)
     {
+        if (mask1 == null)
+            return new BooleanMask5D();
+        if (mask2 == null)
+            return (BooleanMask5D) mask1.clone();
+
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
         // need to subtract something ?
@@ -312,7 +336,7 @@ public class BooleanMask5D
             return new BooleanMask5D(bounds, mask);
         }
 
-        return new BooleanMask5D();
+        return (BooleanMask5D) mask1.clone();
     }
 
     /**
@@ -960,7 +984,11 @@ public class BooleanMask5D
         }
     }
 
-    int[] toInt5D(int[] source4D, int c)
+    /**
+     * Transforms the specified 4D coordinates int array [x,y,z,t] in 5D coordinates int array [x,y,z,t,c] with the
+     * specified C value.
+     */
+    public static int[] toInt5D(int[] source4D, int c)
     {
         final int[] result = new int[(source4D.length * 5) / 4];
 

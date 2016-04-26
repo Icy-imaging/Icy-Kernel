@@ -1086,7 +1086,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
                 progressFrame.setMessage("Waiting for plugin loader to find plugins...");
 
             // wait while online loader is ready
-            PluginRepositoryLoader.waitBasicLoaded();
+            PluginRepositoryLoader.waitLoaded();
 
             if (progressFrame != null)
                 progressFrame.setMessage("Installing workspace '" + name + "' : searching for installed plugins...");
@@ -1124,7 +1124,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
             // install missing plugins (no confirmation needed)
             for (PluginDescriptor plugin : pluginsToInstall)
-                PluginInstaller.install(plugin, false);
+                PluginInstaller.install(plugin, progressFrame != null);
 
             // wait installation completion
             PluginInstaller.waitInstall();

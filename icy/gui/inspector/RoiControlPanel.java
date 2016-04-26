@@ -746,6 +746,10 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final boolean editable = !readOnly;
         final int dim = (roi != null) ? roi.getDimension() : 0;
 
+        // avoid retaining ROIS when sequence is closed
+        if (!hasSequence)
+            modifiedRois = null;
+
         // wait a bit to avoid eating too much time with refresh
         ThreadUtil.sleep(1);
 
@@ -754,28 +758,31 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             @Override
             public void run()
             {
-                modifyingRoi.acquireUninterruptibly();
-                try
+                // modifyingRoi.acquireUninterruptibly();
+                if (modifyingRoi.tryAcquire())
                 {
-                    if (sequence != null)
+                    try
                     {
-                        ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(sequence
-                                .getSizeZ() - 1));
-                        ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(sequence
-                                .getSizeT() - 1));
-                        ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(sequence
-                                .getSizeC() - 1));
+                        if (sequence != null)
+                        {
+                            ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(sequence
+                                    .getSizeZ() - 1));
+                            ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(sequence
+                                    .getSizeT() - 1));
+                            ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(sequence
+                                    .getSizeC() - 1));
+                        }
+                        else
+                        {
+                            ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                            ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                            ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                        }
                     }
-                    else
+                    finally
                     {
-                        ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(0));
-                        ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(0));
-                        ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                        modifyingRoi.release();
                     }
-                }
-                finally
-                {
-                    modifyingRoi.release();
                 }
 
                 posXField.setEnabled(singleSelect && canSetPosition && editable);
@@ -889,7 +896,10 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             @Override
             public void run()
             {
-                modifyingRoi.acquireUninterruptibly();
+                // modifyingRoi.acquireUninterruptibly();
+                if (!modifyingRoi.tryAcquire())
+                    return;
+
                 try
                 {
                     if (roi != null)

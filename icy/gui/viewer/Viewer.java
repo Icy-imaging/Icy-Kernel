@@ -31,6 +31,7 @@ import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
+import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
@@ -51,6 +52,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
+import icy.system.IcyHandledException;
 import icy.system.thread.ThreadUtil;
 import icy.util.Random;
 import icy.util.StringUtil;
@@ -520,22 +522,25 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
     void updateToolbarComponents()
     {
-        toolBar.removeAll();
+        if (toolBar != null)
+        {
+            toolBar.removeAll();
 
-        toolBar.add(lockComboBox);
-        toolBar.addSeparator();
-        toolBar.add(canvasComboBox);
-        toolBar.addSeparator();
-        toolBar.add(layersEnabledButton);
-        if (canvas != null)
-            canvas.customizeToolbar(toolBar);
-        toolBar.add(Box.createHorizontalGlue());
-        toolBar.addSeparator();
-        toolBar.add(screenShotButton);
-        toolBar.add(screenShotAlternateButton);
-        toolBar.addSeparator();
-        toolBar.add(duplicateButton);
-        toolBar.add(switchStateButton);
+            toolBar.add(lockComboBox);
+            toolBar.addSeparator();
+            toolBar.add(canvasComboBox);
+            toolBar.addSeparator();
+            toolBar.add(layersEnabledButton);
+            if (canvas != null)
+                canvas.customizeToolbar(toolBar);
+            toolBar.add(Box.createHorizontalGlue());
+            toolBar.addSeparator();
+            toolBar.add(screenShotButton);
+            toolBar.add(screenShotAlternateButton);
+            toolBar.addSeparator();
+            toolBar.add(duplicateButton);
+            toolBar.add(switchStateButton);
+        }
     }
 
     void refreshLockCombo()
@@ -666,8 +671,34 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         {
             try
             {
-                // create new canvas
-                final IcyCanvas newCanvas = IcyCanvas.create(pluginClassName, this);
+                IcyCanvas newCanvas;
+
+                try
+                {
+                    // try to create the new canvas
+                    newCanvas = IcyCanvas.create(pluginClassName, this);
+                }
+                catch (Throwable e)
+                {
+                	if (e instanceof IcyHandledException)
+                	{
+                		// just ignore
+                	}
+                	else if (e instanceof UnsupportedOperationException)
+                    {
+                        MessageDialog.showDialog(e.getLocalizedMessage(), MessageDialog.ERROR_MESSAGE);
+                    }
+                    else if (e instanceof Exception)
+                    {
+                        IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '"
+                                + pluginClassName + "' class --> cannot create the canvas.", e), true);
+                    }
+                    else
+                        IcyExceptionHandler.handleException(e, true);
+
+                    // create a new instance of current canvas
+                    newCanvas = IcyCanvas.create(canvas.getClass().getName(), this);
+                }
 
                 final int saveX;
                 final int saveY;
@@ -715,13 +746,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                 // canvas set :)
                 canvas = newCanvas;
+
             }
-            catch (ClassCastException e)
-            {
-                IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + pluginClassName
-                        + "' class --> cannot create the canvas.", e), true);
-            }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 IcyExceptionHandler.handleException(e, true);
             }

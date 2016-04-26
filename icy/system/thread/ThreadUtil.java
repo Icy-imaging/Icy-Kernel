@@ -93,7 +93,7 @@ public class ThreadUtil
     {
         if (SystemUtil.is32bits())
         {
-            int wantedThread = SystemUtil.getNumberOfCPUs() * 2;
+            int wantedThread = SystemUtil.getNumberOfCPUs();
             wantedThread = Math.max(wantedThread, 2);
 
             // 32 bits JVM, limit the number of thread
@@ -103,7 +103,7 @@ public class ThreadUtil
         }
         else
         {
-            int wantedThread = SystemUtil.getNumberOfCPUs() * 2;
+            int wantedThread = SystemUtil.getNumberOfCPUs();
             wantedThread = Math.max(wantedThread, 4);
 
             // 64 bits JVM, can have higher limit
@@ -120,10 +120,10 @@ public class ThreadUtil
         {
             // keep these thread active
             instanceProcessors[i] = new InstanceProcessor(NORM_PRIORITY);
-            instanceProcessors[i].setThreadName("Instance processor (normal priority)");
+            instanceProcessors[i].setThreadName("Instance processor - thread " + i);
             instanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
             bgInstanceProcessors[i] = new InstanceProcessor(MIN_PRIORITY);
-            bgInstanceProcessors[i].setThreadName("Instance processor (low priority)");
+            bgInstanceProcessors[i].setThreadName("Instance processor (low priority) - thread " + i);
             bgInstanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
         }
     }
@@ -290,9 +290,7 @@ public class ThreadUtil
             if (e.getTargetException() instanceof Exception)
                 throw (Exception) e.getTargetException();
 
-            // not an exception --> handle it
-            IcyExceptionHandler.showErrorMessage(e, true);
-            return null;
+            throw new Exception(e.getTargetException());
         }
 
         try
@@ -304,9 +302,7 @@ public class ThreadUtil
             if (e.getCause() instanceof Exception)
                 throw (Exception) e.getCause();
 
-            // not an exception --> handle it
-            IcyExceptionHandler.showErrorMessage(e, true);
-            return null;
+            throw new Exception(e.getCause());
         }
     }
 
@@ -416,8 +412,7 @@ public class ThreadUtil
     }
 
     /**
-     * @deprecated Use {@link #runSingle(Runnable)} instead and {@link #invokeNow(Runnable)}
-     *             separately.
+     * @deprecated Use {@link #runSingle(Runnable)} instead and {@link #invokeNow(Runnable)} separately.
      * @see #bgRunSingle(Runnable)
      */
     @Deprecated

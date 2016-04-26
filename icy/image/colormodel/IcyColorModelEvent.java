@@ -18,12 +18,12 @@
  */
 package icy.image.colormodel;
 
-import icy.common.EventHierarchicalChecker;
+import icy.common.CollapsibleEvent;
 
 /**
  * @author stephane
  */
-public class IcyColorModelEvent implements EventHierarchicalChecker
+public class IcyColorModelEvent implements CollapsibleEvent
 {
     public enum IcyColorModelEventType
     {
@@ -32,7 +32,7 @@ public class IcyColorModelEvent implements EventHierarchicalChecker
 
     private final IcyColorModel colorModel;
     private final IcyColorModelEventType type;
-    private final int component;
+    private int component;
 
     /**
      * @param colorModel
@@ -72,16 +72,38 @@ public class IcyColorModelEvent implements EventHierarchicalChecker
     }
 
     @Override
-    public boolean isEventRedundantWith(EventHierarchicalChecker event)
+    public boolean collapse(CollapsibleEvent event)
     {
-        if (event instanceof IcyColorModelEvent)
+        if (equals(event))
         {
             final IcyColorModelEvent e = (IcyColorModelEvent) event;
 
-            return (type == e.getType()) && ((component == -1) || (component == e.getComponent()));
+            // set all component
+            if (e.getComponent() != component)
+                component = -1;
+
+            return true;
         }
 
         return false;
     }
 
+    @Override
+    public int hashCode()
+    {
+        return colorModel.hashCode() ^ type.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyColorModelEvent)
+        {
+            final IcyColorModelEvent e = (IcyColorModelEvent) obj;
+
+            return (colorModel == e.getColorModel()) && (type == e.getType());
+        }
+
+        return super.equals(obj);
+    }
 }

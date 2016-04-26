@@ -47,7 +47,7 @@ public class UByteColorModel extends IcyColorModel
         for (int comp = 0; comp < numComponents; comp++)
             scaledData[comp] = (int) colormapScalers[comp].scale(pix[comp] & 0xFF);
 
-        return colorSpace.toRGBUnnorm(scaledData);
+        return getIcyColorSpace().toRGBUnnorm(scaledData);
     }
 
     /**

@@ -50,8 +50,8 @@ public class XMLPersistentHelper
         if (document == null)
             return false;
 
-        // first we normalize the document
-        document.normalizeDocument();
+        // TODO: check if we can really avoid it (it slowdown loading process)
+        // document.normalizeDocument();
 
         // load from root node
         return persistent.loadFromXML(document.getDocumentElement());
@@ -82,8 +82,8 @@ public class XMLPersistentHelper
         if (document == null)
             return false;
 
-        // first we normalize the document
-        document.normalizeDocument();
+        // TODO: check if it's ok to do it only on file save operation
+        // document.normalizeDocument();
 
         // save to root node
         return persistent.saveToXML(document.getDocumentElement());

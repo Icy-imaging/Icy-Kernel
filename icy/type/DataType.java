@@ -37,30 +37,30 @@ public enum DataType
 {
     // UBYTE (unsigned 8 bits integer)
     UBYTE(Byte.SIZE, true, false, 0d, MathUtil.POW2_8_DOUBLE - 1d, Byte.TYPE, DataBuffer.TYPE_BYTE, PixelType.UINT8,
-            "unsigned byte (8 bits)", "unsigned byte"),
+            "unsigned byte (8 bits)", "8 bits"),
     // BYTE (signed 8 bits integer)
     BYTE(Byte.SIZE, true, true, Byte.MIN_VALUE, Byte.MAX_VALUE, Byte.TYPE, DataBuffer.TYPE_BYTE, PixelType.INT8,
-            "signed byte (8 bits)", "byte"),
+            "signed byte (8 bits)", "8 bits (signed)"),
     // USHORT (unsigned 16 bits integer)
     USHORT(Short.SIZE, true, false, 0d, MathUtil.POW2_16_DOUBLE - 1d, Short.TYPE, DataBuffer.TYPE_USHORT,
-            PixelType.UINT16, "unsigned short (16 bits)", "unsigned short"),
+            PixelType.UINT16, "unsigned short (16 bits)", "16 bits"),
     // SHORT (signed 16 bits integer)
     SHORT(Short.SIZE, true, true, Short.MIN_VALUE, Short.MAX_VALUE, Short.TYPE, DataBuffer.TYPE_SHORT, PixelType.INT16,
-            "signed short (16 bits)", "short"),
+            "signed short (16 bits)", "16 bits (signed)"),
     // UINT (unsigned 32bits integer)
     UINT(Integer.SIZE, true, false, 0d, MathUtil.POW2_32_DOUBLE - 1d, Integer.TYPE, DataBuffer.TYPE_INT,
-            PixelType.UINT32, "unsigned int (32 bits)", "unsigned int"),
+            PixelType.UINT32, "unsigned int (32 bits)", "32 bits"),
     // INT (signed 32 bits integer)
     INT(Integer.SIZE, true, true, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.TYPE, DataBuffer.TYPE_INT,
-            PixelType.INT32, "signed int (32 bits)", "int"),
+            PixelType.INT32, "signed int (32 bits)", "32 bits (signed)"),
     // ULONG (unsigned 64 bits integer)
     // WARNING : double data type loss information here for min/max
     ULONG(Long.SIZE, true, false, 0d, MathUtil.POW2_64_DOUBLE - 1d, Long.TYPE, DataBuffer.TYPE_UNDEFINED, null,
-            "unsigned long (64 bits)", "unsigned long"),
+            "unsigned long (64 bits)", "64 bits"),
     // LONG (signed 64 bits integer)
     // WARNING : double data type loss information here for min/max
     LONG(Long.SIZE, true, true, Long.MIN_VALUE, Long.MAX_VALUE, Long.TYPE, DataBuffer.TYPE_UNDEFINED, null,
-            "signed long (64 bits)", "long"),
+            "signed long (64 bits)", "64 bits (signed)"),
     // FLOAT (signed 32 bits float)
     FLOAT(Float.SIZE, false, true, -Float.MAX_VALUE, Float.MAX_VALUE, Float.TYPE, DataBuffer.TYPE_FLOAT,
             PixelType.FLOAT, "float (32 bits)", "float"),
@@ -68,6 +68,10 @@ public enum DataType
     DOUBLE(Double.SIZE, false, true, -Double.MAX_VALUE, Double.MAX_VALUE, Double.TYPE, DataBuffer.TYPE_DOUBLE,
             PixelType.DOUBLE, "double (64 bits)", "double"),
     // UNDEFINED (undefined data type)
+    /**
+     * @deprecated Use <code>null</code> instance instead
+     */
+    @SuppressWarnings("dep-ann")
     UNDEFINED(0, true, false, 0d, 0d, null, DataBuffer.TYPE_UNDEFINED, null, "undefined", "undefined");
 
     /**
@@ -122,13 +126,12 @@ public enum DataType
             if (dataType.toString(false).equals(value) || dataType.toString(true).equals(value))
                 return dataType;
 
-        return UNDEFINED;
+        return null;
     }
 
     /**
      * Return a DataType from old dataType.<br>
-     * ex : <code>getDataTypeFromOldDataType(TypeUtil.BYTE, false)</code> will return
-     * <code>DataType.UBYTE</code>
+     * ex : <code>getDataTypeFromOldDataType(TypeUtil.BYTE, false)</code> will return <code>DataType.UBYTE</code>
      */
     public static DataType getDataType(int oldDataType, boolean signed)
     {
@@ -151,7 +154,7 @@ public enum DataType
             case TypeUtil.TYPE_DOUBLE:
                 return DOUBLE;
             default:
-                return UNDEFINED;
+                return null;
         }
     }
 
@@ -182,13 +185,12 @@ public enum DataType
         if (classType.equals(java.lang.Double.TYPE))
             return DataType.DOUBLE;
 
-        return DataType.UNDEFINED;
+        return null;
     }
 
     /**
      * Return a DataType from the specified VTK type.<br>
-     * ex : <code>getDataTypeFromVTKType(VtkUtil.VTK_INT)</code> will return
-     * <code>DataType.INT</code>
+     * ex : <code>getDataTypeFromVTKType(VtkUtil.VTK_INT)</code> will return <code>DataType.INT</code>
      */
     public static DataType getDataTypeFromVTKType(int vtkType)
     {
@@ -216,14 +218,13 @@ public enum DataType
             case VtkUtil.VTK_LONG:
                 return LONG;
             default:
-                return UNDEFINED;
+                return null;
         }
     }
 
     /**
      * Return a DataType from the specified DataBuffer type.<br>
-     * ex : <code>getDataTypeFromDataBufferType(DataBuffer.TYPE_BYTE)</code> will return
-     * <code>DataType.UBYTE</code>
+     * ex : <code>getDataTypeFromDataBufferType(DataBuffer.TYPE_BYTE)</code> will return <code>DataType.UBYTE</code>
      */
     public static DataType getDataTypeFromDataBufferType(int dataBufferType)
     {
@@ -244,14 +245,13 @@ public enum DataType
             case DataBuffer.TYPE_DOUBLE:
                 return DOUBLE;
             default:
-                return UNDEFINED;
+                return null;
         }
     }
 
     /**
      * Return a DataType from the specified FormatTools type.<br>
-     * ex : <code>getDataTypeFromFormatToolsType(FormatTools.UINT8)</code> will return
-     * <code>DataType.UBYTE</code>
+     * ex : <code>getDataTypeFromFormatToolsType(FormatTools.UINT8)</code> will return <code>DataType.UBYTE</code>
      */
     public static DataType getDataTypeFromFormatToolsType(int type)
     {
@@ -274,14 +274,13 @@ public enum DataType
             case FormatTools.DOUBLE:
                 return DOUBLE;
             default:
-                return UNDEFINED;
+                return null;
         }
     }
 
     /**
      * Return a DataType from the specified PixelType.<br>
-     * ex : <code>getDataTypeFromPixelType(FormatTools.UINT8)</code> will return
-     * <code>DataType.UBYTE</code>
+     * ex : <code>getDataTypeFromPixelType(FormatTools.UINT8)</code> will return <code>DataType.UBYTE</code>
      */
     public static DataType getDataTypeFromPixelType(PixelType type)
     {
@@ -304,7 +303,7 @@ public enum DataType
             case DOUBLE:
                 return DOUBLE;
             default:
-                return UNDEFINED;
+                return null;
         }
     }
 
@@ -346,7 +345,6 @@ public enum DataType
      * {@link DataType#LONG}<br>
      * {@link DataType#FLOAT}<br>
      * {@link DataType#DOUBLE}<br>
-     * {@link DataType#UNDEFINED}<br>
      */
     public DataType getJavaType()
     {

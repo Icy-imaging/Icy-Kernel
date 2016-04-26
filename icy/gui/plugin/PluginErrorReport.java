@@ -90,7 +90,7 @@ public class PluginErrorReport
                             + "' has crashed, searching for update...");
 
                     // wait for online basic info loaded
-                    PluginRepositoryLoader.waitBasicLoaded();
+                    PluginRepositoryLoader.waitLoaded();
 
                     PluginDescriptor onlinePlugin = null;
 
@@ -108,7 +108,7 @@ public class PluginErrorReport
                     // update found and not canceled
                     if (!info.isCancelRequested() && (onlinePlugin != null))
                     {
-                        PluginInstaller.install(onlinePlugin, false);
+                        PluginInstaller.install(onlinePlugin, true);
                         new AnnounceFrame(
                                 "The plugin crashed but a new version has been found, try it again when installation is done",
                                 10);

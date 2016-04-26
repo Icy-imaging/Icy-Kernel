@@ -291,7 +291,7 @@ public class ClassUtil
     }
 
     /**
-     * Return true if clazz extends baseClass
+     * Return true if clazz is the same class or extends baseClass
      */
     public static boolean isSubClass(Class<?> clazz, Class<?> baseClass)
     {

@@ -3,6 +3,7 @@
  */
 package plugins.kernel.roi.descriptor.measure;
 
+import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
@@ -69,51 +70,48 @@ public class ROIPerimeterDescriptor extends ROIDescriptor
     /**
      * Computes and returns the perimeter expressed in the unit of the descriptor (see {@link #getUnit(Sequence)}) for
      * the specified ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+     * It may thrown an <code>UnsupportedOperationException</code> if the operation is not supported for that ROI.
      * 
      * @param roi
      *        the ROI on which we want to compute the perimeter
      * @param sequence
-     *        an optional sequence where the pixel size can be retrieved
-     * @return the perimeter
+     *        the sequence from which the pixel size can be retrieved
+     * @return the perimeter expressed in the unit of the descriptor (see {@link #getUnit(Sequence)})
      * @throws UnsupportedOperationException
      *         if the operation is not supported for this ROI
      */
     public static double computePerimeter(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
         if (!(roi instanceof ROI2D))
-            throw new UnsupportedOperationException("Perimeter not supported for ROI" + roi.getDimension() + "D !");
+            throw new UnsupportedOperationException("Perimeter not supported on " + roi.getDimension() + "D ROI !");
+        if (sequence == null)
+            throw new UnsupportedOperationException("Cannot compute Perimeter with null Sequence parameter !");
 
-        return computePerimeter(ROIContourDescriptor.computeContour(roi), roi, sequence);
+        final UnitPrefix bestUnit = sequence.getBestPixelSizeUnit(2, 1);
+        final double perimeter = ((ROI2D) roi).getPerimeter(sequence);
+
+        return UnitUtil.getValueInUnit(perimeter, UnitPrefix.MICRO, bestUnit, 1);
     }
 
-    /**
-     * Computes and returns the perimeter from a given number of contour points expressed in the
-     * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
-     * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
-     * 
-     * @param contourPoints
-     *        the number of contour points (override the ROI value)
-     * @param roi
-     *        the ROI we want to compute the perimeter
-     * @param sequence
-     *        the input sequence used to retrieve operation unit by using pixel size
-     *        information.
-     * @return the perimeter
-     * @throws UnsupportedOperationException
-     *         if the operation is not supported for this ROI
-     */
-    public static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
-            throws UnsupportedOperationException
-    {
-        try
-        {
-            return ROIContourDescriptor.computeContour(contourPoints, roi, sequence, 2);
-        }
-        catch (UnsupportedOperationException e)
-        {
-            throw new UnsupportedOperationException("Can't process '" + ID + "' calculation on the ROI: "
-                    + roi.getName());
-        }
-    }
+    // /**
+    // * Computes and returns the perimeter from a given number of contour points expressed in the
+    // * unit of the descriptor (see {@link #getUnit(Sequence)}) for the specified sequence and ROI.<br>
+    // * It may returns <code>Double.Nan</code> if the operation is not supported for that ROI.
+    // *
+    // * @param contourPoints
+    // * the number of contour points (override the ROI value)
+    // * @param roi
+    // * the ROI we want to compute the perimeter
+    // * @param sequence
+    // * the input sequence used to retrieve operation unit by using pixel size
+    // * information.
+    // * @return the perimeter
+    // * @throws UnsupportedOperationException
+    // * if the operation is not supported for this ROI
+    // */
+    // static double computePerimeter(double contourPoints, ROI roi, Sequence sequence)
+    // throws UnsupportedOperationException
+    // {
+    // return ROIContourDescriptor.computeContour(contourPoints, roi, sequence, 2);
+    // }
 }

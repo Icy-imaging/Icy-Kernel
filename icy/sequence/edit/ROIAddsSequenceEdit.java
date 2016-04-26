@@ -62,5 +62,4 @@ public class ROIAddsSequenceEdit extends AbstractROIsSequenceEdit
             sequence.endUpdate();
         }
     }
-
 }

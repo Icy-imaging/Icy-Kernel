@@ -34,6 +34,7 @@ import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -107,8 +108,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     }
 
     /**
-     * Returns <code>true</code> if the ROI directly uses the 3D slice color draw property and
-     * <code>false</code> if it uses the global 4D ROI color draw property.
+     * Returns <code>true</code> if the ROI directly uses the 3D slice color draw property and <code>false</code> if it
+     * uses the global 4D ROI color draw property.
      */
     public boolean getUseChildColor()
     {
@@ -116,8 +117,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     }
 
     /**
-     * Set to <code>true</code> if you want to directly use the 3D slice color draw property and
-     * <code>false</code> to keep the global 4D ROI color draw property.
+     * Set to <code>true</code> if you want to directly use the 3D slice color draw property and <code>false</code> to
+     * keep the global 4D ROI color draw property.
      * 
      * @see #setColor(int, Color)
      */
@@ -363,12 +364,12 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     {
         return slices.isEmpty();
     }
-    
+
     /**
      * @return The size of this ROI stack along T.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
-     *         of this ROI, but doesn't guarantee that all slices in-between exist (
-     *         {@link #getSlice(int)} may still return <code>null</code>.<br>
+     *         of this ROI, but doesn't guarantee that all slices in-between exist ( {@link #getSlice(int)} may still
+     *         return <code>null</code>.<br>
      */
     public int getSizeT()
     {
@@ -421,7 +422,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         slices.put(Integer.valueOf(t), roi3d);
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(true);
     }
 
     /**
@@ -440,7 +441,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         }
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(true);
 
         return result;
     }
@@ -472,7 +473,9 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         switch (event.getType())
         {
             case ROI_CHANGED:
-                roiChanged();
+                // position change of a slice can change global bounds --> transform to 'content changed' event type
+                roiChanged(true);
+//                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:
@@ -557,7 +560,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     @Override
     public boolean contains(double x, double y, double z, double t)
     {
-        final R roi3d = getSlice((int)Math.floor(t));
+        final R roi3d = getSlice((int) Math.floor(t));
 
         if (roi3d != null)
             return roi3d.contains(x, y, z);
@@ -614,17 +617,17 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         return false;
     }
 
+    // default approximated implementation for ROI4DStack
     @Override
     public double computeNumberOfContourPoints()
     {
-        // 3D edge points = first slice points + inter slices edge points + last slice points
-        // TODO: only approximation, fix this to use real 4D edge point
-        double perimeter = 0;
+        // 4D contour points = first slice points + inter slices contour points + last slice points
+        double result = 0;
 
         if (slices.size() <= 2)
         {
             for (R slice : slices.values())
-                perimeter += slice.getNumberOfPoints();
+                result += slice.getNumberOfPoints();
         }
         else
         {
@@ -633,15 +636,15 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
             final Integer firstKey = firstEntry.getKey();
             final Integer lastKey = lastEntry.getKey();
 
-            perimeter = firstEntry.getValue().getNumberOfPoints();
+            result = firstEntry.getValue().getNumberOfPoints();
 
             for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                perimeter += slice.getNumberOfContourPoints();
+                result += slice.getNumberOfContourPoints();
 
-            perimeter += lastEntry.getValue().getNumberOfPoints();
+            result += lastEntry.getValue().getNumberOfPoints();
         }
 
-        return perimeter;
+        return result;
     }
 
     @Override
@@ -654,7 +657,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
 
         return volume;
     }
-    
+
     @Override
     public boolean canTranslate()
     {
@@ -691,7 +694,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         }
 
         // notify ROI changed
-        roiChanged();
+        roiChanged(false);
     }
 
     @Override
@@ -718,6 +721,10 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
             {
                 modifyingSlice.release();
             }
+
+            // notify ROI changed because we modified slice 'internally'
+            if ((dx != 0d) || (dy != 0d) || (dz != 0d))
+                roiChanged(false);
         }
         finally
         {

@@ -83,7 +83,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     {
         if (plugin != null)
         {
-            if (!PluginRepositoryLoader.isBasicLoaded())
+            if (!PluginRepositoryLoader.isLoaded())
                 return PluginLocalState.CHECKING_UPDATE;
 
             if ((PluginInstaller.isDesinstallingPlugin(plugin)))

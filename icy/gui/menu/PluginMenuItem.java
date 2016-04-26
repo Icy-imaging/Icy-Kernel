@@ -21,10 +21,12 @@ package icy.gui.menu;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.resource.ResourceUtil;
+import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 
 /**
@@ -36,7 +38,7 @@ public class PluginMenuItem extends JMenuItem implements ActionListener
 
     private static final int ICON_SIZE = 24;
 
-    private final PluginDescriptor pluginDescriptor;
+    final PluginDescriptor pluginDescriptor;
 
     public PluginMenuItem(PluginDescriptor pluginDescriptor)
     {
@@ -44,8 +46,17 @@ public class PluginMenuItem extends JMenuItem implements ActionListener
 
         this.pluginDescriptor = pluginDescriptor;
 
-        if (pluginDescriptor.getIcon() != null)
-            setIcon(ResourceUtil.scaleIcon(pluginDescriptor.getIcon(), ICON_SIZE));
+        // do it in background as loading icon can take sometime
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final ImageIcon icon = PluginMenuItem.this.pluginDescriptor.getIcon();
+                if (icon != null)
+                    setIcon(ResourceUtil.scaleIcon(icon, ICON_SIZE));
+            }
+        });
 
         addActionListener(this);
     }
