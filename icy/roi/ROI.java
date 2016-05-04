@@ -2047,15 +2047,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final Rectangle5D.Integer bounds = getBounds5D().toInteger();
         final Rectangle5D.Integer roiBounds = roi.getBounds5D().toInteger();
 
-        // --> trivial optimization
-        if (bounds.isEmpty() || roiBounds.isEmpty())
+        // trivial optimization
+        if (bounds.isEmpty())
             return false;
+
+        // special case of ROI Point --> just test position if contained
+        if (roiBounds.isEmpty())
+            return contains(roiBounds.getPosition());
 
         // simple bounds contains test
         if (bounds.contains(roiBounds))
         {
-            final Rectangle5D.Integer intersection = bounds.createIntersection(roiBounds).toInteger();
-            final Rectangle intersection2D = (Rectangle) intersection.toRectangle2D();
+            final Rectangle5D.Integer containedBounds = bounds.createIntersection(roiBounds).toInteger();
             int minZ;
             int maxZ;
             int minT;
@@ -2064,36 +2067,38 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             int maxC;
 
             // special infinite case
-            if (intersection.isInfiniteZ())
+            if (containedBounds.isInfiniteZ())
             {
                 minZ = -1;
                 maxZ = -1;
             }
             else
             {
-                minZ = (int) intersection.getMinZ();
-                maxZ = (int) intersection.getMaxZ();
+                minZ = (int) containedBounds.getMinZ();
+                maxZ = (int) containedBounds.getMaxZ();
             }
-            if (intersection.isInfiniteT())
+            if (containedBounds.isInfiniteT())
             {
                 minT = -1;
                 maxT = -1;
             }
             else
             {
-                minT = (int) intersection.getMinT();
-                maxT = (int) intersection.getMaxT();
+                minT = (int) containedBounds.getMinT();
+                maxT = (int) containedBounds.getMaxT();
             }
-            if (intersection.isInfiniteC())
+            if (containedBounds.isInfiniteC())
             {
                 minC = -1;
                 maxC = -1;
             }
             else
             {
-                minC = (int) intersection.getMinC();
-                maxC = (int) intersection.getMaxC();
+                minC = (int) containedBounds.getMinC();
+                maxC = (int) containedBounds.getMaxC();
             }
+            
+            final Rectangle containedBounds2D = (Rectangle) containedBounds.toRectangle2D();
 
             // slow method using the boolean mask
             for (int c = minC; c <= maxC; c++)
@@ -2106,20 +2111,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                         BooleanMask2D roiMask;
 
                         // take content first
-                        mask = new BooleanMask2D(intersection2D, getBooleanMask2D(intersection2D, z, t, c, false));
-                        roiMask = new BooleanMask2D(intersection2D,
-                                roi.getBooleanMask2D(intersection2D, z, t, c, false));
+                        mask = new BooleanMask2D(containedBounds2D, getBooleanMask2D(containedBounds2D, z, t, c, false));
+                        roiMask = new BooleanMask2D(containedBounds2D,
+                                roi.getBooleanMask2D(containedBounds2D, z, t, c, false));
 
                         // test first only on content
-                        if (!roiMask.isEmpty() && !mask.contains(roiMask))
+                        if (!mask.contains(roiMask))
                             return false;
 
                         // take content and edge
-                        mask = new BooleanMask2D(intersection2D, getBooleanMask2D(intersection2D, z, t, c, true));
-                        roiMask = new BooleanMask2D(intersection2D, roi.getBooleanMask2D(intersection2D, z, t, c, true));
+                        mask = new BooleanMask2D(containedBounds2D, getBooleanMask2D(containedBounds2D, z, t, c, true));
+                        roiMask = new BooleanMask2D(containedBounds2D, roi.getBooleanMask2D(containedBounds2D, z, t, c, true));
 
                         // then test on content and edge
-                        if (!roiMask.isEmpty() && !mask.contains(roiMask))
+                        if (!mask.contains(roiMask))
                             return false;
                     }
                 }
@@ -2194,58 +2199,54 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final Rectangle5D.Integer roiBounds = roi.getBounds5D().toInteger();
         final Rectangle5D.Integer intersection = bounds.createIntersection(roiBounds).toInteger();
 
-        // intersection not empty
-        if (!intersection.isEmpty())
+        int minZ;
+        int maxZ;
+        int minT;
+        int maxT;
+        int minC;
+        int maxC;
+
+        // special infinite case
+        if (intersection.isInfiniteZ())
         {
-            int minZ;
-            int maxZ;
-            int minT;
-            int maxT;
-            int minC;
-            int maxC;
+            minZ = -1;
+            maxZ = -1;
+        }
+        else
+        {
+            minZ = (int) intersection.getMinZ();
+            maxZ = (int) intersection.getMaxZ();
+        }
+        if (intersection.isInfiniteT())
+        {
+            minT = -1;
+            maxT = -1;
+        }
+        else
+        {
+            minT = (int) intersection.getMinT();
+            maxT = (int) intersection.getMaxT();
+        }
+        if (intersection.isInfiniteC())
+        {
+            minC = -1;
+            maxC = -1;
+        }
+        else
+        {
+            minC = (int) intersection.getMinC();
+            maxC = (int) intersection.getMaxC();
+        }
 
-            // special infinite case
-            if (intersection.isInfiniteZ())
+        // slow method using the boolean mask
+        for (int c = minC; c <= maxC; c++)
+        {
+            for (int t = minT; t <= maxT; t++)
             {
-                minZ = -1;
-                maxZ = -1;
-            }
-            else
-            {
-                minZ = (int) intersection.getMinZ();
-                maxZ = (int) intersection.getMaxZ();
-            }
-            if (intersection.isInfiniteT())
-            {
-                minT = -1;
-                maxT = -1;
-            }
-            else
-            {
-                minT = (int) intersection.getMinT();
-                maxT = (int) intersection.getMaxT();
-            }
-            if (intersection.isInfiniteC())
-            {
-                minC = -1;
-                maxC = -1;
-            }
-            else
-            {
-                minC = (int) intersection.getMinC();
-                maxC = (int) intersection.getMaxC();
-            }
-
-            // slow method using the boolean mask
-            for (int c = minC; c <= maxC; c++)
-            {
-                for (int t = minT; t <= maxT; t++)
+                for (int z = minZ; z <= maxZ; z++)
                 {
-                    for (int z = minZ; z <= maxZ; z++)
-                    {
-                        if (getBooleanMask2D(z, t, c, true).intersects(roi.getBooleanMask2D(z, t, c, true)))
-                            return true;
-                    }
+                    if (getBooleanMask2D(z, t, c, true).intersects(roi.getBooleanMask2D(z, t, c, true)))
+                        return true;
                 }
             }
         }

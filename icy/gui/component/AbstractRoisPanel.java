@@ -19,6 +19,8 @@
 package icy.gui.component;
 
 import icy.action.RoiActions;
+import icy.gui.component.AbstractRoisPanel.ColumnInfo;
+import icy.gui.component.AbstractRoisPanel.DescriptorResult;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.renderer.ImageTableCellRenderer;
@@ -27,6 +29,9 @@ import icy.gui.main.ActiveSequenceListener;
 import icy.gui.util.GuiUtil;
 import icy.gui.util.LookAndFeelUtil;
 import icy.math.MathUtil;
+import icy.plugin.PluginLoader;
+import icy.plugin.PluginLoader.PluginLoaderEvent;
+import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
@@ -126,7 +131,7 @@ import plugins.kernel.roi.descriptor.property.ROISizeZDescriptor;
  * Abstract ROI panel component
  */
 public abstract class AbstractRoisPanel extends ExternalizablePanel implements ActiveSequenceListener,
-        TextChangeListener, ListSelectionListener
+        TextChangeListener, ListSelectionListener, PluginLoaderListener
 {
     /**
      * 
@@ -365,6 +370,9 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         buildActionMap();
 
         refreshRois();
+
+        // listen plugin loader changes
+        PluginLoader.addListener(this);
     }
 
     protected void initialize()
@@ -483,12 +491,16 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
      */
     protected ROIDescriptor getROIDescriptor(String descriptorId)
     {
+        final ROIDescriptor[] descriptors;
+
         synchronized (descriptorMap)
         {
-            for (ROIDescriptor descriptor : descriptorMap.keySet())
-                if (descriptor.getId().equals(descriptorId))
-                    return descriptor;
+            descriptors = descriptorMap.keySet().toArray(new ROIDescriptor[descriptorMap.size()]);
         }
+
+        for (ROIDescriptor descriptor : descriptors)
+            if (descriptor.getId().equals(descriptorId))
+                return descriptor;
 
         return null;
     }
@@ -1511,17 +1523,17 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 // don't use break, we also need to send the event to descriptors
 
             case SEQUENCE_DATA:
-                final Object[] allRoiResults;
+                final ROIResults[] allRoiResults;
 
                 // get all ROI results
                 synchronized (roiResultsMap)
                 {
-                    allRoiResults = roiResultsMap.values().toArray();
+                    allRoiResults = roiResultsMap.values().toArray(new ROIResults[roiResultsMap.size()]);
                 }
 
                 // notify ROI results that sequence has changed
-                for (Object roiResults : allRoiResults)
-                    ((ROIResults) roiResults).sequenceChanged(event);
+                for (ROIResults roiResults : allRoiResults)
+                    roiResults.sequenceChanged(event);
 
                 // refresh table data
                 refreshTableData();
@@ -1532,6 +1544,12 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 refreshColumnInfoList();
                 break;
         }
+    }
+
+    @Override
+    public void pluginLoaderChanged(PluginLoaderEvent e)
+    {
+        refreshDescriptorList();
     }
 
     protected class ROITableModel extends AbstractTableModel
@@ -1825,26 +1843,23 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             {
                 case ROI_CHANGED:
                 case PROPERTY_CHANGED:
-                    final Object[] keys;
+                    final Object[] entries;
 
                     synchronized (descriptorResults)
                     {
-                        keys = descriptorResults.keySet().toArray();
+                        entries = descriptorResults.entrySet().toArray();
                     }
 
-                    for (Object key : keys)
+                    for (Object entryObj : entries)
                     {
-                        final ROIDescriptor descriptor = ((ColumnInfo) key).descriptor;
+                        final Entry<ColumnInfo, DescriptorResult> entry = (Entry<ColumnInfo, DescriptorResult>) entryObj; 
+                        final ColumnInfo key = entry.getKey();
+                        final ROIDescriptor descriptor = key.descriptor;
 
                         // need to recompute this descriptor ?
                         if (descriptor.needRecompute(event))
                         {
-                            final DescriptorResult result;
-
-                            synchronized (descriptorResults)
-                            {
-                                result = descriptorResults.get(key);
-                            }
+                            final DescriptorResult result = entry.getValue();
 
                             // mark as outdated
                             if (result != null)
@@ -1877,26 +1892,23 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
          */
         public void sequenceChanged(SequenceEvent event)
         {
-            final Object[] keys;
+            final Object[] entries;
 
             synchronized (descriptorResults)
             {
-                keys = descriptorResults.keySet().toArray();
+                entries = descriptorResults.entrySet().toArray();
             }
 
-            for (Object key : keys)
+            for (Object entryObj : entries)
             {
-                final ROIDescriptor descriptor = ((ColumnInfo) key).descriptor;
+                final Entry<ColumnInfo, DescriptorResult> entry = (Entry<ColumnInfo, DescriptorResult>) entryObj; 
+                final ColumnInfo key = entry.getKey();
+                final ROIDescriptor descriptor = key.descriptor;
 
                 // need to recompute this descriptor ?
                 if (descriptor.needRecompute(event))
                 {
-                    final DescriptorResult result;
-
-                    synchronized (descriptorResults)
-                    {
-                        result = descriptorResults.get(key);
-                    }
+                    final DescriptorResult result = entry.getValue();
 
                     // mark as outdated
                     if (result != null)
@@ -2015,17 +2027,15 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         protected void computeROIResults(ROIResults roiResults, Sequence seq)
         {
             final Map<ColumnInfo, DescriptorResult> results = roiResults.descriptorResults;
-            final Object[] keys;
+            final ColumnInfo[] columnInfos;
 
             synchronized (results)
             {
-                keys = results.keySet().toArray();
+                columnInfos = results.keySet().toArray(new ColumnInfo[results.size()]);
             }
 
-            for (Object key : keys)
+            for (ColumnInfo columnInfo : columnInfos)
             {
-                final ColumnInfo columnInfo = (ColumnInfo) key;
-
                 // only compute a specific kind of descriptor
                 if (columnInfo.getDescriptorType() == type)
                     AbstractRoisPanel.this.computeROIResults(roiResults, seq, columnInfo);
@@ -2617,8 +2627,9 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             }
             catch (Exception e)
             {
-                System.err.println("ROI table column sort failed:");
-                System.err.println(e.getMessage());
+                // ignore this...
+//                System.err.println("ROI table column sort failed:");
+//                System.err.println(e.getMessage());
             }
         }
 

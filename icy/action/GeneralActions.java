@@ -364,7 +364,6 @@ public class GeneralActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            // open browser on help page
             if (Audit.isUserLinked())
             {
                 // ask for confirmation

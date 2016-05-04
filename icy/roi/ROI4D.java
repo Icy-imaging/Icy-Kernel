@@ -88,12 +88,38 @@ public abstract class ROI4D extends ROI
     }
 
     /**
+     * Returns true if specified ROI is on the same [C] position than current ROI.
+     * 
+     * @param shouldContain
+     *        if <code>true</code> then current ROI should "contains" specified ROI position [C]
+     */
+    protected boolean onSamePos(ROI4D roi, boolean shouldContain)
+    {
+        final int c = getC();
+        final int roiC = roi.getC();
+
+        // same position ?
+        if (shouldContain)
+        {
+            if ((c != -1) && (c != roiC))
+                return false;
+        }
+        else
+        {
+            if ((c != -1) && (roiC != -1) && (c != roiC))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Tests if a specified {@link Point4D} is inside the ROI.
      * 
      * @param p
      *        the specified <code>Point4D</code> to be tested
-     * @return <code>true</code> if the specified <code>Point3D</code> is inside the boundary of the
-     *         <code>ROI</code>; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point3D</code> is inside the boundary of the <code>ROI</code>;
+     *         <code>false</code> otherwise.
      */
     public boolean contains(Point4D p)
     {
@@ -101,23 +127,23 @@ public abstract class ROI4D extends ROI
     }
 
     /**
-     * Tests if the interior of the <code>ROI</code> entirely contains the specified
-     * <code>Rectangle4D</code>. The {@code ROI.contains()} method allows a implementation to
+     * Tests if the interior of the <code>ROI</code> entirely contains the specified <code>Rectangle4D</code>. The
+     * {@code ROI.contains()} method allows a implementation to
      * conservatively return {@code false} when:
      * <ul>
      * <li>the <code>intersect</code> method returns <code>true</code> and
      * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the
      * <code>Rectangle3D</code> are prohibitively expensive.
      * </ul>
-     * This means that for some ROIs this method might return {@code false} even though the
-     * {@code ROI} contains the {@code Rectangle4D}.
+     * This means that for some ROIs this method might return {@code false} even though the {@code ROI} contains the
+     * {@code Rectangle4D}.
      * 
      * @param r
      *        The specified <code>Rectangle4D</code>
-     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
-     *         <code>Rectangle4D</code>; <code>false</code> otherwise or, if the <code>ROI</code>
-     *         contains the <code>Rectangle4D</code> and the <code>intersects</code> method returns
-     *         <code>true</code> and the containment calculations would be too expensive to perform.
+     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the <code>Rectangle4D</code>;
+     *         <code>false</code> otherwise or, if the <code>ROI</code> contains the <code>Rectangle4D</code> and the
+     *         <code>intersects</code> method returns <code>true</code> and the containment calculations would be too
+     *         expensive to perform.
      * @see #contains(double, double, double, double, double, double, double, double)
      */
     public boolean contains(Rectangle4D r)
@@ -136,8 +162,8 @@ public abstract class ROI4D extends ROI
      *        the specified Z coordinate to be tested
      * @param t
      *        the specified T coordinate to be tested
-     * @return <code>true</code> if the specified 4D coordinates are inside the <code>ROI</code>
-     *         boundary; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified 4D coordinates are inside the <code>ROI</code> boundary;
+     *         <code>false</code> otherwise.
      */
     public abstract boolean contains(double x, double y, double z, double t);
 
@@ -146,15 +172,15 @@ public abstract class ROI4D extends ROI
      * coordinates that lie inside the rectangular area must lie within the <code>ROI</code> for the
      * entire rectangular area to be considered contained within the <code>ROI</code>.
      * <p>
-     * The {@code ROI.contains()} method allows a {@code ROI} implementation to conservatively
-     * return {@code false} when:
+     * The {@code ROI.contains()} method allows a {@code ROI} implementation to conservatively return {@code false}
+     * when:
      * <ul>
      * <li>the <code>intersect</code> method returns <code>true</code> and
-     * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the
-     * rectangular area are prohibitively expensive.
+     * <li>the calculations to determine whether or not the <code>ROI</code> entirely contains the rectangular area are
+     * prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code false} even though the
-     * {@code ROI} contains the rectangular area.
+     * This means that for some {@code ROIs} this method might return {@code false} even though the {@code ROI} contains
+     * the rectangular area.
      * 
      * @param x
      *        the X coordinate of the minimum corner position of the specified rectangular area
@@ -173,9 +199,9 @@ public abstract class ROI4D extends ROI
      * @param sizeT
      *        size for T dimension of the specified rectangular area
      * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
-     *         specified 4D rectangular area; <code>false</code> otherwise or, if the
-     *         <code>ROI</code> contains the 4D rectangular area and the <code>intersects</code>
-     *         method returns <code>true</code> and the containment calculations would be too
+     *         specified 4D rectangular area; <code>false</code> otherwise or, if the <code>ROI</code> contains the 4D
+     *         rectangular area and the <code>intersects</code> method returns <code>true</code> and the containment
+     *         calculations would be too
      *         expensive to perform.
      */
     public abstract boolean contains(double x, double y, double z, double t, double sizeX, double sizeY, double sizeZ,
@@ -218,13 +244,37 @@ public abstract class ROI4D extends ROI
         if (roi instanceof ROI4D)
         {
             final ROI4D roi4d = (ROI4D) roi;
-            final int c = getC();
-            final boolean cok;
 
-            // same position ?
-            cok = (c == -1) || (c == roi4d.getC());
+            if (onSamePos(roi4d, true))
+            {
+                // special case of ROI Point
+                if (roi4d.isEmpty())
+                    return contains(roi4d.getPosition4D());
 
-            return cok && getBooleanMask(false).contains(roi4d.getBooleanMask(false));
+                BooleanMask4D mask;
+                BooleanMask4D roiMask;
+
+                // take content first
+                mask = getBooleanMask(false);
+                roiMask = roi4d.getBooleanMask(false);
+
+                // test first only on content
+                if (!mask.contains(roiMask))
+                    return false;
+
+                // take content and edge
+                mask = getBooleanMask(true);
+                roiMask = roi4d.getBooleanMask(true);
+
+                // then test on content and edge
+                if (!mask.contains(roiMask))
+                    return false;
+
+                // contained
+                return true;
+            }
+
+            return false;
         }
 
         // use default implementation
@@ -232,23 +282,21 @@ public abstract class ROI4D extends ROI
     }
 
     /**
-     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
-     * <code>Rectangle4D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
-     * implementation to conservatively return {@code true} when:
+     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified <code>Rectangle4D</code>.
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the <code>Rectangle4D</code> and the <code>ROI</code>
-     * intersect, but
+     * <li>there is a high probability that the <code>Rectangle4D</code> and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * {@code Rectangle4D} does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the {@code Rectangle4D}
+     * does not intersect the {@code ROI}.
      * 
      * @param r
      *        the specified <code>Rectangle4D</code>
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         specified <code>Rectangle4D</code> intersect, or are both highly likely to intersect
-     *         and intersection calculations would be too expensive to perform; <code>false</code>
-     *         otherwise.
+     *         and intersection calculations would be too expensive to perform; <code>false</code> otherwise.
      * @see #intersects(double, double, double,double, double, double, double, double)
      */
     public boolean intersects(Rectangle4D r)
@@ -259,19 +307,18 @@ public abstract class ROI4D extends ROI
 
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
-     * 4D rectangular area. The 4D rectangular area is considered to intersect the <code>ROI</code>
-     * if any point is contained in both the interior of the <code>ROI</code> and the specified
+     * 4D rectangular area. The 4D rectangular area is considered to intersect the <code>ROI</code> if any point is
+     * contained in both the interior of the <code>ROI</code> and the specified
      * rectangular area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
-     * return {@code true} when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the 4D rectangular area and the <code>ROI</code>
-     * intersect, but
+     * <li>there is a high probability that the 4D rectangular area and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * 4D rectangular area does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the 4D rectangular area
+     * does not intersect the {@code ROI}.
      * 
      * @param x
      *        the X coordinate of the minimum corner position of the specified rectangular area
@@ -324,14 +371,9 @@ public abstract class ROI4D extends ROI
         if (roi instanceof ROI4D)
         {
             final ROI4D roi4d = (ROI4D) roi;
-            final int c = getC();
-            final boolean cok;
 
-            // can intersect ?
-            cok = (c == -1) || (c == roi4d.getC()) || (roi4d.getC() == -1);
-
-            // same position ?
-            return cok && getBooleanMask(true).intersects(roi4d.getBooleanMask(true));
+            if (onSamePos(roi4d, false))
+                return getBooleanMask(true).intersects(roi4d.getBooleanMask(true));
         }
 
         // use default implementation
@@ -391,8 +433,7 @@ public abstract class ROI4D extends ROI
      * returned {@link Rectangle4D} is the smallest bounding box that encloses the <code>ROI</code>,
      * only that the <code>ROI</code> lies entirely within the indicated <code>Rectangle4D</code>.
      * 
-     * @return an instance of <code>Rectangle4D</code> that is a bounding box of the
-     *         <code>ROI</code>.
+     * @return an instance of <code>Rectangle4D</code> that is a bounding box of the <code>ROI</code>.
      */
     public Rectangle4D getBounds4D()
     {
@@ -431,8 +472,8 @@ public abstract class ROI4D extends ROI
 
     /**
      * Set the <code>ROI</code> 4D bounds.<br>
-     * Note that not all ROI supports bounds modification and you should call
-     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * Note that not all ROI supports bounds modification and you should call {@link #canSetBounds()} first to test if
+     * the operation is supported.<br>
      * 
      * @param bounds
      *        new ROI 4D bounds
@@ -471,8 +512,8 @@ public abstract class ROI4D extends ROI
 
     /**
      * Set the <code>ROI</code> 4D position.<br>
-     * Note that not all ROI supports position modification and you should call
-     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * Note that not all ROI supports position modification and you should call {@link #canSetPosition()} first to test
+     * if the operation is supported.<br>
      * 
      * @param position
      *        new ROI 4D position
@@ -516,8 +557,7 @@ public abstract class ROI4D extends ROI
 
     /**
      * Translate the ROI position by the specified delta X/Y/Z/T.<br>
-     * Note that not all ROI support this operation so you should test it by calling
-     * {@link #canTranslate()} first.
+     * Note that not all ROI support this operation so you should test it by calling {@link #canTranslate()} first.
      * 
      * @param dx
      *        translation value to apply on X dimension

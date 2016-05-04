@@ -555,6 +555,44 @@ public abstract class ROI2D extends ROI
     }
 
     /**
+     * Returns true if specified ROI is on the same [Z, T, C] position than current ROI.
+     * 
+     * @param shouldContain
+     *        if <code>true</code> then current ROI should "contains" specified ROI position [Z, T, C]
+     */
+    protected boolean onSamePos(ROI2D roi, boolean shouldContain)
+    {
+        final int z = getZ();
+        final int t = getT();
+        final int c = getC();
+        final int roiZ = roi.getZ();
+        final int roiT = roi.getT();
+        final int roiC = roi.getC();
+
+        // same position ?
+        if (shouldContain)
+        {
+            if ((z != -1) && (z != roiZ))
+                return false;
+            if ((t != -1) && (t != roiT))
+                return false;
+            if ((c != -1) && (c != roiC))
+                return false;
+        }
+        else
+        {
+            if ((z != -1) && (roiZ != -1) && (z != roiZ))
+                return false;
+            if ((t != -1) && (roiT != -1) && (t != roiT))
+                return false;
+            if ((c != -1) && (roiC != -1) && (c != roiC))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Tests if a specified {@link Point2D} is inside the ROI.
      * 
      * @param p
@@ -681,6 +719,53 @@ public abstract class ROI2D extends ROI
         return zok && tok && cok && contains(x, y, sizeX, sizeY);
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean contains(ROI roi)
+    {
+        if (roi instanceof ROI2D)
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            if (onSamePos(roi2d, true))
+            {
+                // special case of ROI Point
+                if (roi2d.isEmpty())
+                    return contains(roi2d.getPosition2D());
+
+                BooleanMask2D mask;
+                BooleanMask2D roiMask;
+
+                // take content first
+                mask = getBooleanMask(false);
+                roiMask = roi2d.getBooleanMask(false);
+
+                // test first only on content
+                if (!mask.contains(roiMask))
+                    return false;
+
+                // take content and edge
+                mask = getBooleanMask(true);
+                roiMask = roi2d.getBooleanMask(true);
+
+                // then test on content and edge
+                if (!mask.contains(roiMask))
+                    return false;
+
+                // contained
+                return true;
+            }
+
+            return false;
+        }
+
+        // use default implementation
+        return super.contains(roi);
+    }
+
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified <code>Rectangle2D</code>.
      * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
@@ -759,6 +844,25 @@ public abstract class ROI2D extends ROI
             cok = ((c + sizeC) > getC()) && (c < (getC() + 1d));
 
         return intersects(x, y, sizeX, sizeY) && zok && tok && cok;
+    }
+
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and may be slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean intersects(ROI roi)
+    {
+        if (roi instanceof ROI2D)
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            if (onSamePos(roi2d, false))
+                return getBooleanMask(true).intersects(roi2d.getBooleanMask(true));
+        }
+
+        // use default implementation
+        return super.intersects(roi);
     }
 
     /**

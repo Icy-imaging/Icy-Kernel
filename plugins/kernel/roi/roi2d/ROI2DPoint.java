@@ -349,6 +349,16 @@ public class ROI2DPoint extends ROI2DShape
     {
         return false;
     }
+    
+    @Override
+    public boolean intersects(ROI r)
+    {
+        // special case of ROI2DPoint
+        if (r instanceof ROI2DPoint)
+            return onSamePos(((ROI2DPoint) r), false) && ((ROI2DPoint) r).getPoint().equals(getPoint());
+        
+        return super.intersects(r);
+    }
 
     /**
      * roi changed

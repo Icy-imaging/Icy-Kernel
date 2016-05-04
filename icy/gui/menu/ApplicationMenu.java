@@ -194,6 +194,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 {
                     final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
 
+                    button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
                     {
                         @Override
@@ -250,6 +251,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 {
                     final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
 
+                    button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
                     {
                         @Override
