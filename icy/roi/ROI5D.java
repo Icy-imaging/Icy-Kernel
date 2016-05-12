@@ -151,8 +151,7 @@ public abstract class ROI5D extends ROI
 
     /**
      * Translate the ROI position by the specified delta X/Y/Z/T.<br>
-     * Note that not all ROI support this operation so you should test it by calling
-     * {@link #canTranslate()} first.
+     * Note that not all ROI support this operation so you should test it by calling {@link #canTranslate()} first.
      * 
      * @param dx
      *        translation value to apply on X dimension
@@ -180,10 +179,38 @@ public abstract class ROI5D extends ROI
     public boolean contains(ROI roi)
     {
         if (roi instanceof ROI5D)
-            return getBooleanMask(false).contains(((ROI5D) roi).getBooleanMask(false));
+        {
+            final ROI5D roi5d = (ROI5D) roi;
 
-        // do it the other way
-        return roi.intersects(this);
+            // special case of ROI Point
+            if (roi5d.isEmpty())
+                return contains(roi5d.getPosition5D());
+
+            BooleanMask5D mask;
+            BooleanMask5D roiMask;
+
+            // take content first
+            mask = getBooleanMask(false);
+            roiMask = roi5d.getBooleanMask(false);
+
+            // test first only on content
+            if (!mask.contains(roiMask))
+                return false;
+
+            // take content and edge
+            mask = getBooleanMask(true);
+            roiMask = roi5d.getBooleanMask(true);
+
+            // then test on content and edge
+            if (!mask.contains(roiMask))
+                return false;
+
+            // contained
+            return true;
+        }
+
+        // use default implementation
+        return super.contains(roi);
     }
 
     /*
@@ -196,8 +223,8 @@ public abstract class ROI5D extends ROI
         if (roi instanceof ROI5D)
             return getBooleanMask(true).intersects(((ROI5D) roi).getBooleanMask(true));
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.intersects(roi);
     }
 
     @Override

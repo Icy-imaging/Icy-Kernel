@@ -54,17 +54,24 @@ import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.system.IcyHandledException;
 import icy.system.thread.ThreadUtil;
+import icy.util.GraphicsUtil;
 import icy.util.Random;
 import icy.util.StringUtil;
 
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -89,6 +96,48 @@ import javax.swing.event.EventListenerList;
  */
 public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener, PluginLoaderListener
 {
+    private class ViewerMainPanel extends JPanel
+    {
+        public ViewerMainPanel()
+        {
+            super();
+        }
+
+        public void drawTextCenter(Graphics2D g, String text, float alpha)
+        {
+            final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
+            final int w = (int) rect.getWidth();
+            final int h = (int) rect.getHeight();
+            final int x = (getWidth() - (w + 8 + 2)) / 2;
+            final int y = (getHeight() - (h + 8 + 2)) / 2;
+
+            g.setColor(Color.gray);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g.fillRoundRect(x, y, w + 8, h + 8, 8, 8);
+
+            g.setColor(Color.white);
+            g.drawString(text, x + 4, y + 2 + h);
+        }
+
+        @Override
+        public void paint(Graphics g)
+        {
+            // currently modifying canvas ?
+            super.paint(g);
+
+            // display a message
+            if (settingCanvas)
+            {
+                final Graphics2D g2 = (Graphics2D) g.create();
+
+                g2.setFont(new Font("Arial", Font.BOLD, 16));
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                drawTextCenter(g2, "Loading canvas...", 0.8f);
+                g2.dispose();
+            }
+        }
+    }
+
     /**
      * associated LUT
      */
@@ -96,7 +145,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     /**
      * associated canvas
      */
-    IcyCanvas canvas;
+    private IcyCanvas canvas;
     /**
      * associated sequence
      */
@@ -109,7 +158,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      * GUI
      */
     private JToolBar toolBar;
-    private JPanel mainPanel;
+    private ViewerMainPanel mainPanel;
     private LUTViewer lutViewer;
 
     JComboBox canvasComboBox;
@@ -124,7 +173,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      * internals
      */
     boolean initialized;
-    final Runnable lutUpdater;
+    private final Runnable lutUpdater;
+    boolean settingCanvas;
 
     public Viewer(Sequence sequence, boolean visible)
     {
@@ -140,6 +190,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         lut = null;
         lutViewer = null;
         initialized = false;
+        settingCanvas = false;
 
         lutUpdater = new Runnable()
         {
@@ -169,7 +220,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             }
         };
 
-        mainPanel = new JPanel();
+        mainPanel = new ViewerMainPanel();
+        mainPanel.setLayout(new BorderLayout());
 
         // set menu directly in system menu so we don't need a extra MenuBar
         setSystemMenuCallback(new MenuCallback()
@@ -183,8 +235,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // build tool bar
         buildToolBar();
-
-        mainPanel.setLayout(new BorderLayout());
 
         // create a new compatible LUT
         final LUT lut = sequence.createCompatibleLUT();
@@ -673,6 +723,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             {
                 IcyCanvas newCanvas;
 
+                settingCanvas = true;
+                // show loading message
+                mainPanel.paintImmediately(mainPanel.getBounds());
                 try
                 {
                     // try to create the new canvas
@@ -680,11 +733,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 }
                 catch (Throwable e)
                 {
-                	if (e instanceof IcyHandledException)
-                	{
-                		// just ignore
-                	}
-                	else if (e instanceof UnsupportedOperationException)
+                    if (e instanceof IcyHandledException)
+                    {
+                        // just ignore
+                    }
+                    else if (e instanceof UnsupportedOperationException)
                     {
                         MessageDialog.showDialog(e.getLocalizedMessage(), MessageDialog.ERROR_MESSAGE);
                     }
@@ -698,6 +751,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                     // create a new instance of current canvas
                     newCanvas = IcyCanvas.create(canvas.getClass().getName(), this);
+                }
+                finally
+                {
+                    settingCanvas = false;
                 }
 
                 final int saveX;
@@ -746,7 +803,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                 // canvas set :)
                 canvas = newCanvas;
-
             }
             catch (Throwable e)
             {

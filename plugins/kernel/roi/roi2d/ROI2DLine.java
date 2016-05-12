@@ -258,6 +258,19 @@ public class ROI2DLine extends ROI2DShape
     }
 
     @Override
+    public boolean intersects(ROI r)
+    {
+        // special case of ROI2DLine
+        if (r instanceof ROI2DLine)
+            return onSamePos(((ROI2DLine) r), false) && ((ROI2DLine) r).getLine().intersectsLine(getLine());
+        // special case of ROI2DRectangle
+        if (r instanceof ROI2DRectangle)
+            return onSamePos(((ROI2DRectangle) r), false) && ((ROI2DRectangle) r).getRectangle().intersectsLine(getLine());
+
+        return super.intersects(r);
+    }
+
+    @Override
     public boolean loadFromXML(Node node)
     {
         beginUpdate();

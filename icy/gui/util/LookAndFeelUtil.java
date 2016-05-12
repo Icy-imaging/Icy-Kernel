@@ -425,7 +425,7 @@ public class LookAndFeelUtil
 
     public static SubstanceColorScheme getEnabledColorScheme(DecorationAreaType d)
     {
-        return getCurrentSkin().getDisabledColorScheme(d);
+        return getCurrentSkin().getEnabledColorScheme(d);
     }
 
     public static SubstanceSkin getSkin()
@@ -525,17 +525,25 @@ public class LookAndFeelUtil
      */
     public static Color getForeground(Component c)
     {
-        final SubstanceColorScheme colorScheme;
+        SubstanceColorScheme colorScheme;
 
-        if (c.isEnabled())
+        if (c == null)
+            colorScheme = getEnabledColorScheme(DecorationAreaType.GENERAL);
+        else if (c.isEnabled())
             colorScheme = getEnabledColorScheme(c);
         else
             colorScheme = getDisabledColorScheme(c);
 
+        if (colorScheme == null)
+            getEnabledColorScheme(DecorationAreaType.GENERAL);
+
         if (colorScheme != null)
             return new ColorUIResource(colorScheme.getForegroundColor());
 
-        return c.getForeground();
+        if (c != null)
+            return c.getForeground();
+
+        return Color.white;
     }
 
     /**
@@ -543,17 +551,25 @@ public class LookAndFeelUtil
      */
     public static Color getSelectedForeground(Component c)
     {
-        final SubstanceColorScheme colorScheme;
+        SubstanceColorScheme colorScheme;
 
-        if (c.isEnabled())
+        if (c == null)
+            colorScheme = getEnabledColorScheme(DecorationAreaType.GENERAL);
+        else if (c.isEnabled())
             colorScheme = getEnabledColorScheme(c);
         else
             colorScheme = getDisabledColorScheme(c);
 
+        if (colorScheme == null)
+            getEnabledColorScheme(DecorationAreaType.GENERAL);
+
         if (colorScheme != null)
             return new ColorUIResource(colorScheme.getSelectionForegroundColor());
 
-        return c.getForeground();
+        if (c != null)
+            return c.getForeground();
+
+        return Color.gray;
     }
 
     /**
@@ -561,17 +577,25 @@ public class LookAndFeelUtil
      */
     public static Color getBackground(Component c)
     {
-        final SubstanceColorScheme colorScheme;
+        SubstanceColorScheme colorScheme;
 
-        if (c.isEnabled())
+        if (c == null)
+            colorScheme = getEnabledColorScheme(DecorationAreaType.GENERAL);
+        else if (c.isEnabled())
             colorScheme = getEnabledColorScheme(c);
         else
             colorScheme = getDisabledColorScheme(c);
 
+        if (colorScheme == null)
+            getEnabledColorScheme(DecorationAreaType.GENERAL);
+
         if (colorScheme != null)
             return new ColorUIResource(colorScheme.getBackgroundFillColor());
 
-        return c.getBackground();
+        if (c != null)
+            return c.getBackground();
+
+        return Color.lightGray;
     }
 
     /**
@@ -579,17 +603,25 @@ public class LookAndFeelUtil
      */
     public static Color getSelectedBackground(Component c)
     {
-        final SubstanceColorScheme colorScheme;
+        SubstanceColorScheme colorScheme;
 
-        if (c.isEnabled())
+        if (c == null)
+            colorScheme = getEnabledColorScheme(DecorationAreaType.GENERAL);
+        else if (c.isEnabled())
             colorScheme = getEnabledColorScheme(c);
         else
             colorScheme = getDisabledColorScheme(c);
 
+        if (colorScheme == null)
+            getEnabledColorScheme(DecorationAreaType.GENERAL);
+
         if (colorScheme != null)
             return new ColorUIResource(colorScheme.getSelectionBackgroundColor());
 
-        return c.getBackground();
+        if (c != null)
+            return c.getBackground();
+
+        return Color.darkGray;
     }
 
     public static SubstanceTitlePane getTitlePane(Window window)

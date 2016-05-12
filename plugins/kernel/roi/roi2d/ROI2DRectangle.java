@@ -19,6 +19,7 @@
 package plugins.kernel.roi.roi2d;
 
 import icy.resource.ResourceUtil;
+import icy.roi.ROI;
 import icy.type.point.Point5D;
 
 import java.awt.geom.Point2D;
@@ -103,6 +104,39 @@ public class ROI2DRectangle extends ROI2DRectShape
     public void setRectangle(Rectangle2D rectangle)
     {
         setBounds2D(rectangle);
+    }
+
+    @Override
+    public boolean contains(ROI roi)
+    {
+        // special case of ROI2DPoint
+        if (roi instanceof ROI2DPoint)
+            return onSamePos(((ROI2DPoint) roi), true) && contains(((ROI2DPoint) roi).getPoint());
+        // special case of ROI2DLine
+        if (roi instanceof ROI2DLine)
+            return onSamePos(((ROI2DLine) roi), true) && contains(((ROI2DLine) roi).getBounds2D());
+        // special case of ROI2DRectangle
+        if (roi instanceof ROI2DRectangle)
+            return onSamePos(((ROI2DRectangle) roi), true) && contains(((ROI2DRectangle) roi).getRectangle());
+
+        return super.contains(roi);
+    }
+
+    @Override
+    public boolean intersects(ROI roi)
+    {
+        // special case of ROI2DPoint
+        if (roi instanceof ROI2DPoint)
+            return onSamePos(((ROI2DPoint) roi), false) && contains(((ROI2DPoint) roi).getPoint());
+        // special case of ROI2DLine
+        if (roi instanceof ROI2DLine)
+            return onSamePos(((ROI2DLine) roi), false) && ((ROI2DLine) roi).getLine().intersects(getRectangle());
+        // special case of ROI2DRectangle
+        if (roi instanceof ROI2DRectangle)
+            return onSamePos(((ROI2DRectangle) roi), false)
+                    && ((ROI2DRectangle) roi).getRectangle().intersects(getRectangle());
+
+        return super.intersects(roi);
     }
 
     @Override

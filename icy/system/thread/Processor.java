@@ -60,16 +60,12 @@ public class Processor extends ThreadPoolExecutor
     protected class ProcessorThreadFactory implements ThreadFactory
     {
         String name;
-        int threadCount;
-        final boolean showNumber;
 
-        public ProcessorThreadFactory(String name, boolean showNumber)
+        public ProcessorThreadFactory(String name)
         {
             super();
 
             setName(name);
-            threadCount = 0;
-            this.showNumber = showNumber;
         }
 
         public String getName()
@@ -86,9 +82,6 @@ public class Processor extends ThreadPoolExecutor
         {
             String result = name;
 
-            if (showNumber)
-                result += " - thread " + threadCount;
-
             return result;
         }
 
@@ -98,8 +91,6 @@ public class Processor extends ThreadPoolExecutor
             final Thread result = new Thread(r, getThreadName());
 
             result.setPriority(priority);
-
-            threadCount++;
 
             return result;
         }
@@ -326,7 +317,7 @@ public class Processor extends ThreadPoolExecutor
         super(numThread, numThread, 2L, TimeUnit.SECONDS, (maxWaiting == -1) ? new LinkedBlockingQueue<Runnable>()
                 : new LinkedBlockingQueue<Runnable>(maxWaiting));
 
-        setThreadFactory(new ProcessorThreadFactory("Processor", numThread > 1));
+        setThreadFactory(new ProcessorThreadFactory("Processor"));
         setRejectedExecutionHandler(new ProcessorRejectedExecutionHandler());
         allowCoreThreadTimeOut(true);
 
@@ -379,7 +370,6 @@ public class Processor extends ThreadPoolExecutor
     /**
      * @deprecated Use {@link #submit(Runnable)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public boolean addTask(Runnable task, boolean onEDT, int id)
     {
@@ -804,7 +794,6 @@ public class Processor extends ThreadPoolExecutor
      * @deprecated Not anymore supported.<br>
      *             Use {@link #getWaitingTasksCount(Callable)} or {@link #getWaitingTasksCount(Runnable)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public int getWaitingTasksCount(int id)
     {
@@ -851,7 +840,6 @@ public class Processor extends ThreadPoolExecutor
      * @deprecated Not anymore supported.<br>
      *             Use {@link #hasWaitingTasks(Callable)} or {@link #hasWaitingTasks(Runnable)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public boolean hasWaitingTasks(int id)
     {
@@ -888,7 +876,6 @@ public class Processor extends ThreadPoolExecutor
      * @deprecated Not anymore supported.<br>
      *             USe {@link #removeFirstWaitingTask(Runnable)} or {@link #removeFirstWaitingTask(Callable)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public boolean removeFirstWaitingTask(int id)
     {
@@ -957,7 +944,6 @@ public class Processor extends ThreadPoolExecutor
      *             USe {@link #removeWaitingTasks(Runnable)} or {@link #removeWaitingTasks(Callable)} instead.
      */
     @Deprecated
-    @SuppressWarnings("unused")
     public boolean removeWaitingTasks(int id)
     {
         return false;
@@ -1030,7 +1016,6 @@ public class Processor extends ThreadPoolExecutor
     /**
      * @deprecated Not anymore supported !
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public void limitWaitingTask(int id, int value)
     {
@@ -1061,7 +1046,7 @@ public class Processor extends ThreadPoolExecutor
     @Deprecated
     public void addListener(ProcessorEventListener listener)
     {
-
+        //
     }
 
     /**
@@ -1070,7 +1055,7 @@ public class Processor extends ThreadPoolExecutor
     @Deprecated
     public void removeListener(ProcessorEventListener listener)
     {
-
+        //
     }
 
     /**
@@ -1079,7 +1064,7 @@ public class Processor extends ThreadPoolExecutor
     @Deprecated
     public void fireDoneEvent(FutureTaskAdapter<?> task)
     {
-
+        //
     }
 
     @Override

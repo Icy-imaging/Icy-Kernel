@@ -1642,8 +1642,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
         final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         final Graphics2D g = img.createGraphics();
-        final DataBuffer dataBuffer = img.getRaster().getDataBuffer();
-        final byte[] buffer = ((DataBufferByte) dataBuffer).getData();
 
         // we want accurate rendering as we use the image for the mask
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
@@ -1669,6 +1667,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
         g.dispose();
 
+        final byte[] buffer = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
         final boolean[] result = new boolean[width * height];
 
         // compute mask from image

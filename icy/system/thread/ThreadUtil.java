@@ -120,10 +120,10 @@ public class ThreadUtil
         {
             // keep these thread active
             instanceProcessors[i] = new InstanceProcessor(NORM_PRIORITY);
-            instanceProcessors[i].setThreadName("Instance processor - thread " + i);
+            instanceProcessors[i].setThreadName("Background instance processor");
             instanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
             bgInstanceProcessors[i] = new InstanceProcessor(MIN_PRIORITY);
-            bgInstanceProcessors[i].setThreadName("Instance processor (low priority) - thread " + i);
+            bgInstanceProcessors[i].setThreadName("Background instance processor (low priority)");
             bgInstanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
         }
     }

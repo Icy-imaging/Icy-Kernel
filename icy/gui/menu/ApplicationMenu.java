@@ -194,6 +194,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 {
                     final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
 
+                    button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
                     {
                         @Override
@@ -206,8 +207,9 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                             {
                                 try
                                 {
+                                    // we really need to start the plugin here in case it uses EzPlug for instance
                                     final SequenceImporter importer = (SequenceImporter) PluginLauncher
-                                            .create(pluginDescriptor);
+                                            .startSafe(pluginDescriptor);
 
                                     // asynchronous loading
                                     ThreadUtil.bgRun(new Runnable()
@@ -250,6 +252,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 {
                     final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
 
+                    button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
                     {
                         @Override
@@ -262,7 +265,8 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                             {
                                 try
                                 {
-                                    final Importer importer = (Importer) PluginLauncher.create(pluginDescriptor);
+                                    // we really need to start the plugin here in case it uses EzPlug for instance
+                                    final Importer importer = (Importer) PluginLauncher.startSafe(pluginDescriptor);
 
                                     // asynchronous loading
                                     ThreadUtil.bgRun(new Runnable()

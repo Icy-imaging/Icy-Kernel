@@ -182,8 +182,13 @@ public class MetaDataUtil
 
         try
         {
-            final int index = FormatTools.getIndex(pix.getDimensionOrder().getValue(), sizeZ, sizeC, sizeT,
-                    pix.sizeOfPlaneList(), z, c, t);
+            DimensionOrder dimOrder = pix.getDimensionOrder();
+            // use default dimension order
+            if (dimOrder == null)
+                dimOrder = DimensionOrder.XYZCT;
+
+            final int index = FormatTools.getIndex(dimOrder.getValue(), sizeZ, sizeC, sizeT, pix.sizeOfPlaneList(), z,
+                    c, t);
             return pix.getPlane(index);
         }
         catch (IllegalArgumentException e)
@@ -524,14 +529,14 @@ public class MetaDataUtil
 
     /**
      * Computes time interval from the time position informations.<br>
-     * Returns <code>0d</code> if time position information are missing.
+     * Returns <code>0d</code> if time position informations are missing ot if we have only 1 frame in the image.
      */
     private static double computeTimeIntervalFromTimePosition(Pixels pix)
     {
         final int sizeT = getSizeT(pix);
 
         if (sizeT <= 1)
-            return Double.NaN;
+            return 0d;
 
         double result = 0d;
         double last = -1d;

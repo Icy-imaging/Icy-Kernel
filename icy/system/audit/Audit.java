@@ -329,7 +329,7 @@ public class Audit
                         {
                             try
                             {
-                                Thread.sleep(2000);
+                                Thread.sleep(1000);
                                 updateUserLink();
 
                                 // user linked !

@@ -25,6 +25,7 @@ import icy.gui.plugin.PluginUpdateFrame;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.system.thread.ThreadUtil;
+import icy.util.Random;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +90,9 @@ public class PluginUpdater
      */
     public static PluginDescriptor getUpdate(PluginDescriptor plugin)
     {
+        // don't check update for kernel plugin
+        if (plugin.isKernelPlugin()) return null;
+        
         // find equivalent online plugins
         final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
         final PluginDescriptor onlinePlugin;
@@ -111,6 +115,10 @@ public class PluginUpdater
         // we have an update available ?
         if ((onlinePlugin != null) && onlinePlugin.getVersion().isGreater(plugin.getVersion()))
             return onlinePlugin;
+
+// random forced update
+//if (Random.nextBoolean())
+//    return onlinePlugin;
 
         return null;
     }

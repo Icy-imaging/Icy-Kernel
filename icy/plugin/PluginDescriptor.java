@@ -40,6 +40,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 
@@ -218,6 +219,15 @@ public class PluginDescriptor implements XMLPersistent
     public static boolean existInList(List<PluginDescriptor> list, String className)
     {
         return getIndex(list, className) != -1;
+    }
+
+    public static boolean existInList(Set<PluginDescriptor> plugins, PluginIdent ident)
+    {
+        for (PluginDescriptor plugin : plugins)
+            if (plugin.getIdent().equals(ident))
+                return true;
+
+        return false;
     }
 
     public static void addToList(List<PluginDescriptor> list, PluginDescriptor plugin, int position)

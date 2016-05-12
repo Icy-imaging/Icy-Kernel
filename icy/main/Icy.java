@@ -78,9 +78,7 @@ import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
-import vtk.vtkJavaGarbageCollector;
 import vtk.vtkNativeLibrary;
-import vtk.vtkObjectBase;
 import vtk.vtkVersion;
 
 /**
@@ -102,7 +100,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.8.0.0");
+    public static Version version = new Version("1.8.1.0");
 
     /**
      * Main interface
@@ -213,9 +211,10 @@ public class Icy
                         // HACKY: attempt to load an image as ImageIO may fail on first try...
                         ImageIO.read(getClass().getResource("/" + ResourceUtil.IMAGE_PATH + "logo.png"));
                     }
-                    catch (Exception e)
+                    catch (Throwable t)
                     {
-                        // ignore
+                        // ignore this one...
+                        // t.printStackTrace();
                     }
 
                     // force resources loading now so it will eat less time on GUI loading
@@ -223,10 +222,10 @@ public class Icy
                     {
                         Class.forName(ResourceUtil.class.getName());
                     }
-                    catch (ClassNotFoundException e)
+                    catch (Throwable t)
                     {
-                        // ignore
-
+                        // show the stack trace as this one is more problematic
+                        t.printStackTrace();
                     }
                 }
             });
@@ -251,6 +250,9 @@ public class Icy
                     }
                 });
             }
+            
+            // set LOCI debug level (do it immediately as it can quickly show some log messages)
+            loci.common.DebugTools.enableLogging("ERROR");
 
             // initialize network (need preferences)
             NetworkUtil.init();
@@ -386,11 +388,19 @@ public class Icy
             // update last update check time
             GeneralPreferences.setLastUpdateCheckTime(currentTime);
         }
+        else
+        {
+            
+// forced udpate        
+//if (PluginPreferences.getAutomaticUpdate())
+//    PluginUpdater.checkUpdate(true);
+
+        }
 
         // update version info
         ApplicationPreferences.setVersion(Icy.version);
         // set LOCI debug level
-        loci.common.DebugTools.enableLogging("ERROR");
+//        loci.common.DebugTools.enableLogging("ERROR");
         // set OGL debug level
         // SystemUtil.setProperty("jogl.verbose", "TRUE");
         // SystemUtil.setProperty("jogl.debug", "TRUE");
@@ -1000,7 +1010,7 @@ public class Icy
         }
 
         if (!SystemUtil.addToJavaLibraryPath(directories.toArray(new String[directories.size()])))
-            System.err.println("Native libraries may won't load correctly.");
+            System.err.println("Native libraries may not load correctly.");
 
         // load native libraries
         loadVtkLibrary(libPath);
@@ -1281,7 +1291,7 @@ public class Icy
         }
         catch (Throwable e)
         {
-            System.out.println(e);
+            IcyExceptionHandler.showErrorMessage(e, false, false);
         }
 
         if (vtkLibraryLoaded)
@@ -1290,9 +1300,9 @@ public class Icy
 
             System.out.println("VTK " + vv + " library successfully loaded...");
 
-            final vtkJavaGarbageCollector vtkJavaGarbageCollector = vtkObjectBase.JAVA_OBJECT_MANAGER
-                    .getAutoGarbageCollector();
-
+            // final vtkJavaGarbageCollector vtkJavaGarbageCollector = vtkObjectBase.JAVA_OBJECT_MANAGER
+            // .getAutoGarbageCollector();
+            //
             // set auto garbage collection for VTK (every 20 seconds should be enough)
             // probably not a good idea...
             // vtkJavaGarbageCollector.SetScheduleTime(5, TimeUnit.SECONDS);

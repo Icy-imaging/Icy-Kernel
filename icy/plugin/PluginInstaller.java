@@ -37,7 +37,9 @@ import icy.util.StringUtil;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.event.EventListenerList;
 
@@ -735,8 +737,8 @@ public class PluginInstaller implements Runnable
             }
 
             List<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
-            final List<PluginDescriptor> pluginsOk = new ArrayList<PluginDescriptor>();
-            final List<PluginDescriptor> pluginsNOk = new ArrayList<PluginDescriptor>();
+            final Set<PluginDescriptor> pluginsOk = new HashSet<PluginDescriptor>();
+            final Set<PluginDescriptor> pluginsNOk = new HashSet<PluginDescriptor>();
 
             // get dependencies
             for (int i = installingPlugins.size() - 1; i >= 0; i--)
@@ -840,10 +842,8 @@ public class PluginInstaller implements Runnable
             // reload plugin list
             PluginLoader.reload();
 
-            for (int i = pluginsOk.size() - 1; i >= 0; i--)
+            for (PluginDescriptor plugin: pluginsOk)
             {
-                final PluginDescriptor plugin = pluginsOk.get(i);
-
                 error = PluginLoader.verifyPlugin(plugin);
 
                 // send report when we have verification error
@@ -853,10 +853,12 @@ public class PluginInstaller implements Runnable
                     // print error
                     System.err.println(error);
 
-                    pluginsOk.remove(i);
                     pluginsNOk.add(plugin);
                 }
             }
+            
+            // remove all plugins which failed from OK list 
+            pluginsOk.removeAll(pluginsNOk);
 
             if (!pluginsNOk.isEmpty())
             {

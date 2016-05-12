@@ -103,6 +103,38 @@ public abstract class ROI3D extends ROI
     }
 
     /**
+     * Returns true if specified ROI is on the same [T, C] position than current ROI.
+     * 
+     * @param shouldContain
+     *        if <code>true</code> then current ROI should "contains" specified ROI position [T, C]
+     */
+    protected boolean onSamePos(ROI3D roi, boolean shouldContain)
+    {
+        final int t = getT();
+        final int c = getC();
+        final int roiT = roi.getT();
+        final int roiC = roi.getC();
+
+        // same position ?
+        if (shouldContain)
+        {
+            if ((t != -1) && (t != roiT))
+                return false;
+            if ((c != -1) && (c != roiC))
+                return false;
+        }
+        else
+        {
+            if ((t != -1) && (roiT != -1) && (t != roiT))
+                return false;
+            if ((c != -1) && (roiC != -1) && (c != roiC))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Tests if a specified {@link Point3D} is inside the ROI.
      * 
      * @param p
@@ -236,16 +268,37 @@ public abstract class ROI3D extends ROI
         if (roi instanceof ROI3D)
         {
             final ROI3D roi3d = (ROI3D) roi;
-            final int t = getT();
-            final int c = getC();
-            final boolean tok;
-            final boolean cok;
 
-            // same position ?
-            tok = (t == -1) || (t == roi3d.getT());
-            cok = (c == -1) || (c == roi3d.getC());
+            if (onSamePos(roi3d, true))
+            {
+                // special case of ROI Point
+                if (roi3d.isEmpty())
+                    return contains(roi3d.getPosition3D());
 
-            return tok && cok && getBooleanMask(false).contains(roi3d.getBooleanMask(false));
+                BooleanMask3D mask;
+                BooleanMask3D roiMask;
+
+                // take content first
+                mask = getBooleanMask(false);
+                roiMask = roi3d.getBooleanMask(false);
+
+                // test first only on content
+                if (!mask.contains(roiMask))
+                    return false;
+
+                // take content and edge
+                mask = getBooleanMask(true);
+                roiMask = roi3d.getBooleanMask(true);
+
+                // then test on content and edge
+                if (!mask.contains(roiMask))
+                    return false;
+
+                // contained
+                return true;
+            }
+
+            return false;
         }
 
         // use default implementation
@@ -341,17 +394,9 @@ public abstract class ROI3D extends ROI
         if (roi instanceof ROI3D)
         {
             final ROI3D roi3d = (ROI3D) roi;
-            final int t = getT();
-            final int c = getC();
-            final boolean cok;
-            final boolean tok;
-
-            // can intersect ?
-            tok = (t == -1) || (t == roi3d.getT()) || (roi3d.getT() == -1);
-            cok = (c == -1) || (c == roi3d.getC()) || (roi3d.getC() == -1);
-
-            // same position ?
-            return tok && cok && getBooleanMask(true).intersects(roi3d.getBooleanMask(true));
+            
+            if (onSamePos(roi3d, false))
+                return getBooleanMask(true).intersects(roi3d.getBooleanMask(true));
         }
 
         // use default implementation
