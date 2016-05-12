@@ -410,7 +410,7 @@ public class GuiUtil
             content = window.getComponent(0);
             menuBar = null;
         }
-        
+
         final IcyFrame frame = new IcyFrame(title, true, true, false, false);
         frame.setLayout(new BorderLayout());
         frame.add(content, BorderLayout.CENTER);
@@ -435,16 +435,24 @@ public class GuiUtil
             @Override
             public void icyFrameClosing(IcyFrameEvent e)
             {
-                window.setLocation(frame.getLocation());
-                for (WindowListener l : window.getWindowListeners())
-                    l.windowClosing(new WindowEvent(window, e.getEvent().getID()));
+                // ensure we are not doing recursing 'close' calls
+                if (window.isVisible())
+                {
+                    window.setLocation(frame.getLocation());
+                    for (WindowListener l : window.getWindowListeners())
+                        l.windowClosing(new WindowEvent(window, e.getEvent().getID()));
+                }
             }
 
             @Override
             public void icyFrameClosed(IcyFrameEvent e)
             {
-                for (WindowListener l : window.getWindowListeners())
-                    l.windowClosed(new WindowEvent(window, e.getEvent().getID()));
+                // ensure we are not doing recursing 'close' calls
+                if (window.isVisible())
+                {
+                    for (WindowListener l : window.getWindowListeners())
+                        l.windowClosed(new WindowEvent(window, e.getEvent().getID()));
+                }
             }
         });
 

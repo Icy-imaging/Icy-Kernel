@@ -52,7 +52,7 @@ public class ROIVolumeDescriptor extends ROIDescriptor
         {
             final String metaName = (String) change.getSource();
 
-            return StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_X)
+            return StringUtil.isEmpty(metaName) || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_X)
                     || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_Y)
                     || StringUtil.equals(metaName, Sequence.ID_PIXEL_SIZE_Z);
         }

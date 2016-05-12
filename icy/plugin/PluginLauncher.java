@@ -124,12 +124,12 @@ public class PluginLauncher
 
     /**
      * Creates a new instance of the specified plugin and returns it.<br>
+     * The plugin is automatically registered t list of active plugins.
      * 
      * @param plugin
      *        descriptor of the plugin we want to create an instance for
      * @see #startSafe(PluginDescriptor)
      */
-
     public static Plugin create(final PluginDescriptor plugin) throws Exception
     {
         final Class<? extends Plugin> clazz = plugin.getPluginClass();
@@ -139,7 +139,7 @@ public class PluginLauncher
             return clazz.newInstance();
 
         // create the plugin instance on the EDT
-        return ThreadUtil.invokeNow(new Callable<Plugin>()
+        final Plugin result = ThreadUtil.invokeNow(new Callable<Plugin>()
         {
             @Override
             public Plugin call() throws Exception
@@ -147,6 +147,11 @@ public class PluginLauncher
                 return clazz.newInstance();
             }
         });
+
+        // register plugin
+        Icy.getMainInterface().registerPlugin(result);
+
+        return result;
     }
 
     /**
@@ -182,8 +187,6 @@ public class PluginLauncher
                 return null;
             }
 
-            // register plugin
-            Icy.getMainInterface().registerPlugin(result);
             // audit
             Audit.pluginLaunched(result);
             // execute plugin
@@ -239,8 +242,8 @@ public class PluginLauncher
         // create plugin instance
         result = create(plugin);
 
-        // register plugin
-        Icy.getMainInterface().registerPlugin(result);
+        // audit
+        Audit.pluginLaunched(result);
         // execute plugin
         if (result instanceof PluginImageAnalysis)
             internalExecute(result);

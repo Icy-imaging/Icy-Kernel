@@ -26,9 +26,10 @@ public class SequenceEvent implements CollapsibleEvent
     public enum SequenceEventSourceType
     {
         SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, /**
-                                                                                                                 * @deprecated
-                                                                                                                 **/
-        @Deprecated SEQUENCE_PAINTER, SEQUENCE_OVERLAY
+         * @deprecated
+         **/
+        @Deprecated
+        SEQUENCE_PAINTER, SEQUENCE_OVERLAY
     }
 
     public enum SequenceEventType
@@ -88,11 +89,12 @@ public class SequenceEvent implements CollapsibleEvent
     }
 
     /**
-     * SourceType define the object type of <code>source<code><br>
+     * SourceType define the object type of <code>source</code><br>
      * <br>
-     * The following source types are available :<br>
+     * The following source types are available:<br>
      * <code>SEQUENCE_TYPE</code> --> source object is null<br>
      * <code>SEQUENCE_META</code> --> source object define the meta data id (String)<br>
+     * It can be <i>null</i> (consider global metadata change)<br>
      * <code>SEQUENCE_COLORMAP</code> --> source object is an instance of IcyColorModel<br>
      * <code>SEQUENCE_COMPONENTBOUNDS</code> --> source object is an instance of IcyColorModel<br>
      * <code>SEQUENCE_DATA</code> --> source object is an instance of IcyBufferedImage<br>
@@ -128,8 +130,7 @@ public class SequenceEvent implements CollapsibleEvent
      * <br>
      * When <code>sourceType</code> is one of the following :<br>
      * <code>SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER, SEQUENCE_OVERLAY</code><br>
-     * the type can also be <code>SequenceEventType.ADDED</code> or
-     * <code>SequenceEventType.REMOVED</code><br>
+     * the type can also be <code>SequenceEventType.ADDED</code> or <code>SequenceEventType.REMOVED</code><br>
      * That mean a specific image, roi or painter (if <code>source != null</code>) has been added or
      * removed from the sequence.<br>
      * If <code>source == null</code> that mean we have a global change event and some stuff need to
@@ -145,8 +146,8 @@ public class SequenceEvent implements CollapsibleEvent
     /**
      * Extra parameter of event.<br>
      * <br>
-     * It's used to specify the component number when <code>sourceType</code> is
-     * <code>SEQUENCE_COLORMAP</code> or <code>SEQUENCE_COMPONENTBOUNDS</code> (in both case source
+     * It's used to specify the component number when <code>sourceType</code> is <code>SEQUENCE_COLORMAP</code> or
+     * <code>SEQUENCE_COMPONENTBOUNDS</code> (in both case source
      * is instance of <code>IcyColorModel</code>).<br>
      * Also used internally...
      */
@@ -197,13 +198,16 @@ public class SequenceEvent implements CollapsibleEvent
         switch (sourceType)
         {
             case SEQUENCE_META:
-                res ^= source.hashCode();
+                if (source != null)
+                    res ^= source.hashCode();
                 break;
 
             case SEQUENCE_PAINTER:
             case SEQUENCE_OVERLAY:
             case SEQUENCE_ROI:
-                res ^= type.hashCode() ^ source.hashCode();
+                res ^= type.hashCode();
+                if (source != null)
+                    res ^= source.hashCode();
                 break;
 
             default:
