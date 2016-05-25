@@ -2315,11 +2315,15 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Set the mask from a BooleanMask2D object
+     * Set the mask from a BooleanMask2D object.<br>
+     * If specified mask is <i>null</i> then ROI is cleared.
      */
     public void setAsBooleanMask(BooleanMask2D mask)
     {
-        if ((mask != null) && !mask.isEmpty())
+        // mask empty ? --> just clear the ROI
+        if ((mask == null) || mask.isEmpty())
+            clear();
+        else
             setAsBooleanMask(mask.bounds, mask.mask);
     }
 

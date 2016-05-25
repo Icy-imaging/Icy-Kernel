@@ -2579,10 +2579,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
                     // we want to share the same color space for all the sequence:
                     // colormap eats a lot of memory so it's better to keep one global and we never
-                    // use colormap for
-                    // single image anyway. But it's important to preserve the colormodel for each
-                    // image though as it
-                    // store the channel bounds informations.
+                    // use colormap for single image anyway. But it's important to preserve the colormodel for each
+                    // image though as it store the channel bounds informations.
                     if (colorModel != null)
                         icyImg.getIcyColorModel().setColorSpace(colorModel.getIcyColorSpace());
 
@@ -3236,10 +3234,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void setColormap(int channel, IcyColorMap map, boolean setAlpha)
     {
         final LUT lut = getUserLUT();
-        
+
         // we want to preserve the custom colormap
         if (userLut == null)
-            userLut = lut;        
+            userLut = lut;
 
         if (channel < lut.getNumChannel())
             lut.getLutChannel(channel).setColorMap(map, setAlpha);
@@ -5963,11 +5961,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 if (!colorModel.isCompatible(newImage.getIcyColorModel()))
                     // define it from the new image colorModel
                     setColorModel(IcyColorModel.createInstance(newImage.getIcyColorModel(), true, true));
-                else
-                    // only inform about a type change (sequence sizeX and sizeY)
+                // only inform about a type change if sequence sizeX and sizeY changed
+                else if ((oldImage.getSizeX() != newImage.getSizeX()) || (oldImage.getSizeY() != newImage.getSizeY()))
                     typeChanged();
             }
 
+            // TODO: improve cleaning here
+            // need that to avoid memory leak as we manually patch the image colorspace
+            if (colorModel != null)
+                colorModel.getIcyColorSpace().removeListener(oldImage.getIcyColorModel());
             // remove listener from old image
             oldImage.removeListener(this);
             // notify about old image remove
@@ -5991,11 +5993,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void onImageRemoved(IcyBufferedImage image)
     {
-        // no more image ?
+        // no more image ? --> releasethe global colorModel
         if (isEmpty())
-            // free the global colorModel
             setColorModel(null);
 
+        // TODO: improve cleaning here
+        // need that to avoid memory leak as we manually patch the image colorspace
+        if (colorModel != null)
+            colorModel.getIcyColorSpace().removeListener(image.getIcyColorModel());
         // remove listener from image
         image.removeListener(this);
 

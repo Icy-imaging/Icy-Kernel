@@ -26,7 +26,6 @@ import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 
 import java.awt.geom.Point2D;
-import java.util.Collection;
 import java.util.Map.Entry;
 
 import plugins.kernel.roi.roi4d.ROI4DArea;
@@ -128,8 +127,8 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
      * @param roiSlice
      *        the 4D ROI to set
      * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or
-     *        <code>false</code> to replace the existing slice.
+     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
+     *        replace the existing slice.
      */
     public void setSlice(int c, ROI4D roiSlice, boolean merge)
     {
@@ -173,14 +172,25 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
     }
 
     /**
-     * Set the mask from a BooleanMask5D object
+     * Set the mask from a BooleanMask5D object<br>
+     * If specified mask is <i>null</i> then ROI is cleared.
      */
     public void setAsBooleanMask(BooleanMask5D mask)
     {
-        if (mask != null)
+        // mask empty ? --> just clear the ROI
+        if ((mask == null) || mask.isEmpty())
+            clear();
+        else
         {
-            final Collection<BooleanMask4D> values = mask.mask.values();
-            setAsBooleanMask(mask.bounds, values.toArray(new BooleanMask4D[values.size()]));
+            final Rectangle5D.Integer bounds5d = mask.bounds;
+            final int startC = bounds5d.c;
+            final int sizeC = bounds5d.sizeC;
+            final BooleanMask4D masks4d[] = new BooleanMask4D[sizeC];
+
+            for (int c = 0; c < sizeC; c++)
+                masks4d[c] = mask.getMask4D(startC + c);
+
+            setAsBooleanMask(bounds5d, masks4d);
         }
     }
 
@@ -190,7 +200,7 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
      * @param rect
      *        the 5D region defined by 4D boolean mask array
      * @param mask
-     *        the 5D mask data (array length should be equals to rect.sizeZ)
+     *        the 5D mask data (array length should be equals to rect.sizeC)
      */
     public void setAsBooleanMask(Rectangle5D.Integer rect, BooleanMask4D[] mask)
     {

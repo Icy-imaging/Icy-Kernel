@@ -451,6 +451,10 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
      */
     public void clear()
     {
+        // nothing to do
+        if (isEmpty())
+            return;
+
         for (R slice : slices.values())
         {
             slice.removeListener(this);
@@ -458,6 +462,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         }
 
         slices.clear();
+        roiChanged(true);
     }
 
     /**
