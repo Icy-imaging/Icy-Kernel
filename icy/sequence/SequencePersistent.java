@@ -67,8 +67,8 @@ public class SequencePersistent implements XMLPersistent
         if (StringUtil.isEmpty(seqFilename))
             return null;
 
-        // avoid '#' for XML file
-        seqFilename = seqFilename.replaceAll("#", "_");
+        // remove some problematic character for XML file
+        seqFilename = FileUtil.cleanPath(seqFilename);
 
         // retrieve the serie index
         final int serieNum = sequence.getSerieIndex();

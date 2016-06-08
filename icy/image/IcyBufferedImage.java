@@ -78,7 +78,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         NEAREST, BILINEAR, BICUBIC
     };
 
-    private static IcyBufferedImageUtil.FilterType getNewFilterType(FilterType ft)
+    protected static IcyBufferedImageUtil.FilterType getNewFilterType(FilterType ft)
     {
         switch (ft)
         {
@@ -447,7 +447,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param autoUpdateChannelBounds
      *        If true then channel bounds are automatically calculated.<br>
      */
-    private IcyBufferedImage(IcyColorModel cm, WritableRaster wr, boolean autoUpdateChannelBounds)
+    protected IcyBufferedImage(IcyColorModel cm, WritableRaster wr, boolean autoUpdateChannelBounds)
     {
         super(cm, wr, false, null);
 
@@ -469,7 +469,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param wr
      *        {@link WritableRaster}
      */
-    IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
+    protected IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
     {
         this(cm, wr, false);
     }
@@ -478,7 +478,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * Create an Icy formatted BufferedImage with specified IcyColorModel, width and height.<br>
      * Private version, {@link IcyColorModel} is directly used internally.
      */
-    IcyBufferedImage(IcyColorModel cm, int width, int height)
+    protected IcyBufferedImage(IcyColorModel cm, int width, int height)
     {
         this(cm, cm.createCompatibleWritableRaster(width, height), false);
     }
@@ -503,7 +503,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        If true then channel bounds are automatically calculated.<br>
      *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
      */
-    IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
+    protected IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
     {
         this(cm, cm.createWritableRaster(data, width, height), autoUpdateChannelBounds);
 
@@ -969,7 +969,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Get calculated image channel bounds (min and max values)
      */
-    private double[] getCalculatedChannelBounds(int channel)
+    protected double[] getCalculatedChannelBounds(int channel)
     {
         final DataType dataType = getDataType_();
 
@@ -985,7 +985,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Adjust specified bounds depending internal data type
      */
-    private double[] adjustBoundsForDataType(double[] bounds)
+    protected double[] adjustBoundsForDataType(double[] bounds)
     {
         double min, max;
 
@@ -2830,7 +2830,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param dstChannel
      *        destination channel
      */
-    private void fastCopyData(IcyBufferedImage srcImage, Rectangle srcRect, Point dstPt, int srcChannel, int dstChannel)
+    protected void fastCopyData(IcyBufferedImage srcImage, Rectangle srcRect, Point dstPt, int srcChannel,
+            int dstChannel)
     {
         final int srcSizeX = srcImage.getSizeX();
         final int dstSizeX = getSizeX();
@@ -2882,9 +2883,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param srcImage
      *        source image
      */
-    private void internalCopyData(int srcChannel, int dstChannel, DataBuffer src_db, DataBuffer dst_db, int[] indices,
-            int[] band_offsets, int[] bank_offsets, int scanlineStride_src, int pixelStride_src, int maxX, int maxY,
-            int decOffsetSrc)
+    protected void internalCopyData(int srcChannel, int dstChannel, DataBuffer src_db, DataBuffer dst_db,
+            int[] indices, int[] band_offsets, int[] bank_offsets, int scanlineStride_src, int pixelStride_src,
+            int maxX, int maxY, int decOffsetSrc)
     {
         final int scanlineStride_dst = getSizeX();
 
@@ -3454,7 +3455,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * notify image colorMap has changed
      */
-    private void colormapChanged(int component)
+    protected void colormapChanged(int component)
     {
         updater.changed(new IcyBufferedImageEvent(this, IcyBufferedImageEventType.COLORMAP_CHANGED, component));
     }
@@ -3479,7 +3480,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * fire change event
      */
-    private void fireChangeEvent(IcyBufferedImageEvent e)
+    protected void fireChangeEvent(IcyBufferedImageEvent e)
     {
         for (IcyBufferedImageListener listener : new ArrayList<IcyBufferedImageListener>(listeners))
             listener.imageChanged(e);

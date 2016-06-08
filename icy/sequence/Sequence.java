@@ -152,45 +152,45 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * id generator
      */
-    private static int id_gen = 1;
+    protected static int id_gen = 1;
 
     /**
      * volumetric images (4D [XYCZ])
      */
-    final TreeMap<Integer, VolumetricImage> volumetricImages;
+    protected final TreeMap<Integer, VolumetricImage> volumetricImages;
     /**
      * painters
      */
-    final Set<Overlay> overlays;
+    protected final Set<Overlay> overlays;
     /**
      * ROIs
      */
-    final Set<ROI> rois;
+    protected final Set<ROI> rois;
 
     /**
      * id of sequence (uniq during an Icy session)
      */
-    private final int id;
+    protected final int id;
     /**
      * colorModel of sequence
      */
-    IcyColorModel colorModel;
+    protected IcyColorModel colorModel;
     /**
      * user lut for this sequence (saved in metadata)
      */
-    LUT userLut;
+    protected LUT userLut;
     /**
      * Origin filename (from/to which the sequence has been loaded/saved)<br>
      * null --> no file attachment<br>
      * directory or metadata file --> multiples files attachment<br>
      * image file --> single file attachment
      */
-    String filename;
+    protected String filename;
 
     /**
      * Metadata
      */
-    OMEXMLMetadataImpl metaData;
+    protected OMEXMLMetadataImpl metaData;
     // /**
     // * X, Y, Z resolution (in mm)
     // */
@@ -213,30 +213,30 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * automatic update of channel bounds
      */
-    boolean autoUpdateChannelBounds;
+    protected boolean autoUpdateChannelBounds;
     /**
      * persistent object to load/save data (XML format)
      */
-    final SequencePersistent persistent;
+    protected final SequencePersistent persistent;
     /**
      * undo manager
      */
-    final IcyUndoManager undoManager;
+    protected final IcyUndoManager undoManager;
 
     /**
      * internal updater
      */
-    final UpdateEventHandler updater;
+    protected final UpdateEventHandler updater;
     /**
      * listeners
      */
-    final List<SequenceListener> listeners;
-    final List<SequenceModelListener> modelListeners;
+    protected final List<SequenceListener> listeners;
+    protected final List<SequenceModelListener> modelListeners;
 
     /**
      * internals
      */
-    boolean channelBoundsInvalid;
+    protected boolean channelBoundsInvalid;
 
     /**
      * Creates a new empty sequence with specified meta data object and name.
@@ -254,7 +254,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // set metadata object
         if (meta == null)
+        {
             metaData = new OMEXMLMetadataImpl();
+        }
         else
             metaData = meta;
 
@@ -590,7 +592,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         getUndoManager().discardAllEdits();
     }
 
-    private void setColorModel(IcyColorModel cm)
+    protected void setColorModel(IcyColorModel cm)
     {
         // remove listener
         if (colorModel != null)
@@ -2204,7 +2206,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Used only for backward compatibility with {@link Painter} interface.
      */
     @SuppressWarnings("deprecation")
-    private Overlay getOverlay(Painter painter)
+    protected Overlay getOverlay(Painter painter)
     {
         if (painter instanceof Overlay)
             return (Overlay) painter;
@@ -2307,7 +2309,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns the first VolumetricImage
      */
-    private VolumetricImage getFirstVolumetricImage()
+    protected VolumetricImage getFirstVolumetricImage()
     {
         final Entry<Integer, VolumetricImage> entry;
 
@@ -2325,7 +2327,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns the last VolumetricImage
      */
-    private VolumetricImage getLastVolumetricImage()
+    protected VolumetricImage getLastVolumetricImage()
     {
         final Entry<Integer, VolumetricImage> entry;
 
@@ -2351,7 +2353,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Add an empty volumetricImage at t position
      */
-    private VolumetricImage setVolumetricImage(int t)
+    protected VolumetricImage setVolumetricImage(int t)
     {
         // remove old volumetric image if any
         removeAllImages(t);
@@ -2441,12 +2443,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             for (VolumetricImage volImg : volumetricImages.values())
             {
-                synchronized (volImg.images)
-                {
-                    for (IcyBufferedImage img : volImg.images.values())
-                        if (img != null)
-                            return img;
-                }
+                final IcyBufferedImage img = volImg.getFirstNonNullImage();
+                if (img != null)
+                    return img;
             }
         }
 
@@ -2535,12 +2534,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         synchronized (volumetricImages)
         {
             for (VolumetricImage volImg : volumetricImages.values())
-            {
-                synchronized (volImg.images)
-                {
-                    result.addAll(volImg.images.values());
-                }
-            }
+                result.addAll(volImg.getAllImage());
         }
 
         return result;
@@ -2549,7 +2543,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Add an image to the specified VolumetricImage at the specified z location
      */
-    private void setImage(VolumetricImage volImg, int z, BufferedImage image) throws IllegalArgumentException
+    protected void setImage(VolumetricImage volImg, int z, BufferedImage image) throws IllegalArgumentException
     {
         if (volImg != null)
         {
@@ -3312,7 +3306,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Recalculate all image channels bounds (min and max values).<br>
      * Internal use only.
      */
-    private void recalculateAllImageChannelsBounds()
+    protected void recalculateAllImageChannelsBounds()
     {
         // nothing to do...
         if ((colorModel == null) || isEmpty())
@@ -3339,7 +3333,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * At this point we assume images has correct channels bounds information.<br>
      * Internal use only.
      */
-    private void internalUpdateChannelsBounds()
+    protected void internalUpdateChannelsBounds()
     {
         // nothing to do...
         if ((colorModel == null) || isEmpty())
@@ -3353,9 +3347,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             for (VolumetricImage volImg : volumetricImages.values())
             {
-                synchronized (volImg.images)
+                for (IcyBufferedImage img : volImg.getAllImage())
                 {
-                    for (IcyBufferedImage img : volImg.images.values())
+                    if (img != null)
                         bounds = adjustBounds(img.getChannelsTypeBounds(), bounds);
                 }
             }
@@ -3370,9 +3364,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             for (VolumetricImage volImg : volumetricImages.values())
             {
-                synchronized (volImg.images)
+                for (IcyBufferedImage img : volImg.getAllImage())
                 {
-                    for (IcyBufferedImage img : volImg.images.values())
+                    if (img != null)
                         bounds = adjustBounds(img.getChannelsBounds(), bounds);
                 }
             }
@@ -6012,7 +6006,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * fire change event
      */
     @SuppressWarnings("deprecation")
-    private void fireChangedEvent(SequenceEvent e)
+    protected void fireChangedEvent(SequenceEvent e)
     {
         final List<SequenceListener> cachedListeners = new ArrayList<SequenceListener>(listeners);
 
@@ -6040,7 +6034,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * fire close event
      */
-    private void fireClosedEvent()
+    protected void fireClosedEvent()
     {
         for (SequenceListener listener : new ArrayList<SequenceListener>(listeners))
             listener.sequenceClosed(this);
@@ -6112,7 +6106,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * sequence type (colorModel, size) changed
      */
-    private void typeChanged()
+    protected void typeChanged()
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_TYPE));
     }
@@ -6120,7 +6114,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * sequence colorMap changed
      */
-    private void colormapChanged(IcyColorModel colorModel, int component)
+    protected void colormapChanged(IcyColorModel colorModel, int component)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COLORMAP, colorModel, component));
     }
@@ -6128,7 +6122,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * sequence component bounds changed
      */
-    private void componentBoundsChanged(IcyColorModel colorModel, int component)
+    protected void componentBoundsChanged(IcyColorModel colorModel, int component)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
     }
@@ -6226,7 +6220,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * data has changed
      */
-    private void dataChanged(IcyBufferedImage image, SequenceEventType type)
+    protected void dataChanged(IcyBufferedImage image, SequenceEventType type)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_DATA, image, type, 0));
     }

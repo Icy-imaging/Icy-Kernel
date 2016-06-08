@@ -280,6 +280,17 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         renderWindow = panel3D.getRenderWindow();
         camera = renderer.GetActiveCamera();
 
+        // initialize text info actor (need to be done before the first getImageData() call !
+        textInfo = new vtkTextActor();
+        textInfo.SetInput("No enough memory to display this 3D image !");
+        textInfo.SetPosition(10, 10);
+        // not visible by default
+        textInfo.SetVisibility(0);
+
+        // change text properties
+        textProperty = textInfo.GetTextProperty();
+        textProperty.SetFontFamilyToArial();
+
         // rebuild volume image
         updateImageData(getImageData());
 
@@ -349,17 +360,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         rulerBox.SetGridLineLocation(VtkUtil.VTK_GRID_LINES_FURTHEST);
         rulerBox.SetFlyModeToOuterEdges();
         rulerBox.SetUseBounds(true);
-
-        // initialize text info actor
-        textInfo = new vtkTextActor();
-        textInfo.SetInput("No enough memory to display this 3D image !");
-        textInfo.SetPosition(10, 10);
-        // not visible by default
-        textInfo.SetVisibility(0);
-
-        // change text properties
-        textProperty = textInfo.GetTextProperty();
-        textProperty.SetFontFamilyToArial();
 
         // restore settings
         settingPanel.setBackgroundColor(new Color(preferences.getInt(ID_BGCOLOR, 0x000000)));
@@ -1314,8 +1314,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             {
                 final Sequence seq = getSequence();
 
-                // we have an image --> not enough memory to display it (show
-                // message)
+                // we have an image --> not enough memory to display it (show message)
                 if ((seq != null) && !seq.isEmpty())
                     textInfo.SetVisibility(1);
             }

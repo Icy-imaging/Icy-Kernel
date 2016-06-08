@@ -145,6 +145,7 @@ public class SaverDialog extends JFileChooser
             filename = sequence.getName();
         if (!StringUtil.isEmpty(filename))
         {
+            filename = FileUtil.cleanPath(filename);
             // test if filename has already a valid extension
             final String ext = getDialogExtension(filename);
             // remove file extension

@@ -221,7 +221,11 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                                             try
                                             {
                                                 // plugin correctly started ? --> do load operation
-                                                importer.load();
+                                                final Sequence result = importer.load();
+                                                
+                                                // display result sequence
+                                                if (result != null)
+                                                    Icy.getMainInterface().addSequence(result);
                                             }
                                             catch (Exception exc)
                                             {

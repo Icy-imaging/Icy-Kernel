@@ -2559,8 +2559,9 @@ public class Loader
         return result;
     }
 
-    static int[] selectSerie(final SequenceFileImporter importer, final String path, final OMEXMLMetadataImpl meta,
-            int defaultSerie, int serieCount) throws UnsupportedFormatException, IOException
+    public static int[] selectSerie(final SequenceFileImporter importer, final String path,
+            final OMEXMLMetadataImpl meta, int defaultSerie, int serieCount) throws UnsupportedFormatException,
+            IOException
     {
         final int[] tmp = new int[serieCount + 1];
 

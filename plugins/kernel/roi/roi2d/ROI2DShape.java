@@ -117,7 +117,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             Arrays.fill(scaling, 1d);
 
             needRebuild = true;
-            canvas3d = null;
+            canvas3d = new WeakReference<VtkCanvas>(null);
         }
 
         @Override
