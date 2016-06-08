@@ -29,8 +29,8 @@ import java.util.TreeMap;
  */
 public class VolumetricImage
 {
-    final Sequence sequence;
-    final TreeMap<Integer, IcyBufferedImage> images;
+    protected final Sequence sequence;
+    protected final TreeMap<Integer, IcyBufferedImage> images;
 
     public VolumetricImage(Sequence seq)
     {
@@ -96,6 +96,20 @@ public class VolumetricImage
 
         if (entry != null)
             return entry.getValue();
+
+        return null;
+    }
+
+    public IcyBufferedImage getFirstNonNullImage()
+    {
+        synchronized (images)
+        {
+            for (IcyBufferedImage img : images.values())
+            {
+                if (img != null)
+                    return img;
+            }
+        }
 
         return null;
     }

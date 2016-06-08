@@ -25,8 +25,8 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import loci.common.services.ServiceException;
 import loci.formats.FormatTools;
@@ -35,6 +35,7 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.units.quantity.Time;
+import ome.xml.model.Annotation;
 import ome.xml.model.Channel;
 import ome.xml.model.Dataset;
 import ome.xml.model.Experiment;
@@ -107,8 +108,11 @@ public class MetaDataUtil
         while (ome.sizeOfImageList() <= index)
         {
             final Image img = new Image();
+            final Pixels pix = new Pixels();
+            // wanted default dimension order
+            pix.setDimensionOrder(DimensionOrder.XYCZT);
             // create default pixels object
-            img.setPixels(new Pixels());
+            img.setPixels(pix);
             ome.addImage(img);
         }
 
@@ -133,42 +137,63 @@ public class MetaDataUtil
     /**
      * Return pixels object at specified index for the specified metaData description.
      */
-    public static Pixels getPixels(OMEXMLMetadataImpl metaData, int index)
+    public static Pixels getPixels(OME ome, int index)
     {
-        final OME ome = getOME(metaData);
-
-        if (index < ome.sizeOfImageList())
-            return ome.getImage(index).getPixels();
+        if (ome != null)
+        {
+            if (index < ome.sizeOfImageList())
+                return ome.getImage(index).getPixels();
+        }
 
         return null;
     }
 
     /**
-     * Ensure the pixels at specified index exist for the specified metaData description.
+     * Return pixels object at specified index for the specified metaData description.
      */
-    public static Pixels ensurePixels(OME ome, int index)
+    public static Pixels getPixels(OMEXMLMetadataImpl metaData, int index)
     {
-        Image img;
-        Pixels result;
+        return getPixels(getOME(metaData), index);
+    }
 
-        // create missing image
-        while (ome.sizeOfImageList() <= index)
+    /**
+     * Return plane index for the specified T, Z, C position.
+     */
+    public static int getPlaneIndex(Pixels pix, int t, int z, int c)
+    {
+        final int sizeT = OMEUtil.getValue(pix.getSizeT(), 0);
+        final int sizeZ = OMEUtil.getValue(pix.getSizeZ(), 0);
+        int sizeC = OMEUtil.getValue(pix.getSizeC(), 0);
+        int adjC = c;
+
+        final Channel channel = pix.getChannel(0);
+        if (channel != null)
         {
-            img = new Image();
-            ome.addImage(img);
+            final int spp = OMEUtil.getValue(channel.getSamplesPerPixel(), 0);
+            // channel are packed in pixel so consider sizeC = 1
+            if ((spp != 0) && (spp == sizeC))
+            {
+                sizeC = 1;
+                adjC = 0;
+            }
+        }
+        DimensionOrder dimOrder = pix.getDimensionOrder();
+        // use default dimension order
+        if (dimOrder == null)
+            dimOrder = DimensionOrder.XYCZT;
+
+        return FormatTools.getIndex(dimOrder.getValue(), sizeZ, sizeC, sizeT, pix.sizeOfPlaneList(), z, adjC, t);
+    }
+
+    public static Plane getPlane(Pixels pix, int index)
+    {
+        if (pix != null)
+        {
+            if (index < pix.sizeOfPlaneList())
+                return pix.getPlane(index);
         }
 
-        img = ome.getImage(index);
-        result = img.getPixels();
-
-        // create Pixels object
-        if (result == null)
-        {
-            result = new Pixels();
-            img.setPixels(result);
-        }
-
-        return result;
+        return null;
     }
 
     /**
@@ -176,25 +201,34 @@ public class MetaDataUtil
      */
     public static Plane getPlane(Pixels pix, int t, int z, int c)
     {
-        final int sizeT = OMEUtil.getValue(pix.getSizeT(), 0);
-        final int sizeZ = OMEUtil.getValue(pix.getSizeZ(), 0);
-        final int sizeC = OMEUtil.getValue(pix.getSizeC(), 0);
+        return getPlane(pix, getPlaneIndex(pix, t, z, c));
+    }
 
-        try
-        {
-            DimensionOrder dimOrder = pix.getDimensionOrder();
-            // use default dimension order
-            if (dimOrder == null)
-                dimOrder = DimensionOrder.XYZCT;
+    /**
+     * Remove the Plan at specified position
+     */
+    public static void removePlane(Image img, int t, int z, int c)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return;
 
-            final int index = FormatTools.getIndex(dimOrder.getValue(), sizeZ, sizeC, sizeT, pix.sizeOfPlaneList(), z,
-                    c, t);
-            return pix.getPlane(index);
-        }
-        catch (IllegalArgumentException e)
-        {
-            return null;
-        }
+        final int numPlane = pix.sizeOfPlaneList();
+        final int index = getPlaneIndex(pix, t, z, c);
+        final Plane plane = getPlane(pix, index);
+
+        // remove plane
+        pix.removePlane(plane);
+
+        // remove associated annotation
+        for (int i = 0; i < plane.sizeOfLinkedAnnotationList(); i++)
+            img.unlinkAnnotation(plane.getLinkedAnnotation(i));
+
+        // clean some data
+        if (pix.sizeOfBinDataList() == numPlane)
+            pix.removeBinData(pix.getBinData(index));
+        if (pix.sizeOfTiffDataList() == numPlane)
+            pix.removeTiffData(pix.getTiffData(index));
     }
 
     /**
@@ -807,6 +841,10 @@ public class MetaDataUtil
      *        number of Z slices (need to be >= 1)
      * @param sizeT
      *        number of T frames (need to be >= 1)
+     * @param z
+     *        If this value is not <code>-1</code> then only the specified Z plane metadata information are preserved.
+     * @param t
+     *        If this value is not <code>-1</code> then only the specified T frame metadata information are preserved.
      * @param dataType
      *        data type.
      * @param separateChannel
@@ -814,7 +852,7 @@ public class MetaDataUtil
      * @throws ServiceException
      */
     public static void setMetaData(OMEXMLMetadataImpl metadata, int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
-            DataType dataType, boolean separateChannel) throws ServiceException
+            int z, int t, DataType dataType, boolean separateChannel) throws ServiceException
     {
         OME ome = (OME) metadata.getRoot();
 
@@ -826,16 +864,33 @@ public class MetaDataUtil
 
         // keep only one image
         setNumSerie(metadata, 1);
+        // we need to remove some plane data
+        if ((z != -1) || (t != -1))
+            keepPlanes(ome.getImage(0), t, z, -1);
 
-        // save channel name
-        final List<String> channelNames = new ArrayList<String>();
-        for (int c = 0; c < sizeC; c++)
-            channelNames.add(getChannelName(metadata, 0, c));
+        if (StringUtil.isEmpty(metadata.getImageID(0)))
+            metadata.setImageID(MetadataTools.createLSID("Image", 0), 0);
+        if (StringUtil.isEmpty(metadata.getImageName(0)))
+            metadata.setImageName("Sample", 0);
 
-        // save pixel size and time interval informations
-        final double pixelSizeX = MetaDataUtil.getPixelSizeX(metadata, 0, 1d);
-        final double pixelSizeY = MetaDataUtil.getPixelSizeY(metadata, 0, 1d);
-        final double pixelSizeZ = MetaDataUtil.getPixelSizeZ(metadata, 0, 1d);
+        if (StringUtil.isEmpty(metadata.getPixelsID(0)))
+            metadata.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
+
+        // prefer big endian as JVM is big endian
+        metadata.setPixelsBigEndian(Boolean.TRUE, 0);
+        metadata.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
+        // force XYCZT dimension order
+        metadata.setPixelsDimensionOrder(DimensionOrder.XYCZT, 0);
+
+        // adjust pixel type and dimension size
+        metadata.setPixelsType(dataType.toPixelType(), 0);
+        metadata.setPixelsSizeX(OMEUtil.getPositiveInteger(sizeX), 0);
+        metadata.setPixelsSizeY(OMEUtil.getPositiveInteger(sizeY), 0);
+        metadata.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), 0);
+        metadata.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), 0);
+        metadata.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), 0);
+
+        // get time interval information
         double timeInterval = MetaDataUtil.getTimeInterval(metadata, 0, 0d);
         // not defined ?
         if (timeInterval == 0d)
@@ -847,45 +902,55 @@ public class MetaDataUtil
                 MetaDataUtil.setTimeInterval(metadata, 0, timeInterval);
         }
 
-        // init pixels object as we set specific size here
-        ome.getImage(0).setPixels(new Pixels());
-
-        if (StringUtil.isEmpty(metadata.getImageID(0)))
-            metadata.setImageID(MetadataTools.createLSID("Image", 0), 0);
-        if (StringUtil.isEmpty(metadata.getImageName(0)))
-            metadata.setImageName("Sample", 0);
-
-        metadata.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
-        // prefer big endian as JVM is big endian
-        metadata.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
-        metadata.setPixelsDimensionOrder(DimensionOrder.XYCZT, 0);
-        metadata.setPixelsType(dataType.toPixelType(), 0);
-        metadata.setPixelsSizeX(OMEUtil.getPositiveInteger(sizeX), 0);
-        metadata.setPixelsSizeY(OMEUtil.getPositiveInteger(sizeY), 0);
-        metadata.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), 0);
-        metadata.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), 0);
-        metadata.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), 0);
-
-        // restore pixel size and time interval informations
-        metadata.setPixelsPhysicalSizeX(OMEUtil.getLength(pixelSizeX), 0);
-        metadata.setPixelsPhysicalSizeY(OMEUtil.getLength(pixelSizeY), 0);
-        metadata.setPixelsPhysicalSizeZ(OMEUtil.getLength(pixelSizeZ), 0);
-        metadata.setPixelsTimeIncrement(OMEUtil.getTime(timeInterval), 0);
-
         if (separateChannel)
         {
+            // ensure we have the required number of channel
+            ensureChannel(getPixels(ome, 0), sizeC - 1);
+
             for (int c = 0; c < sizeC; c++)
             {
-                metadata.setChannelID(MetadataTools.createLSID("Channel", 0, c), 0, c);
+                if (StringUtil.isEmpty(metadata.getChannelID(0, c)))
+                    metadata.setChannelID(MetadataTools.createLSID("Channel", 0, c), 0, c);
                 metadata.setChannelSamplesPerPixel(new PositiveInteger(Integer.valueOf(1)), 0, c);
-                metadata.setChannelName(channelNames.get(c), 0, c);
+                // metadata.getChannelName(0, c);
             }
         }
         else
         {
-            metadata.setChannelID(MetadataTools.createLSID("Channel", 0, 0), 0, 0);
+            // ensure we have the required number of channel
+            ensureChannel(getPixels(ome, 0), 0);
+
+            if (StringUtil.isEmpty(metadata.getChannelID(0, 0)))
+                metadata.setChannelID(MetadataTools.createLSID("Channel", 0, 0), 0, 0);
             metadata.setChannelSamplesPerPixel(new PositiveInteger(Integer.valueOf(sizeC)), 0, 0);
         }
+    }
+
+    /**
+     * Set metadata object with the given image properties.
+     * 
+     * @param metadata
+     *        metadata object to fill.
+     * @param sizeX
+     *        width in pixels (need to be >= 1)
+     * @param sizeY
+     *        height in pixels (need to be >= 1)
+     * @param sizeC
+     *        number of channel (need to be >= 1)
+     * @param sizeZ
+     *        number of Z slices (need to be >= 1)
+     * @param sizeT
+     *        number of T frames (need to be >= 1)
+     * @param dataType
+     *        data type.
+     * @param separateChannel
+     *        true if we want channel data to be separated.
+     * @throws ServiceException
+     */
+    public static void setMetaData(OMEXMLMetadataImpl metadata, int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
+            DataType dataType, boolean separateChannel) throws ServiceException
+    {
+        setMetaData(metadata, sizeX, sizeY, sizeC, sizeZ, sizeT, -1, -1, dataType, separateChannel);
     }
 
     /**
@@ -949,10 +1014,27 @@ public class MetaDataUtil
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT, boolean separateChannel)
             throws ServiceException
     {
+        // do a copy as we mean use several time the same source sequence metadata
         final OMEXMLMetadataImpl result = OMEUtil.createOMEMetadata(sequence.getMetadata());
 
         setMetaData(result, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(), useZ ? sequence.getSizeZ()
                 : 1, useT ? sequence.getSizeT() : 1, sequence.getDataType_(), separateChannel);
+
+        return result;
+    }
+
+    /**
+     * Generates Meta Data for the given Sequence and parameters.
+     * 
+     * @see #setMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)
+     */
+    public static OMEXMLMetadata generateMetaDataSinglePlane(Sequence sequence, int z, int t, boolean separateChannel)
+            throws ServiceException
+    {
+        final OMEXMLMetadataImpl result = OMEUtil.createOMEMetadata(sequence.getMetadata());
+
+        setMetaData(result, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(), 1, 1, z, t,
+                sequence.getDataType_(), separateChannel);
 
         return result;
     }
@@ -993,11 +1075,11 @@ public class MetaDataUtil
         final Image img = getSerie(metaData, num);
 
         // keep only the desired image
-        for (int i = ome.sizeOfImageList() - 1; i >= 0; i--)
+        for (int i = numSeries - 1; i >= 0; i--)
             if (i != num)
                 ome.removeImage(ome.getImage(i));
 
-        final List<Object> toKeep = new ArrayList<Object>();
+        final Set<Object> toKeep = new HashSet<Object>();
 
         // try to keep associated dataset only
         toKeep.clear();
@@ -1131,6 +1213,102 @@ public class MetaDataUtil
             for (int i = numSeries - 1; i >= 0; i--)
                 if (i != num)
                     ome.removeScreen(ome.getScreen(i));
+        }
+    }
+
+    /**
+     * Keep only the specified plane metadata.
+     */
+    public static void keepSinglePlane(Image img, int index)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return;
+
+        final int numPlane = pix.sizeOfPlaneList();
+        final Plane plane = getPlane(pix, index);
+
+        // keep only the desired plane
+        for (int i = numPlane - 1; i >= 0; i--)
+        {
+            if (i != index)
+                pix.removePlane(pix.getPlane(i));
+        }
+
+        final Set<Object> toKeep = new HashSet<Object>();
+
+        // try to keep associated annotation only
+        toKeep.clear();
+        for (int i = 0; i < plane.sizeOfLinkedAnnotationList(); i++)
+            toKeep.add(plane.getLinkedAnnotation(i));
+        if (!toKeep.isEmpty())
+        {
+            for (int i = img.sizeOfLinkedAnnotationList() - 1; i >= 0; i--)
+            {
+                final Annotation obj = img.getLinkedAnnotation(i);
+                if (!toKeep.contains(obj))
+                    img.unlinkAnnotation(obj);
+            }
+        }
+        // just assume they are indirectly linked
+        else if (img.sizeOfLinkedAnnotationList() == numPlane)
+        {
+            for (int i = numPlane - 1; i >= 0; i--)
+                if (i != index)
+                    img.unlinkAnnotation(img.getLinkedAnnotation(i));
+        }
+
+        // clean some data
+        if (pix.sizeOfBinDataList() == numPlane)
+        {
+            for (int i = numPlane - 1; i >= 0; i--)
+                if (i != index)
+                    pix.removeBinData(pix.getBinData(i));
+        }
+        if (pix.sizeOfTiffDataList() == numPlane)
+        {
+            for (int i = numPlane - 1; i >= 0; i--)
+                if (i != index)
+                    pix.removeTiffData(pix.getTiffData(i));
+        }
+    }
+
+    /**
+     * Keep only plane(s) at specified C, Z, T position from the given metadata.
+     * 
+     * @param posT
+     *        keep Plane to given T position (-1 to keep all)
+     * @param posZ
+     *        keep Plane to given Z position (-1 to keep all)
+     * @param posC
+     *        keep Plane to given C position (-1 to keep all)
+     */
+    public static void keepPlanes(Image img, int posT, int posZ, int posC)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return;
+
+        final int sizeT = OMEUtil.getValue(pix.getSizeT(), 0);
+        final int sizeZ = OMEUtil.getValue(pix.getSizeZ(), 0);
+        final int sizeC = OMEUtil.getValue(pix.getSizeC(), 0);
+
+        for (int t = 0; t < sizeT; t++)
+        {
+            boolean remove = (posT != -1) && (posT != t);
+
+            for (int z = 0; t < sizeZ; z++)
+            {
+                remove |= (posZ != -1) && (posZ != z);
+
+                for (int c = 0; c < sizeC; c++)
+                {
+                    remove |= (posC != -1) && (posC != c);
+
+                    if (remove)
+                        removePlane(img, t, z, c);
+                }
+            }
         }
     }
 

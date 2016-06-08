@@ -42,7 +42,6 @@ import java.awt.event.InputEvent;
 import java.awt.geom.Point2D;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map.Entry;
 
 import plugins.kernel.canvas.VtkCanvas;
@@ -654,14 +653,25 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * Set the mask from a BooleanMask3D object
+     * Set the mask from a BooleanMask3D object.<br>
+     * If specified mask is <i>null</i> then ROI is cleared.
      */
     public void setAsBooleanMask(BooleanMask3D mask)
     {
-        if (mask != null)
+        // mask empty ? --> just clear the ROI
+        if ((mask == null) || mask.isEmpty())
+            clear();
+        else
         {
-            final Collection<BooleanMask2D> values = mask.mask.values();
-            setAsBooleanMask(mask.bounds, values.toArray(new BooleanMask2D[values.size()]));
+            final Rectangle3D.Integer bounds3d = mask.bounds;
+            final int startZ = bounds3d.z;
+            final int sizeZ = bounds3d.sizeZ;
+            final BooleanMask2D masks2d[] = new BooleanMask2D[sizeZ];
+
+            for (int z = 0; z < sizeZ; z++)
+                masks2d[z] = mask.getMask2D(startZ + z);
+
+            setAsBooleanMask(bounds3d, masks2d);
         }
     }
 

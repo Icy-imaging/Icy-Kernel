@@ -34,7 +34,6 @@ import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
-import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -425,6 +424,10 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
      */
     public void clear()
     {
+        // nothing to do
+        if (isEmpty())
+            return;
+
         for (R slice : slices.values())
         {
             slice.removeListener(this);
@@ -432,6 +435,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         }
 
         slices.clear();
+        roiChanged(true);
     }
 
     /**
@@ -449,7 +453,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             case ROI_CHANGED:
                 // position change of a slice can change global bounds --> transform to 'content changed' event type
                 roiChanged(true);
-//                roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
+                // roiChanged(StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL));
                 break;
 
             case FOCUS_CHANGED:

@@ -18,10 +18,6 @@
  */
 package icy.file;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
 import icy.gui.menu.ApplicationMenu;
@@ -35,6 +31,11 @@ import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.IFormatWriter;
@@ -59,8 +60,7 @@ import loci.formats.out.TiffWriter;
 public class Saver
 {
     /**
-     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
-     *             instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
@@ -70,8 +70,7 @@ public class Saver
     }
 
     /**
-     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
-     *             instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
@@ -281,8 +280,7 @@ public class Saver
     /**
      * Return the closest compatible {@link IcyColorModel} supported by writer
      * from the specified image description.<br>
-     * That means the writer is able to save the data described by the returned
-     * {@link IcyColorModel} without any loss
+     * That means the writer is able to save the data described by the returned {@link IcyColorModel} without any loss
      * or conversion.<br>
      * 
      * @param writer
@@ -342,8 +340,7 @@ public class Saver
     /**
      * Return the closest compatible {@link IcyColorModel} supported by writer
      * from the specified {@link IcyColorModel}.<br>
-     * That means the writer is able to save the data described by the returned
-     * {@link IcyColorModel} without any loss
+     * That means the writer is able to save the data described by the returned {@link IcyColorModel} without any loss
      * or conversion.<br>
      * 
      * @param writer
@@ -373,8 +370,7 @@ public class Saver
     }
 
     /**
-     * Return true if the specified writer is compatible with the specified {@link IcyColorModel}.
-     * <br>
+     * Return true if the specified writer is compatible with the specified {@link IcyColorModel}. <br>
      * That means the writer is able to save the data described by the colorModel without any loss
      * or conversion.<br>
      * The color map data are never preserved, they are always restored to their default.<br>
@@ -389,9 +385,13 @@ public class Saver
      */
     private static boolean getSeparateChannelFlag(IFormatWriter writer, int numChannel, DataType dataType)
     {
+        // OMETiffWriter has been fixed, we can now always separate channel for this writer
         if (writer instanceof OMETiffWriter)
-            return (numChannel == 2) || (numChannel > 4) || (dataType.getSize() > 1);
+            return true;
+        
+        // return (numChannel == 2) || (numChannel > 4) || (dataType.getSize() > 1);
 
+        // others writers does not support separated channel
         return false;
     }
 
@@ -448,8 +448,7 @@ public class Saver
     }
 
     /**
-     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)}
-     *             instead.
+     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)} instead.
      */
     @Deprecated
     public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
@@ -490,8 +489,7 @@ public class Saver
     }
 
     /**
-     * @deprecated Use
-     *             {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
+     * @deprecated Use {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
      *             instead.
      */
     @Deprecated
@@ -512,8 +510,7 @@ public class Saver
      *        writer used to save sequence (define the image format).<br>
      *        If set to <code>null</code> then writer is determined from the file extension.<br>
      *        If destination file does not have a valid extension (for folder for instance) then you
-     *        have to specify a valid Writer to write the image file (see
-     *        {@link #getWriter(ImageFileFormat)})
+     *        have to specify a valid Writer to write the image file (see {@link #getWriter(ImageFileFormat)})
      * @param sequence
      *        sequence to save
      * @param file
@@ -680,7 +677,7 @@ public class Saver
      * Save a single image from bytes buffer to the specified file.
      */
     private static void saveImage(IFormatWriter formatWriter, byte[] data, int width, int height, int numChannel,
-            DataType dataType, File file, boolean force) throws FormatException, IOException
+            boolean separateChannel, DataType dataType, File file, boolean force) throws FormatException, IOException
     {
         final String filePath = FileUtil.cleanPath(FileUtil.getGenericPath(file.getAbsolutePath()));
 
@@ -696,6 +693,7 @@ public class Saver
         FileUtil.ensureParentDirExist(filePath);
 
         final IFormatWriter writer;
+        final boolean separateCh;
 
         if (formatWriter == null)
         {
@@ -705,8 +703,9 @@ public class Saver
             // prepare the metadata
             try
             {
+                separateCh = getSeparateChannelFlag(writer, numChannel, dataType);
                 writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(width, height, numChannel, dataType,
-                        getSeparateChannelFlag(writer, numChannel, dataType)));
+                        separateCh));
             }
             catch (ServiceException e)
             {
@@ -715,23 +714,45 @@ public class Saver
             }
         }
         else
+        {
             // ready to use writer (metadata already prepared)
             writer = formatWriter;
+            separateCh = separateChannel;
+        }
 
-        // we never interleaved data even if some image viewer need it to correctly read image (win
-        // XP viewer)
+        // we never interleaved data even if some image viewer need it to correctly read image (win XP viewer)
         writer.setInterleaved(false);
         writer.setId(filePath);
         writer.setSeries(0);
+        // usually give better save performance
+        writer.setWriteSequentially(true);
+
         try
         {
-            writer.saveBytes(0, data);
+            // separated channel data
+            if (separateChannel)
+            {
+                final int pitch = width * height * dataType.getSize();
+                final byte[] dataChannel = new byte[pitch];
+                int offset = 0;
+
+                for (int c = 0; c < numChannel; c++)
+                {
+                    System.arraycopy(data, offset, dataChannel, 0, pitch);
+                    writer.saveBytes(c, dataChannel);
+                    offset += pitch;
+                }
+            }
+            else
+                // save all data at once
+                writer.saveBytes(0, data);
         }
         catch (Exception e)
         {
             System.err.println("Saver.saveImage(...) error :");
             IcyExceptionHandler.showErrorMessage(e, true);
         }
+
         writer.close();
     }
 
@@ -741,7 +762,7 @@ public class Saver
     public static void saveImage(byte[] data, int width, int height, int numChannel, DataType dataType, File file,
             boolean force) throws FormatException, IOException
     {
-        saveImage(null, data, width, height, numChannel, dataType, file, force);
+        saveImage(null, data, width, height, numChannel, false, dataType, file, force);
     }
 
     /**
@@ -768,10 +789,11 @@ public class Saver
         if (writer == null)
             throw new UnknownFormatException("Can't find a valid image writer for the specified file: " + file);
 
+        final boolean separateChannel = getSeparateChannelFlag(writer, image.getIcyColorModel());
+
         try
         {
-            writer.setMetadataRetrieve(
-                    MetaDataUtil.generateMetaData(image, getSeparateChannelFlag(writer, image.getIcyColorModel())));
+            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(image, separateChannel));
         }
         catch (ServiceException e)
         {
@@ -783,7 +805,7 @@ public class Saver
         final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();
         // then save the image
         saveImage(writer, image.getRawData(littleEndian), image.getSizeX(), image.getSizeY(), image.getSizeC(),
-                image.getDataType_(), file, force);
+                separateChannel, image.getDataType_(), file, force);
     }
 
     /**
@@ -853,8 +875,8 @@ public class Saver
         // set settings
         writer.setFramesPerSecond(fps);
         // generate metadata
-        writer.setMetadataRetrieve(
-                MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1, separateChannel));
+        writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
+                separateChannel));
         // no interleave (XP default viewer want interleaved channel to correctly read image)
         writer.setInterleaved(false);
         // set id

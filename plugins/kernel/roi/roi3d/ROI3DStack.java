@@ -288,6 +288,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     /**
      * Returns <code>true</code> if the ROI stack is empty.
      */
+    @Override
     public boolean isEmpty()
     {
         return slices.isEmpty();
@@ -380,6 +381,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
      */
     public void clear()
     {
+        // nothing to do
+        if (isEmpty())
+            return;
+
         for (R slice : slices.values())
         {
             slice.removeListener(this);
@@ -387,6 +392,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         }
 
         slices.clear();
+        roiChanged(true);
     }
 
     /**

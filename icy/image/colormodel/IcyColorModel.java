@@ -672,20 +672,20 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * Change the colorspace of the color model.<br/>
      * <b>You should never use this method directly (internal use only)</b>
      */
-    public void setColorSpace(IcyColorSpace cs)
+    public void setColorSpace(IcyColorSpace colorSpace)
     {
-        final IcyColorSpace currentCS = getIcyColorSpace();
+        final IcyColorSpace cs = getIcyColorSpace();
 
-        if (currentCS != cs)
+        if (cs != colorSpace)
         {
             try
             {
                 final Field csField = ReflectionUtil.getField(ColorModel.class, "colorSpace", true);
                 // set new colorSpace value
-                csField.set(this, cs);
+                csField.set(this, colorSpace);
 
-                currentCS.removeListener(this);
-                cs.addListener(this);
+                cs.removeListener(this);
+                colorSpace.addListener(this);
             }
             catch (Exception e)
             {
