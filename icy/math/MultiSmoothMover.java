@@ -368,9 +368,11 @@ public class MultiSmoothMover implements ActionListener
         else
         {
             final int len = stepValues[index].length;
-            final int ind = Math.min((elapsedMsTime * len) / moveTime, len - 2);
+            final int ind = Math.min((elapsedMsTime * len) / moveTime, len - 2) + 1;
+
             // set value
-            setCurrentValue(index, stepValues[index][ind + 1], (elapsedMsTime * 100) / moveTime);
+            if ((ind >= 0) && (ind < stepValues[index].length))
+                setCurrentValue(index, stepValues[index][ind], (elapsedMsTime * 100) / moveTime);
         }
     }
 

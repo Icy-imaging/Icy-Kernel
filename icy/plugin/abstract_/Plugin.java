@@ -362,6 +362,12 @@ public abstract class Plugin
                     mappedlibName = mappedlibName.substring(0, mappedlibName.length() - 7) + ".dylib";
                     libUrl = getResource(basePath + mappedlibName);
                 }
+                // do the contrary in case we have an old "jnilib" file and system use "dylib" by default
+                else if (mappedlibName.endsWith(".dylib"))
+                {
+                    mappedlibName = mappedlibName.substring(0, mappedlibName.length() - 6) + ".jnilib";
+                    libUrl = getResource(basePath + mappedlibName);
+                }                
             }
 
             // resource not found --> error
