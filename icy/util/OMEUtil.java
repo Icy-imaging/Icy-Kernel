@@ -252,7 +252,7 @@ public class OMEUtil
     {
         try
         {
-            return XMLUtil.getDocumentSafe(getOMEMetadata(metadata).dumpXML());
+            return XMLUtil.createDocument(getOMEMetadata(metadata).dumpXML());
         }
         catch (Exception e)
         {

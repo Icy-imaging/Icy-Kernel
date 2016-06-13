@@ -712,15 +712,18 @@ public class IcyBufferedImageUtil
             return null;
 
         final IcyBufferedImage result;
+        final int srcW = source.getWidth();
+        final int srcH = source.getHeight();
+        final boolean resize = resizeContent && ((width != srcW) || (height != srcH));
 
         // no content resize ?
-        if (!resizeContent)
+        if (!resize)
         {
             final int xt;
             final int yt;
 
             // calculate translation values
-            final int dx = width - source.getWidth();
+            final int dx = width - srcW;
             switch (xAlign)
             {
                 default:
@@ -737,7 +740,7 @@ public class IcyBufferedImageUtil
                     break;
             }
 
-            final int dy = height - source.getHeight();
+            final int dy = height - srcH;
             switch (yAlign)
             {
                 default:
@@ -761,8 +764,8 @@ public class IcyBufferedImageUtil
         }
         else
         {
-            final Float xScale = Float.valueOf((float) width / source.getWidth());
-            final Float yScale = Float.valueOf((float) height / source.getHeight());
+            final Float xScale = Float.valueOf((float) width / srcW);
+            final Float yScale = Float.valueOf((float) height / srcH);
             final Interpolation interpolation;
 
             switch (filterType)

@@ -108,15 +108,21 @@ public class MetaDataUtil
         while (ome.sizeOfImageList() <= index)
         {
             final Image img = new Image();
+            ome.addImage(img);
+        }
+
+        final Image result = ome.getImage(index);
+
+        if (result.getPixels() == null)
+        {
             final Pixels pix = new Pixels();
             // wanted default dimension order
             pix.setDimensionOrder(DimensionOrder.XYCZT);
             // create default pixels object
-            img.setPixels(pix);
-            ome.addImage(img);
+            result.setPixels(pix);
         }
 
-        return ome.getImage(index);
+        return result;
     }
 
     /**

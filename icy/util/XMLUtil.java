@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -148,7 +150,23 @@ public class XMLUtil
         result.setOutputProperty(OutputKeys.METHOD, "xml");
         result.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
         result.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        result.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+        result.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        result.setOutputProperty(OutputKeys.INDENT, "yes");
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new Transformer.
+     */
+    public static Transformer createTransformerSafe() throws TransformerConfigurationException
+    {
+        final Transformer result = transformerFactory.newTransformer();
+
+        result.setOutputProperty(OutputKeys.METHOD, "xml");
+        result.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+        result.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        result.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         result.setOutputProperty(OutputKeys.INDENT, "yes");
 
         return result;
@@ -176,11 +194,26 @@ public class XMLUtil
     }
 
     /**
-     * Parse the specified string and convert it to XML Document.<br>
-     * Returns an empty document if an error occurred (error shown in console).
+     * Parse the specified string and convert it to XML Document (throw an exception if an error occurred).
      * 
-     * @see #getDocumentSafe(String)
+     * @throws IOException
+     * @throws SAXException
      */
+    public static Document createDocument(String xmlString) throws SAXException, IOException
+    {
+        final DocumentBuilder docBuilder = createDocumentBuilder();
+
+        // an error occurred
+        if (docBuilder == null)
+            return null;
+
+        return docBuilder.parse(new InputSource(new StringReader(filterString(xmlString))));
+    }
+
+    /**
+     * @deprecated Use {@link #createDocument(String)} instead.
+     */
+    @Deprecated
     public static Document getDocument(String xmlString)
     {
         final DocumentBuilder docBuilder = createDocumentBuilder();
@@ -203,20 +236,12 @@ public class XMLUtil
     }
 
     /**
-     * Parse the specified string and convert it to XML Document (safe version).
-     * 
-     * @throws IOException
-     * @throws SAXException
+     * @deprecated Use {@link #createDocument(String)} instead.
      */
+    @Deprecated
     public static Document getDocumentSafe(String xmlString) throws SAXException, IOException
     {
-        final DocumentBuilder docBuilder = createDocumentBuilder();
-
-        // an error occurred
-        if (docBuilder == null)
-            return null;
-
-        return docBuilder.parse(new InputSource(new StringReader(filterString(xmlString))));
+        return createDocument(xmlString);
     }
 
     /**
@@ -434,6 +459,24 @@ public class XMLUtil
         }
 
         return false;
+    }
+
+    /**
+     * Return the XML String from the specified document.
+     * 
+     * @throws TransformerException
+     */
+    public static String getXMLString(Document document) throws TransformerException
+    {
+        if (document == null)
+            return "";
+
+        final Transformer transformer = createTransformerSafe();
+        final StringWriter writer = new StringWriter();
+
+        transformer.transform(new DOMSource(document), new StreamResult(writer));
+
+        return writer.toString();
     }
 
     /**
