@@ -188,7 +188,7 @@ public class MetaDataUtil
         if (dimOrder == null)
             dimOrder = DimensionOrder.XYCZT;
 
-        return FormatTools.getIndex(dimOrder.getValue(), sizeZ, sizeC, sizeT, pix.sizeOfPlaneList(), z, adjC, t);
+        return FormatTools.getIndex(dimOrder.getValue(), sizeZ, sizeC, sizeT, sizeZ * sizeC * sizeT, z, adjC, t);
     }
 
     public static Plane getPlane(Pixels pix, int index)
@@ -908,10 +908,11 @@ public class MetaDataUtil
                 MetaDataUtil.setTimeInterval(metadata, 0, timeInterval);
         }
 
+        // fix channel number depending separate channel flag
         if (separateChannel)
         {
-            // ensure we have the required number of channel
-            ensureChannel(getPixels(ome, 0), sizeC - 1);
+            // set channel number
+            setNumChannel(metadata, 0, sizeC);
 
             for (int c = 0; c < sizeC; c++)
             {
@@ -923,8 +924,8 @@ public class MetaDataUtil
         }
         else
         {
-            // ensure we have the required number of channel
-            ensureChannel(getPixels(ome, 0), 0);
+            // set channel number
+            setNumChannel(metadata, 0, 1);
 
             if (StringUtil.isEmpty(metadata.getChannelID(0, 0)))
                 metadata.setChannelID(MetadataTools.createLSID("Channel", 0, 0), 0, 0);
