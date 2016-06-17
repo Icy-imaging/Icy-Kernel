@@ -912,7 +912,7 @@ public class MetaDataUtil
         if (separateChannel)
         {
             // set channel number
-            setNumChannel(metadata, 0, sizeC - 1);
+            setNumChannel(metadata, 0, sizeC);
 
             for (int c = 0; c < sizeC; c++)
             {
