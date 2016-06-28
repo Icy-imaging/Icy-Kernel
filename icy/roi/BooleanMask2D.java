@@ -117,6 +117,229 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
+     * Return a list of Point representing the contour points of the mask.<br>
+     * Points are returned in ascending XY order:
+     * 
+     * <pre>
+     *  123 
+     *  4 5
+     *  6 7
+     *   89
+     * </pre>
+     */
+    public static List<Point> getContourPoints(Rectangle bounds, boolean mask[])
+    {
+        if (bounds.isEmpty())
+            return new ArrayList<Point>(1);
+
+        final List<Point> points = new ArrayList<Point>(mask.length / 16);
+        final int h = bounds.height;
+        final int w = bounds.width;
+        final int minx = bounds.x;
+        final int miny = bounds.y;
+        final int maxx = minx + (w - 1);
+        final int maxy = miny + (h - 1);
+
+        // cache
+        boolean top = false;
+        boolean bottom = false;
+        boolean left = false;
+        boolean right = false;
+        boolean current;
+
+        int offset = 0;
+
+        // special case
+        if ((w == 1) && (h == 1))
+        {
+            if (mask[0])
+                points.add(new Point(minx, miny));
+        }
+        else if (w == 1)
+        {
+            // first pixel of row
+            top = false;
+            current = mask[offset];
+            bottom = mask[++offset];
+
+            // current pixel is a border ?
+            if (current && !(top && bottom))
+                points.add(new Point(minx, miny));
+
+            // row
+            for (int y = miny + 1; y < maxy; y++)
+            {
+                // cache
+                top = current;
+                current = bottom;
+                bottom = mask[++offset];
+
+                // current pixel is a border ?
+                if (current && !(top && bottom))
+                    points.add(new Point(minx, y));
+            }
+
+            // cache
+            top = current;
+            current = bottom;
+            bottom = false;
+
+            // current pixel is a border ?
+            if (current && !(top && bottom))
+                points.add(new Point(minx, maxy));
+        }
+        // special case
+        else if (h == 1)
+        {
+            // first pixel of line
+            left = false;
+            current = mask[offset];
+            right = mask[++offset];
+
+            // current pixel is a border ?
+            if (current && !(left && right))
+                points.add(new Point(minx, miny));
+
+            // line
+            for (int x = minx + 1; x < maxx; x++)
+            {
+                // cache
+                left = current;
+                current = right;
+                right = mask[++offset];
+
+                // current pixel is a border ?
+                if (current && !(left && right))
+                    points.add(new Point(x, miny));
+            }
+
+            // last pixel of first line
+            left = current;
+            current = right;
+            right = false;
+
+            // current pixel is a border ?
+            if (current && !(left && right))
+                points.add(new Point(maxx, miny));
+        }
+        else
+        {
+            // first pixel of first line
+            top = false;
+            left = false;
+            current = mask[offset];
+            bottom = mask[offset + w];
+            right = mask[++offset];
+
+            // current pixel is a border ?
+            if (current && !(top && left && right && bottom))
+                points.add(new Point(minx, miny));
+
+            // first line
+            for (int x = minx + 1; x < maxx; x++)
+            {
+                // cache
+                left = current;
+                current = right;
+                bottom = mask[offset + w];
+                right = mask[++offset];
+
+                // current pixel is a border ?
+                if (current && !(top && left && right && bottom))
+                    points.add(new Point(x, miny));
+            }
+
+            // last pixel of first line
+            left = current;
+            current = right;
+            bottom = mask[offset + w];
+            right = false;
+            offset++;
+
+            // current pixel is a border ?
+            if (current && !(top && left && right && bottom))
+                points.add(new Point(maxx, miny));
+
+            for (int y = miny + 1; y < maxy; y++)
+            {
+                // first pixel of line
+                left = false;
+                current = mask[offset];
+                top = mask[offset - w];
+                bottom = mask[offset + w];
+                right = mask[++offset];
+
+                // current pixel is a border ?
+                if (current && !(top && left && right && bottom))
+                    points.add(new Point(minx, y));
+
+                for (int x = minx + 1; x < maxx; x++)
+                {
+                    // cache
+                    left = current;
+                    current = right;
+                    top = mask[offset - w];
+                    bottom = mask[offset + w];
+                    right = mask[++offset];
+
+                    // current pixel is a border ?
+                    if (current && !(top && left && right && bottom))
+                        points.add(new Point(x, y));
+                }
+
+                // last pixel of line
+                left = current;
+                current = right;
+                top = mask[offset - w];
+                bottom = mask[offset + w];
+                right = false;
+                offset++;
+
+                // current pixel is a border ?
+                if (current && !(top && left && right && bottom))
+                    points.add(new Point(maxx, y));
+            }
+
+            // first pixel of last line
+            left = false;
+            current = mask[offset];
+            top = mask[offset - w];
+            bottom = false;
+            right = mask[++offset];
+
+            // current pixel is a border ?
+            if (current && !(top && left && right && bottom))
+                points.add(new Point(minx, maxy));
+
+            // last line
+            for (int x = minx + 1; x < maxx; x++)
+            {
+                // cache
+                left = current;
+                current = right;
+                top = mask[offset - w];
+                right = mask[++offset];
+
+                // current pixel is a border ?
+                if (current && !(top && left && right && bottom))
+                    points.add(new Point(x, maxy));
+            }
+
+            // last pixel of last line
+            left = current;
+            current = right;
+            top = mask[offset - w];
+            right = false;
+
+            // current pixel is a border ?
+            if (current && !(top && left && right && bottom))
+                points.add(new Point(maxx, maxy));
+        }
+
+        return points;
+    }
+
+    /**
      * Build global boolean mask from union of all specified mask
      */
     public static BooleanMask2D getUnion(List<BooleanMask2D> masks)

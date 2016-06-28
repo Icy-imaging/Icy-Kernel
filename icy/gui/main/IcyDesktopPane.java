@@ -35,6 +35,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ContainerEvent;
@@ -120,7 +121,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             final int bgImgHeight = backGround.getHeight(this);
 
             // compute image scaling
-            final double scale = Math.max((double) width / (double) bgImgWidth, (double) height / (double) bgImgHeight);
+            final double scale = Math.max((double) width / (double) bgImgWidth, (double) height / (double) bgImgHeight) * 1.5d;
             final Graphics2D g2 = (Graphics2D) g.create();
 
             // fill background color
@@ -129,6 +130,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
             // paint image over background in transparency
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.2f));
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g2.drawImage(backGround, 0, 0, (int) (scale * bgImgWidth), (int) (scale * bgImgHeight), bgColor, this);
 
             final String text = "Version " + Icy.version;
@@ -211,8 +213,6 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         // paint overlays
         for (DesktopOverlay overlay : overlays)
             overlay.paint(g, w, h);
-
-        // System.out.println("paint background " + i++);
     }
 
     private void registerFrame(JInternalFrame frame)

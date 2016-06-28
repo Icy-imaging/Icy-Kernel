@@ -37,6 +37,7 @@ public class ConfirmDialog
         private final String message;
         private final int optionType;
 
+        int intResult;
         boolean result;
 
         /**
@@ -62,9 +63,9 @@ public class ConfirmDialog
             else
             {
                 final JFrame parent = Icy.getMainInterface().getMainFrame();
-
-                result = getBooleanReturnValue(JOptionPane.showConfirmDialog(parent, message, title, optionType,
-                        JOptionPane.QUESTION_MESSAGE));
+                intResult = JOptionPane.showConfirmDialog(parent, message, title, optionType,
+                        JOptionPane.QUESTION_MESSAGE);
+                result = getBooleanReturnValue(intResult);
             }
         }
     }
@@ -80,6 +81,15 @@ public class ConfirmDialog
     public static boolean getBooleanReturnValue(final int returnValue)
     {
         return (returnValue == JOptionPane.YES_OPTION) || (returnValue == JOptionPane.OK_OPTION);
+    }
+
+    public static int confirmEx(final String title, final String message, final int optionType)
+    {
+        final Confirmer confirmer = new Confirmer(title, message, optionType);
+
+        ThreadUtil.invokeNow(confirmer);
+
+        return confirmer.intResult;
     }
 
     public static boolean confirm(final String title, final String message, final int optionType)

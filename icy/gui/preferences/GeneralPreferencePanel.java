@@ -54,6 +54,7 @@ public class GeneralPreferencePanel extends PreferencePanel
      */
     final JCheckBox exitConfirm;
     private final JCheckBox sequencePersistence;
+    private final JCheckBox saveNewSequence;
     final JCheckBox autoUpdateCheckBox;
     private final JCheckBox alwaysOnTopCheckBox;
     private final JCheckBox usageStatistics;
@@ -72,7 +73,8 @@ public class GeneralPreferencePanel extends PreferencePanel
         exitConfirm = new JCheckBox("Show confirmation when exiting application");
         sequencePersistence = new JCheckBox("Enable sequence persistence");
         sequencePersistence
-                .setToolTipText("Enable the XML persistence for Sequence (file is automatically loaded/saved when sequence is opened/closed)");
+                .setToolTipText("Enable the XML persistence for sequence (file is automatically loaded/saved when sequence is opened/closed)");
+        saveNewSequence = new JCheckBox("Ask to save new sequence when closing them");
         autoUpdateCheckBox = new JCheckBox("Enable application update");
         autoUpdateCheckBox.setToolTipText("Enable automatic update for application as soon a new version is available");
         alwaysOnTopCheckBox = new JCheckBox("Application window always on top");
@@ -132,6 +134,8 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(Box.createVerticalStrut(6));
         topPanel.add(GuiUtil.createLineBoxPanel(sequencePersistence, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(GuiUtil.createLineBoxPanel(saveNewSequence, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
         topPanel.add(GuiUtil.createLineBoxPanel(usageStatistics, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(18));
         topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
@@ -170,6 +174,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         uiFontSizeSpinner.setValue(Integer.valueOf(GeneralPreferences.getGuiFontSize()));
         exitConfirm.setSelected(GeneralPreferences.getExitConfirm());
         sequencePersistence.setSelected(GeneralPreferences.getSequencePersistence());
+        saveNewSequence.setSelected(GeneralPreferences.getSaveNewSequence());
         autoUpdateCheckBox.setSelected(GeneralPreferences.getAutomaticUpdate());
         alwaysOnTopCheckBox.setSelected(GeneralPreferences.getAlwaysOnTop());
         usageStatistics.setSelected(GeneralPreferences.getUsageStatisticsReport());
@@ -193,6 +198,7 @@ public class GeneralPreferencePanel extends PreferencePanel
 
         GeneralPreferences.setExitConfirm(exitConfirm.isSelected());
         GeneralPreferences.setSequencePersistence(sequencePersistence.isSelected());
+        GeneralPreferences.setSaveNewSequence(saveNewSequence.isSelected());
         GeneralPreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
         GeneralPreferences.setUsageStatisticsReport(usageStatistics.isSelected());
 
@@ -200,5 +206,4 @@ public class GeneralPreferencePanel extends PreferencePanel
         Icy.getMainInterface().setAlwaysOnTop(booleanValue);
         GeneralPreferences.setAlwaysOnTop(booleanValue);
     }
-
 }

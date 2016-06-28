@@ -295,7 +295,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 }
             }
         }, waitCreate);
-        
+
         final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
         // listen main frame mode change
         if (mainFrame != null)
@@ -704,18 +704,15 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
      */
     public void removeFrom(final Container c)
     {
-        if (isInternalized())
+        // AWT safe
+        ThreadUtil.invoke(new Runnable()
         {
-            // AWT safe
-            ThreadUtil.invoke(new Runnable()
+            @Override
+            public void run()
             {
-                @Override
-                public void run()
-                {
-                    c.remove(internalFrame);
-                }
-            }, syncProcess);
-        }
+                c.remove(internalFrame);
+            }
+        }, syncProcess);
     }
 
     /**
@@ -2089,6 +2086,8 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 
     /**
      * Implement setDefaultCloseOperation method
+     * 
+     * @see JFrame#setDefaultCloseOperation(int)
      */
     public void setDefaultCloseOperation(final int operation)
     {

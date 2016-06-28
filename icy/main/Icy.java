@@ -49,7 +49,6 @@ import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
 import icy.preferences.PluginPreferences;
-import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.system.AppleUtil;
 import icy.system.IcyExceptionHandler;
@@ -71,7 +70,6 @@ import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.imageio.ImageIO;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -201,35 +199,6 @@ public class Icy
                 }
             }
 
-            ThreadUtil.bgRun(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    try
-                    {
-                        // HACKY: attempt to load an image as ImageIO may fail on first try...
-                        ImageIO.read(getClass().getResource("/" + ResourceUtil.IMAGE_PATH + "logo.png"));
-                    }
-                    catch (Throwable t)
-                    {
-                        // ignore this one...
-                        // t.printStackTrace();
-                    }
-
-                    // force resources loading now so it will eat less time on GUI loading
-                    try
-                    {
-                        Class.forName(ResourceUtil.class.getName());
-                    }
-                    catch (Throwable t)
-                    {
-                        // show the stack trace as this one is more problematic
-                        t.printStackTrace();
-                    }
-                }
-            });
-
             if (!headless && !noSplash)
             {
                 // prepare splashScreen (ok to create it here as we are not yet in substance laf)
@@ -250,7 +219,7 @@ public class Icy
                     }
                 });
             }
-            
+
             // set LOCI debug level (do it immediately as it can quickly show some log messages)
             loci.common.DebugTools.enableLogging("ERROR");
 
@@ -390,17 +359,17 @@ public class Icy
         }
         else
         {
-            
-// forced udpate        
-//if (PluginPreferences.getAutomaticUpdate())
-//    PluginUpdater.checkUpdate(true);
+
+            // forced udpate
+            // if (PluginPreferences.getAutomaticUpdate())
+            // PluginUpdater.checkUpdate(true);
 
         }
 
         // update version info
         ApplicationPreferences.setVersion(Icy.version);
         // set LOCI debug level
-//        loci.common.DebugTools.enableLogging("ERROR");
+        // loci.common.DebugTools.enableLogging("ERROR");
         // set OGL debug level
         // SystemUtil.setProperty("jogl.verbose", "TRUE");
         // SystemUtil.setProperty("jogl.debug", "TRUE");
