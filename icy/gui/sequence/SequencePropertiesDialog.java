@@ -68,11 +68,6 @@ public class SequencePropertiesDialog extends ActionDialog
                     MessageDialog.showDialog("Pixel size values should be > 0 !", MessageDialog.WARNING_MESSAGE);
                     return;
                 }
-                if (st <= 0d)
-                {
-                    MessageDialog.showDialog("Timer interval should be > 0 !", MessageDialog.WARNING_MESSAGE);
-                    return;
-                }
 
                 sequence.setName(panel.getNameFieldValue());
                 sequence.setPixelSizeX(UnitUtil.getValueInUnit(sx, panel.getPixelSizeXUnit(), UnitPrefix.MICRO));

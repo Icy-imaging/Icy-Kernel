@@ -211,6 +211,26 @@ public class MetaDataUtil
     }
 
     /**
+     * Ensure the plane at specified index exist for the specified Pixels object.
+     */
+    public static Plane ensurePlane(Pixels pix, int index)
+    {
+        // create missing plane
+        while (pix.sizeOfPlaneList() <= index)
+            pix.addPlane(new Plane());
+
+        return pix.getPlane(index);
+    }
+
+    /**
+     * Ensure the plane at specified T, Z, C position exist for the specified Pixels object.
+     */
+    public static Plane ensurePlane(Pixels pix, int t, int z, int c)
+    {
+        return ensurePlane(pix, getPlaneIndex(pix, t, z, c));
+    }
+
+    /**
      * Remove the Plan at specified position
      */
     public static void removePlane(Image img, int t, int z, int c)
@@ -816,7 +836,10 @@ public class MetaDataUtil
     {
         final OMEXMLMetadataImpl result = OMEUtil.createOMEMetadata();
 
-        result.createRoot();
+        final OME ome = getOME(result);
+
+        ensureSerie(ome, 0);
+
         result.setImageID(MetadataTools.createLSID("Image", 0), 0);
         result.setImageName(name, 0);
 
