@@ -29,6 +29,7 @@ import ij.gui.Toolbar;
 import ij.plugin.MacroInstaller;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.MenuComponent;
 import java.awt.PopupMenu;
@@ -156,7 +157,7 @@ public class ToolbarWrapper extends Toolbar
                 super.remove(popup);
                 swingComponent.add(popup);
             }
-
+            
             // get access to private methods
             // drawButtonsMethod = ReflectionUtil.getMethod(this.getClass(), "drawButtons", true,
             // Graphics.class);
@@ -226,6 +227,12 @@ public class ToolbarWrapper extends Toolbar
         new MacroInstaller().run(IJ.getDirectory("macros") + "StartupMacros.txt");
 
         LookAndFeelUtil.addSkinChangeListener(new WeakSkinChangeListener(skinChangeListener));
+    }
+    
+    @Override
+    public Container getParent()
+    {
+        return swingComponent.getParent();
     }
 
     /**
