@@ -229,4 +229,41 @@ public class ZipUtil
     {
         return extract(zipFile, FileUtil.getDirectory(zipFile) + FileUtil.getFileName(zipFile, false));
     }
+
+    /**
+     * Verify that specified file is a valid ZIP file
+     * 
+     * @param zipFile
+     *        input zip file name
+     * @return true if the specified file is a valid ZIP file
+     */
+    public static boolean isValid(String zipFile, boolean showError)
+    {
+        boolean ok = true;
+        try
+        {
+            final ZipFile file = new ZipFile(zipFile);
+            final Enumeration<? extends ZipEntry> entries = file.entries();
+
+            while (entries.hasMoreElements())
+            {
+                ZipEntry entry = entries.nextElement();
+                entry.getName();
+            }
+
+            file.close();
+        }
+        catch (IOException e)
+        {
+            if (showError)
+            {
+                System.err.println("ZipUtil.isValid(" + zipFile + ") error :");
+                IcyExceptionHandler.showErrorMessage(e, false);
+            }
+
+            ok = false;
+        }
+
+        return ok;
+    }
 }

@@ -81,9 +81,6 @@ public abstract class ROI3D extends ROI
      */
     protected int c;
 
-    protected double cachedSurfaceArea;
-    protected boolean surfaceAreaInvalid;
-
     public ROI3D()
     {
         super();
@@ -91,9 +88,6 @@ public abstract class ROI3D extends ROI
         // by default we consider no specific T and C attachment
         t = -1;
         c = -1;
-
-        cachedSurfaceArea = 0d;
-        surfaceAreaInvalid = true;
     }
 
     @Override
@@ -394,7 +388,7 @@ public abstract class ROI3D extends ROI
         if (roi instanceof ROI3D)
         {
             final ROI3D roi3d = (ROI3D) roi;
-            
+
             if (onSamePos(roi3d, false))
                 return getBooleanMask(true).intersects(roi3d.getBooleanMask(true));
         }
@@ -818,14 +812,8 @@ public abstract class ROI3D extends ROI
      */
     public double getSurfaceArea(Sequence sequence)
     {
-        // we need to recompute the surface area
-        if (surfaceAreaInvalid)
-        {
-            cachedSurfaceArea = computeSurfaceArea(sequence);
-            surfaceAreaInvalid = false;
-        }
-
-        return cachedSurfaceArea;
+        // we cannot cache surface area as result depends from sequence metadata
+        return computeSurfaceArea(sequence);
     }
 
     /**
@@ -935,20 +923,20 @@ public abstract class ROI3D extends ROI
         return ((getT() == -1) || (t == -1) || (getT() == t)) && ((getC() == -1) || (c == -1) || (getC() == c));
     }
 
-    @Override
-    public void onChanged(CollapsibleEvent object)
-    {
-        super.onChanged(object);
-
-        final ROIEvent event = (ROIEvent) object;
-
-        if (event.getType() == ROIEventType.ROI_CHANGED)
-        {
-            // need to recompute surface area
-            if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
-                surfaceAreaInvalid = true;
-        }
-    }
+//    @Override
+//    public void onChanged(CollapsibleEvent object)
+//    {
+//        super.onChanged(object);
+//
+//        final ROIEvent event = (ROIEvent) object;
+//
+//        if (event.getType() == ROIEventType.ROI_CHANGED)
+//        {
+//            // need to recompute surface area
+//            if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+//                surfaceAreaInvalid = true;
+//        }
+//    }
 
     @Override
     public boolean loadFromXML(Node node)

@@ -172,15 +172,18 @@ public class MetaDataUtil
         int sizeC = OMEUtil.getValue(pix.getSizeC(), 0);
         int adjC = c;
 
-        final Channel channel = pix.getChannel(0);
-        if (channel != null)
+        if (pix.sizeOfChannelList() > 0)
         {
-            final int spp = OMEUtil.getValue(channel.getSamplesPerPixel(), 0);
-            // channel are packed in pixel so consider sizeC = 1
-            if ((spp != 0) && (spp == sizeC))
+            final Channel channel = pix.getChannel(0);
+            if (channel != null)
             {
-                sizeC = 1;
-                adjC = 0;
+                final int spp = OMEUtil.getValue(channel.getSamplesPerPixel(), 0);
+                // channel are packed in pixel so consider sizeC = 1
+                if ((spp != 0) && (spp == sizeC))
+                {
+                    sizeC = 1;
+                    adjC = 0;
+                }
             }
         }
         DimensionOrder dimOrder = pix.getDimensionOrder();
@@ -693,7 +696,7 @@ public class MetaDataUtil
     {
         final Pixels pix = getPixels(metaData, serie);
 
-        if (pix != null)
+        if ((pix != null) && (index < pix.sizeOfChannelList()))
             return pix.getChannel(index);
 
         return null;

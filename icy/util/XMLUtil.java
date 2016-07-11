@@ -2069,5 +2069,4 @@ public class XMLUtil
         for (int i = 0; i < nodeMap.getLength(); i++)
             element.removeAttribute(nodeMap.item(i).getNodeName());
     }
-
 }
