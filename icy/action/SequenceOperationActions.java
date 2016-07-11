@@ -319,7 +319,7 @@ public class SequenceOperationActions
     }
 
     public static IcyAbstractAction cloneSequenceAction = new IcyAbstractAction("Duplicate", new IcyIcon(
-            ResourceUtil.ICON_DUPLICATE), "Duplicate sequence", "Create a fresh copy of the sequence", true,
+            ResourceUtil.ICON_COPY), "Duplicate sequence", "Create a fresh copy of the sequence", true,
             "Duplicating sequence...")
     {
         /**

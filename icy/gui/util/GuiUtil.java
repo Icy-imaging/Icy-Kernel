@@ -415,6 +415,13 @@ public class GuiUtil
         frame.setLayout(new BorderLayout());
         frame.add(content, BorderLayout.CENTER);
         frame.setJMenuBar(menuBar);
+        
+        // keep this property
+        if (window instanceof JFrame)
+            frame.setDefaultCloseOperation(((JFrame) window).getDefaultCloseOperation());
+        else if (window instanceof JDialog)
+            frame.setDefaultCloseOperation(((JDialog) window).getDefaultCloseOperation());
+
         frame.pack();
         frame.getIcyExternalFrame().setSize(window.getSize());
         frame.getIcyInternalFrame().setSize(window.getSize());

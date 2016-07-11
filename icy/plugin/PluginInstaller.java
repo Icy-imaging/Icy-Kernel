@@ -33,6 +33,8 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.update.Updater;
 import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.util.ZipUtil;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -404,8 +406,8 @@ public class PluginInstaller implements Runnable
         final String login;
         final String pass;
 
-        // use authentication
-        if ((repos != null) && repos.isAuthenticationEnabled())
+        // use authentication (repos should not be null at this point) 
+        if (repos.isAuthenticationEnabled())
         {
             login = repos.getLogin();
             pass = repos.getPassword();
@@ -426,11 +428,19 @@ public class PluginInstaller implements Runnable
         if (!StringUtil.isEmpty(result))
             return result;
 
+        // verify JAR file is not corrupted
+        if (!ZipUtil.isValid(plugin.getJarFilename(), false))
+                return "Downloaded JAR file '" + plugin.getJarFilename() + "' is corrupted !";
+
         // download and save XML file
         url = URLUtil.buildURL(basePath, plugin.getUrl());
         result = downloadAndSave(url, plugin.getXMLFilename(), login, pass, true, taskFrame);
         if (!StringUtil.isEmpty(result))
             return result;
+
+        // verify XML file is not corrupted
+        if (XMLUtil.loadDocument(plugin.getXMLFilename()) == null)
+            return "Downloaded XML file '" + plugin.getXMLFilename() + "' is corrupted !";
 
         // download and save icon & image files
         if (!StringUtil.isEmpty(plugin.getIconUrl()))
@@ -842,7 +852,7 @@ public class PluginInstaller implements Runnable
             // reload plugin list
             PluginLoader.reload();
 
-            for (PluginDescriptor plugin: pluginsOk)
+            for (PluginDescriptor plugin : pluginsOk)
             {
                 error = PluginLoader.verifyPlugin(plugin);
 
@@ -856,8 +866,8 @@ public class PluginInstaller implements Runnable
                     pluginsNOk.add(plugin);
                 }
             }
-            
-            // remove all plugins which failed from OK list 
+
+            // remove all plugins which failed from OK list
             pluginsOk.removeAll(pluginsNOk);
 
             if (!pluginsNOk.isEmpty())

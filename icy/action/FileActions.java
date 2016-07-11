@@ -21,6 +21,7 @@ package icy.action;
 import icy.file.Saver;
 import icy.gui.dialog.ImageSaverDialog;
 import icy.gui.dialog.LoaderDialog;
+import icy.gui.dialog.SaverDialog;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -278,7 +279,7 @@ public class FileActions
 
                 if (seq != null)
                 {
-                    new ImageSaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
+                    new SaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
                     return true;
                 }
             }

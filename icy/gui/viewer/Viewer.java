@@ -31,7 +31,9 @@ import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
+import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.dialog.SaverDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
@@ -47,6 +49,7 @@ import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginCanvas;
+import icy.preferences.GeneralPreferences;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
@@ -85,8 +88,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
+import javax.swing.WindowConstants;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -305,6 +310,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             {
                 refreshToolBar();
             }
+
+            @Override
+            public void icyFrameClosing(IcyFrameEvent e)
+            {
+                onClosing();
+            }
         });
 
         addKeyListener(this);
@@ -339,7 +350,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         buildActionMap(getInputMap(JComponent.WHEN_FOCUSED), getActionMap());
     }
 
-    private void buildActionMap(InputMap imap, ActionMap amap)
+    protected void buildActionMap(InputMap imap, ActionMap amap)
     {
         imap.put(WindowActions.gridTileAction.getKeyStroke(), WindowActions.gridTileAction.getName());
         imap.put(WindowActions.horizontalTileAction.getKeyStroke(), WindowActions.horizontalTileAction.getName());
@@ -361,8 +372,46 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
+     * Called when user want to close viewer
+     */
+    protected void onClosing()
+    {
+        // this sequence was not saved
+        if ((sequence != null) && (sequence.getFilename() == null))
+        {
+            // save new sequence enabled ?
+            if (GeneralPreferences.getSaveNewSequence())
+            {
+                final int res = ConfirmDialog.confirmEx("Save sequence", "Do you want to save '" + sequence.getName()
+                        + "' before closing it ?", ConfirmDialog.YES_NO_CANCEL_OPTION);
+
+                switch (res)
+                {
+                    case JOptionPane.YES_OPTION:
+                        // save the image
+                        new SaverDialog(sequence, getPositionZ(), getPositionT());
+
+                    case JOptionPane.NO_OPTION:
+                        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                        break;
+
+                    case JOptionPane.CANCEL_OPTION:
+                    default:
+                        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+                        break;
+                }
+
+                return;
+            }
+        }
+
+        // just close it
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    }
+
+    /**
      * Called when viewer is closed.<br>
-     * Free as much references we can here because of the
+     * Release as much references we can here because of the
      * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4759312">
      * JInternalFrame bug</a>.
      */
@@ -471,7 +520,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         return result;
     }
 
-    private void buildLockCombo()
+    protected void buildLockCombo()
     {
         final ArrayList<JLabel> labels = new ArrayList<JLabel>();
 
@@ -535,7 +584,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     /**
      * build the toolBar
      */
-    private void buildToolBar()
+    protected void buildToolBar()
     {
         // build combo box
         buildLockCombo();
@@ -1336,13 +1385,13 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         return Icy.getMainInterface().isUniqueViewer(this);
     }
 
-    private void lutChanged()
+    protected void lutChanged()
     {
         // can be called from external thread, replace it in AWT dispatch thread
         ThreadUtil.bgRunSingle(lutUpdater);
     }
 
-    private void positionChanged(DimensionId dim)
+    protected void positionChanged(DimensionId dim)
     {
         fireViewerChanged(ViewerEventType.POSITION_CHANGED, dim);
     }
@@ -1380,7 +1429,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         fireViewerChanged(event, DimensionId.NULL);
     }
 
-    private void fireViewerClosed()
+    protected void fireViewerClosed()
     {
         for (ViewerListener viewerListener : listeners.getListeners(ViewerListener.class))
             viewerListener.viewerClosed(this);
@@ -1413,7 +1462,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     /**
      * Change the frame's title.
      */
-    private void refreshViewerTitle()
+    protected void refreshViewerTitle()
     {
         // have to test this as we release sequence reference on closed
         if (sequence != null)
