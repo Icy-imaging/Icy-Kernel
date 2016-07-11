@@ -876,6 +876,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             sizeY = rect.height;
         }
 
+        final int serie = reader.getSeries();
         // convert in our data type
         final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
         // prepare informations
@@ -949,18 +950,18 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                         colormaps[effC] = null;
                         break;
                 }
-
-                // colormap not set (or black) ? --> try to use metadata
-                if ((colormaps[effC] == null) || colormaps[effC].isBlack())
-                {
-                    final Color color = MetaDataUtil.getChannelColor(metaData, reader.getSeries(), effC);
-
-                    if ((color != null) && !ColorUtil.isBlack(color))
-                        colormaps[effC] = new LinearColorMap("Channel " + effC, color);
-                    else
-                        colormaps[effC] = null;
-                }
             }
+            
+            // colormap not yet set (or black) ? --> try to use metadata
+            if ((colormaps[effC] == null) || colormaps[effC].isBlack())
+            {
+                final Color color = MetaDataUtil.getChannelColor(metaData, serie, effC);
+
+                if ((color != null) && !ColorUtil.isBlack(color))
+                    colormaps[effC] = new LinearColorMap("Channel " + effC, color);
+                else
+                    colormaps[effC] = null;
+            }            
         }
 
         final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
@@ -969,8 +970,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         result.beginUpdate();
         try
         {
-            if (indexed)
-            {
                 // error ! we should have same number of colormap than component
                 if (colormaps.length != sizeC)
                 {
@@ -986,20 +985,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                         if (colormaps[comp] != null)
                             result.setColorMap(comp, colormaps[comp], true);
                     }
-                }
-            }
-            // special case of 4 channels image, try to restore alpha channel
-            else if (sizeC == 4)
-            {
-                // assume real alpha channel depending from the reader we use
-                final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
-                        || (reader instanceof JPEG2000Reader);
-                // || (reader instanceof TiffJAIReader);
+                    
+                    // special case of 4 channels image, try to restore alpha channel
+                    if ((sizeC == 4) && (colormaps[3] == null))
+                    {
+                        // assume real alpha channel depending from the reader we use
+                        final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
+                                || (reader instanceof JPEG2000Reader);
+                        // || (reader instanceof TiffJAIReader);
 
-                // restore alpha channel
-                if (alpha)
-                    result.setColorMap(3, LinearColorMap.alpha_, true);
-            }
+                        // restore alpha channel
+                        if (alpha)
+                            result.setColorMap(3, LinearColorMap.alpha_, true);
+                    }
+                }
         }
         finally
         {

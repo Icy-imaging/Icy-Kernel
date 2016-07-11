@@ -33,6 +33,8 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.MenuBar;
 import java.awt.Point;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -126,6 +128,30 @@ public class ImageJWrapper extends ImageJ
         swingStatusPanel.add(swingProgressBar, BorderLayout.EAST);
 
         swingPanel.add(swingStatusPanel, BorderLayout.SOUTH);
+        
+        // add original toolbar (but not visible) just to detect removing of it
+        swingToolBar.setVisible(false);
+        swingPanel.add(swingToolBar, BorderLayout.EAST);
+        swingPanel.addContainerListener(new ContainerListener()
+        {
+            @Override
+            public void componentRemoved(ContainerEvent e)
+            {
+                // original toolbar was removed ?
+                if (e.getChild() == swingToolBar)
+                    // remove its swing counterpart
+                    swingPanel.remove(swingToolBar.getSwingComponent());
+            }
+            
+            @Override
+            public void componentAdded(ContainerEvent e)
+            {
+                // original toolbar was (re)added ?
+                if (e.getChild() == swingToolBar)
+                    // add its swing counterpart
+                    swingPanel.add(swingToolBar.getSwingComponent());
+            }
+        });
 
         swingPanel.validate();
 

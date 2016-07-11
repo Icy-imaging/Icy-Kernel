@@ -41,6 +41,7 @@ public class GeneralPreferences
      * id general
      */
     public static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
+    public static final String ID_SAVE_NEW_SEQUENCE = "saveNewSequence";
     public static final String ID_AUTO_UPDATE = "autoUpdate";
     public static final String ID_LAST_UPDATECHECK_TIME = "lastUpdateCheckTime";
     public static final String ID_RIBBON_MINIMIZED = "ribbonMinimized";
@@ -123,6 +124,11 @@ public class GeneralPreferences
     public static boolean getExitConfirm()
     {
         return prefConfirms.getBoolean(ID_CONFIRM_EXIT, true);
+    }
+
+    public static boolean getSaveNewSequence()
+    {
+        return prefGeneral.getBoolean(ID_SAVE_NEW_SEQUENCE, false);
     }
 
     public static boolean getSequencePersistence()
@@ -208,6 +214,11 @@ public class GeneralPreferences
     public static void setExitConfirm(boolean value)
     {
         prefConfirms.putBoolean(ID_CONFIRM_EXIT, value);
+    }
+
+    public static void setSaveNewSequence(boolean value)
+    {
+        prefGeneral.putBoolean(ID_SAVE_NEW_SEQUENCE, value);
     }
 
     public static void setSequencePersistence(boolean value)

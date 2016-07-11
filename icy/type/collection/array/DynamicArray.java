@@ -212,8 +212,7 @@ public abstract class DynamicArray
          * @param granularity
          *        Accepted values go from 0 to 8 where lower value mean less memory used but more
          *        allocation time where higher mean more memory used but less allocation time
-         *        (default =
-         *        4).
+         *        (default = 4).
          */
         public Int(int granularity)
         {

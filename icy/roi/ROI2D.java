@@ -21,10 +21,8 @@ package icy.roi;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
-import icy.common.CollapsibleEvent;
 import icy.gui.util.FontUtil;
 import icy.preferences.GeneralPreferences;
-import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.edit.PositionROIEdit;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
@@ -32,7 +30,6 @@ import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil.ShapeOperation;
-import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Graphics2D;
@@ -344,9 +341,6 @@ public abstract class ROI2D extends ROI
      */
     protected int c;
 
-    protected double cachedPerimeter;
-    protected boolean perimeterInvalid;
-
     public ROI2D()
     {
         super();
@@ -355,9 +349,6 @@ public abstract class ROI2D extends ROI
         z = -1;
         t = -1;
         c = -1;
-
-        cachedPerimeter = 0d;
-        perimeterInvalid = true;
     }
 
     @Override
@@ -1323,14 +1314,8 @@ public abstract class ROI2D extends ROI
      */
     public double getPerimeter(Sequence sequence)
     {
-        // we need to recompute the perimeter
-        if (perimeterInvalid)
-        {
-            cachedPerimeter = computePerimeter(sequence);
-            perimeterInvalid = false;
-        }
-
-        return cachedPerimeter;
+        // we cannot cache perimeter information from ROI as it depends from Sequence metadata as well
+        return computePerimeter(sequence);
     }
 
     /**
@@ -1402,20 +1387,20 @@ public abstract class ROI2D extends ROI
         return result;
     }
 
-    @Override
-    public void onChanged(CollapsibleEvent object)
-    {
-        super.onChanged(object);
-
-        final ROIEvent event = (ROIEvent) object;
-
-        if (event.getType() == ROIEventType.ROI_CHANGED)
-        {
-            // need to recompute perimeter
-            if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
-                perimeterInvalid = true;
-        }
-    }
+    // @Override
+    // public void onChanged(CollapsibleEvent object)
+    // {
+    // super.onChanged(object);
+    //
+    // final ROIEvent event = (ROIEvent) object;
+    //
+    // if (event.getType() == ROIEventType.ROI_CHANGED)
+    // {
+    // // need to recompute perimeter
+    // if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+    // perimeterInvalid = true;
+    // }
+    // }
 
     @Override
     public boolean loadFromXML(Node node)

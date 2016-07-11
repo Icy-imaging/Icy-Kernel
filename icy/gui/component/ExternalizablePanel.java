@@ -99,7 +99,6 @@ public class ExternalizablePanel extends JPanel
 
             setLayout(new BorderLayout());
             setSize(400, 400);
-            addToDesktopPane();
         }
     }
 
@@ -284,6 +283,7 @@ public class ExternalizablePanel extends JPanel
 
         frame.add(this, BorderLayout.CENTER);
         frame.validate();
+        frame.addToDesktopPane();
         frame.setVisible(true);
 
         // notify
@@ -302,6 +302,7 @@ public class ExternalizablePanel extends JPanel
         frame.setVisible(false);
         frame.remove(this);
         frame.validate();
+        frame.removeFromMainDesktopPane();
 
         if (parent != null)
         {

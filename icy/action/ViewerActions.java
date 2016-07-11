@@ -30,7 +30,7 @@ import plugins.kernel.canvas.VtkCanvas;
 public class ViewerActions
 {
     public static IcyAbstractAction duplicateAction = new IcyAbstractAction("Duplicate view", new IcyIcon(
-            ResourceUtil.ICON_DUPLICATE), "Duplicate view (no data duplication)", KeyEvent.VK_F2)
+            ResourceUtil.ICON_PICTURE_COPY), "Duplicate view (no data duplication)", KeyEvent.VK_F2)
     {
         /**
          * 

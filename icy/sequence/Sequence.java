@@ -254,9 +254,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // set metadata object
         if (meta == null)
-        {
-            metaData = new OMEXMLMetadataImpl();
-        }
+            metaData = MetaDataUtil.createDefaultMetadata(name);
         else
             metaData = meta;
 
@@ -845,8 +843,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         double result = MetaDataUtil.getTimeInterval(metaData, 0, 0d);
 
+        // not yet defined ?
         if (result == 0d)
+        {
             result = MetaDataUtil.getTimeIntervalFromTimePositions(metaData, 0);
+            // we got something --> set it as the time interval
+            if (result != 0d)
+                MetaDataUtil.setTimeInterval(metaData, 0, result);
+        }
 
         return result;
     }

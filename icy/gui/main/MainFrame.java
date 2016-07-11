@@ -99,6 +99,49 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
+     * Returns the list of internal viewers.
+     * 
+     * @param bounds
+     *        If not null only viewers visible in the specified bounds are returned.
+     * @param wantNotVisible
+     *        Also return not visible viewers
+     * @param wantIconized
+     *        Also return iconized viewers
+     */
+    public static Viewer[] getExternalViewers(Rectangle bounds, boolean wantNotVisible, boolean wantIconized)
+    {
+        final List<Viewer> result = new ArrayList<Viewer>();
+
+        for (Viewer viewer : Icy.getMainInterface().getViewers())
+        {
+            if (viewer.isExternalized())
+            {
+                final IcyExternalFrame externalFrame = viewer.getIcyExternalFrame();
+
+                if ((wantNotVisible || externalFrame.isVisible())
+                        && (wantIconized || !ComponentUtil.isMinimized(externalFrame))
+                        && ((bounds == null) || bounds.contains(ComponentUtil.getCenter(externalFrame))))
+                    result.add(viewer);
+            }
+        }
+
+        return result.toArray(new Viewer[result.size()]);
+    }
+
+    /**
+     * Returns the list of internal viewers.
+     * 
+     * @param wantNotVisible
+     *        Also return not visible viewers
+     * @param wantIconized
+     *        Also return iconized viewers
+     */
+    public static Viewer[] getExternalViewers(boolean wantNotVisible, boolean wantIconized)
+    {
+        return getExternalViewers(null, wantNotVisible, wantIconized);
+    }
+
+    /**
 	 * 
 	 */
     private static final long serialVersionUID = 1113003570969611614L;
@@ -113,7 +156,7 @@ public class MainFrame extends JRibbonFrame
 
     public static final String ID_PREVIOUS_STATE = "previousState";
 
-    private final MainRibbon mainRibbon;
+    final MainRibbon mainRibbon;
     JSplitPane mainPane;
     private final JPanel centerPanel;
     private final IcyDesktopPane desktopPane;
@@ -188,10 +231,21 @@ public class MainFrame extends JRibbonFrame
             {
                 if (e.getClickCount() == 2)
                 {
-                    if (isInpectorInternalized())
-                        externalizeInspector();
+                    final Insets insets = mainPane.getInsets();
+                    final int lastLoc = mainPane.getLastDividerLocation();
+                    final int currentLoc = mainPane.getDividerLocation();
+                    final int maxLoc = mainPane.getWidth() - (mainPane.getDividerSize() + insets.left);
+
+                    // just hide / unhide inspector
+                    if (currentLoc != maxLoc)
+                        mainPane.setDividerLocation(maxLoc);
                     else
-                        internalizeInspector();
+                        mainPane.setDividerLocation(lastLoc);
+
+                    // if (isInpectorInternalized())
+                    // externalizeInspector();
+                    // else
+                    // internalizeInspector();
                 }
             }
         });
@@ -549,49 +603,6 @@ public class MainFrame extends JRibbonFrame
         }
 
         return false;
-    }
-
-    /**
-     * Returns the list of internal viewers.
-     * 
-     * @param bounds
-     *        If not null only viewers visible in the specified bounds are returned.
-     * @param wantNotVisible
-     *        Also return not visible viewers
-     * @param wantIconized
-     *        Also return iconized viewers
-     */
-    public Viewer[] getExternalViewers(Rectangle bounds, boolean wantNotVisible, boolean wantIconized)
-    {
-        final List<Viewer> result = new ArrayList<Viewer>();
-
-        for (Viewer viewer : Icy.getMainInterface().getViewers())
-        {
-            if (viewer.isExternalized())
-            {
-                final IcyExternalFrame externalFrame = viewer.getIcyExternalFrame();
-
-                if ((wantNotVisible || externalFrame.isVisible())
-                        && (wantIconized || !ComponentUtil.isMinimized(externalFrame))
-                        && ((bounds == null) || bounds.contains(ComponentUtil.getCenter(externalFrame))))
-                    result.add(viewer);
-            }
-        }
-
-        return result.toArray(new Viewer[result.size()]);
-    }
-
-    /**
-     * Returns the list of internal viewers.
-     * 
-     * @param wantNotVisible
-     *        Also return not visible viewers
-     * @param wantIconized
-     *        Also return iconized viewers
-     */
-    public Viewer[] getExternalViewers(boolean wantNotVisible, boolean wantIconized)
-    {
-        return getExternalViewers(null, wantNotVisible, wantIconized);
     }
 
     /**
@@ -958,18 +969,18 @@ public class MainFrame extends JRibbonFrame
         super.reshape(r.x, r.y, r.width, r.height);
     }
 
-//    @Override
-//    public synchronized void setMaximizedBounds(Rectangle bounds)
-//    {
-//        Rectangle bnds = SystemUtil.getScreenBounds(ComponentUtil.getScreen(this), true);
-//
-//        if (bnds.isEmpty())
-//            bnds = bounds;
-//        // at least use the location from original bounds
-//        else if (bounds != null)
-//            bnds.setLocation(bounds.getLocation());
-//        else bnds.setLocation(0, 0);
-//
-//        super.setMaximizedBounds(bnds);
-//    }
+    // @Override
+    // public synchronized void setMaximizedBounds(Rectangle bounds)
+    // {
+    // Rectangle bnds = SystemUtil.getScreenBounds(ComponentUtil.getScreen(this), true);
+    //
+    // if (bnds.isEmpty())
+    // bnds = bounds;
+    // // at least use the location from original bounds
+    // else if (bounds != null)
+    // bnds.setLocation(bounds.getLocation());
+    // else bnds.setLocation(0, 0);
+    //
+    // super.setMaximizedBounds(bnds);
+    // }
 }
