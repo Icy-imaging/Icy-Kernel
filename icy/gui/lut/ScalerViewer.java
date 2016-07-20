@@ -521,6 +521,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
      */
     private final Runnable histoUpdater;
     String message;
+    private int retry;
 
     /**
      * 
@@ -533,6 +534,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         this.lutChannel = lutChannel;
 
         message = "";
+        retry = 0;
         scalerMapPositionListeners = new EventListenerList();
         histoUpdater = new Runnable()
         {
@@ -676,13 +678,14 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                     }
                 }
             }
+            
+            retry = 0;
         }
         catch (Exception e)
         {
             // just redo it later
-            // TODO: check if this can lead on infinite refresh
-            refreshHistoData();
-            // System.out.println("error");
+            if (retry++ < 3)
+                refreshHistoData();
         }
         finally
         {

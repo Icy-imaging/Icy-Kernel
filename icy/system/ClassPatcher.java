@@ -51,16 +51,17 @@
 
 package icy.system;
 
-import icy.util.StringUtil;
-
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 
+import icy.util.StringUtil;
 import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
+import javassist.LoaderClassPath;
 import javassist.NotFoundException;
 
 /**
@@ -84,13 +85,19 @@ public class ClassPatcher
     private final String patchPackage;
     private final String patchSuffix;
 
-    public ClassPatcher(String patchPackage, String patchSuffix)
+    public ClassPatcher(ClassLoader classLoader, String patchPackage, String patchSuffix)
     {
         pool = ClassPool.getDefault();
         pool.appendClassPath(new ClassClassPath(getClass()));
-//        pool.appendClassPath(new LoaderClassPath(PluginLoader.getLoader()));
+        if (classLoader != null)
+            pool.appendClassPath(new LoaderClassPath(classLoader));
         this.patchPackage = patchPackage;
         this.patchSuffix = patchSuffix;
+    }
+
+    public ClassPatcher(String patchPackage, String patchSuffix)
+    {
+        this(null, patchPackage, patchSuffix);
     }
 
     /**
@@ -303,6 +310,32 @@ public class ClassPatcher
         }
     }
 
+    /**
+     * Loads the given, possibly modified, class.
+     * <p>
+     * This method must be called to confirm any changes made with {@link #insertAfterMethod},
+     * {@link #insertBeforeMethod}, {@link #insertMethod} or {@link #replaceMethod}.
+     * </p>
+     * 
+     * @param fullClass
+     *        Fully qualified class name to load.
+     * @return the loaded class
+     */
+    public Class<?> loadClass(final String fullClass, ClassLoader classLoader, ProtectionDomain protectionDomain)
+    {
+        final CtClass classRef = getClass(fullClass);
+        try
+        {
+            return classRef.toClass(classLoader, protectionDomain);
+        }
+        catch (final CannotCompileException e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, false);
+            System.err.println("Cannot load class: " + fullClass);
+            return null;
+        }
+    }
+
     /** Gets the Javassist class object corresponding to the given class name. */
     private CtClass getClass(final String fullClass)
     {
@@ -353,8 +386,8 @@ public class ClassPatcher
         final boolean isStatic = isStatic(methodSig);
         final boolean isVoid = isVoid(methodSig);
 
-        final StringBuilder newCode = new StringBuilder((isVoid ? "" : "return ") + patchPackage + "." + className
-                + patchSuffix + "." + methodName + "(");
+        final StringBuilder newCode = new StringBuilder(
+                (isVoid ? "" : "return ") + patchPackage + "." + className + patchSuffix + "." + methodName + "(");
         boolean firstArg = true;
         if (!isStatic)
         {

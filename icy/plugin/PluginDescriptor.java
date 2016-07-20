@@ -752,7 +752,8 @@ public class PluginDescriptor implements XMLPersistent
         XMLUtil.setElementValue(node, ID_WEB, getWeb());
         XMLUtil.setElementValue(node, ID_EMAIL, getEmail());
         XMLUtil.setElementValue(node, ID_DESCRIPTION, getDescription());
-        XMLUtil.setElementValue(node, ID_CHANGELOG, getChangesLog());
+        loadChangeLog();
+        XMLUtil.setElementValue(node, ID_CHANGELOG, getChangeLog());
 
         // synchronized (dateFormatter)
         // {

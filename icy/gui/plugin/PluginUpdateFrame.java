@@ -81,7 +81,8 @@ public class PluginUpdateFrame extends ActionFrame
                 {
                     final PluginDescriptor plugin = (PluginDescriptor) pluginList.getSelectedValue();
 
-                    final String changeLog = plugin.getChangesLog();
+                    plugin.loadChangeLog();
+                    final String changeLog = plugin.getChangeLog();
 
                     if (StringUtil.isEmpty(changeLog))
                         changeLogArea.setText("no change log");
