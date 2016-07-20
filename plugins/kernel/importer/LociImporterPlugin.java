@@ -951,7 +951,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                         break;
                 }
             }
-            
+
             // colormap not yet set (or black) ? --> try to use metadata
             if ((colormaps[effC] == null) || colormaps[effC].isBlack())
             {
@@ -961,7 +961,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     colormaps[effC] = new LinearColorMap("Channel " + effC, color);
                 else
                     colormaps[effC] = null;
-            }            
+            }
         }
 
         final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
@@ -970,35 +970,25 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         result.beginUpdate();
         try
         {
-                // error ! we should have same number of colormap than component
-                if (colormaps.length != sizeC)
-                {
-                    System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
-                    System.err.println("Colormap can not be restored");
-                }
-                else
-                {
-                    // set colormaps
-                    for (int comp = 0; comp < sizeC; comp++)
-                    {
-                        // set colormap
-                        if (colormaps[comp] != null)
-                            result.setColorMap(comp, colormaps[comp], true);
-                    }
-                    
-                    // special case of 4 channels image, try to restore alpha channel
-                    if ((sizeC == 4) && (colormaps[3] == null))
-                    {
-                        // assume real alpha channel depending from the reader we use
-                        final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
-                                || (reader instanceof JPEG2000Reader);
-                        // || (reader instanceof TiffJAIReader);
+            // set colormaps
+            for (int comp = 0; comp < effSizeC; comp++)
+            {
+                // set colormap
+                if (colormaps[comp] != null)
+                    result.setColorMap(comp, colormaps[comp], true);
+            }
 
-                        // restore alpha channel
-                        if (alpha)
-                            result.setColorMap(3, LinearColorMap.alpha_, true);
-                    }
-                }
+            // special case of 4 channels image, try to restore alpha channel
+            if ((sizeC == 4) && ((colormaps.length < 4) || (colormaps[3] == null)))
+            {
+                // assume real alpha channel depending from the reader we use
+                final boolean alpha = (rgbChanCount == 4) || (reader instanceof PNGReader) || (reader instanceof APNGReader)
+                        || (reader instanceof JPEG2000Reader);
+
+                // restore alpha channel
+                if (alpha)
+                    result.setColorMap(3, LinearColorMap.alpha_, true);
+            }
         }
         finally
         {

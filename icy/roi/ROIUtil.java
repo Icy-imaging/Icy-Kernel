@@ -112,7 +112,7 @@ public class ROIUtil
      * @param roiDescriptors
      *        the input {@link ROIDescriptor} set (see {@link #getROIDescriptors()} method)
      * @param descriptorId
-     *        the id of the descriptor we want to compute ( {@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
+     *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
      *        instance)
      * @param roi
      *        the ROI on which the descriptor(s) should be computed

@@ -716,14 +716,14 @@ public class ColorUtil
      * <a href="http://www.efg2.com/Lab/ScienceAndEngineering/Spectra.htm">Spectra Lab Report</a>
      * 
      * @param wavelength
-     *            the wavelength to convert (in nanometers)
+     *        the wavelength to convert (in nanometers)
      * @return a {@link Color} object representing the specified wavelength
      */
     public static Color getColorFromWavelength(double wavelength)
     {
         double factor;
         double r, g, b;
-        
+
         if ((wavelength >= 380) && (wavelength < 440))
         {
             r = -(wavelength - 440) / (440 - 380);
@@ -766,33 +766,23 @@ public class ColorUtil
             g = 0.0;
             b = 0.0;
         }
-        
+
         // Let the intensity fall off near the vision limits
-        
         if ((wavelength >= 380) && (wavelength < 420))
-        {
             factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
-        }
         else if ((wavelength >= 420) && (wavelength < 701))
-        {
             factor = 1.0;
-        }
         else if ((wavelength >= 701) && (wavelength < 781))
-        {
             factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 700);
-        }
         else
-        {
             factor = 0.0;
-        }
-        
+
         int[] rgb = new int[3];
-        
+
         rgb[0] = r == 0.0 ? 0 : (int) Math.round(255 * r * factor);
         rgb[1] = g == 0.0 ? 0 : (int) Math.round(255 * g * factor);
         rgb[2] = b == 0.0 ? 0 : (int) Math.round(255 * b * factor);
-        
+
         return new Color(rgb[0], rgb[1], rgb[2]);
     }
-
 }
