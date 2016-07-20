@@ -19,10 +19,6 @@
 
 package icy.plugin.classloader;
 
-import icy.plugin.classloader.exception.JclException;
-import icy.plugin.classloader.exception.ResourceNotFoundException;
-import icy.system.IcyExceptionHandler;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +31,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import icy.plugin.classloader.exception.JclException;
+import icy.plugin.classloader.exception.ResourceNotFoundException;
+import icy.system.IcyExceptionHandler;
 
 /**
  * Reads the class bytes from jar files and other resources using
@@ -63,7 +63,7 @@ public class JarClassLoader extends AbstractClassLoader
 
         classpathResources = new ClasspathResources();
         loadedClasses = Collections.synchronizedMap(new HashMap<String, Class>());
-        
+
         addLoader(localLoader);
     }
 
@@ -80,7 +80,7 @@ public class JarClassLoader extends AbstractClassLoader
     public JarClassLoader(Object[] sources)
     {
         this();
-        
+
         addAll(sources);
     }
 
@@ -92,7 +92,7 @@ public class JarClassLoader extends AbstractClassLoader
     public JarClassLoader(List sources)
     {
         this();
-        
+
         addAll(sources);
     }
 
@@ -226,8 +226,8 @@ public class JarClassLoader extends AbstractClassLoader
             }
             catch (ResourceNotFoundException e)
             {
-                throw new JclException("Class could not be unloaded "
-                        + "[Possible reason: Class belongs to the system]", e);
+                throw new JclException(
+                        "Class could not be unloaded " + "[Possible reason: Class belongs to the system]", e);
             }
         }
     }
@@ -284,22 +284,27 @@ public class JarClassLoader extends AbstractClassLoader
                 return result;
             }
 
-            try
-            {
-                classBytes = getClassBytes(className);
-            }
-            catch (IOException e)
-            {
-                // we got a severe error here --> throw an exception
-                throw new ClassNotFoundException(className, e);
-            }
-            if (classBytes == null)
-                return null;
-
-            result = defineClass(className, classBytes, 0, classBytes.length);
-
+            // try to find from already loaded class (by other method)
+            result = findLoadedClass(className);
+            // not loaded ?
             if (result == null)
-                return null;
+            {
+                try
+                {
+                    classBytes = getClassBytes(className);
+                }
+                catch (IOException e)
+                {
+                    // we got a severe error here --> throw an exception
+                    throw new ClassNotFoundException(className, e);
+                }
+                if (classBytes == null)
+                    return null;
+
+                result = defineClass(className, classBytes, 0, classBytes.length);
+                if (result == null)
+                    return null;
+            }
 
             /*
              * Preserve package name.
