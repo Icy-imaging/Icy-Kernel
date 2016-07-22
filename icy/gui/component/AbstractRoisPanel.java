@@ -19,8 +19,6 @@
 package icy.gui.component;
 
 import icy.action.RoiActions;
-import icy.gui.component.AbstractRoisPanel.ColumnInfo;
-import icy.gui.component.AbstractRoisPanel.DescriptorResult;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.renderer.ImageTableCellRenderer;
@@ -504,6 +502,35 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
         return null;
     }
+
+    // /**
+    // * Get column info for specified visible column index.
+    // */
+    // protected ColumnInfo getVisibleColumnInfo(List<ColumnInfo> columns, int column)
+    // {
+    // int ind = 0;
+    // for (int c = 0; c < columns.size(); c++)
+    // {
+    // final ColumnInfo col = columns.get(c);
+    //
+    // if (col.visible)
+    // {
+    // if (ind == column)
+    // return col;
+    // ind++;
+    // }
+    // }
+    //
+    // return null;
+    // }
+    //
+    // /**
+    // * Get column info for specified visible column index.
+    // */
+    // protected ColumnInfo getVisibleColumnInfo(int column)
+    // {
+    // return getVisibleColumnInfo(columnInfoList, column);
+    // }
 
     /**
      * Get column info for specified column index.
@@ -1046,10 +1073,17 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
     protected void refreshTableDataInternal()
     {
         final long time = System.currentTimeMillis();
+        final boolean hasPendingTask = primaryDescriptorComputer.hasPendingComputation()
+                && basicDescriptorComputer.hasPendingComputation()
+                && advancedDescriptorComputer.hasPendingComputation();
 
-        // avoid too much table data update
-        if ((time - lastTableDataRefresh) < 200)
-            return;
+        // still pending descriptor task ? 
+        if (hasPendingTask)
+        {
+            // avoid too much table data update
+            if ((time - lastTableDataRefresh) < 200)
+                return;
+        }
 
         lastTableDataRefresh = time;
 
@@ -1554,6 +1588,11 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
     protected class ROITableModel extends AbstractTableModel
     {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -6537163170625368503L;
+
         public ROITableModel()
         {
             super();
@@ -1781,9 +1820,9 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         }
 
         /**
-         * Retrieve the value for the specified descriptor
+         * Retrieve the DescriptorResult for the specified column
          */
-        public Object getValue(ColumnInfo column)
+        public DescriptorResult getDescriptorResult(ColumnInfo column)
         {
             // get result for this descriptor
             DescriptorResult result;
@@ -1801,6 +1840,17 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                     descriptorResults.put(column, result);
                 }
             }
+
+            return result;
+        }
+
+        /**
+         * Retrieve the value for the specified descriptor
+         */
+        public Object getValue(ColumnInfo column)
+        {
+            // get result for this descriptor
+            final DescriptorResult result = getDescriptorResult(column);
 
             // out dated result ? --> request for descriptor computation
             if (result.isOutdated())
@@ -1852,7 +1902,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
                     for (Object entryObj : entries)
                     {
-                        final Entry<ColumnInfo, DescriptorResult> entry = (Entry<ColumnInfo, DescriptorResult>) entryObj; 
+                        final Entry<ColumnInfo, DescriptorResult> entry = (Entry<ColumnInfo, DescriptorResult>) entryObj;
                         final ColumnInfo key = entry.getKey();
                         final ROIDescriptor descriptor = key.descriptor;
 
@@ -1901,7 +1951,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
             for (Object entryObj : entries)
             {
-                final Entry<ColumnInfo, DescriptorResult> entry = (Entry<ColumnInfo, DescriptorResult>) entryObj; 
+                final Entry<ColumnInfo, DescriptorResult> entry = (Entry<ColumnInfo, DescriptorResult>) entryObj;
                 final ColumnInfo key = entry.getKey();
                 final ROIDescriptor descriptor = key.descriptor;
 
@@ -1931,6 +1981,11 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             this.type = type;
 
             setPriority(Thread.MIN_PRIORITY);
+        }
+
+        public boolean hasPendingComputation()
+        {
+            return resultsToCompute.size() > 0;
         }
 
         public boolean hasPendingComputation(ROIResults results)
@@ -2499,6 +2554,11 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
 
     protected class ROITableColumnModel extends DefaultTableColumnModelExt
     {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -8024047283485991234L;
+
         public ROITableColumnModel()
         {
             super();
@@ -2534,6 +2594,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 // use the number cell renderer
                 else if (ClassUtil.isSubClass(type, Number.class))
                     column.setCellRenderer(new SubstanceDefaultTableCellRenderer.NumberRenderer());
+                // column.setCellRenderer(new NumberTableCellRenderer());
 
                 // and finally add to the model
                 addColumn(column);
@@ -2628,8 +2689,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             catch (Exception e)
             {
                 // ignore this...
-//                System.err.println("ROI table column sort failed:");
-//                System.err.println(e.getMessage());
+                // System.err.println("ROI table column sort failed:");
+                // System.err.println(e.getMessage());
             }
         }
 
@@ -2724,4 +2785,41 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             }
         }
     }
+
+    // protected class NumberTableCellRenderer extends SubstanceDefaultTableCellRenderer.NumberRenderer
+    // {
+    //
+    // /**
+    // *
+    // */
+    // private static final long serialVersionUID = 5033090596184731420L;
+    //
+    // @Override
+    // public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+    // boolean hasFocus, int row, int column)
+    // {
+    // final Component result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+    // column);
+    //
+    // final ROIResults roiResults = getRoiResults(row);
+    //
+    // if (roiResults != null)
+    // {
+    // final ColumnInfo ci = getVisibleColumnInfo(column);
+    //
+    // if (ci != null)
+    // {
+    // final DescriptorResult descResult = roiResults.getDescriptorResult(ci);
+    //
+    // if (descResult != null)
+    // {
+    // if (descResult.isOutdated())
+    // result.setBackground(ColorUtil.mix(Color.red, result.getBackground()));
+    // }
+    // }
+    // }
+    //
+    // return result;
+    // }
+    // }
 }
