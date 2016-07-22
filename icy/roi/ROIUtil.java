@@ -93,7 +93,7 @@ public class ROIUtil
                         result.put(roiDescriptor, plugin);
                 }
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 // show a message in the output console
                 IcyExceptionHandler.showErrorMessage(e, false, true);

@@ -683,7 +683,7 @@ public class Loader
                 // add the importer
                 result.add((SequenceFileImporter) PluginLauncher.create(plugin));
             }
-            catch (Exception t)
+            catch (Throwable t)
             {
                 // show a message in the output console
                 IcyExceptionHandler.showErrorMessage(t, false, true);
