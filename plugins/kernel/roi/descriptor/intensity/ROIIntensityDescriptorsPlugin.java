@@ -41,11 +41,11 @@ public class ROIIntensityDescriptorsPlugin extends Plugin implements PluginROIDe
 
     public static class IntensityDescriptorInfos
     {
-        double min;
-        double mean;
-        double max;
-        double sum;
-        double deviation;
+        public double min;
+        public double mean;
+        public double max;
+        public double sum;
+        public double deviation;
     };
 
     /**
@@ -59,8 +59,7 @@ public class ROIIntensityDescriptorsPlugin extends Plugin implements PluginROIDe
      *        the Sequence used to compute the intensity descriptors
      * @param allowMultiChannel
      *        Allow multi channel intensity computation. If this parameter is set to <code>false</code> and the ROI
-     *        number of channel
-     *        is > 1 then a {@link UnsupportedOperationException} is launch.
+     *        number of channel is > 1 then a {@link UnsupportedOperationException} is launch.
      * @throws Exception
      *         If the ROI dimension changed during the descriptor computation.
      * @throws UnsupportedOperationException

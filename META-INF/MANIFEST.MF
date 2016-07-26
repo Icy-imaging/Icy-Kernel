@@ -10,8 +10,7 @@ Class-Path: resources.jar ij/ij.jar lib/arpack-combo.jar lib/bioformats.jar
   lib/jfreechart.jar lib/jmf.jar lib/joal.jar lib/jocl.jar lib/jogl-all.jar
   lib/jplasma.jar lib/jtransforms.jar lib/junit.jar lib/jxl.jar
   lib/laf-plugin.jar lib/laf-widget.jar lib/mediaplayer.jar lib/multiplayer.jar
-  lib/netlib-java.jar lib/optimization.jar lib/parallelcolt.jar lib/poi.jar
-  lib/poi-excelant.jar lib/poi-ooxml.jar lib/poi-ooxml-schemas.jar lib/poi-scratchpad.jar
+  lib/netlib-java.jar lib/optimization.jar lib/parallelcolt.jar
   lib/phys2d.jar lib/sound.jar lib/substance.jar lib/substance-flamingo.jar
   lib/substance-swingx.jar lib/swingx-all.jar lib/Tracking.jar lib/trident.jar
   lib/vecmath.jar lib/vtk.jar lib/xuggler.jar	

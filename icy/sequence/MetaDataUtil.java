@@ -234,16 +234,36 @@ public class MetaDataUtil
     }
 
     /**
-     * Remove the Plan at specified position
+     * Remove the Plan at specified position.
+     * 
+     * @return <code>true</code> if the operation succeed, <code>false</code> otherwise
      */
-    public static void removePlane(Image img, int t, int z, int c)
+    public static boolean removePlane(Image img, int t, int z, int c)
     {
         final Pixels pix = img.getPixels();
         if (pix == null)
-            return;
+            return false;
+
+        return removePlane(img, getPlaneIndex(pix, t, z, c));
+    }
+
+    /**
+     * Remove the Plan at specified position.
+     * 
+     * @return <code>true</code> if the operation succeed, <code>false</code> otherwise
+     */
+    public static boolean removePlane(Image img, int index)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return false;
 
         final int numPlane = pix.sizeOfPlaneList();
-        final int index = getPlaneIndex(pix, t, z, c);
+
+        // no plane here --> return false
+        if (index >= numPlane)
+            return false;
+
         final Plane plane = getPlane(pix, index);
 
         // remove plane
@@ -258,6 +278,8 @@ public class MetaDataUtil
             pix.removeBinData(pix.getBinData(index));
         if (pix.sizeOfTiffDataList() == numPlane)
             pix.removeTiffData(pix.getTiffData(index));
+
+        return true;
     }
 
     /**
@@ -896,7 +918,12 @@ public class MetaDataUtil
 
         // keep only one image
         setNumSerie(metadata, 1);
-        // we need to remove some plane data
+        // clean TiffData metadata (can produce error on reloading)
+        cleanTiffData(ome.getImage(0));
+        // clean binData metadata (can produce error on reloading)
+        cleanBinData(ome.getImage(0));
+
+        // we need to remove some plane data (normally here we have sizeZ = 1 and sizeT = 1)
         if ((z != -1) || (t != -1))
             keepPlanes(ome.getImage(0), t, z, -1);
 
@@ -921,6 +948,9 @@ public class MetaDataUtil
         metadata.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), 0);
         metadata.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), 0);
         metadata.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), 0);
+
+        // clean plane metadata outside allowed range
+        cleanPlanes(ome.getImage(0));
 
         // get time interval information
         double timeInterval = MetaDataUtil.getTimeInterval(metadata, 0, 0d);
@@ -1309,6 +1339,8 @@ public class MetaDataUtil
     /**
      * Keep only plane(s) at specified C, Z, T position from the given metadata.
      * 
+     * @param img
+     *        image metadata to clean plane from
      * @param posT
      *        keep Plane to given T position (-1 to keep all)
      * @param posZ
@@ -1343,6 +1375,66 @@ public class MetaDataUtil
                 }
             }
         }
+    }
+
+    /**
+     * Clean plane(s) which are outside the pixel sizeC / sizeZ and sizeT.
+     * 
+     * @param img
+     *        image metadata to clean plane from
+     */
+    public static void cleanPlanes(Image img)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return;
+
+        final int sizeT = OMEUtil.getValue(pix.getSizeT(), 0);
+        final int sizeZ = OMEUtil.getValue(pix.getSizeZ(), 0);
+        final int sizeC = OMEUtil.getValue(pix.getSizeC(), 0);
+        if ((sizeT < 1) || (sizeZ < 1) || (sizeC < 1))
+            return;
+
+        // get allowed maximum plane
+        final int allowedMaxPlaneIndex = getPlaneIndex(pix, sizeT - 1, sizeZ - 1, sizeC - 1);
+        // current number of plane
+        int maxPlaneIndex = pix.sizeOfPlaneList() - 1;
+
+        // remove plan outside allowed region
+        while (maxPlaneIndex > allowedMaxPlaneIndex)
+            removePlane(img, maxPlaneIndex--);
+    }
+
+    /**
+     * Clean TiffData packet
+     * 
+     * @param img
+     *        image metadata to clean TiffData from
+     */
+    public static void cleanTiffData(Image img)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return;
+
+        while (pix.sizeOfTiffDataList() > 0)
+            pix.removeTiffData(pix.getTiffData(pix.sizeOfTiffDataList() - 1));
+    }
+
+    /**
+     * Clean BinData packet
+     * 
+     * @param img
+     *        image metadata to clean BinData from
+     */
+    public static void cleanBinData(Image img)
+    {
+        final Pixels pix = img.getPixels();
+        if (pix == null)
+            return;
+
+        while (pix.sizeOfBinDataList() > 0)
+            pix.removeBinData(pix.getBinData(pix.sizeOfBinDataList() - 1));
     }
 
     /**
