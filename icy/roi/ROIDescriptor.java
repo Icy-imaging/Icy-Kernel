@@ -3,10 +3,22 @@
  */
 package icy.roi;
 
+import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLauncher;
+import icy.plugin.PluginLoader;
+import icy.plugin.interface_.PluginROIDescriptor;
 import icy.roi.ROIEvent.ROIEventType;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
+import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import plugins.kernel.roi.descriptor.measure.ROIBasicMeasureDescriptorsPlugin;
 
 /**
  * Abstract class providing the basic methods to retrieve properties and compute a specific
@@ -16,6 +28,97 @@ import icy.util.StringUtil;
  */
 public abstract class ROIDescriptor
 {
+    /**
+     * Returns all available ROI descriptors (see {@link ROIDescriptor}) and their attached plugin
+     * (see {@link PluginROIDescriptor}).<br/>
+     * This list can be extended by installing new plugin(s) implementing the {@link PluginROIDescriptor} interface.
+     * 
+     * @see ROIDescriptor#compute(ROI, Sequence)
+     * @see PluginROIDescriptor#compute(ROI, Sequence)
+     */
+    public static Map<ROIDescriptor, PluginROIDescriptor> getDescriptors()
+    {
+        final Map<ROIDescriptor, PluginROIDescriptor> result = new HashMap<ROIDescriptor, PluginROIDescriptor>();
+        final List<PluginDescriptor> pluginDescriptors = PluginLoader.getPlugins(PluginROIDescriptor.class);
+
+        for (PluginDescriptor pluginDescriptor : pluginDescriptors)
+        {
+            try
+            {
+                final PluginROIDescriptor plugin = (PluginROIDescriptor) PluginLauncher.create(pluginDescriptor);
+                final List<ROIDescriptor> descriptors = plugin.getDescriptors();
+
+                if (descriptors != null)
+                {
+                    for (ROIDescriptor roiDescriptor : descriptors)
+                        result.put(roiDescriptor, plugin);
+                }
+            }
+            catch (Throwable e)
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(pluginDescriptor, IcyExceptionHandler.getErrorMessage(e, true));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Computes the specified descriptor from the input {@link ROIDescriptor} set on given ROI
+     * and returns the result (or <code>null</code> if the descriptor is not found).
+     * 
+     * @param roiDescriptors
+     *        the input {@link ROIDescriptor} set (see {@link #getDescriptors()} method)
+     * @param descriptorId
+     *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
+     *        instance)
+     * @param roi
+     *        the ROI on which the descriptor(s) should be computed
+     * @param sequence
+     *        an optional sequence where the pixel size can be retrieved
+     * @return the computed descriptor or <code>null</code> if the descriptor if not found in the
+     *         specified set
+     * @throws UnsupportedOperationException
+     *         if the type of the given ROI is not supported by this descriptor, or if <code>sequence</code> is
+     *         <code>null</code> while the calculation requires it, or if
+     *         the specified Z, T or C position are not supported by the descriptor
+     */
+    public static Object computeDescriptor(Set<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
+            Sequence sequence)
+    {
+        for (ROIDescriptor roiDescriptor : roiDescriptors)
+            if (StringUtil.equals(roiDescriptor.getId(), descriptorId))
+                return roiDescriptor.compute(roi, sequence);
+
+        return null;
+    }
+
+    /**
+     * Computes the specified descriptor on given ROI and returns the result (or <code>null</code> if the descriptor is
+     * not found).
+     * 
+     * @param descriptorId
+     *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
+     *        instance)
+     * @param roi
+     *        the ROI on which the descriptor(s) should be computed
+     * @param sequence
+     *        an optional sequence where the pixel size can be retrieved
+     * @return the computed descriptor or <code>null</code> if the descriptor if not found in the
+     *         specified set
+     * @throws UnsupportedOperationException
+     *         if the type of the given ROI is not supported by this descriptor, or if <code>sequence</code> is
+     *         <code>null</code> while the calculation requires it, or if
+     *         the specified Z, T or C position are not supported by the descriptor
+     */
+    public static Object computeDescriptor(String descriptorId, ROI roi, Sequence sequence)
+    {
+        return computeDescriptor(getDescriptors().keySet(), descriptorId, roi, sequence);
+    }
+
     protected final String id;
     protected final String name;
     protected final Class<?> type;

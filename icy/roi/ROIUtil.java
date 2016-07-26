@@ -70,44 +70,21 @@ public class ROIUtil
     /**
      * Returns all available ROI descriptors (see {@link ROIDescriptor}) and their attached plugin
      * (see {@link PluginROIDescriptor}).<br/>
-     * This list can be extended by installing new plugin(s) implementing the {@link PluginROIDescriptor} interface.
+     * This list can be extended by installing new plugin(s) implementing the {@link PluginROIDescriptor} interface.<br/>
+     * This method is an alias of {@link ROIDescriptor#getDescriptors()}
      * 
      * @see ROIDescriptor#compute(ROI, Sequence)
      * @see PluginROIDescriptor#compute(ROI, Sequence)
      */
     public static Map<ROIDescriptor, PluginROIDescriptor> getROIDescriptors()
     {
-        final Map<ROIDescriptor, PluginROIDescriptor> result = new HashMap<ROIDescriptor, PluginROIDescriptor>();
-        final List<PluginDescriptor> pluginDescriptors = PluginLoader.getPlugins(PluginROIDescriptor.class);
-
-        for (PluginDescriptor pluginDescriptor : pluginDescriptors)
-        {
-            try
-            {
-                final PluginROIDescriptor plugin = (PluginROIDescriptor) PluginLauncher.create(pluginDescriptor);
-                final List<ROIDescriptor> descriptors = plugin.getDescriptors();
-
-                if (descriptors != null)
-                {
-                    for (ROIDescriptor roiDescriptor : descriptors)
-                        result.put(roiDescriptor, plugin);
-                }
-            }
-            catch (Throwable e)
-            {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(e, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(pluginDescriptor, IcyExceptionHandler.getErrorMessage(e, true));
-            }
-        }
-
-        return result;
+        return ROIDescriptor.getDescriptors();
     }
 
     /**
      * Computes the specified descriptor from the input {@link ROIDescriptor} set on given ROI
-     * and returns the result (or <code>null</code> if the descriptor is not found).
+     * and returns the result (or <code>null</code> if the descriptor is not found).<br/>
+     * This method is an alias of {@link ROIDescriptor#computeDescriptor(Set, String, ROI, Sequence)}
      * 
      * @param roiDescriptors
      *        the input {@link ROIDescriptor} set (see {@link #getROIDescriptors()} method)
@@ -128,16 +105,13 @@ public class ROIUtil
     public static Object computeDescriptor(Set<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
             Sequence sequence)
     {
-        for (ROIDescriptor roiDescriptor : roiDescriptors)
-            if (StringUtil.equals(roiDescriptor.getId(), descriptorId))
-                return roiDescriptor.compute(roi, sequence);
-
-        return null;
+        return ROIDescriptor.computeDescriptor(roiDescriptors, descriptorId, roi, sequence);
     }
 
     /**
      * Computes the specified descriptor on given ROI and returns the result (or <code>null</code> if the descriptor is
-     * not found).
+     * not found).<br/>
+     * This method is an alias of {@link ROIDescriptor#computeDescriptor(String, ROI, Sequence)}
      * 
      * @param descriptorId
      *        the id of the descriptor we want to compute ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for
@@ -155,7 +129,7 @@ public class ROIUtil
      */
     public static Object computeDescriptor(String descriptorId, ROI roi, Sequence sequence)
     {
-        return computeDescriptor(getROIDescriptors().keySet(), descriptorId, roi, sequence);
+        return ROIDescriptor.computeDescriptor(descriptorId, roi, sequence);
     }
 
     /**
