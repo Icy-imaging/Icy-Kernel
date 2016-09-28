@@ -1,13 +1,10 @@
-/**
- * 
- */
-package icy.roi;
+package icy.type.geom;
 
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -29,118 +26,57 @@ import java.awt.geom.Rectangle2D;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * Modified by Stephane Dallongeville
  */
 
 /**
- * This class is a Polygon with double coordinates.
+ * This class has the same behavior than {@link Polygon2D}, except that
+ * the figure is not closed.
  */
-public class Polygon2D implements Shape, Cloneable
+public class Polyline2D implements Shape, Cloneable
 {
+    private static final double ASSUME_ZERO = 0.00001d;
+
     /**
-     * The total number of points. The value of <code>npoints</code> represents the number of valid points in this
-     * <code>Polygon</code>.
+     * The total number of points. The value of <code>npoints</code> represents the number of points in this
+     * <code>Polyline2D</code>.
      */
     public int npoints;
 
     /**
      * The array of <i>x</i> coordinates. The value of {@link #npoints} is equal to the
-     * number of points in this <code>Polygon2D</code>.
+     * number of points in this <code>Polyline2D</code>.
      */
     public double[] xpoints;
 
     /**
-     * The array of <i>x</i> coordinates. The value of {@link #npoints} is equal to the
-     * number of points in this <code>Polygon2D</code>.
+     * The array of <i>y</i> coordinates. The value of {@link #npoints} is equal to the
+     * number of points in this <code>Polyline2D</code>.
      */
     public double[] ypoints;
 
     /**
-     * Bounds of the Polygon2D.
+     * Bounds of the Polyline2D.
      * 
      * @see #getBounds()
      */
     protected Rectangle2D bounds;
 
-    private Path2D.Double path;
-    private Path2D.Double closedPath;
+    protected Path2D.Double path;
 
     /**
-     * Creates an empty Polygon2D.
+     * Creates an empty Polyline2D.
      */
-    public Polygon2D()
+    public Polyline2D()
     {
         super();
 
-        npoints = 0;
-        xpoints = new double[0];
-        ypoints = new double[0];
-        bounds = new Rectangle2D.Double();
-        path = null;
+        reset();
     }
 
     /**
-     * Constructs and initializes a <code>Polygon2D</code> from the specified
-     * Rectangle2D.
-     * 
-     * @param rec
-     *        the Rectangle2D
-     * @exception NullPointerException
-     *            rec is <code>null</code>.
-     */
-    public Polygon2D(Rectangle2D rec)
-    {
-        super();
-
-        if (rec == null)
-            throw new IllegalArgumentException("null Rectangle");
-
-        npoints = 4;
-        xpoints = new double[4];
-        ypoints = new double[4];
-
-        xpoints[0] = rec.getMinX();
-        ypoints[0] = rec.getMinY();
-        xpoints[1] = rec.getMaxX();
-        ypoints[1] = rec.getMinY();
-        xpoints[2] = rec.getMaxX();
-        ypoints[2] = rec.getMaxY();
-        xpoints[3] = rec.getMinX();
-        ypoints[3] = rec.getMaxY();
-
-        calculatePath();
-    }
-
-    /**
-     * Constructs and initializes a <code>Polygon2D</code> from the specified
-     * Polygon.
-     * 
-     * @param pol
-     *        the Polygon
-     * @exception NullPointerException
-     *            pol is <code>null</code>.
-     */
-    public Polygon2D(Polygon pol)
-    {
-        super();
-
-        if (pol == null)
-            throw new IllegalArgumentException("null Polygon");
-
-        this.npoints = pol.npoints;
-        this.xpoints = new double[pol.npoints];
-        this.ypoints = new double[pol.npoints];
-
-        for (int i = 0; i < pol.npoints; i++)
-        {
-            xpoints[i] = pol.xpoints[i];
-            ypoints[i] = pol.ypoints[i];
-        }
-
-        calculatePath();
-    }
-
-    /**
-     * Constructs and initializes a <code>Polygon2D</code> from the specified
+     * Constructs and initializes a <code>Polyline2D</code> from the specified
      * parameters.
      * 
      * @param xpoints
@@ -148,7 +84,7 @@ public class Polygon2D implements Shape, Cloneable
      * @param ypoints
      *        an array of <i>y</i> coordinates
      * @param npoints
-     *        the total number of points in the <code>Polygon2D</code>
+     *        the total number of points in the <code>Polyline2D</code>
      * @exception NegativeArraySizeException
      *            if the value of <code>npoints</code> is negative.
      * @exception IndexOutOfBoundsException
@@ -157,7 +93,7 @@ public class Polygon2D implements Shape, Cloneable
      * @exception NullPointerException
      *            if <code>xpoints</code> or <code>ypoints</code> is <code>null</code>.
      */
-    public Polygon2D(double[] xpoints, double[] ypoints, int npoints)
+    public Polyline2D(double[] xpoints, double[] ypoints, int npoints)
     {
         super();
 
@@ -175,7 +111,7 @@ public class Polygon2D implements Shape, Cloneable
     }
 
     /**
-     * Constructs and initializes a <code>Polygon2D</code> from the specified
+     * Constructs and initializes a <code>Polyline2D</code> from the specified
      * parameters.
      * 
      * @param xpoints
@@ -183,7 +119,7 @@ public class Polygon2D implements Shape, Cloneable
      * @param ypoints
      *        an array of <i>y</i> coordinates
      * @param npoints
-     *        the total number of points in the <code>Polygon2D</code>
+     *        the total number of points in the <code>Polyline2D</code>
      * @exception NegativeArraySizeException
      *            if the value of <code>npoints</code> is negative.
      * @exception IndexOutOfBoundsException
@@ -192,7 +128,7 @@ public class Polygon2D implements Shape, Cloneable
      * @exception NullPointerException
      *            if <code>xpoints</code> or <code>ypoints</code> is <code>null</code>.
      */
-    public Polygon2D(int[] xpoints, int[] ypoints, int npoints)
+    public Polyline2D(int[] xpoints, int[] ypoints, int npoints)
     {
         super();
 
@@ -212,8 +148,36 @@ public class Polygon2D implements Shape, Cloneable
         calculatePath();
     }
 
+    public Polyline2D(Line2D line)
+    {
+        super();
+
+        npoints = 2;
+        xpoints = new double[2];
+        ypoints = new double[2];
+
+        xpoints[0] = line.getX1();
+        xpoints[1] = line.getX2();
+        ypoints[0] = line.getY1();
+        ypoints[1] = line.getY2();
+
+        calculatePath();
+    }
+
     /**
-     * Resets this <code>Polygon</code> object to an empty polygon.
+     * Resets this <code>Polyline2D</code> object to an empty polygon.
+     * The coordinate arrays and the data in them are left untouched
+     * but the number of points is reset to zero to mark the old
+     * vertex data as invalid and to start accumulating new vertex
+     * data at the beginning.
+     * All internally-cached data relating to the old vertices
+     * are discarded.
+     * Note that since the coordinate arrays from before the reset
+     * are reused, creating a new empty <code>Polyline2D</code> might
+     * be more memory efficient than resetting the current one if
+     * the number of vertices in the new polyline data is significantly
+     * smaller than the number of vertices in the data from before the
+     * reset.
      */
     public void reset()
     {
@@ -222,13 +186,12 @@ public class Polygon2D implements Shape, Cloneable
         ypoints = new double[0];
         bounds = new Rectangle2D.Double();
         path = null;
-        closedPath = null;
     }
 
     @Override
     public Object clone()
     {
-        Polygon2D pol = new Polygon2D();
+        Polyline2D pol = new Polyline2D();
 
         for (int i = 0; i < npoints; i++)
             pol.addPoint(xpoints[i], ypoints[i]);
@@ -245,10 +208,9 @@ public class Polygon2D implements Shape, Cloneable
             path.lineTo(xpoints[i], ypoints[i]);
 
         bounds = path.getBounds2D();
-        closedPath = null;
     }
 
-    private void updatePath(double x, double y)
+    protected void updatePath(double x, double y)
     {
         if (path == null)
         {
@@ -276,34 +238,6 @@ public class Polygon2D implements Shape, Cloneable
 
             bounds = new Rectangle2D.Double(_xmin, _ymin, _xmax - _xmin, _ymax - _ymin);
         }
-
-        closedPath = null;
-    }
-
-    /*
-     * get the associated {@link Polyline2D}.
-     */
-    public Polyline2D getPolyline2D()
-    {
-        Polyline2D pol = new Polyline2D(xpoints, ypoints, npoints);
-
-        pol.addPoint(xpoints[0], ypoints[0]);
-
-        return pol;
-    }
-
-    public Polygon getPolygon()
-    {
-        int[] _xpoints = new int[npoints];
-        int[] _ypoints = new int[npoints];
-
-        for (int i = 0; i < npoints; i++)
-        {
-            _xpoints[i] = (int) xpoints[i]; // todo maybe rounding is better ?
-            _ypoints[i] = (int) ypoints[i];
-        }
-
-        return new Polygon(_xpoints, _ypoints, npoints);
     }
 
     public void addPoint(Point2D p)
@@ -312,12 +246,17 @@ public class Polygon2D implements Shape, Cloneable
     }
 
     /**
-     * Appends the specified coordinates to this <code>Polygon2D</code>.
+     * Appends the specified coordinates to this <code>Polyline2D</code>.
+     * <p>
+     * If an operation that calculates the bounding box of this <code>Polyline2D</code> has already been performed, such
+     * as <code>getBounds</code> or <code>contains</code>, then this method updates the bounding box.
      * 
      * @param x
      *        the specified x coordinate
      * @param y
      *        the specified y coordinate
+     * @see java.awt.Polygon#getBounds
+     * @see java.awt.Polygon#contains(double,double)
      */
     public void addPoint(double x, double y)
     {
@@ -342,36 +281,6 @@ public class Polygon2D implements Shape, Cloneable
     }
 
     /**
-     * Determines whether the specified {@link Point} is inside this <code>Polygon</code>.
-     * 
-     * @param p
-     *        the specified <code>Point</code> to be tested
-     * @return <code>true</code> if the <code>Polygon</code> contains the <code>Point</code>; <code>false</code>
-     *         otherwise.
-     * @see #contains(double, double)
-     */
-    public boolean contains(Point p)
-    {
-        return contains(p.x, p.y);
-    }
-
-    /**
-     * Determines whether the specified coordinates are inside this <code>Polygon</code>.
-     * <p>
-     * 
-     * @param x
-     *        the specified x coordinate to be tested
-     * @param y
-     *        the specified y coordinate to be tested
-     * @return <code>true</code> if this <code>Polygon</code> contains
-     *         the specified coordinates, (<i>x</i>,&nbsp;<i>y</i>); <code>false</code> otherwise.
-     */
-    public boolean contains(int x, int y)
-    {
-        return contains((double) x, (double) y);
-    }
-
-    /**
      * Returns the high precision bounding box of the {@link Shape}.
      * 
      * @return a {@link Rectangle2D} that precisely
@@ -383,67 +292,63 @@ public class Polygon2D implements Shape, Cloneable
         return (Rectangle2D) bounds.clone();
     }
 
+    /**
+     * Gets the bounding box of this <code>Polyline2D</code>.
+     * The bounding box is the smallest {@link Rectangle} whose
+     * sides are parallel to the x and y axes of the
+     * coordinate space, and can completely contain the <code>Polyline2D</code>.
+     * 
+     * @return a <code>Rectangle</code> that defines the bounds of this <code>Polyline2D</code>.
+     */
     @Override
     public Rectangle getBounds()
     {
+        if (bounds == null)
+            return new Rectangle();
+
         return bounds.getBounds();
     }
 
     /**
-     * Determines if the specified coordinates are inside this <code>Polygon</code>. For the definition of
-     * <i>insideness</i>, see the class comments of {@link Shape}.
-     * 
-     * @param x
-     *        the specified x coordinate
-     * @param y
-     *        the specified y coordinate
-     * @return <code>true</code> if the <code>Polygon</code> contains the
-     *         specified coordinates; <code>false</code> otherwise.
+     * Determines whether the specified {@link Point} is inside this <code>Polyline2D</code>.
+     * This method is required to implement the Shape interface,
+     * but in the case of Line2D objects it always returns false since a line contains no area.
+     */
+    public boolean contains(Point p)
+    {
+        return false;
+    }
+
+    /**
+     * Determines if the specified coordinates are inside this <code>Polyline2D</code>.
+     * This method is required to implement the Shape interface,
+     * but in the case of Line2D objects it always returns false since a line contains no area.
      */
     @Override
     public boolean contains(double x, double y)
     {
-        if (npoints <= 2 || !bounds.contains(x, y))
-            return false;
-
-        return updateComputingPath().contains(x, y);
-    }
-
-    private Path2D.Double updateComputingPath()
-    {
-        Path2D.Double result = closedPath;
-
-        // need to recompute it ?
-        if (result == null)
-        {
-            if (path != null)
-            {
-                result = (Path2D.Double) path.clone();
-                result.closePath();
-            }
-            else
-                // empty path
-                result = new Path2D.Double();
-
-            closedPath = result;
-        }
-
-        return result;
+        return false;
     }
 
     /**
-     * Tests if a specified {@link Point2D} is inside the boundary of this <code>Polygon</code>.
-     * 
-     * @param p
-     *        a specified <code>Point2D</code>
-     * @return <code>true</code> if this <code>Polygon</code> contains the
-     *         specified <code>Point2D</code>; <code>false</code> otherwise.
-     * @see #contains(double, double)
+     * Determines whether the specified coordinates are inside this <code>Polyline2D</code>.
+     * This method is required to implement the Shape interface,
+     * but in the case of Line2D objects it always returns false since a line contains no area.
+     */
+    public boolean contains(int x, int y)
+    {
+        return false;
+    }
+
+    /**
+     * Tests if a specified {@link Point2D} is inside the boundary of this <code>Polyline2D</code>.
+     * This method is required to implement the Shape interface,
+     * but in the case of Line2D objects it always returns false since a line contains no area.
      */
     @Override
     public boolean contains(Point2D p)
     {
-        return contains(p.getX(), p.getY());
+        return false;
     }
 
     /**
@@ -467,10 +372,10 @@ public class Polygon2D implements Shape, Cloneable
     @Override
     public boolean intersects(double x, double y, double w, double h)
     {
-        if (npoints <= 0 || !bounds.intersects(x, y, w, h))
+        if ((path == null) || !bounds.intersects(x, y, w, h))
             return false;
 
-        return updateComputingPath().intersects(x, y, w, h);
+        return path.intersects(x, y, w, h);
     }
 
     /**
@@ -489,52 +394,57 @@ public class Polygon2D implements Shape, Cloneable
     }
 
     /**
-     * Tests if the interior of this <code>Polygon</code> entirely
+     * Tests if the interior of this <code>Polyline2D</code> entirely
      * contains the specified set of rectangular coordinates.
-     * 
-     * @param x
-     *        the x coordinate of the top-left corner of the
-     *        specified set of rectangular coordinates
-     * @param y
-     *        the y coordinate of the top-left corner of the
-     *        specified set of rectangular coordinates
-     * @param w
-     *        the width of the set of rectangular coordinates
-     * @param h
-     *        the height of the set of rectangular coordinates
-     * @return <code>true</code> if this <code>Polygon</code> entirely
-     *         contains the specified set of rectangular
-     *         coordinates; <code>false</code> otherwise.
+     * This method is required to implement the Shape interface,
+     * but in the case of Line2D objects it always returns false since a line contains no area.
      */
     @Override
     public boolean contains(double x, double y, double w, double h)
     {
-        if (npoints <= 0 || !bounds.intersects(x, y, w, h))
-            return false;
-
-        return updateComputingPath().contains(x, y, w, h);
+        return false;
     }
 
     /**
-     * Tests if the interior of this <code>Polygon</code> entirely
+     * Tests if the interior of this <code>Polyline2D</code> entirely
      * contains the specified <code>Rectangle2D</code>.
-     * 
-     * @param r
-     *        the specified <code>Rectangle2D</code>
-     * @return <code>true</code> if this <code>Polygon</code> entirely
-     *         contains the specified <code>Rectangle2D</code>; <code>false</code> otherwise.
-     * @see #contains(double, double, double, double)
+     * This method is required to implement the Shape interface,
+     * but in the case of Line2D objects it always returns false since a line contains no area.
      */
     @Override
     public boolean contains(Rectangle2D r)
     {
-        return contains(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+        return false;
+    }
+
+    /*
+     * get the associated {@link Polygon2D}.
+     * This method take care that may be the last point can
+     * be equal to the first. In that case it must not be included in the Polygon,
+     * as polygons declare their first point only once.
+     */
+    public Polygon2D getPolygon2D()
+    {
+        Polygon2D pol = new Polygon2D();
+
+        for (int i = 0; i < npoints - 1; i++)
+            pol.addPoint(xpoints[i], ypoints[i]);
+
+        Point2D.Double p0 = new Point2D.Double(xpoints[0], ypoints[0]);
+        Point2D.Double p1 = new Point2D.Double(xpoints[npoints - 1], ypoints[npoints - 1]);
+
+        if (p0.distance(p1) > ASSUME_ZERO)
+            pol.addPoint(xpoints[npoints - 1], ypoints[npoints - 1]);
+
+        return pol;
     }
 
     /**
      * Returns an iterator object that iterates along the boundary of this <code>Polygon</code> and provides access to
-     * the geometry of the outline of this <code>Polygon</code>. An optional {@link AffineTransform} can be specified so
-     * that the coordinates returned in the iteration are transformed accordingly.
+     * the geometry
+     * of the outline of this <code>Polygon</code>. An optional {@link AffineTransform} can be specified so that the
+     * coordinates
+     * returned in the iteration are transformed accordingly.
      * 
      * @param at
      *        an optional <code>AffineTransform</code> to be applied to the
@@ -546,15 +456,18 @@ public class Polygon2D implements Shape, Cloneable
     @Override
     public PathIterator getPathIterator(AffineTransform at)
     {
-        return updateComputingPath().getPathIterator(at);
+        if (path == null)
+            return new Path2D.Double().getPathIterator(at);
+
+        return path.getPathIterator(at);
     }
 
     /**
      * Returns an iterator object that iterates along the boundary of
-     * the <code>Polygon2D</code> and provides access to the geometry of the
-     * outline of the <code>Shape</code>. Only SEG_MOVETO, SEG_LINETO, and
-     * SEG_CLOSE point types are returned by the iterator.
-     * Since polygons are already flat, the <code>flatness</code> parameter
+     * the <code>Shape</code> and provides access to the geometry of the
+     * outline of the <code>Shape</code>. Only SEG_MOVETO and SEG_LINETO, point types
+     * are returned by the iterator.
+     * Since polylines are already flat, the <code>flatness</code> parameter
      * is ignored.
      * 
      * @param at
