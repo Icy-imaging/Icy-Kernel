@@ -79,6 +79,12 @@ public class PluginInstaller implements Runnable
 
             return super.equals(obj);
         }
+
+        @Override
+        public int hashCode()
+        {
+            return plugin.hashCode();
+        }
     }
 
     private static final String ERROR_DOWNLOAD = "Error while downloading ";
@@ -375,7 +381,7 @@ public class PluginInstaller implements Runnable
      * Backup specified plugin if it already exists.<br>
      * Return an empty string if no error else return error message
      */
-    private String backup(PluginDescriptor plugin)
+    private static String backup(PluginDescriptor plugin)
     {
         boolean ok;
 
@@ -392,7 +398,7 @@ public class PluginInstaller implements Runnable
     /**
      * Return an empty string if no error else return error message
      */
-    private String downloadAndSavePlugin(PluginDescriptor plugin, DownloadFrame taskFrame)
+    private static String downloadAndSavePlugin(PluginDescriptor plugin, DownloadFrame taskFrame)
     {
         String result;
 
@@ -406,7 +412,7 @@ public class PluginInstaller implements Runnable
         final String login;
         final String pass;
 
-        // use authentication (repos should not be null at this point) 
+        // use authentication (repos should not be null at this point)
         if (repos.isAuthenticationEnabled())
         {
             login = repos.getLogin();
@@ -430,7 +436,7 @@ public class PluginInstaller implements Runnable
 
         // verify JAR file is not corrupted
         if (!ZipUtil.isValid(plugin.getJarFilename(), false))
-                return "Downloaded JAR file '" + plugin.getJarFilename() + "' is corrupted !";
+            return "Downloaded JAR file '" + plugin.getJarFilename() + "' is corrupted !";
 
         // download and save XML file
         url = URLUtil.buildURL(basePath, plugin.getUrl());
@@ -460,8 +466,8 @@ public class PluginInstaller implements Runnable
     /**
      * Return an empty string if no error else return error message
      */
-    private String downloadAndSave(URL downloadPath, String savePath, String login, String pass, boolean displayError,
-            DownloadFrame downloadFrame)
+    private static String downloadAndSave(URL downloadPath, String savePath, String login, String pass,
+            boolean displayError, DownloadFrame downloadFrame)
     {
         if (downloadFrame != null)
             downloadFrame.setPath(FileUtil.getFileName(savePath));
@@ -482,7 +488,7 @@ public class PluginInstaller implements Runnable
         return null;
     }
 
-    private boolean deletePlugin(PluginDescriptor plugin)
+    private static boolean deletePlugin(PluginDescriptor plugin)
     {
         if (!FileUtil.delete(plugin.getJarFilename(), false))
         {

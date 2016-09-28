@@ -34,7 +34,9 @@ import icy.math.MathUtil;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
 import icy.roi.edit.BoundsROIEdit;
+import icy.roi.edit.BoundsROIsEdit;
 import icy.roi.edit.PositionROIEdit;
+import icy.roi.edit.PositionROIsEdit;
 import icy.roi.edit.PropertyROIsEdit;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
@@ -117,8 +119,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     IcyButton saveButton;
     IcyButton copyButton;
     IcyButton pasteButton;
-    IcyButton copyLinkButton;
-    IcyButton pasteLinkButton;
     IcyButton xlsExportButton;
     JSpinner strokeSpinner;
     JCheckBox displayNameCheckBox;
@@ -204,7 +204,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         toolBar.setRollover(true);
         GridBagConstraints gbc_toolBar = new GridBagConstraints();
         gbc_toolBar.anchor = GridBagConstraints.WEST;
-        gbc_toolBar.gridwidth = 4;
+        gbc_toolBar.gridwidth = 3;
         gbc_toolBar.insets = new Insets(0, 0, 5, 5);
         gbc_toolBar.gridx = 0;
         gbc_toolBar.gridy = 0;
@@ -228,15 +228,17 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         pasteButton = new IcyButton(RoiActions.pasteAction);
         pasteButton.setHideActionText(true);
         toolBar.add(pasteButton);
-        copyLinkButton = new IcyButton(RoiActions.copyLinkAction);
-        copyLinkButton.setHideActionText(true);
-        toolBar.add(copyLinkButton);
-        pasteLinkButton = new IcyButton(RoiActions.pasteLinkAction);
-        pasteLinkButton.setHideActionText(true);
-        toolBar.add(pasteLinkButton);
 
         horizontalGlue_1 = Box.createHorizontalGlue();
         toolBar.add(horizontalGlue_1);
+        deleteButton = new IcyButton(RoiActions.deleteAction);
+        deleteButton.setMargin(new Insets(2, 0, 2, 4));
+        GridBagConstraints gbc_deleteButton = new GridBagConstraints();
+        gbc_deleteButton.fill = GridBagConstraints.HORIZONTAL;
+        gbc_deleteButton.insets = new Insets(0, 0, 5, 5);
+        gbc_deleteButton.gridx = 3;
+        gbc_deleteButton.gridy = 0;
+        actionPanel.add(deleteButton, gbc_deleteButton);
 
         xlsExportButton = new IcyButton(RoiActions.xlsExportAction);
         xlsExportButton.setMargin(new Insets(2, 0, 2, 4));
@@ -277,14 +279,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         horizontalGlue = Box.createHorizontalGlue();
         toolBar_1.add(horizontalGlue);
-        deleteButton = new IcyButton(RoiActions.deleteAction);
-        deleteButton.setMargin(new Insets(2, 0, 2, 4));
-        GridBagConstraints gbc_deleteButton = new GridBagConstraints();
-        gbc_deleteButton.fill = GridBagConstraints.HORIZONTAL;
-        gbc_deleteButton.insets = new Insets(0, 0, 5, 0);
-        gbc_deleteButton.gridx = 4;
-        gbc_deleteButton.gridy = 1;
-        actionPanel.add(deleteButton, gbc_deleteButton);
 
         final JLabel lblColor = new JLabel("Color");
         GridBagConstraints gbc_lblColor = new GridBagConstraints();
@@ -334,7 +328,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         actionPanel.add(lblNewLabel, gbc_lblNewLabel);
 
         strokeSpinner = new JSpinner();
-        strokeSpinner.setToolTipText("ROI stroke size (visualization only)");
+        strokeSpinner.setToolTipText("ROI stroke size (for visualization only)");
         strokeSpinner.setModel(new SpinnerNumberModel(1.0, 1.0, 9.0, 1.0));
         GridBagConstraints gbc_strokeSpinner = new GridBagConstraints();
         gbc_strokeSpinner.fill = GridBagConstraints.HORIZONTAL;
@@ -681,35 +675,27 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         return MathUtil.roundSignificant(pos, 5, true);
     }
 
-    static double formatSize(double value)
-    {
-        // special case of infinite dimension
-        if (value == Double.POSITIVE_INFINITY)
-            return value;
-
-        return MathUtil.roundSignificant(value, 5, true);
-    }
-
     static String getPositionAsString(double pos, double size)
     {
-        final double v = formatPosition(pos, size);
-
         // special case of infinite dimension
-        if (v == -1d)
+        if (size == Double.POSITIVE_INFINITY)
             return "all";
 
-        return StringUtil.toString(v);
+        return StringUtil.toString(MathUtil.roundSignificant(pos, 5, true));
+    }
+
+    static double formatSize(double value)
+    {
+        return MathUtil.roundSignificant(value, 5, true);
     }
 
     static String getSizeAsString(double value)
     {
-        final double v = formatSize(value);
-
         // special case of infinite dimension
-        if (v == Double.POSITIVE_INFINITY)
+        if (value == Double.POSITIVE_INFINITY)
             return MathUtil.INFINITE_STRING;
 
-        return StringUtil.toString(v);
+        return StringUtil.toString(formatSize(value));
     }
 
     /**
@@ -729,18 +715,24 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final List<ROI> selectedRois = getSelectedRois();
         final ROI roi = (selectedRois.size() > 0) ? selectedRois.get(0) : null;
 
+        boolean canSetPos = false;
+        boolean canSetBnd = false;
         boolean readOnly = true;
         // set read only flag
         for (ROI r : selectedRois)
+        {
             readOnly &= r.isReadOnly();
+            canSetPos |= r.canSetPosition();
+            canSetBnd |= r.canSetBounds();
+        }
 
         final boolean hasSequence = (sequence != null);
         final boolean hasSelected = (roi != null);
         final boolean twoSelected = (selectedRois.size() == 2);
         final boolean multiSelect = (selectedRois.size() > 1);
         final boolean singleSelect = hasSelected && !multiSelect;
-        final boolean canSetBounds = (roi != null) ? roi.canSetBounds() : false;
-        final boolean canSetPosition = (roi != null) ? roi.canSetPosition() : false;
+        final boolean canSetPosition = canSetPos;
+        final boolean canSetBounds = canSetBnd;
         final boolean hasROIinClipboard = Clipboard.isType(Clipboard.TYPE_ROILIST);
         final boolean hasROILinkinClipboard = Clipboard.isType(Clipboard.TYPE_ROILINKLIST);
         final boolean editable = !readOnly;
@@ -785,19 +777,19 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     }
                 }
 
-                posXField.setEnabled(singleSelect && canSetPosition && editable);
-                posYField.setEnabled(singleSelect && canSetPosition && editable);
-                posZField.setEnabled(singleSelect && canSetPosition && editable);
-                posTField.setEnabled(singleSelect && canSetPosition && editable);
-                posCField.setEnabled(singleSelect && canSetPosition && editable);
-                posZSpinner.setEnabled(singleSelect && canSetPosition && editable);
-                posTSpinner.setEnabled(singleSelect && canSetPosition && editable);
-                posCSpinner.setEnabled(singleSelect && canSetPosition && editable);
-                sizeXField.setEnabled(singleSelect && canSetBounds && editable);
-                sizeYField.setEnabled(singleSelect && canSetBounds && editable && (dim > 1));
-                sizeZField.setEnabled(singleSelect && canSetBounds && editable && (dim > 2));
-                sizeTField.setEnabled(singleSelect && canSetBounds && editable && (dim > 3));
-                sizeCField.setEnabled(singleSelect && canSetBounds && editable && (dim > 4));
+                posXField.setEnabled(canSetPosition && editable);
+                posYField.setEnabled(canSetPosition && editable);
+                posZField.setEnabled(canSetPosition && editable);
+                posTField.setEnabled(canSetPosition && editable);
+                posCField.setEnabled(canSetPosition && editable);
+                posZSpinner.setEnabled(canSetPosition && editable);
+                posTSpinner.setEnabled(canSetPosition && editable);
+                posCSpinner.setEnabled(canSetPosition && editable);
+                sizeXField.setEnabled(canSetBounds && editable);
+                sizeYField.setEnabled(canSetBounds && editable && (dim > 1));
+                sizeZField.setEnabled(canSetBounds && editable && (dim > 2));
+                sizeTField.setEnabled(canSetBounds && editable && (dim > 3));
+                sizeCField.setEnabled(canSetBounds && editable && (dim > 4));
 
                 if (dim > 2)
                 {
@@ -848,8 +840,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 saveButton.setEnabled(hasSelected);
                 copyButton.setEnabled(hasSelected);
                 pasteButton.setEnabled(hasROIinClipboard);
-                copyLinkButton.setEnabled(hasSelected);
-                pasteLinkButton.setEnabled(hasROILinkinClipboard);
 
                 deleteButton.setEnabled(hasSelected && editable);
 
@@ -985,18 +975,13 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         }
 
         // at this point the text is validated...
+        final List<ROI> rois = modifiedRois;
 
-        // can't edit multiple ROI at same time (should not arrive)
-        if ((modifiedRois == null) || (modifiedRois.size() != 1))
+        // nothing to edit ?
+        if ((rois == null) || rois.isEmpty())
             return;
 
-        // get the ROI we were modifying
-        final ROI roi = modifiedRois.get(0);
-
-        // can't edit read only ROI (should not arrive)
-        if (roi.isReadOnly())
-            return;
-
+        // can get semaphore ?
         if (!modifyingRoi.tryAcquire())
             return;
 
@@ -1006,107 +991,237 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             if ((source == posXField) || (source == posYField) || (source == posZField) || (source == posTField)
                     || (source == posCField))
             {
-                // get current ROI position
-                final Point5D savePosition = roi.getPosition5D();
-                Point5D position = (Point5D) savePosition.clone();
+                final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
-                // roi support position change ?
-                if (roi.canSetPosition())
+                // correct value ?
+                if (!Double.isNaN(value))
                 {
-                    final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
+                    final List<ROI> roiToModify = new ArrayList<ROI>();
 
-                    if (!Double.isNaN(value))
+                    // get the ROI we were modifying
+                    for (ROI roi : rois)
                     {
-                        if (source == posXField)
-                            position.setX(value);
-                        else if (source == posYField)
-                            position.setY(value);
-                        else if (source == posZField)
-                            position.setZ(value);
-                        else if (source == posTField)
-                            position.setT(value);
+                        // can't edit read only ROI (should not arrive)
+                        if (roi.isReadOnly())
+                            continue;
+
+                        // roi support position change ?
+                        if (roi.canSetPosition())
+                            roiToModify.add(roi);
+                    }
+
+                    // we have effectively some ROI to modify ?
+                    if (!roiToModify.isEmpty())
+                    {
+                        Point5D positionSet = null;
+
+                        // single change ?
+                        if (roiToModify.size() == 1)
+                        {
+                            final ROI roi = roiToModify.get(0);
+
+                            // get current ROI position
+                            final Point5D savePosition = roi.getPosition5D();
+                            final Point5D position = (Point5D) savePosition.clone();
+
+                            if (source == posXField)
+                                position.setX(value);
+                            else if (source == posYField)
+                                position.setY(value);
+                            else if (source == posZField)
+                                position.setZ(value);
+                            else if (source == posTField)
+                                position.setT(value);
+                            else
+                                position.setC(value);
+
+                            // set new position
+                            roi.setPosition5D(position);
+                            // keep trace of accepted ROI position
+                            positionSet = roi.getPosition5D();
+
+                            // add position change to undo manager
+                            Icy.getMainInterface().getUndoManager()
+                                    .addEdit(new PositionROIEdit(roi, savePosition, false));
+                        }
                         else
-                            position.setC(value);
+                        {
+                            final List<Point5D> savePositions = new ArrayList<Point5D>();
+                            final List<Point5D> newPositions = new ArrayList<Point5D>();
 
-                        roi.setPosition5D(position);
-                        // update position with ROI accepted values
-                        position = roi.getPosition5D();
+                            // save previous positions
+                            for (ROI roi : roiToModify)
+                                savePositions.add(roi.getPosition5D());
 
-                        // add position change to undo manager
-                        Icy.getMainInterface().getUndoManager().addEdit(new PositionROIEdit(roi, savePosition));
+                            for (ROI roi : roiToModify)
+                            {
+                                // get current ROI position
+                                final Point5D position = roi.getPosition5D();
+
+                                if (source == posXField)
+                                    position.setX(value);
+                                else if (source == posYField)
+                                    position.setY(value);
+                                else if (source == posZField)
+                                    position.setZ(value);
+                                else if (source == posTField)
+                                    position.setT(value);
+                                else
+                                    position.setC(value);
+
+                                // set new position
+                                roi.setPosition5D(position);
+                                // keep trace of first accepted ROI position
+                                if (positionSet == null)
+                                    positionSet = roi.getPosition5D();
+
+                                // save new position
+                                newPositions.add(position);
+                            }
+
+                            // add position change to undo manager
+                            Icy.getMainInterface().getUndoManager()
+                                    .addEdit(new PositionROIsEdit(roiToModify, savePositions, newPositions, false));
+                        }
+
+                        if (positionSet != null)
+                        {
+                            double p;
+
+                            // fix field value if needed
+                            if (source == posXField)
+                                p = positionSet.getX();
+                            else if (source == posYField)
+                                p = positionSet.getY();
+                            else if (source == posZField)
+                                p = positionSet.getZ();
+                            else if (source == posTField)
+                                p = positionSet.getT();
+                            else
+                                p = positionSet.getC();
+
+                            // change infinite by -1
+                            if (p == Double.NEGATIVE_INFINITY)
+                                p = -1d;
+
+                            source.setText(Double.toString(p));
+                        }
                     }
                 }
-
-                double p;
-
-                // fix field value if needed
-                if (source == posXField)
-                    p = position.getX();
-                else if (source == posYField)
-                    p = position.getY();
-                else if (source == posZField)
-                    p = position.getZ();
-                else if (source == posTField)
-                    p = position.getT();
-                else
-                    p = position.getC();
-
-                // change infinite by -1
-                if (p == Double.NEGATIVE_INFINITY)
-                    p = -1d;
-
-                source.setText(Double.toString(p));
             }
             // size fields ?
             else if ((source == sizeXField) || (source == sizeYField) || (source == sizeZField)
                     || (source == sizeTField) || (source == sizeCField))
             {
-                // get current ROI size
-                final Rectangle5D saveBounds = roi.getBounds5D();
-                Rectangle5D bounds = (Rectangle5D) saveBounds.clone();
+                final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
-                // roi support size change ?
-                if (roi.canSetBounds())
+                // correct value ?
+                if (!Double.isNaN(value))
                 {
-                    final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
+                    final List<ROI> roiToModify = new ArrayList<ROI>();
 
-                    if (!Double.isNaN(value))
+                    // get the ROI we were modifying
+                    for (ROI roi : rois)
                     {
-                        if (source == sizeXField)
-                            bounds.setSizeX(value);
-                        else if (source == sizeYField)
-                            bounds.setSizeY(value);
-                        else if (source == sizeZField)
-                            bounds.setSizeZ(value);
-                        else if (source == sizeTField)
-                            bounds.setSizeT(value);
+                        // can't edit read only ROI (should not arrive)
+                        if (roi.isReadOnly())
+                            continue;
+
+                        // roi support position change ?
+                        if (roi.canSetPosition())
+                            roiToModify.add(roi);
+                    }
+
+                    // we have effectively some ROI to modify ?
+                    if (!roiToModify.isEmpty())
+                    {
+                        Rectangle5D boundsSet = null;
+
+                        if (roiToModify.size() == 1)
+                        {
+                            final ROI roi = roiToModify.get(0);
+
+                            // get current ROI size
+                            final Rectangle5D saveBounds = roi.getBounds5D();
+                            final Rectangle5D bounds = (Rectangle5D) saveBounds.clone();
+
+                            if (source == sizeXField)
+                                bounds.setSizeX(value);
+                            else if (source == sizeYField)
+                                bounds.setSizeY(value);
+                            else if (source == sizeZField)
+                                bounds.setSizeZ(value);
+                            else if (source == sizeTField)
+                                bounds.setSizeT(value);
+                            else
+                                bounds.setSizeC(value);
+
+                            roi.setBounds5D(bounds);
+                            // keep trace of first accepted ROI bounds
+                            boundsSet = roi.getBounds5D();
+
+                            // add position change to undo manager
+                            Icy.getMainInterface().getUndoManager().addEdit(new BoundsROIEdit(roi, saveBounds, false));
+                        }
                         else
-                            bounds.setSizeC(value);
+                        {
+                            final List<Rectangle5D> saveBoundsList = new ArrayList<Rectangle5D>();
+                            final List<Rectangle5D> newBoundsList = new ArrayList<Rectangle5D>();
 
-                        roi.setBounds5D(bounds);
-                        // update bounds with ROI accepted values
-                        bounds = roi.getBounds5D();
+                            // save previous size
+                            for (ROI roi : roiToModify)
+                                saveBoundsList.add(roi.getBounds5D());
 
-                        // add position change to undo manager
-                        Icy.getMainInterface().getUndoManager().addEdit(new BoundsROIEdit(roi, saveBounds));
+                            for (ROI roi : roiToModify)
+                            {
+                                // get current ROI size
+                                Rectangle5D bounds = roi.getBounds5D();
+
+                                if (source == sizeXField)
+                                    bounds.setSizeX(value);
+                                else if (source == sizeYField)
+                                    bounds.setSizeY(value);
+                                else if (source == sizeZField)
+                                    bounds.setSizeZ(value);
+                                else if (source == sizeTField)
+                                    bounds.setSizeT(value);
+                                else
+                                    bounds.setSizeC(value);
+
+                                roi.setBounds5D(bounds);
+                                // keep trace of first accepted ROI bounds
+                                if (boundsSet == null)
+                                    boundsSet = roi.getBounds5D();
+
+                                // save new size
+                                newBoundsList.add(bounds);
+                            }
+
+                            // add position change to undo manager
+                            Icy.getMainInterface().getUndoManager()
+                                    .addEdit(new BoundsROIsEdit(roiToModify, saveBoundsList, newBoundsList, false));
+                        }
+
+                        if (boundsSet != null)
+                        {
+                            final double p;
+
+                            // fix field value if needed
+                            if (source == sizeXField)
+                                p = boundsSet.getSizeX();
+                            else if (source == sizeYField)
+                                p = boundsSet.getSizeY();
+                            else if (source == sizeZField)
+                                p = boundsSet.getSizeZ();
+                            else if (source == sizeTField)
+                                p = boundsSet.getSizeT();
+                            else
+                                p = boundsSet.getSizeC();
+
+                            source.setText(Double.toString(p));
+                        }
                     }
                 }
-
-                final double p;
-
-                // fix field value if needed
-                if (source == sizeXField)
-                    p = bounds.getSizeX();
-                else if (source == sizeYField)
-                    p = bounds.getSizeY();
-                else if (source == sizeZField)
-                    p = bounds.getSizeZ();
-                else if (source == sizeTField)
-                    p = bounds.getSizeT();
-                else
-                    p = bounds.getSizeC();
-
-                source.setText(Double.toString(p));
             }
         }
         finally
@@ -1229,58 +1344,116 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             {
                 final List<ROI> rois = getSelectedRois();
 
-                // can't edit multiple ROI at same time (should not arrive)
-                if ((rois == null) || (rois.size() != 1))
-                    return;
-
-                // get the ROI we were modifying
-                final ROI roi = rois.get(0);
-
-                // can't edit read only ROI (should not arrive)
-                if (roi.isReadOnly())
+                // nothing to edit
+                if ((rois == null) || rois.isEmpty())
                     return;
 
                 final SpecialValueSpinner spinner = (SpecialValueSpinner) source;
+                final double value = ((Integer) spinner.getValue()).intValue();
 
-                // get current ROI position
-                final Point5D savePosition = roi.getPosition5D();
-                Point5D position = (Point5D) savePosition.clone();
-
-                // roi support position change ?
-                if (roi.canSetPosition())
+                // correct value ?
+                if (!Double.isNaN(value))
                 {
-                    final double value = ((Integer) spinner.getValue()).intValue();
+                    final List<ROI> roiToModify = new ArrayList<ROI>();
 
-                    if (source == posZSpinner)
-                        position.setZ(value);
-                    else if (source == posTSpinner)
-                        position.setT(value);
-                    else
-                        position.setC(value);
+                    // get the ROI we were modifying
+                    for (ROI roi : rois)
+                    {
+                        // can't edit read only ROI (should not arrive)
+                        if (roi.isReadOnly())
+                            continue;
 
-                    roi.setPosition5D(position);
-                    // update position with ROI accepted values
-                    position = roi.getPosition5D();
+                        // roi support position change ?
+                        if (roi.canSetPosition())
+                            roiToModify.add(roi);
+                    }
 
-                    // add position change to undo manager
-                    sequence.addUndoableEdit(new PositionROIEdit(roi, savePosition));
+                    // we have effectively some ROI to modify ?
+                    if (!roiToModify.isEmpty())
+                    {
+                        Point5D positionSet = null;
+
+                        // single change ?
+                        if (roiToModify.size() == 1)
+                        {
+                            final ROI roi = roiToModify.get(0);
+
+                            // get current ROI position
+                            final Point5D savePosition = roi.getPosition5D();
+                            final Point5D position = (Point5D) savePosition.clone();
+
+                            if (source == posZSpinner)
+                                position.setZ(value);
+                            else if (source == posTSpinner)
+                                position.setT(value);
+                            else
+                                position.setC(value);
+
+                            // set new position
+                            roi.setPosition5D(position);
+                            // keep trace of accepted ROI position
+                            positionSet = roi.getPosition5D();
+
+                            // add position change to undo manager
+                            Icy.getMainInterface().getUndoManager()
+                                    .addEdit(new PositionROIEdit(roi, savePosition, false));
+                        }
+                        else
+                        {
+                            final List<Point5D> savePositions = new ArrayList<Point5D>();
+                            final List<Point5D> newPositions = new ArrayList<Point5D>();
+
+                            // save previous positions
+                            for (ROI roi : roiToModify)
+                                savePositions.add(roi.getPosition5D());
+
+                            for (ROI roi : roiToModify)
+                            {
+                                // get current ROI position
+                                final Point5D position = roi.getPosition5D();
+
+                                if (source == posZSpinner)
+                                    position.setZ(value);
+                                else if (source == posTSpinner)
+                                    position.setT(value);
+                                else
+                                    position.setC(value);
+
+                                // set new position
+                                roi.setPosition5D(position);
+                                // keep trace of first accepted ROI position
+                                if (positionSet == null)
+                                    positionSet = roi.getPosition5D();
+
+                                // save new position
+                                newPositions.add(position);
+                            }
+
+                            // add position change to undo manager
+                            Icy.getMainInterface().getUndoManager()
+                                    .addEdit(new PositionROIsEdit(roiToModify, savePositions, newPositions, false));
+                        }
+
+                        if (positionSet != null)
+                        {
+                            double p;
+
+                            // fix field value if needed
+                            if (source == posZSpinner)
+                                p = positionSet.getZ();
+                            else if (source == posTSpinner)
+                                p = positionSet.getT();
+                            else
+                                p = positionSet.getC();
+
+                            // change infinite by -1
+                            if (p == Double.NEGATIVE_INFINITY)
+                                p = -1d;
+
+                            spinner.setValue(Integer.valueOf((int) p));
+                        }
+                    }
                 }
-
-                double p;
-
-                // fix field value if needed
-                if (source == posZSpinner)
-                    p = position.getZ();
-                else if (source == posTSpinner)
-                    p = position.getT();
-                else
-                    p = position.getC();
-
-                // change infinite by -1
-                if (p == Double.NEGATIVE_INFINITY)
-                    p = -1d;
-
-                spinner.setValue(Integer.valueOf((int) p));
             }
         }
         finally

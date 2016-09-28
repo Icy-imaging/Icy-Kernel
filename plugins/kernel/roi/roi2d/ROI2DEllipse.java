@@ -46,8 +46,7 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         super(new Ellipse2D.Double(), topLeft, bottomRight);
 
-        // set name and icon
-        setName("Ellipse2D");
+        // set icon (default name is defined by getDefaultName()) 
         setIcon(ResourceUtil.ICON_ROI_OVAL);
     }
 
@@ -75,8 +74,7 @@ public class ROI2DEllipse extends ROI2DRectShape
 
     public ROI2DEllipse(Ellipse2D ellipse)
     {
-        this(new Point2D.Double(ellipse.getMinX(), ellipse.getMinY()), new Point2D.Double(ellipse.getMaxX(),
-                ellipse.getMaxY()));
+        this(ellipse.getBounds2D());
     }
 
     /**
@@ -99,12 +97,17 @@ public class ROI2DEllipse extends ROI2DRectShape
     public ROI2DEllipse(Point5D pt)
     {
         this(pt.toPoint2D());
-        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DEllipse()
     {
         this(new Point2D.Double(), new Point2D.Double());
+    }
+    
+    @Override
+    public String getDefaultName()
+    {
+        return "Ellipse2D";
     }
 
     public Ellipse2D getEllipse()
@@ -118,7 +121,7 @@ public class ROI2DEllipse extends ROI2DRectShape
     }
 
     @Override
-    public double computePerimeter(Sequence sequence)
+    public double getLength(Sequence sequence) throws UnsupportedOperationException
     {
         final Ellipse2D ellipse = getEllipse();
         return computeEllipsePerimeter(ellipse.getWidth() * 0.5d * sequence.getPixelSizeX(), ellipse.getHeight() * 0.5d

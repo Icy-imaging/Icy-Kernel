@@ -51,7 +51,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Abstract class defining a generic 3D ROI as a stack of individual 2D ROI slices.
+ * Base class defining a generic 3D ROI as a stack of individual 2D ROI slices.
  * 
  * @author Alexandre Dufour
  * @author Stephane Dallongeville
@@ -60,24 +60,34 @@ import org.w3c.dom.Node;
  */
 public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, OverlayListener, Iterable<R>
 {
+    /**
+     * @deprecated this property does not exist anymore
+     */
+    @Deprecated
     public static final String PROPERTY_USECHILDCOLOR = "useChildColor";
 
     protected final TreeMap<Integer, R> slices = new TreeMap<Integer, R>();
 
-    protected final Class<R> roiClass;
+    protected final Class<? extends R> roiClass;
     protected Semaphore modifyingSlice;
     protected double translateZ;
 
     /**
      * Creates a new 3D ROI based on the given 2D ROI type.
      */
-    public ROI3DStack(Class<R> roiClass)
+    public ROI3DStack(Class<? extends R> roiClass)
     {
         super();
 
         this.roiClass = roiClass;
         modifyingSlice = new Semaphore(1);
         translateZ = 0d;
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "ROI2D stack";
     }
 
     @Override
@@ -223,6 +233,31 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             {
                 for (R slice : slices.values())
                     slice.setSelected(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    @Override
+    public void setName(String value)
+    {
+        beginUpdate();
+        try
+        {
+            super.setName(value);
+
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setName(value);
             }
             finally
             {
@@ -550,6 +585,29 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         return false;
     }
 
+    @Override
+    public void unselectAllPoints()
+    {
+        beginUpdate();
+        try
+        {
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.unselectAllPoints();
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
     // default approximated implementation for ROI3DStack
     @Override
     public double computeSurfaceArea(Sequence sequence) throws UnsupportedOperationException
@@ -783,15 +841,6 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
 
     public class ROI3DStackPainter extends ROIPainter
     {
-        protected boolean useChildColor;
-
-        public ROI3DStackPainter()
-        {
-            super();
-
-            useChildColor = false;
-        }
-
         // protected R getSliceForCanvas(IcyCanvas canvas)
         // {
         // final int z = canvas.getPositionZ();
@@ -826,29 +875,21 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         }
 
         /**
-         * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and <code>false</code> if
-         * it uses the global 3D ROI color draw property.
+         * @deprecated this property does not exist anymore (always return <code>false</code>)
          */
+        @Deprecated
         public boolean getUseChildColor()
         {
-            return useChildColor;
+            return false;
         }
 
         /**
-         * Set to <code>true</code> if you want to directly use the 2D slice color draw property and <code>false</code>
-         * to keep the global 3D ROI color draw property.
-         * 
-         * @see #setColor(int, Color)
+         * @deprecated this property does not exist anymore
          */
+        @Deprecated
         public void setUseChildColor(boolean value)
         {
-            if (useChildColor != value)
-            {
-                useChildColor = value;
-                propertyChanged(PROPERTY_USECHILDCOLOR);
-                // need to redraw it
-                painterChanged();
-            }
+            //
         }
 
         /**

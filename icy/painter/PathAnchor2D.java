@@ -165,6 +165,20 @@ public class PathAnchor2D extends Anchor2D
         }
     }
 
+    @Override
+    public boolean isVisible()
+    {
+        switch (getType())
+        {
+            // CLOSE type point are never visible
+            case PathIterator.SEG_CLOSE:
+                return false;
+
+            default:
+                return super.isVisible();
+        }
+    }
+
     /**
      * @return the posQExt
      */

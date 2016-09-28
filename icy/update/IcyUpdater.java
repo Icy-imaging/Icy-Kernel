@@ -217,7 +217,7 @@ public class IcyUpdater
                 FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
                 // inform that there is no update available
                 if (!silent && !Icy.getMainInterface().isHeadLess())
-                    new AnnounceFrame("No application udpate available", 10);
+                    new AnnounceFrame("No application update available", 10);
             }
         }
         finally

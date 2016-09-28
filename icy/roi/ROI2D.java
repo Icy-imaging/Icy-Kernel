@@ -139,6 +139,8 @@ public abstract class ROI2D extends ROI
     {
         protected Point2D startDragMousePosition;
         protected Point2D startDragROIPosition;
+        protected int startDragMouseZ;
+        protected int startDragROIZ;
 
         public ROI2DPainter()
         {
@@ -146,6 +148,8 @@ public abstract class ROI2D extends ROI
 
             startDragMousePosition = null;
             startDragROIPosition = null;
+            startDragMouseZ = 0;
+            startDragROIZ = 0;
         }
 
         @Override
@@ -173,6 +177,8 @@ public abstract class ROI2D extends ROI
 
             double dx = imagePoint.getX() - startDragMousePosition.getX();
             double dy = imagePoint.getY() - startDragMousePosition.getY();
+            int dz = (getZ() == -1) || (imagePoint.getZ() == -1d) || (startDragMouseZ == -1) ? 0 : (int) imagePoint
+                    .getZ() - startDragMouseZ;
 
             // shift action --> limit to one direction
             if (EventUtil.isShiftDown(e))
@@ -202,6 +208,19 @@ public abstract class ROI2D extends ROI
 
             // set new position
             setPosition2D(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
+            // Z drag enabled ?
+            if (dz != 0)
+            {
+                // compute new Z position
+                int newZ = startDragROIZ + dz;
+                // bound it
+                if (newZ < 0)
+                    newZ = 0;
+                if ((sequence != null) && (newZ >= sequence.getSizeZ()))
+                    newZ = sequence.getSizeZ() - 1;
+                // set it
+                setZ(newZ);
+            }
 
             // allow undo as the ROI position has been modified from canvas
             if ((sequence != null) && (savePosition != null))
@@ -209,6 +228,45 @@ public abstract class ROI2D extends ROI
                 sequence.addUndoableEdit(new PositionROIEdit(ROI2D.this, savePosition));
 
             return true;
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            super.mousePressed(e, imagePoint, canvas);
+
+            // ROI editable ? (don't check for consumption as selection can consume event)
+            if (!isReadOnly())
+            {
+                // check we can do the action
+                if (imagePoint != null)
+                {
+                    if (isActiveFor(canvas))
+                    {
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
+                        {
+                            ROI2D.this.beginUpdate();
+                            try
+                            {
+                                // roi focused ?
+                                if (isFocused())
+                                {
+                                    // store drag start position
+                                    startDragMousePosition = imagePoint.toPoint2D();
+                                    startDragMouseZ = (int) imagePoint.getZ();
+                                    startDragROIPosition = getPosition2D();
+                                    startDragROIZ = getZ();
+                                }
+                            }
+                            finally
+                            {
+                                ROI2D.this.endUpdate();
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         @Override
@@ -243,11 +301,13 @@ public abstract class ROI2D extends ROI
                                 // roi focused ?
                                 if (isFocused())
                                 {
-                                    // start drag position
+                                    // start drag position if not yet done
                                     if (startDragMousePosition == null)
                                     {
                                         startDragMousePosition = imagePoint.toPoint2D();
+                                        startDragMouseZ = (int) imagePoint.getZ();
                                         startDragROIPosition = getPosition2D();
+                                        startDragROIZ = getZ();
                                     }
 
                                     updateDrag(e, imagePoint, canvas);
@@ -349,6 +409,12 @@ public abstract class ROI2D extends ROI
         z = -1;
         t = -1;
         c = -1;
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "ROI2D";
     }
 
     @Override
@@ -467,28 +533,6 @@ public abstract class ROI2D extends ROI
         return ((getZ() == -1) || (z == -1) || (getZ() == z)) && ((getT() == -1) || (t == -1) || (getT() == t))
                 && ((getC() == -1) || (c == -1) || (getC() == c));
     }
-
-    // public abstract boolean canAddPoint();
-    //
-    // /**
-    // * Return true if this ROI support removing point
-    // */
-    // public abstract boolean canRemovePoint();
-    //
-    // /**
-    // * Add a new point at specified position (used to build ROI)
-    // */
-    // public abstract boolean addPointAt(Point2D pos, boolean ctrl);
-    //
-    // /**
-    // * Remove point at specified position (used to build ROI)
-    // */
-    // public abstract boolean removePointAt(IcyCanvas canvas, Point2D imagePoint);
-    //
-    // /**
-    // * Remove selected point at specified position (used to build ROI)
-    // */
-    // protected abstract boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint);
 
     /**
      * @deprecated Use {@link #isOverEdge(IcyCanvas, Point2D)} instead.
@@ -1297,25 +1341,21 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Compute the perimeter in um given the pixel size informations from the specified Sequence.<br>
-     * Generic implementation of perimeter computation using the number of contour point (approximation).<br>
-     * This method should be overridden whenever possible to provide faster and accurate calculation.
+     * @deprecated Perimeter computation cannot be cached so directly use #getLength(Sequence) instead.
      */
+    @Deprecated
     public double computePerimeter(Sequence sequence)
     {
-        return sequence.calculateSize(getNumberOfContourPoints(), 2, 1);
+        return getLength(sequence);
     }
 
     /**
-     * Returns perimeter of the 2D ROI in um given the pixel size informations from the specified Sequence.
-     * 
-     * @see #computePerimeter(Sequence)
-     * @see #getNumberOfContourPoints()
+     * @deprecated Use {@link #getLength(Sequence)} instead
      */
-    public double getPerimeter(Sequence sequence)
+    @Deprecated
+    public double getPerimeter(Sequence sequence) throws UnsupportedOperationException
     {
-        // we cannot cache perimeter information from ROI as it depends from Sequence metadata as well
-        return computePerimeter(sequence);
+        return getLength(sequence);
     }
 
     /**

@@ -2413,8 +2413,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             mousePos.x = x;
             mousePos.y = y;
 
-            // mouse image position as probably changed so this method should be overridden
-            // to implement the correct calculation for the mouse iamge position change
+            // mouse image position probably changed so this method should be overridden
+            // to implement the correct calculation for the mouse image position change
 
             return true;
         }
@@ -3042,6 +3042,30 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public double canvasToImageLogDeltaY(int value)
     {
         return canvasToImageLogDeltaY(value, 5d);
+    }
+
+    /**
+     * Convert specified canvas delta Z to log image delta Z.<br>
+     * The conversion is still affected by zoom ratio but with specified logarithm form.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageLogDelta(...) method instead for rotation transformed delta.
+     */
+    public double canvasToImageLogDeltaZ(int value, double logFactor)
+    {
+        final double scaleFactor = getScaleZ();
+        // keep the zoom ratio but in a log perspective
+        return value / (scaleFactor / Math.pow(10, Math.log10(scaleFactor) / logFactor));
+    }
+
+    /**
+     * Convert specified canvas delta Z to log image delta Z.<br>
+     * The conversion is still affected by zoom ratio but with logarithm form.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageLogDelta(...) method instead for rotation transformed delta.
+     */
+    public double canvasToImageLogDeltaZ(int value)
+    {
+        return canvasToImageLogDeltaZ(value, 5d);
     }
 
     /**
@@ -4197,7 +4221,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void addLayerListener(CanvasLayerListener listener)
     {
-        layerListeners.add(listener);
+        if (listener != null)
+            layerListeners.add(listener);
     }
 
     /**

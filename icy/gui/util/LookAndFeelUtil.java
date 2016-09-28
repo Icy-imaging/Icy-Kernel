@@ -56,6 +56,7 @@ import org.pushingpixels.substance.api.DecorationAreaType;
 import org.pushingpixels.substance.api.SubstanceColorScheme;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
 import org.pushingpixels.substance.api.SubstanceSkin;
+import org.pushingpixels.substance.api.colorscheme.LightAquaColorScheme;
 import org.pushingpixels.substance.api.fonts.FontPolicy;
 import org.pushingpixels.substance.api.fonts.FontSet;
 import org.pushingpixels.substance.api.fonts.SubstanceFontUtilities;
@@ -415,17 +416,29 @@ public class LookAndFeelUtil
 
     public static SubstanceColorScheme getBackgroundColorScheme(DecorationAreaType d)
     {
-        return getCurrentSkin().getBackgroundColorScheme(d);
+        final SubstanceSkin skin = getCurrentSkin();
+        if (skin != null) return skin.getBackgroundColorScheme(d);
+
+        // Arrive only when using designer --> use a random color theme, we don't care
+        return new LightAquaColorScheme();
     }
 
     public static SubstanceColorScheme getDisabledColorScheme(DecorationAreaType d)
     {
-        return getCurrentSkin().getDisabledColorScheme(d);
+        final SubstanceSkin skin = getCurrentSkin();
+        if (skin != null) return skin.getDisabledColorScheme(d);
+        
+        // Arrive only when using designer --> use a random color theme, we don't care
+        return new LightAquaColorScheme();
     }
 
     public static SubstanceColorScheme getEnabledColorScheme(DecorationAreaType d)
     {
-        return getCurrentSkin().getEnabledColorScheme(d);
+        final SubstanceSkin skin = getCurrentSkin();
+        if (skin != null) return skin.getEnabledColorScheme(d);
+        
+        // Arrive only when using designer --> use a random color theme, we don't care
+        return new LightAquaColorScheme();
     }
 
     public static SubstanceSkin getSkin()

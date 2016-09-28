@@ -82,6 +82,12 @@ public abstract class ROI4D extends ROI
     }
 
     @Override
+    public String getDefaultName()
+    {
+        return "ROI4D";
+    }
+
+    @Override
     final public int getDimension()
     {
         return 4;

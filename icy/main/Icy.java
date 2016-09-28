@@ -98,7 +98,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.8.6.0");
+    public static Version version = new Version("1.8.7.0");
 
     /**
      * Main interface
@@ -357,14 +357,6 @@ public class Icy
             // update last update check time
             GeneralPreferences.setLastUpdateCheckTime(currentTime);
         }
-        else
-        {
-
-            // forced udpate
-            // if (PluginPreferences.getAutomaticUpdate())
-            // PluginUpdater.checkUpdate(true);
-
-        }
 
         // update version info
         ApplicationPreferences.setVersion(Icy.version);
@@ -459,10 +451,24 @@ public class Icy
         {
             final String text = "You're using a 32 bits Java with a 64 bits OS, try to upgrade to 64 bits java for better performance !";
 
-            if (Icy.getMainInterface().isHeadLess())
-                System.out.println("Warning: " + text);
-            else
+            System.out.println("Warning: " + text);
+
+            if (!Icy.getMainInterface().isHeadLess())
                 new ToolTipFrame("<html>" + text + "</html>", 15, "badJavaArchTip");
+        }
+
+        // we are using java 6 on OSX --> warn the user
+        final double javaVersion = SystemUtil.getJavaVersionAsNumber();
+
+        if ((javaVersion > 0) && (javaVersion < 1.7d) && SystemUtil.isMac())
+        {
+            final String text = "It looks like you're using a old version of Java (1.6)<br>"
+                    + "It's recommended to use last JDK 8 for OSX for a better user experience.<br>See the <a href=\"http://icy.bioimageanalysis.org/faq#35\">FAQ</a> to get information about how to update java.";
+
+            System.out.println("Warning: " + text);
+
+            if (!Icy.getMainInterface().isHeadLess())
+                new ToolTipFrame("<html>" + text + "</html>", 15, "outdatedJavaOSX");
         }
 
         // detect bad memory setting
@@ -470,9 +476,9 @@ public class Icy
         {
             final String text = "Your maximum memory setting is low, you should increase it in Preferences.";
 
-            if (Icy.getMainInterface().isHeadLess())
-                System.out.println("Warning: " + text);
-            else
+            System.out.println("Warning: " + text);
+
+            if (!Icy.getMainInterface().isHeadLess())
                 new ToolTipFrame("<html>" + text + "</html>", 15, "lowMemoryTip");
         }
         else if (ApplicationPreferences.getMaxMemoryMB() < (ApplicationPreferences.getDefaultMemoryMB() / 2))
@@ -484,6 +490,11 @@ public class Icy
                         "maxMemoryTip");
             }
         }
+
+        // welcome tip !
+        final ToolTipFrame tooltip = new ToolTipFrame("<html>Access the main menu by clicking on top left icon<br>" + "<img src=\""
+                + Icy.class.getResource("/res/image/help/main_menu.png").toString() + "\" /></html>", 30, "mainMenuTip");
+        tooltip.setSize(456, 240);
     }
 
     static void fatalError(Throwable t, boolean headless)

@@ -29,6 +29,8 @@ import java.beans.PropertyChangeListener;
 import javax.swing.Icon;
 
 import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.RichTooltip;
+import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
 
 /**
  * @author Stephane
@@ -99,7 +101,7 @@ public class IcyCommandButton extends JCommandButton
 
         setAction(action);
     }
-    
+
     /**
      * @deprecated User {@link #IcyCommandButton(IcyAbstractAction)} instead.
      */
@@ -167,6 +169,14 @@ public class IcyCommandButton extends JCommandButton
     }
 
     /**
+     * Returns the {@link IcyAbstractAction} attached to this button.
+     */
+    public IcyAbstractAction getAction()
+    {
+        return action;
+    }
+
+    /**
      * Sets the {@link IcyAbstractAction} attached to this button.
      */
     public void setAction(IcyAbstractAction value)
@@ -181,20 +191,21 @@ public class IcyCommandButton extends JCommandButton
             }
 
             action = value;
-
-            setText(action.getName());
-
-            final IcyIcon icon = action.getIcon();
-
-            if (icon != null)
-                setIcon(new IcyIcon(icon));
-            else
-                setIcon(null);
-
             setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
 
             if (value != null)
             {
+                // set text
+                setText(action.getName());
+
+                // set icon
+                final IcyIcon icon = action.getIcon();
+
+                if (icon != null)
+                    setIcon(new IcyIcon(icon));
+                else
+                    setIcon(null);
+
                 // set tooltip
                 setActionRichTooltip(action.getRichToolTip());
 
@@ -202,16 +213,27 @@ public class IcyCommandButton extends JCommandButton
                 addActionListener(value);
                 value.addPropertyChangeListener(actionPropertyChangeListener);
             }
-            
+
             refreshEnabled();
         }
     }
 
     /**
-     * Returns the {@link IcyAbstractAction} attached to this button.
+     * Sets the {@link IcyAbstractAction} attached to this button.
      */
-    public IcyAbstractAction getAction()
+    public void setPopup(PopupPanelCallback cb, RichTooltip toolTip)
     {
-        return action;
+        // remove action
+        setAction(null);
+
+        // then set popup
+        setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+
+        if (cb != null)
+            setPopupCallback(cb);
+        if (toolTip != null)
+            setPopupRichTooltip(toolTip);
+
+        refreshEnabled();
     }
 }

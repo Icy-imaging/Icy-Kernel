@@ -158,6 +158,8 @@ public class ResourceUtil
     public static final Image ICON_ROI_XOR = ResourceUtil.getAlphaIconAsImage("roi_xor.png");
     public static final Image ICON_ROI_SUB = ResourceUtil.getAlphaIconAsImage("roi_sub.png");
 
+    public static final Image ICON_BOOL_MASK = ResourceUtil.getAlphaIconAsImage("boolean_mask.png");
+
     public static final Image ICON_INDENT_DECREASE = ResourceUtil.getAlphaIconAsImage("indent_decrease.png");
     public static final Image ICON_INDENT_INCREASE = ResourceUtil.getAlphaIconAsImage("indent_increase.png");
     public static final Image ICON_INDENT_REMOVE = ResourceUtil.getAlphaIconAsImage("indent_remove.png");
@@ -314,10 +316,10 @@ public class ResourceUtil
         final URL url = ResourceUtil.class.getResource("/" + IMAGE_PATH + name);
 
         // TODO: this actually return the image asynchronously, check it does not bring problems
-//        if (url != null)
-//            result = ImageUtil.loadAsync(url);
-//        else
-//            result = ImageUtil.loadAsync(ICON_PATH + name);
+        // if (url != null)
+        // result = ImageUtil.loadAsync(url);
+        // else
+        // result = ImageUtil.loadAsync(ICON_PATH + name);
 
         if (url != null)
             result = ImageUtil.load(url, true);
@@ -372,10 +374,10 @@ public class ResourceUtil
         final URL url = ResourceUtil.class.getResource("/" + ICON_PATH + name);
 
         // TODO: this actually return the image asynchronously, check it does not bring problems
-//        if (url != null)
-//            image = ImageUtil.loadAsync(url);
-//        else
-//            image = ImageUtil.loadAsync(ICON_PATH + name);
+        // if (url != null)
+        // image = ImageUtil.loadAsync(url);
+        // else
+        // image = ImageUtil.loadAsync(ICON_PATH + name);
 
         if (url != null)
             image = ImageUtil.load(url, true);

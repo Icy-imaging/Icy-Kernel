@@ -42,8 +42,8 @@ import vtk.vtkActorCollection;
 import vtk.vtkCellArray;
 import vtk.vtkCollection;
 import vtk.vtkColorTransferFunction;
+import vtk.vtkContourFilter;
 import vtk.vtkDataArray;
-import vtk.vtkDecimatePro;
 import vtk.vtkDoubleArray;
 import vtk.vtkFloatArray;
 import vtk.vtkIdTypeArray;
@@ -51,17 +51,14 @@ import vtk.vtkImageConstantPad;
 import vtk.vtkImageData;
 import vtk.vtkIntArray;
 import vtk.vtkLongArray;
-import vtk.vtkMarchingCubes;
 import vtk.vtkObject;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkPoints;
 import vtk.vtkPolyData;
-import vtk.vtkPolyDataConnectivityFilter;
 import vtk.vtkProp;
 import vtk.vtkPropCollection;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
-import vtk.vtkSmoothPolyDataFilter;
 import vtk.vtkUnsignedCharArray;
 import vtk.vtkUnsignedIntArray;
 import vtk.vtkUnsignedLongArray;
@@ -777,16 +774,8 @@ public class VtkUtil
      *        the input image to construct surface from
      * @param threshold
      *        the threshold intensity value used to build the surface
-     * @param keepLargest
-     *        keeps the largest surface only (useful to remove small surfaces due to noise)
-     * @param simplifyMesh
-     *        try to simplify mesh (reduce the number of polygon) without affecting much the representation
-     * @param smoothness
-     *        smoothness coefficient in number of iteration (0 for no smoothing).<br>
-     *        Smoothing operation take some time, do not use too high smoothness coefficient.
      */
-    public static vtkPolyData getSurfaceFromImage(vtkImageData imageData, double threshold, boolean keepLargest,
-            boolean simplifyMesh, int smoothness)
+    public static vtkPolyData getSurfaceFromImage(vtkImageData imageData, double threshold)
     {
         vtkImageData out;
         vtkPolyData result;
@@ -799,7 +788,7 @@ public class VtkUtil
         extent[4]--; // min Z
         extent[5]++; // max Z
 
-        // pad on all sides to guarantee close meshes
+        // pad on all sides to guarantee closed meshes
         final vtkImageConstantPad pad = new vtkImageConstantPad();
 
         pad.SetOutputWholeExtent(extent);
@@ -810,59 +799,67 @@ public class VtkUtil
         // do not delete input image
         pad.Delete();
 
-        final vtkMarchingCubes marchingCubes = new vtkMarchingCubes();
+        final vtkContourFilter contourFilter = new vtkContourFilter();
+        contourFilter.SetInputData(out);
+        contourFilter.SetValue(0, threshold);
+        contourFilter.Update();
+        result = contourFilter.GetOutput();
+        contourFilter.GetInput().Delete();
+        contourFilter.Delete();
 
-        marchingCubes.SetInputData(out);
-        marchingCubes.SetValue(0, threshold);
-        marchingCubes.Update();
+        // final vtkMarchingCubes marchingCubes = new vtkMarchingCubes();
+        //
+        // marchingCubes.SetInputData(out);
+        // marchingCubes.SetValue(0, threshold);
+        // marchingCubes.Update();
+        //
+        // // get the poly data result
+        // result = marchingCubes.GetOutput();
+        // marchingCubes.GetInput().Delete();
+        // marchingCubes.Delete();
 
-        // get the poly data result
-        result = marchingCubes.GetOutput();
-        marchingCubes.GetInput().Delete();
-        marchingCubes.Delete();
-
-        if (keepLargest)
-        {
-            final vtkPolyDataConnectivityFilter cc = new vtkPolyDataConnectivityFilter();
-
-            cc.SetInputData(result);
-            cc.SetExtractionModeToLargestRegion();
-            cc.Update();
-
-            result = cc.GetOutput();
-            cc.GetInput().Delete();
-            cc.Delete();
-        }
-
-        if (simplifyMesh)
-        {
-            final vtkDecimatePro dec = new vtkDecimatePro();
-
-            dec.SetInputData(result);
-            dec.PreserveTopologyOn();
-            dec.SetTargetReduction(0.9);
-            dec.Update();
-
-            result = dec.GetOutput();
-            dec.GetInput().Delete();
-            dec.Delete();
-        }
-
-        if (smoothness > 0)
-        {
-            final vtkSmoothPolyDataFilter smoother = new vtkSmoothPolyDataFilter();
-
-            smoother.SetInputData(result);
-            smoother.SetRelaxationFactor(0.3);
-            smoother.FeatureEdgeSmoothingOff();
-            smoother.BoundarySmoothingOn();
-            smoother.SetNumberOfIterations(smoothness);
-            smoother.Update();
-
-            result = smoother.GetOutput();
-            smoother.GetInput().Delete();
-            smoother.Delete();
-        }
+        // if (keepLargest)
+        // {
+        // final vtkPolyDataConnectivityFilter cc = new vtkPolyDataConnectivityFilter();
+        //
+        // cc.SetInputData(result);
+        // cc.SetExtractionModeToLargestRegion();
+        // cc.Update();
+        //
+        // result = cc.GetOutput();
+        // cc.GetInput().Delete();
+        // cc.Delete();
+        // }
+        //
+        // if (simplifyMesh)
+        // {
+        // final vtkDecimatePro dec = new vtkDecimatePro();
+        //
+        // dec.SetInputData(result);
+        // dec.PreserveTopologyOn();
+        // dec.SetTargetReduction(0.9);
+        // dec.Update();
+        //
+        // result = dec.GetOutput();
+        // dec.GetInput().Delete();
+        // dec.Delete();
+        // }
+        //
+        // if (smoothness > 0)
+        // {
+        // final vtkSmoothPolyDataFilter smoother = new vtkSmoothPolyDataFilter();
+        //
+        // smoother.SetInputData(result);
+        // smoother.SetRelaxationFactor(0.3);
+        // smoother.FeatureEdgeSmoothingOff();
+        // smoother.BoundarySmoothingOn();
+        // smoother.SetNumberOfIterations(smoothness);
+        // smoother.Update();
+        //
+        // result = smoother.GetOutput();
+        // smoother.GetInput().Delete();
+        // smoother.Delete();
+        // }
 
         return result;
     }

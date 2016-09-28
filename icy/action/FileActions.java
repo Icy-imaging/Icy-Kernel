@@ -74,8 +74,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction newSequenceAction = new IcyAbstractAction("New", new IcyIcon(
-            ResourceUtil.ICON_DOC_NEW), "Create a new sequence")
+    public static IcyAbstractAction newSequenceAction = new IcyAbstractAction("Create", new IcyIcon(
+            ResourceUtil.ICON_DOC_NEW), "Create an empty sequence")
     {
         /**
          * 

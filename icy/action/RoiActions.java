@@ -36,6 +36,7 @@ import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.sequence.edit.ROIAddSequenceEdit;
 import icy.sequence.edit.ROIAddsSequenceEdit;
+import icy.sequence.edit.ROIReplacesSequenceEdit;
 import icy.system.SystemUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
@@ -996,6 +997,345 @@ public class RoiActions
             }
 
             return false;
+        }
+    };
+
+    public static IcyAbstractAction convertToStackAction = new IcyAbstractAction("3D stack", new IcyIcon(
+            ResourceUtil.ICON_LAYER_V2), "Convert to 3D stack ROI",
+            "Convert selected 2D ROI to 3D stack ROI by stacking it along the Z axis.")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final int maxZ = sequence.getSizeZ() - 1;
+
+                // ROI Z stack conversion
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI2D> selectedROIs = sequence.getSelectedROI2Ds();
+                    final List<ROI> removedROIs = new ArrayList<ROI>();
+                    final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                    for (ROI2D roi : selectedROIs)
+                    {
+                        final ROI stackedRoi = ROIUtil.convertToStack(roi, 0, maxZ);
+
+                        if (stackedRoi != null)
+                        {
+                            // select it by default
+                            stackedRoi.setSelected(true);
+
+                            sequence.removeROI(roi);
+                            sequence.addROI(stackedRoi);
+
+                            // add to undo manager
+                            removedROIs.add(roi);
+                            addedROIs.add(stackedRoi);
+                        }
+                    }
+
+                    if (!addedROIs.isEmpty())
+                        sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                (addedROIs.size() > 1) ? "ROIs 3D stack conversion" : "ROI 3D stack conversion"));
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction convertToMaskAction = new IcyAbstractAction("To mask", new IcyIcon(
+            ResourceUtil.ICON_BOOL_MASK), "Convert Shape ROI to Mask ROI",
+            "Convert selected Shape ROI to Mask ROI by using their boolean mask.")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final int maxZ = sequence.getSizeZ() - 1;
+
+                // ROI mask conversion
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI2D> selectedROIs = sequence.getSelectedROI2Ds();
+                    final List<ROI> removedROIs = new ArrayList<ROI>();
+                    final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                    for (ROI2D roi : selectedROIs)
+                    {
+                        final ROI maskRoi = ROIUtil.convertToMask(roi);
+
+                        if (maskRoi != null)
+                        {
+                            // select it by default
+                            maskRoi.setSelected(true);
+
+                            sequence.removeROI(roi);
+                            sequence.addROI(maskRoi);
+
+                            // add to undo manager
+                            removedROIs.add(roi);
+                            addedROIs.add(maskRoi);
+                        }
+                    }
+
+                    if (!addedROIs.isEmpty())
+                        sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                (addedROIs.size() > 1) ? "ROIs mask conversion" : "ROI mask conversion"));
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction convertToShapeAction = new IcyAbstractAction("To shape", new IcyIcon(
+            ResourceUtil.ICON_ROI_POLYGON), "Convert Mask ROI to Polygon shape ROI",
+            "Convert selected Mask ROI to Shape ROI using polygon approximation.")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                // ROI shape conversion
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI2D> selectedROIs = sequence.getSelectedROI2Ds();
+                    final List<ROI> removedROIs = new ArrayList<ROI>();
+                    final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                    for (ROI2D roi : selectedROIs)
+                    {
+                        final ROI shapeRoi = ROIUtil.convertToShape(roi, -1);
+
+                        if (shapeRoi != null)
+                        {
+                            // select it by default
+                            shapeRoi.setSelected(true);
+
+                            sequence.removeROI(roi);
+                            sequence.addROI(shapeRoi);
+
+                            // add to undo manager
+                            removedROIs.add(roi);
+                            addedROIs.add(shapeRoi);
+                        }
+                    }
+
+                    if (!addedROIs.isEmpty())
+                        sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                (addedROIs.size() > 1) ? "ROIs shape conversion" : "ROI shape conversion"));
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction separateObjectsAction = new IcyAbstractAction("Separate", new IcyIcon(
+            "separate_obj", true), "Separate objects from selected Mask ROI",
+            "Separate connected components from selected Mask ROI.")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI2D> selectedROIs = sequence.getSelectedROI2Ds();
+                    final List<ROI> removedROIs = new ArrayList<ROI>();
+                    final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                    for (ROI2D roi : selectedROIs)
+                    {
+                        final List<ROI> components = ROIUtil.getConnectedComponents(roi);
+
+                        // nothing to do if we obtain only 1 component
+                        if (components.size() > 1)
+                        {
+                            sequence.removeROI(roi);
+                            removedROIs.add(roi);
+
+                            for (ROI component : components)
+                            {
+                                sequence.addROI(component);
+                                // add to undo manager
+                                addedROIs.add(component);
+                            }
+                        }
+                    }
+
+                    if (!removedROIs.isEmpty())
+                        sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                (removedROIs.size() > 1) ? "ROIs separate objects" : "ROI separate objects"));
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction manualCutAction = new IcyAbstractAction("Manual cut", new IcyIcon(
+            ResourceUtil.ICON_CUT), "Manual cut/split ROI",
+            "Manual cut/split ROI by drawing a straight 2D line over it.")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            // TODO: ROI cutter using a Line2D
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction autoSplitAction = new IcyAbstractAction("Auto split", new IcyIcon(
+            "split_roi", true), "Automatic split selected ROI",
+            "Automatic split selected ROI using shape and size information.")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI2D> selectedROIs = sequence.getSelectedROI2Ds();
+                    final List<ROI> removedROIs = new ArrayList<ROI>();
+                    final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                    for (ROI2D roi : selectedROIs)
+                    {
+                        // --> TODO
+                        // final List<ROI> components = ROIUtil.split(roi);
+                        //
+                        // nothing to do if we obtain only 1 component
+                        // if (components.size() > 1)
+                        // {
+                        // sequence.removeROI(roi);
+                        // removedROIs.add(roi);
+                        //
+                        // for (ROI component : components)
+                        // {
+                        // sequence.addROI(component);
+                        // // add to undo manager
+                        // addedROIs.add(component);
+                        // }
+                        // }
+                    }
+
+                    if (!removedROIs.isEmpty())
+                        sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                (removedROIs.size() > 1) ? "ROIs automatic split" : "ROI automatic split"));
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 

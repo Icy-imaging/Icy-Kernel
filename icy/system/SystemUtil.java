@@ -22,6 +22,7 @@ import icy.file.FileUtil;
 import icy.main.Icy;
 import icy.type.collection.CollectionUtil;
 import icy.util.ReflectionUtil;
+import icy.util.StringUtil;
 
 import java.awt.BufferCapabilities;
 import java.awt.Desktop;
@@ -326,14 +327,14 @@ public class SystemUtil
     {
         return getDefaultGraphicsConfiguration();
     }
-    
+
     /**
      * Return all available screen devices.
      */
     public static List<GraphicsDevice> getScreenDevices()
     {
-    	final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
-    	  
+        final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
+
         if (Icy.getMainInterface().isHeadLess())
             return result;
 
@@ -789,7 +790,33 @@ public class SystemUtil
      */
     public static String getJavaVersion()
     {
-        return getProperty("java.runtime.version");
+        String result = getProperty("java.runtime.version");
+
+        if (result.equals("unknow"))
+            result = getProperty("java.version");
+
+        return result;
+    }
+
+    /**
+     * Returns the JVM version in number format (ex: 1.6091)
+     */
+    public static double getJavaVersionAsNumber()
+    {
+        String version = getJavaVersion().replaceAll("[^\\d.]", "");
+        final int firstSepInd = version.indexOf('.');
+
+        if (firstSepInd >= 0)
+        {
+            int lastSepInd = version.lastIndexOf('.');
+            while (lastSepInd != firstSepInd)
+            {
+                version = version.substring(0, lastSepInd) + version.substring(lastSepInd + 1);
+                lastSepInd = version.lastIndexOf('.');
+            }
+        }
+
+        return StringUtil.parseDouble(version, 0);
     }
 
     /**
@@ -932,12 +959,12 @@ public class SystemUtil
         if (!isWindows())
             return false;
 
-        final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
-        if (arch.endsWith("64"))
-            return true;
-
         final String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
         if ((wow64Arch != null) && wow64Arch.endsWith("64"))
+            return true;
+
+        final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+        if ((arch != null) && arch.endsWith("64"))
             return true;
 
         return false;

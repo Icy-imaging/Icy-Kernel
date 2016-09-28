@@ -235,14 +235,14 @@ public class ZipUtil
      * 
      * @param zipFile
      *        input zip file name
-     * @return true if the specified file is a valid ZIP file
+     * @throws IOException
+     *         if the input file is not a valid zip file.
      */
-    public static boolean isValid(String zipFile, boolean showError)
+    public static void isValid(String zipFile) throws IOException
     {
-        boolean ok = true;
+        final ZipFile file = new ZipFile(zipFile);
         try
         {
-            final ZipFile file = new ZipFile(zipFile);
             final Enumeration<? extends ZipEntry> entries = file.entries();
 
             while (entries.hasMoreElements())
@@ -250,8 +250,27 @@ public class ZipUtil
                 ZipEntry entry = entries.nextElement();
                 entry.getName();
             }
-
+        }
+        finally
+        {
             file.close();
+        }
+    }
+
+    /**
+     * Verify that specified file is a valid ZIP file
+     * 
+     * @param zipFile
+     *        input zip file name
+     * @param showError
+     *        indicate if the method should show the error (in the output console) if the verify operation failed.
+     * @return true if the specified file is a valid ZIP file
+     */
+    public static boolean isValid(String zipFile, boolean showError)
+    {
+        try
+        {
+            isValid(zipFile);
         }
         catch (IOException e)
         {
@@ -261,9 +280,9 @@ public class ZipUtil
                 IcyExceptionHandler.showErrorMessage(e, false);
             }
 
-            ok = false;
+            return false;
         }
 
-        return ok;
+        return true;
     }
 }

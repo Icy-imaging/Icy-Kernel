@@ -6,7 +6,6 @@ package plugins.kernel.roi.descriptor.measure;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
 import icy.roi.ROIDescriptor;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
@@ -82,15 +81,13 @@ public class ROIPerimeterDescriptor extends ROIDescriptor
      */
     public static double computePerimeter(ROI roi, Sequence sequence) throws UnsupportedOperationException
     {
-        if (!(roi instanceof ROI2D))
-            throw new UnsupportedOperationException("Perimeter not supported on " + roi.getDimension() + "D ROI !");
         if (sequence == null)
             throw new UnsupportedOperationException("Cannot compute Perimeter with null Sequence parameter !");
 
         final UnitPrefix bestUnit = sequence.getBestPixelSizeUnit(2, 1);
-        final double perimeter = ((ROI2D) roi).getPerimeter(sequence);
+        final double length = roi.getLength(sequence);
 
-        return UnitUtil.getValueInUnit(perimeter, UnitPrefix.MICRO, bestUnit, 1);
+        return UnitUtil.getValueInUnit(length, UnitPrefix.MICRO, bestUnit, 1);
     }
 
     // /**

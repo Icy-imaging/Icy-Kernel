@@ -23,6 +23,7 @@ import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
+import icy.type.point.Point2DUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -81,24 +82,13 @@ public class ROI2DLine extends ROI2DShape
 
         this.pt1 = createAnchor(pt1);
         this.pt2 = createAnchor(pt2);
-
-        // add to the control point list
-        controlPoints.add(this.pt1);
-        controlPoints.add(this.pt2);
-
-        this.pt1.addOverlayListener(anchor2DOverlayListener);
-        this.pt1.addPositionListener(anchor2DPositionListener);
-        this.pt2.addOverlayListener(anchor2DOverlayListener);
-        this.pt2.addPositionListener(anchor2DPositionListener);
-
-        // select the pt2 to size the line for "interactive mode"
+        // keep pt2 selected to size the line for "interactive mode"
         this.pt2.setSelected(true);
-        // getOverlay().setMousePos(new Point5D.Double(pt2.getX(), pt2.getY(), -1d, -1d, -1d));
 
-        updateShape();
+        addPoint(this.pt1);
+        addPoint(this.pt2);
 
-        // set name and icon
-        setName("Line2D");
+        // set icon (default name is defined by getDefaultName()) 
         setIcon(ResourceUtil.ICON_ROI_LINE);
     }
 
@@ -139,6 +129,12 @@ public class ROI2DLine extends ROI2DShape
     public ROI2DLine()
     {
         this(new Point2D.Double(), new Point2D.Double());
+    }
+    
+    @Override
+    public String getDefaultName()
+    {
+        return "Line2D";
     }
 
     @Override
@@ -217,8 +213,8 @@ public class ROI2DLine extends ROI2DShape
     @Override
     protected double getTotalDistance(List<Point2D> points, double factorX, double factorY)
     {
-        // by default the total length don't need last point connection for simple line
-        return super.getTotalDistance(points, factorX, factorY, false);
+        // for ROI2DLine the total length don't need last point connection
+        return Point2DUtil.getTotalDistance(points, factorX, factorY, false);
     }
 
     @Override
@@ -265,7 +261,8 @@ public class ROI2DLine extends ROI2DShape
             return onSamePos(((ROI2DLine) r), false) && ((ROI2DLine) r).getLine().intersectsLine(getLine());
         // special case of ROI2DRectangle
         if (r instanceof ROI2DRectangle)
-            return onSamePos(((ROI2DRectangle) r), false) && ((ROI2DRectangle) r).getRectangle().intersectsLine(getLine());
+            return onSamePos(((ROI2DRectangle) r), false)
+                    && ((ROI2DRectangle) r).getRectangle().intersectsLine(getLine());
 
         return super.intersects(r);
     }

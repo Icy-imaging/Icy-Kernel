@@ -927,7 +927,76 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters
+     * Get file list from specified directory applying the specified parameters.
+     * 
+     * @param extension
+     *        the wanted extension file (without the dot character).<br>
+     *        Set it to <code>null</code> to accept all files.<br>
+     *        If you only want files without extension then use an empty String extension.
+     */
+    private static void getFiles(File folder, String extension, boolean ignoreExtensionCase, boolean recursive,
+            List<File> list)
+    {
+        final File[] files = folder.listFiles();
+
+        if (files != null)
+        {
+            for (File file : files)
+            {
+                if (file.isDirectory())
+                {
+                    if (recursive)
+                        getFiles(file, extension, ignoreExtensionCase, recursive, list);
+                }
+                else if (extension != null)
+                {
+                    final String fileExt = getFileExtension(file.getAbsolutePath(), false);
+
+                    if (ignoreExtensionCase)
+                    {
+                        if (extension.equalsIgnoreCase(fileExt))
+                            list.add(file);
+                    }
+                    else
+                    {
+                        if (extension.equals(fileExt))
+                            list.add(file);
+                    }
+                }
+                else
+                    list.add(file);
+            }
+        }
+    }
+
+    /**
+     * Get file list from specified folder applying the specified parameters.
+     */
+    public static File[] getFiles(File folder, String extension, boolean ignoreExtensionCase, boolean recursive)
+    {
+        final List<File> result = new ArrayList<File>();
+
+        getFiles(folder, extension, ignoreExtensionCase, recursive, result);
+
+        return result.toArray(new File[result.size()]);
+    }
+
+    /**
+     * Get file list from specified folder applying the specified parameters.
+     */
+    public static String[] getFiles(String folder, String extension, boolean ignoreExtensionCase, boolean recursive)
+    {
+        final File[] files = getFiles(new File(getGenericPath(folder)), extension, ignoreExtensionCase, recursive);
+        final String[] result = new String[files.length];
+
+        for (int i = 0; i < files.length; i++)
+            result[i] = files[i].getPath();
+
+        return result;
+    }
+
+    /**
+     * Get file list from specified directory applying the specified parameters.
      */
     private static void getFiles(File f, FileFilter filter, boolean recursive, boolean wantFile, boolean wantDirectory,
             boolean wantHidden, List<File> list)

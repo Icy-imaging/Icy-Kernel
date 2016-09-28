@@ -1539,7 +1539,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             g.drawString(text, x + 4, y + 2 + h);
         }
 
-        void updateCursor()
+        /**
+         * Update mouse cursor
+         */
+        protected void updateCursor()
         {
             // final Cursor cursor = getCursor();
             //
@@ -2636,22 +2639,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(0, getCanvasSizeY() / 4);
+                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
                         canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
                         e.consume();
                     }
                     break;
                 case KeyEvent.VK_NUMPAD4:
-                    if (!canvasView.moving)
-                    {
-                        final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(-getCanvasSizeX() / 4, 0);
-                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
-                        e.consume();
-                    }
-                    break;
-
-                case KeyEvent.VK_NUMPAD6:
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
@@ -2661,11 +2654,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     }
                     break;
 
+                case KeyEvent.VK_NUMPAD6:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(-getCanvasSizeX() / 4, 0);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+
                 case KeyEvent.VK_NUMPAD8:
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
+                        final Point delta = new Point(0, getCanvasSizeY() / 4);
                         canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
                         e.consume();
                     }

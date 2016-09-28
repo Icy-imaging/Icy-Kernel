@@ -41,8 +41,6 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
     public ROI4DArea()
     {
         super(ROI3DArea.class);
-
-        setName("4D area");
     }
 
     public ROI4DArea(Point4D pt)
@@ -77,6 +75,14 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
         // copy the source 4D area ROI
         for (Entry<Integer, ROI3DArea> entry : area.slices.entrySet())
             slices.put(entry.getKey(), new ROI3DArea(entry.getValue()));
+
+        roiChanged(true);
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "Area4D";
     }
 
     /**
@@ -104,7 +110,10 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
      */
     public void setPoint(int x, int y, int z, int t, boolean value)
     {
-        getSlice(t, true).setPoint(x, y, z, value);
+        final ROI3DArea slice = getSlice(t, value);
+
+        if (slice != null)
+            slice.setPoint(x, y, z, value);
     }
 
     /**
@@ -122,7 +131,10 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
      */
     public void removeBrush(Point2D pos, int z, int t)
     {
-        getSlice(t, true).removeBrush(pos, z);
+        final ROI3DArea slice = getSlice(t, false);
+
+        if (slice != null)
+            slice.removeBrush(pos, z);
     }
 
     /**

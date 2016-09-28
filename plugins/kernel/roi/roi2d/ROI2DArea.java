@@ -111,6 +111,7 @@ public class ROI2DArea extends ROI2D
         protected boolean needRebuild;
         protected double scaling[];
         protected WeakReference<VtkCanvas> canvas3d;
+        protected int lastBuildPosZ;
 
         // internal
         protected final Point2D brushPosition;
@@ -134,6 +135,7 @@ public class ROI2DArea extends ROI2D
 
             needRebuild = true;
             canvas3d = new WeakReference<VtkCanvas>(null);
+            lastBuildPosZ = getZ();
         }
 
         @Override
@@ -159,7 +161,7 @@ public class ROI2DArea extends ROI2D
             }
             if (vtkInfo != null)
             {
-                vtkInfo.Remove(VtkCanvas.outlineVisibilityKey);
+                vtkInfo.Remove(VtkCanvas.visibilityKey);
                 vtkInfo.Delete();
             }
             if (outlineMapper != null)
@@ -176,6 +178,7 @@ public class ROI2DArea extends ROI2D
         {
             outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
             outlineMapper = new vtkPolyDataMapper();
+            outlineMapper.SetInputData(outline);
             outlineActor = new vtkActor();
             outlineActor.SetMapper(outlineMapper);
             // disable picking on the outline
@@ -184,7 +187,7 @@ public class ROI2DArea extends ROI2D
             outlineActor.GetProperty().SetRepresentationToWireframe();
             // use vtkInformations to store outline visibility state (hacky)
             vtkInfo = new vtkInformation();
-            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+            vtkInfo.Set(VtkCanvas.visibilityKey, 0);
             // VtkCanvas use this to restore correctly outline visibility flag
             outlineActor.SetPropertyKeys(vtkInfo);
 
@@ -222,6 +225,16 @@ public class ROI2DArea extends ROI2D
             if (seq == null)
                 return;
 
+            // get previous polydata object
+            final vtkPolyData previousPolyData = polyData;
+            // get VTK binary image from ROI mask
+            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI2DArea.this, seq.getSizeZ(),
+                    canvas.getPositionT());
+            // adjust spacing
+            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
+            // get VTK polygon data representing the surface of the binary image
+            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d);
+
             // get bounds
             final Rectangle3D bounds = getBounds5D().toRectangle3D();
             // apply scaling on bounds
@@ -233,33 +246,22 @@ public class ROI2DArea extends ROI2D
             {
                 bounds.setZ(0);
                 bounds.setSizeZ(seq.getSizeZ() * scaling[2]);
+                lastBuildPosZ = -1;
             }
             else
             {
+                lastBuildPosZ = getZ();
                 bounds.setZ(bounds.getZ() * scaling[2]);
                 bounds.setSizeZ(1d * scaling[2]);
             }
-
-            // get previous polydata object
-            final vtkPolyData previousPolyData = polyData;
-
-            // update outline
-            VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY(),
-                    bounds.getMinZ(), bounds.getMaxZ(), canvas);
-            // get VTK binary image from ROI mask
-            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI2DArea.this, seq.getSizeZ(),
-                    canvas.getPositionT());
-            // adjust spacing
-            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
-            // get VTK polygon data representing the surface of the binary image
-            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             vtkPanel.lock();
             try
             {
-                // update outline polygon data
-                outlineMapper.SetInputData(outline);
+                // update outline data
+                VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(),
+                        bounds.getMaxY(), bounds.getMinZ(), bounds.getMaxZ(), canvas);
                 outlineMapper.Update();
                 // update polygon data from image
                 polyMapper.SetInputData(polyData);
@@ -316,13 +318,13 @@ public class ROI2DArea extends ROI2D
                         {
                             outlineActor.GetProperty().SetRepresentationToWireframe();
                             outlineActor.SetVisibility(1);
-                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
+                            vtkInfo.Set(VtkCanvas.visibilityKey, 1);
                         }
                         else
                         {
                             outlineActor.GetProperty().SetRepresentationToPoints();
                             outlineActor.SetVisibility(0);
-                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+                            vtkInfo.Set(VtkCanvas.visibilityKey, 0);
                         }
                         surfaceActor.GetProperty().SetColor(r, g, b);
                         // opacity here is about ROI content, global opacity is handled by Layer
@@ -341,13 +343,13 @@ public class ROI2DArea extends ROI2D
                     {
                         outlineActor.GetProperty().SetRepresentationToWireframe();
                         outlineActor.SetVisibility(1);
-                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
+                        vtkInfo.Set(VtkCanvas.visibilityKey, 1);
                     }
                     else
                     {
                         outlineActor.GetProperty().SetRepresentationToPoints();
                         outlineActor.SetVisibility(0);
-                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+                        vtkInfo.Set(VtkCanvas.visibilityKey, 0);
                     }
                     surfaceActor.GetProperty().SetColor(r, g, b);
                     // opacity here is about ROI content, gobal opacity is handled by Layer
@@ -366,6 +368,58 @@ public class ROI2DArea extends ROI2D
                 VtkUtil.setPolyDataColor(outline, color, canvas3d.get());
             if (polyData != null)
                 VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
+        }
+
+        protected void updateVtkObjectsBounds()
+        {
+            final VtkCanvas canvas = canvas3d.get();
+            // canvas was closed
+            if (canvas == null)
+                return;
+
+            final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+            // canvas was closed
+            if (vtkPanel == null)
+                return;
+
+            final Sequence seq = canvas.getSequence();
+            // nothing to update
+            if (seq == null)
+                return;
+
+            final Rectangle3D bounds = getBounds5D().toRectangle3D();
+            // apply scaling on bounds
+            bounds.setX(bounds.getX() * scaling[0]);
+            bounds.setSizeX(bounds.getSizeX() * scaling[0]);
+            bounds.setY(bounds.getY() * scaling[1]);
+            bounds.setSizeY(bounds.getSizeY() * scaling[1]);
+            if (bounds.isInfiniteZ())
+            {
+                bounds.setZ(0);
+                bounds.setSizeZ(seq.getSizeZ() * scaling[2]);
+            }
+            else
+            {
+                bounds.setZ(bounds.getZ() * scaling[2]);
+                bounds.setSizeZ(1d * scaling[2]);
+            }
+
+            // actor can be accessed in canvas3d for rendering so we need to synchronize access
+            vtkPanel.lock();
+            try
+            {
+                // update outline position
+                VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(),
+                        bounds.getMaxY(), bounds.getMinZ(), bounds.getMaxZ(), canvas);
+                outlineMapper.Update();
+
+                // update actor position
+                surfaceActor.SetPosition(bounds.getX(), bounds.getY(), bounds.getZ());
+            }
+            finally
+            {
+                vtkPanel.unlock();
+            }
         }
 
         void updateCursor()
@@ -522,11 +576,9 @@ public class ROI2DArea extends ROI2D
             // specific VTK canvas processing
             if (canvas instanceof VtkCanvas)
             {
-                final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
-                // focus the ROI
-                final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
-                        && (surfaceActor == vtkCanvas.getPickedObject());
+                // mouse is over the ROI actor ? --> focus the ROI
+                final boolean focused = (surfaceActor != null)
+                        && (surfaceActor == ((VtkCanvas) canvas).getPickedObject());
 
                 setFocused(focused);
 
@@ -537,59 +589,14 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
-        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
-        {
-            boolean hasFocus;
-
-            // mouse cursor is over the actor ? --> focus the ROI
-            if (canvas instanceof VtkCanvas)
-                hasFocus = (surfaceActor != null) && (surfaceActor == ((VtkCanvas) canvas).getPickedObject());
-            else
-                hasFocus = isFocused();
-
-            // nothing to do if the ROI does not have focus
-            if (!hasFocus)
-                return false;
-
-            // union selection
-            if (EventUtil.isShiftDown(e))
-            {
-                // not already selected --> add ROI to selection
-                if (!isSelected())
-                {
-                    setSelected(true);
-                    return true;
-                }
-            }
-            else if (EventUtil.isControlDown(e))
-            // switch selection
-            {
-                // inverse state
-                setSelected(!isSelected());
-                return true;
-            }
-            else
-            // exclusive selection
-            {
-                // not selected --> exclusive ROI selection
-                if (!isSelected())
-                {
-                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
-                    if (!canvas.getSequence().setSelectedROI(ROI2DArea.this))
-                        ROI2DArea.this.setSelected(true);
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first
             super.keyPressed(e, imagePoint, canvas);
+
+            // edition not supported on VtkCanvas
+            if (canvas instanceof VtkCanvas)
+                return;
 
             // not yet consumed and ROI editable...
             if (!e.isConsumed() && !isReadOnly())
@@ -597,35 +604,31 @@ public class ROI2DArea extends ROI2D
                 // then process it here
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (imagePoint != null)
+                    ROI2DArea.this.beginUpdate();
+                    try
                     {
-                        ROI2DArea.this.beginUpdate();
-                        try
+                        switch (e.getKeyChar())
                         {
-                            switch (e.getKeyChar())
-                            {
-                                case '+':
-                                    if (isSelected())
-                                    {
-                                        setBrushSize(getBrushSize() * 1.1f);
-                                        e.consume();
-                                    }
-                                    break;
+                            case '+':
+                                if (isSelected())
+                                {
+                                    setBrushSize(getBrushSize() * 1.1f);
+                                    e.consume();
+                                }
+                                break;
 
-                                case '-':
-                                    if (isSelected())
-                                    {
-                                        setBrushSize(getBrushSize() * 0.9f);
-                                        e.consume();
-                                    }
-                                    break;
-                            }
+                            case '-':
+                                if (isSelected())
+                                {
+                                    setBrushSize(getBrushSize() * 0.9f);
+                                    e.consume();
+                                }
+                                break;
                         }
-                        finally
-                        {
-                            ROI2DArea.this.endUpdate();
-                        }
+                    }
+                    finally
+                    {
+                        ROI2DArea.this.endUpdate();
                     }
                 }
             }
@@ -637,44 +640,47 @@ public class ROI2DArea extends ROI2D
             // send event to parent first
             super.mousePressed(e, imagePoint, canvas);
 
+            // edition not supported on VtkCanvas
+            if (canvas instanceof VtkCanvas)
+                return;
+            // we need it
+            if (imagePoint == null)
+                return;
+
             // not yet consumed, ROI editable, selected and not focused...
             if (!e.isConsumed() && !isReadOnly() && isSelected() && !isFocused())
             {
                 // then process it here
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (imagePoint != null)
-                    {
-                        // keep trace of roi changes from user mouse action
-                        roiModifiedByMouse = false;
-                        // save current ROI
-                        undoSave = getBooleanMask(true);
+                    // keep trace of roi changes from user mouse action
+                    roiModifiedByMouse = false;
+                    // save current ROI
+                    undoSave = getBooleanMask(true);
 
-                        ROI2DArea.this.beginUpdate();
-                        try
+                    ROI2DArea.this.beginUpdate();
+                    try
+                    {
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
                         {
-                            // left button action
-                            if (EventUtil.isLeftMouseButton(e))
-                            {
-                                // add point first
-                                addToMask(imagePoint.toPoint2D());
-                                roiModifiedByMouse = true;
-                                e.consume();
-                            }
-                            // right button action
-                            else if (EventUtil.isRightMouseButton(e))
-                            {
-                                // remove point
-                                removeFromMask(imagePoint.toPoint2D());
-                                roiModifiedByMouse = true;
-                                e.consume();
-                            }
+                            // add point first
+                            addToMask(imagePoint.toPoint2D());
+                            roiModifiedByMouse = true;
+                            e.consume();
                         }
-                        finally
+                        // right button action
+                        else if (EventUtil.isRightMouseButton(e))
                         {
-                            ROI2DArea.this.endUpdate();
+                            // remove point
+                            removeFromMask(imagePoint.toPoint2D());
+                            roiModifiedByMouse = true;
+                            e.consume();
                         }
+                    }
+                    finally
+                    {
+                        ROI2DArea.this.endUpdate();
                     }
                 }
             }
@@ -747,17 +753,20 @@ public class ROI2DArea extends ROI2D
             // send event to parent first
             super.mouseMove(e, imagePoint, canvas);
 
+            // edition not supported on VtkCanvas
+            if (canvas instanceof VtkCanvas)
+                return;
+            // we need it
+            if (imagePoint == null)
+                return;
+
             // not yet consumed, ROI editable and selected...
             if (!e.isConsumed() && !isReadOnly() && isSelected())
             {
                 // then process it here
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (imagePoint != null)
-                    {
-                        setBrushPosition(imagePoint.toPoint2D());
-                    }
+                    setBrushPosition(imagePoint.toPoint2D());
                 }
             }
         }
@@ -768,39 +777,42 @@ public class ROI2DArea extends ROI2D
             // send event to parent first
             super.mouseDrag(e, imagePoint, canvas);
 
+            // edition not supported on VtkCanvas
+            if (canvas instanceof VtkCanvas)
+                return;
+            // we need it
+            if (imagePoint == null)
+                return;
+
             // not yet consumed, ROI editable and selected...
             if (!e.isConsumed() && !isReadOnly() && isSelected())
             {
                 // then process it here
                 if (isActiveFor(canvas))
                 {
-                    // check we can do the action
-                    if (imagePoint != null)
+                    ROI2DArea.this.beginUpdate();
+                    try
                     {
-                        ROI2DArea.this.beginUpdate();
-                        try
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
                         {
-                            // left button action
-                            if (EventUtil.isLeftMouseButton(e))
-                            {
-                                // add point first
-                                addToMask(imagePoint.toPoint2D());
-                                roiModifiedByMouse = true;
-                                e.consume();
-                            }
-                            // right button action
-                            else if (EventUtil.isRightMouseButton(e))
-                            {
-                                // remove point
-                                removeFromMask(imagePoint.toPoint2D());
-                                roiModifiedByMouse = true;
-                                e.consume();
-                            }
+                            // add point first
+                            addToMask(imagePoint.toPoint2D());
+                            roiModifiedByMouse = true;
+                            e.consume();
                         }
-                        finally
+                        // right button action
+                        else if (EventUtil.isRightMouseButton(e))
                         {
-                            ROI2DArea.this.endUpdate();
+                            // remove point
+                            removeFromMask(imagePoint.toPoint2D());
+                            roiModifiedByMouse = true;
+                            e.consume();
                         }
+                    }
+                    finally
+                    {
+                        ROI2DArea.this.endUpdate();
                     }
                 }
             }
@@ -903,6 +915,9 @@ public class ROI2DArea extends ROI2D
             {
                 // 3D canvas
                 final VtkCanvas cnv = (VtkCanvas) canvas;
+                // update reference if needed
+                if (canvas3d.get() != cnv)
+                    canvas3d = new WeakReference<VtkCanvas>(cnv);
 
                 // FIXME : need a better implementation
                 final double[] s = cnv.getVolumeScale();
@@ -924,7 +939,6 @@ public class ROI2DArea extends ROI2D
                         initVtkObjects();
 
                     // request rebuild 3D objects
-                    canvas3d = new WeakReference<VtkCanvas>(cnv);
                     ThreadUtil.runSingle(this);
                     needRebuild = false;
                 }
@@ -1074,8 +1088,7 @@ public class ROI2DArea extends ROI2D
         // get data pointer
         maskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
 
-        // set name and icon
-        setName("Area2D");
+        // set icon (default name is defined by getDefaultName())
         setIcon(ResourceUtil.ICON_ROI_AREA);
     }
 
@@ -1154,9 +1167,14 @@ public class ROI2DArea extends ROI2D
 
         bounds.setBounds(area.bounds);
 
-        // set name and icon
-        setName("Area2D");
+        // set icon (default name is defined by getDefaultName())
         setIcon(ResourceUtil.ICON_ROI_AREA);
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "Area2D";
     }
 
     void addToBounds(Rectangle bnd)
@@ -1402,23 +1420,43 @@ public class ROI2DArea extends ROI2D
      */
     public void setPoint(int x, int y, boolean value)
     {
+        final byte[] data;
+        final Rectangle bnds;
+
         if (value)
         {
             // set point in mask
             addToBounds(new Rectangle(x, y, 1, 1));
+
+            synchronized (this)
+            {
+                data = maskData;
+                bnds = bounds;
+            }
+
             // set color depending remove or adding to mask
-            maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 1;
+            data[(x - bnds.x) + ((y - bnds.y) * bnds.width)] = 1;
+            // notify roi changed
+            roiChanged(true);
         }
         else
         {
-            // remove point from mask
-            maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 0;
-            // mark that bounds need to be updated
-            boundsNeedUpdate = true;
-        }
+            synchronized (this)
+            {
+                data = maskData;
+                bnds = bounds;
+            }
 
-        // notify roi changed
-        roiChanged(true);
+            if (bnds.contains(x, y))
+            {
+                // remove point from mask
+                data[(x - bnds.x) + ((y - bnds.y) * bnds.width)] = 0;
+                // mark that bounds need to be updated
+                boundsNeedUpdate = true;
+                // notify roi changed
+                roiChanged(true);
+            }
+        }
     }
 
     /**
@@ -2388,7 +2426,19 @@ public class ROI2DArea extends ROI2D
                         roiChanged(true);
                 }
                 // we need to rebuild shape
-                ((ROI2DAreaPainter) painter).needRebuild = true;
+                if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+                    ((ROI2DAreaPainter) getOverlay()).needRebuild = true;
+                else
+                {
+                    final ROI2DAreaPainter overlay = ((ROI2DAreaPainter) getOverlay());
+
+                    // z position change ? --> need total rebuild
+                    if (overlay.lastBuildPosZ != getZ())
+                        overlay.needRebuild = true;
+                    // just need to change position
+                    else
+                        overlay.updateVtkObjectsBounds();
+                }
                 break;
 
             case FOCUS_CHANGED:

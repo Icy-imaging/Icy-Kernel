@@ -20,6 +20,7 @@ package icy.gui.frame.progress;
 
 import icy.gui.frame.IcyFrame;
 import icy.gui.util.GuiUtil;
+import icy.network.NetworkUtil;
 import icy.preferences.GeneralPreferences;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -37,6 +38,8 @@ import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JEditorPane;
 import javax.swing.UIManager;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 
 /**
@@ -114,6 +117,18 @@ public class ToolTipFrame extends TaskFrame
                     public void mouseClicked(MouseEvent e)
                     {
                         doClose();
+                    }
+                });
+                // support link click
+                editorPane.addHyperlinkListener(new HyperlinkListener()
+                {
+                    @Override
+                    public void hyperlinkUpdate(HyperlinkEvent e)
+                    {
+                        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
+                        {
+                            NetworkUtil.openBrowser(e.getURL());
+                        }
                     }
                 });
 

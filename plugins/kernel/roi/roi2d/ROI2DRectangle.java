@@ -43,8 +43,7 @@ public class ROI2DRectangle extends ROI2DRectShape
     {
         super(new Rectangle2D.Double(), topLeft, bottomRight);
 
-        // set name and icon
-        setName("Rectangle2D");
+        // set icon (default name is defined by getDefaultName()) 
         setIcon(ResourceUtil.ICON_ROI_RECTANGLE);
     }
 
@@ -88,12 +87,17 @@ public class ROI2DRectangle extends ROI2DRectShape
     public ROI2DRectangle(Point5D pt)
     {
         this(pt.toPoint2D());
-        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DRectangle()
     {
         this(new Point2D.Double(), new Point2D.Double());
+    }
+    
+    @Override
+    public String getDefaultName()
+    {
+        return "Rectangle2D";
     }
 
     public Rectangle2D getRectangle()

@@ -1100,5 +1100,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
         if ((type == SequenceEventSourceType.SEQUENCE_DATA) || (type == SequenceEventSourceType.SEQUENCE_TYPE))
             sequenceOperationTask.onSequenceChange();
+        if (type == SequenceEventSourceType.SEQUENCE_ROI)
+            toolRibbonTask.onSequenceChange();
     }
 }

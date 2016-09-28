@@ -74,31 +74,15 @@ public abstract class ROI2DRectShape extends ROI2DShape
         super(shape);
 
         this.topLeft = createAnchor(topLeft);
-        this.topRight = createAnchor(bottomRight.getX(), topLeft.getY());
-        this.bottomLeft = createAnchor(topLeft.getX(), bottomRight.getY());
+        this.topRight = createAnchor(new Point2D.Double(bottomRight.getX(), topLeft.getY()));
+        this.bottomLeft = createAnchor(new Point2D.Double(topLeft.getX(), bottomRight.getY()));
         this.bottomRight = createAnchor(bottomRight);
-
-        // add to the control point list (important to add them in clockwise order)
-        controlPoints.add(this.topLeft);
-        controlPoints.add(this.topRight);
-        controlPoints.add(this.bottomRight);
-        controlPoints.add(this.bottomLeft);
-
-        this.topLeft.addOverlayListener(anchor2DOverlayListener);
-        this.topLeft.addPositionListener(anchor2DPositionListener);
-        this.topRight.addOverlayListener(anchor2DOverlayListener);
-        this.topRight.addPositionListener(anchor2DPositionListener);
-        this.bottomLeft.addOverlayListener(anchor2DOverlayListener);
-        this.bottomLeft.addPositionListener(anchor2DPositionListener);
-        this.bottomRight.addOverlayListener(anchor2DOverlayListener);
-        this.bottomRight.addPositionListener(anchor2DPositionListener);
-
         // select the bottom right point by default for interactive mode
         this.bottomRight.setSelected(true);
-        // getOverlay().setMousePos(new Point5D.Double(bottomRight.getX(), bottomRight.getY(), -1d,
-        // -1d, -1d));
-
-        updateShape();
+        addPoint(this.topLeft);
+        addPoint(this.topRight);
+        addPoint(this.bottomLeft);
+        addPoint(this.bottomRight);
     }
 
     @Override
