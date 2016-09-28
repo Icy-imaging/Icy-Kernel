@@ -20,6 +20,7 @@ package icy.type.point;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.util.List;
 
 /**
  * Point3D class.<br>
@@ -29,6 +30,44 @@ import java.awt.geom.Point2D;
  */
 public abstract class Point3D implements Cloneable
 {
+    /**
+     * Returns distance between 2 Point2D using specified scale factor for x/y/z dimension.
+     */
+    public static double getDistance(Point3D pt1, Point3D pt2, double factorX, double factorY, double factorZ)
+    {
+        double px = (pt2.getX() - pt1.getX()) * factorX;
+        double py = (pt2.getY() - pt1.getY()) * factorY;
+        double pz = (pt2.getZ() - pt1.getZ()) * factorZ;
+        return Math.sqrt(px * px + py * py + pz * pz);
+    }
+
+    /**
+     * Returns total distance of the specified list of points.
+     */
+    public static double getTotalDistance(List<Point3D> points, double factorX, double factorY, double factorZ,
+            boolean connectLastPoint)
+    {
+        final int size = points.size();
+        double result = 0d;
+
+        if (size > 1)
+        {
+            for (int i = 0; i < size - 1; i++)
+                result += getDistance(points.get(i), points.get(i + 1), factorX, factorY, factorZ);
+
+            // add last to first point distance
+            if (connectLastPoint)
+                result += getDistance(points.get(size - 1), points.get(0), factorX, factorY, factorZ);
+        }
+
+        return result;
+    }
+
+    /**
+     * Cache the hash code to make computing hashes faster.
+     */
+    int hash = 0;
+
     /**
      * Returns the X coordinate of this <code>Point3D</code> in <code>double</code> precision.
      * 
@@ -101,9 +140,278 @@ public abstract class Point3D implements Cloneable
      */
     public abstract Point2D toPoint2D();
 
+    /**
+     * Computes the distance between this point and point {@code (x1, y1, z1)}.
+     *
+     * @param x1
+     *        the x coordinate of other point
+     * @param y1
+     *        the y coordinate of other point
+     * @param z1
+     *        the z coordinate of other point
+     * @return the distance between this point and point {@code (x1, y1, z1)}.
+     */
+    public double distance(double x1, double y1, double z1)
+    {
+        double a = getX() - x1;
+        double b = getY() - y1;
+        double c = getZ() - z1;
+        return Math.sqrt(a * a + b * b + c * c);
+    }
+
+    /**
+     * Computes the distance between this point and the specified {@code point}.
+     *
+     * @param point
+     *        the other point
+     * @return the distance between this point and the specified {@code point}.
+     * @throws NullPointerException
+     *         if the specified {@code point} is null
+     */
+    public double distance(Point3D point)
+    {
+        return distance(point.getX(), point.getY(), point.getZ());
+    }
+
+    /**
+     * Normalizes the relative magnitude vector represented by this instance.
+     * Returns a vector with the same direction and magnitude equal to 1.
+     * If this is a zero vector, a zero vector is returned.
+     * 
+     * @return the normalized vector represented by a {@code Point3D} instance
+     */
+    public Point3D normalize()
+    {
+        final double mag = magnitude();
+
+        if (mag == 0d)
+            return new Point3D.Double(0d, 0d, 0d);
+
+        return new Point3D.Double(getX() / mag, getY() / mag, getZ() / mag);
+    }
+
+    /**
+     * Returns a point which lies in the middle between this point and the
+     * specified coordinates.
+     * 
+     * @param x
+     *        the X coordinate of the second end point
+     * @param y
+     *        the Y coordinate of the second end point
+     * @param z
+     *        the Z coordinate of the second end point
+     * @return the point in the middle
+     */
+    public Point3D midpoint(double x, double y, double z)
+    {
+        return new Point3D.Double(x + (getX() - x) / 2d, y + (getY() - y) / 2d, z + (getZ() - z) / 2d);
+    }
+
+    /**
+     * Returns a point which lies in the middle between this point and the
+     * specified point.
+     * 
+     * @param point
+     *        the other end point
+     * @return the point in the middle
+     * @throws NullPointerException
+     *         if the specified {@code point} is null
+     */
+    public Point3D midpoint(Point3D point)
+    {
+        return midpoint(point.getX(), point.getY(), point.getZ());
+    }
+
+    /**
+     * Computes the angle (in degrees) between the vector represented
+     * by this point and the specified vector.
+     * 
+     * @param x
+     *        the X magnitude of the other vector
+     * @param y
+     *        the Y magnitude of the other vector
+     * @param z
+     *        the Z magnitude of the other vector
+     * @return the angle between the two vectors measured in degrees
+     */
+    public double angle(double x, double y, double z)
+    {
+        final double ax = getX();
+        final double ay = getY();
+        final double az = getZ();
+
+        final double delta = (ax * x + ay * y + az * z)
+                / Math.sqrt((ax * ax + ay * ay + az * az) * (x * x + y * y + z * z));
+
+        if (delta > 1d)
+            return 0d;
+        if (delta < -1d)
+            return 180d;
+
+        return Math.toDegrees(Math.acos(delta));
+    }
+
+    /**
+     * Computes the angle (in degrees) between the vector represented
+     * by this point and the vector represented by the specified point.
+     * 
+     * @param vector
+     *        the other vector
+     * @return the angle between the two vectors measured in degrees, {@code NaN} if any of the two vectors is a zero
+     *         vector
+     * @throws NullPointerException
+     *         if the specified {@code vector} is null
+     */
+    public double angle(Point3D vector)
+    {
+        return angle(vector.getX(), vector.getY(), vector.getZ());
+    }
+
+    /**
+     * Computes the angle (in degrees) between the three points with this point
+     * as a vertex.
+     * 
+     * @param p1
+     *        one point
+     * @param p2
+     *        other point
+     * @return angle between the vectors (this, p1) and (this, p2) measured
+     *         in degrees, {@code NaN} if the three points are not different
+     *         from one another
+     * @throws NullPointerException
+     *         if the {@code p1} or {@code p2} is null
+     */
+    public double angle(Point3D p1, Point3D p2)
+    {
+        final double x = getX();
+        final double y = getY();
+        final double z = getZ();
+
+        final double ax = p1.getX() - x;
+        final double ay = p1.getY() - y;
+        final double az = p1.getZ() - z;
+        final double bx = p2.getX() - x;
+        final double by = p2.getY() - y;
+        final double bz = p2.getZ() - z;
+
+        final double delta = (ax * bx + ay * by + az * bz)
+                / Math.sqrt((ax * ax + ay * ay + az * az) * (bx * bx + by * by + bz * bz));
+
+        if (delta > 1.0)
+            return 0.0;
+
+        if (delta < -1.0)
+            return 180.0;
+
+        return Math.toDegrees(Math.acos(delta));
+    }
+
+    /**
+     * Computes norm2 (square length) of the vector represented by this Point3D.
+     * 
+     * @return norm2 length of the vector
+     */
+    public double norm2()
+    {
+        final double x = getX();
+        final double y = getY();
+        final double z = getZ();
+
+        return x * x + y * y + z * z;
+    }
+
+    /**
+     * Computes length of the vector represented by this Point3D.
+     * 
+     * @return length of the vector
+     */
+    public double length()
+    {
+        return Math.sqrt(norm2());
+    }
+
+    /**
+     * Same as {@link #length()}
+     */
+    public double magnitude()
+    {
+        return length();
+    }
+
+    /**
+     * Computes dot (scalar) product of the vector represented by this instance
+     * and the specified vector.
+     * 
+     * @param x
+     *        the X magnitude of the other vector
+     * @param y
+     *        the Y magnitude of the other vector
+     * @param z
+     *        the Z magnitude of the other vector
+     * @return the dot product of the two vectors
+     */
+    public double dotProduct(double x, double y, double z)
+    {
+        return getX() * x + getY() * y + getZ() * z;
+    }
+
+    /**
+     * Computes dot (scalar) product of the vector represented by this instance
+     * and the specified vector.
+     * 
+     * @param vector
+     *        the other vector
+     * @return the dot product of the two vectors
+     * @throws NullPointerException
+     *         if the specified {@code vector} is null
+     */
+    public double dotProduct(Point3D vector)
+    {
+        return dotProduct(vector.getX(), vector.getY(), vector.getZ());
+    }
+
+    /**
+     * Computes cross product of the vector represented by this instance
+     * and the specified vector.
+     * 
+     * @param x
+     *        the X magnitude of the other vector
+     * @param y
+     *        the Y magnitude of the other vector
+     * @param z
+     *        the Z magnitude of the other vector
+     * @return the cross product of the two vectors
+     */
+    public Point3D crossProduct(double x, double y, double z)
+    {
+        final double ax = getX();
+        final double ay = getY();
+        final double az = getZ();
+
+        return new Point3D.Double(ay * z - az * y, az * x - ax * z, ax * y - ay * x);
+    }
+
+    /**
+     * Computes cross product of the vector represented by this instance
+     * and the specified vector.
+     * 
+     * @param vector
+     *        the other vector
+     * @return the cross product of the two vectors
+     * @throws NullPointerException
+     *         if the specified {@code vector} is null
+     */
+    public Point3D crossProduct(Point3D vector)
+    {
+        return crossProduct(vector.getX(), vector.getY(), vector.getZ());
+    }
+
     @Override
     public boolean equals(Object obj)
     {
+        if (obj == this)
+            return true;
+
         if (obj instanceof Point3D)
         {
             final Point3D pt = (Point3D) obj;
@@ -135,6 +443,30 @@ public abstract class Point3D implements Cloneable
         }
     }
 
+    /**
+     * @return a hash code for this {@code Point3D} object.
+     */
+    @Override
+    public int hashCode()
+    {
+        if (hash == 0)
+        {
+            long bits = 7L;
+            bits = 31L * bits + java.lang.Double.doubleToLongBits(getX());
+            bits = 31L * bits + java.lang.Double.doubleToLongBits(getY());
+            bits = 31L * bits + java.lang.Double.doubleToLongBits(getZ());
+            hash = (int) (bits ^ (bits >> 32));
+            // so hash could never be 0 when computed
+            hash |= 1;
+        }
+
+        return hash;
+    }
+
+    /**
+     * Returns a string representation of this {@code Point3D}.
+     * This method is intended to be used only for informational purposes.
+     */
     @Override
     public String toString()
     {
@@ -227,6 +559,7 @@ public abstract class Point3D implements Cloneable
         public void setX(double x)
         {
             this.x = x;
+            hash = 0;
         }
 
         @Override
@@ -239,6 +572,7 @@ public abstract class Point3D implements Cloneable
         public void setY(double y)
         {
             this.y = y;
+            hash = 0;
         }
 
         @Override
@@ -251,14 +585,7 @@ public abstract class Point3D implements Cloneable
         public void setZ(double z)
         {
             this.z = z;
-        }
-
-        @Override
-        public void setLocation(double x, double y, double z)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
+            hash = 0;
         }
 
         @Override
@@ -360,6 +687,7 @@ public abstract class Point3D implements Cloneable
         public void setX(double x)
         {
             this.x = (float) x;
+            hash = 0;
         }
 
         @Override
@@ -372,6 +700,7 @@ public abstract class Point3D implements Cloneable
         public void setY(double y)
         {
             this.y = (float) y;
+            hash = 0;
         }
 
         @Override
@@ -384,14 +713,7 @@ public abstract class Point3D implements Cloneable
         public void setZ(double z)
         {
             this.z = (float) z;
-        }
-
-        @Override
-        public void setLocation(double x, double y, double z)
-        {
-            this.x = (float) x;
-            this.y = (float) y;
-            this.z = (float) z;
+            hash = 0;
         }
 
         @Override
@@ -493,6 +815,7 @@ public abstract class Point3D implements Cloneable
         public void setX(double x)
         {
             this.x = (int) x;
+            hash = 0;
         }
 
         @Override
@@ -505,6 +828,7 @@ public abstract class Point3D implements Cloneable
         public void setY(double y)
         {
             this.y = (int) y;
+            hash = 0;
         }
 
         @Override
@@ -517,14 +841,7 @@ public abstract class Point3D implements Cloneable
         public void setZ(double z)
         {
             this.z = (int) z;
-        }
-
-        @Override
-        public void setLocation(double x, double y, double z)
-        {
-            this.x = (int) x;
-            this.y = (int) y;
-            this.z = (int) z;
+            hash = 0;
         }
 
         @Override

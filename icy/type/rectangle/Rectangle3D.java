@@ -19,6 +19,8 @@
 package icy.type.rectangle;
 
 import icy.type.dimension.Dimension3D;
+import icy.type.geom.Line3D;
+import icy.type.geom.Shape3D;
 import icy.type.point.Point3D;
 
 import java.awt.Rectangle;
@@ -30,8 +32,89 @@ import java.awt.geom.Rectangle2D;
  * 
  * @author Stephane
  */
-public abstract class Rectangle3D implements Cloneable
+public abstract class Rectangle3D implements Shape3D, Cloneable
 {
+    /**
+     * Returns <code>true</code> if the specified Line3D intersects the given Rectangle3D.
+     * 
+     * @param line
+     *        the Line3D we want to test intersection for
+     * @param rect
+     *        the Rectangle3D we want to test intersection for
+     */
+    public static boolean intersects(Line3D line, Rectangle3D rect)
+    {
+        final double rMinX = rect.getMinX();
+        final double rMaxX = rect.getMaxX();
+        final double rMinY = rect.getMinY();
+        final double rMaxY = rect.getMaxY();
+        final double rMinZ = rect.getMinZ();
+        final double rMaxZ = rect.getMaxZ();
+
+        if ((line.getX2() < rMinX) && (line.getX1() < rMinX))
+            return false;
+        if ((line.getX2() > rMaxX) && (line.getX1() > rMaxX))
+            return false;
+        if ((line.getY2() < rMinY) && (line.getY1() < rMinY))
+            return false;
+        if ((line.getY2() > rMaxY) && (line.getY1() > rMaxY))
+            return false;
+        if ((line.getZ2() < rMinZ) && (line.getZ1() < rMinZ))
+            return false;
+        if ((line.getZ2() > rMaxZ) && (line.getZ1() > rMaxZ))
+            return false;
+
+        if ((line.getX1() > rMinX) && (line.getX1() < rMaxX) && (line.getY1() > rMinY) && (line.getY1() < rMaxY)
+                && (line.getZ1() > rMinZ) && (line.getZ1() < rMaxZ))
+            return true;
+
+        return inBox(getIntersection(line.getX1() - rMinX, line.getX2() - rMinX, line), rect, 1)
+                || inBox(getIntersection(line.getY1() - rMinY, line.getY2() - rMinY, line), rect, 2)
+                || inBox(getIntersection(line.getZ1() - rMinZ, line.getZ2() - rMinZ, line), rect, 3)
+                || inBox(getIntersection(line.getX1() - rMaxX, line.getX2() - rMaxX, line), rect, 1)
+                || inBox(getIntersection(line.getY1() - rMaxY, line.getY2() - rMaxY, line), rect, 2)
+                || inBox(getIntersection(line.getZ1() - rMaxZ, line.getZ2() - rMaxZ, line), rect, 3);
+    }
+
+    static Point3D getIntersection(double dst1, double dst2, Line3D line)
+    {
+        if ((dst1 * dst2) >= 0d)
+            return null;
+        if (dst1 == dst2)
+            return null;
+
+        final double f = -dst1 / (dst2 - dst1);
+
+        // get line vector
+        Point3D result = line.getVector();
+        // multiply it by factor
+        result = new Point3D.Double(result.getX() * f, result.getY() * f, result.getZ() * f);
+        // return the hit position
+        return new Point3D.Double(line.getX1() + result.getX(), line.getY1() + result.getY(), line.getZ1()
+                + result.getZ());
+    }
+
+    static boolean inBox(Point3D hit, Rectangle3D rect, int axis)
+    {
+        if ((hit == null) || (rect == null))
+            return false;
+
+        switch (axis)
+        {
+            default:
+                return false;
+            case 1:
+                return (hit.getZ() > rect.getMinZ()) && (hit.getZ() < rect.getMaxZ()) && (hit.getY() > rect.getMinY())
+                        && (hit.getY() < rect.getMaxY());
+            case 2:
+                return (hit.getZ() > rect.getMinZ()) && (hit.getZ() < rect.getMaxZ()) && (hit.getX() > rect.getMinX())
+                        && (hit.getX() < rect.getMaxX());
+            case 3:
+                return (hit.getX() > rect.getMinX()) && (hit.getX() < rect.getMaxX()) && (hit.getY() > rect.getMinY())
+                        && (hit.getY() < rect.getMaxY());
+        }
+    }
+
     /**
      * Intersects the pair of specified source <code>Rectangle3D</code> objects and puts the result
      * into the specified destination <code>Rectangle3D</code> object. One of the source rectangles
@@ -90,13 +173,13 @@ public abstract class Rectangle3D implements Cloneable
     }
 
     /**
-     * Returns a new <code>Rectangle3D</code> object representing the intersection of this
-     * <code>Rectangle3D</code> with the specified <code>Rectangle3D</code>.
+     * Returns a new <code>Rectangle3D</code> object representing the intersection of this <code>Rectangle3D</code> with
+     * the specified <code>Rectangle3D</code>.
      * 
      * @param r
      *        the <code>Rectangle3D</code> to be intersected with this <code>Rectangle3D</code>
-     * @return the largest <code>Rectangle3D</code> contained in both the specified
-     *         <code>Rectangle3D</code> and in this <code>Rectangle3D</code>.
+     * @return the largest <code>Rectangle3D</code> contained in both the specified <code>Rectangle3D</code> and in this
+     *         <code>Rectangle3D</code>.
      */
     public abstract Rectangle3D createIntersection(Rectangle3D r);
 
@@ -157,19 +240,18 @@ public abstract class Rectangle3D implements Cloneable
     }
 
     /**
-     * Returns a new <code>Rectangle3D</code> object representing the union of this
-     * <code>Rectangle3D</code> with the specified <code>Rectangle3D</code>.
+     * Returns a new <code>Rectangle3D</code> object representing the union of this <code>Rectangle3D</code> with the
+     * specified <code>Rectangle3D</code>.
      * 
      * @param r
      *        the <code>Rectangle3D</code> to be combined with this <code>Rectangle3D</code>
-     * @return the smallest <code>Rectangle3D</code> containing both the specified
-     *         <code>Rectangle3D</code> and this <code>Rectangle3D</code>.
+     * @return the smallest <code>Rectangle3D</code> containing both the specified <code>Rectangle3D</code> and this
+     *         <code>Rectangle3D</code>.
      */
     public abstract Rectangle3D createUnion(Rectangle3D r);
 
     /**
-     * Sets the position and size of this <code>Rectangle3D</code> to the specified
-     * <code>double</code> values.
+     * Sets the position and size of this <code>Rectangle3D</code> to the specified <code>double</code> values.
      * 
      * @param x
      *        the X coordinate of the minimum corner position of this <code>Rectangle3D</code>
@@ -401,8 +483,7 @@ public abstract class Rectangle3D implements Cloneable
     /**
      * Determines whether the <code>Rectangle5D</code> is empty.
      * 
-     * @return <code>true</code> if the <code>Rectangle5D</code> is empty; <code>false</code>
-     *         otherwise.
+     * @return <code>true</code> if the <code>Rectangle5D</code> is empty; <code>false</code> otherwise.
      */
     public boolean isEmpty()
     {
@@ -460,6 +541,12 @@ public abstract class Rectangle3D implements Cloneable
         setSizeZ(java.lang.Double.POSITIVE_INFINITY);
     }
 
+    @Override
+    public Rectangle3D getBounds()
+    {
+        return new Rectangle3D.Double(this);
+    }
+
     /**
      * Tests if the specified coordinates are inside the boundary of the <code>Rectangle3D</code>.
      * 
@@ -472,16 +559,22 @@ public abstract class Rectangle3D implements Cloneable
      * @return <code>true</code> if the specified coordinates are inside
      *         the <code>Rectangle3D</code> boundary; <code>false</code> otherwise.
      */
+    @Override
     public boolean contains(double x, double y, double z)
     {
         return (x >= getMinX()) && (y >= getMinY()) && (z >= getMinZ()) && (x < getMaxX()) && (y < getMaxY())
                 && (z < getMaxZ());
     }
 
+    @Override
+    public boolean contains(Point3D p)
+    {
+        return contains(p.getX(), p.getY(), p.getZ());
+    }
+
     /**
      * Tests if the <code>Rectangle3D</code> entirely contains the specified 3D rectangular area.
-     * All coordinates that lie inside the 3D rectangular area must lie within the
-     * <code>Rectangle3D</code>.
+     * All coordinates that lie inside the 3D rectangular area must lie within the <code>Rectangle3D</code>.
      * 
      * @param x
      *        the X coordinate of the minimum corner position of the specified rectangular area
@@ -499,6 +592,7 @@ public abstract class Rectangle3D implements Cloneable
      *         specified 3D rectangular area; <code>false</code> otherwise
      * @see #intersects
      */
+    @Override
     public boolean contains(double x, double y, double z, double sizeX, double sizeY, double sizeZ)
     {
         final double maxX;
@@ -526,11 +620,11 @@ public abstract class Rectangle3D implements Cloneable
     }
 
     /**
-     * Tests if the <code>Rectangle3D</code> entirely contains the specified
-     * <code>Rectangle3D</code>.
+     * Tests if the <code>Rectangle3D</code> entirely contains the specified <code>Rectangle3D</code>.
      * 
      * @see #contains(double, double, double, double, double, double)
      */
+    @Override
     public boolean contains(Rectangle3D rect)
     {
         return contains(rect.getX(), rect.getY(), rect.getZ(), rect.getSizeX(), rect.getSizeY(), rect.getSizeZ());
@@ -558,6 +652,7 @@ public abstract class Rectangle3D implements Cloneable
      * @return <code>true</code> if the interior of the <code>Rectangle3D</code> and
      *         the interior of the 3D rectangular area intersect.
      */
+    @Override
     public boolean intersects(double x, double y, double z, double sizeX, double sizeY, double sizeZ)
     {
         final double maxX;
@@ -590,22 +685,50 @@ public abstract class Rectangle3D implements Cloneable
      * 
      * @see #intersects(double, double, double, double, double, double)
      */
+    @Override
     public boolean intersects(Rectangle3D rect)
     {
         return intersects(rect.getX(), rect.getY(), rect.getZ(), rect.getSizeX(), rect.getSizeY(), rect.getSizeZ());
     }
 
     /**
-     * Adds a 3D point, specified by the double precision coordinates arguments, to this
-     * <code>Rectangle3D</code>. The resulting <code>Rectangle3D</code> is the smallest
-     * <code>Rectangle3D</code> that contains both the original <code>Rectangle3D</code> and the
+     * Tests if the specified 3D line intersects this <code>Rectangle3D</code>.
+     */
+
+    public boolean intersectsLine(Line3D line)
+    {
+        return intersects(line, this);
+    }
+
+    /**
+     * Tests if the line specified by the given starting and ending Point intersects the plan defined by this
+     * <code>Rectangle3D</code>.
+     */
+
+    public boolean intersectsLine(Point3D pt1, Point3D pt2)
+    {
+        return intersects(new Line3D(pt1, pt2), this);
+    }
+
+    /**
+     * Tests if the specified 3D line intersects this <code>Rectangle3D</code>.
+     */
+
+    public boolean intersectsLine(double x1, double y1, double z1, double x2, double y2, double z2)
+    {
+        return intersects(new Line3D(x1, y1, z1, x2, y2, z2), this);
+    }
+
+    /**
+     * Adds a 3D point, specified by the double precision coordinates arguments, to this <code>Rectangle3D</code>. The
+     * resulting <code>Rectangle3D</code> is the smallest <code>Rectangle3D</code> that contains both the original
+     * <code>Rectangle3D</code> and the
      * specified 3D point.
      * <p>
-     * After adding a 3D point, a call to <code>contains</code> with the added point as an argument
-     * does not necessarily return <code>true</code>. The <code>contains</code> method does not
-     * return <code>true</code> for points on the edges of a rectangle. Therefore, if the added 3D
-     * point falls on edge of the enlarged rectangle, <code>contains</code> returns
-     * <code>false</code> for that point.
+     * After adding a 3D point, a call to <code>contains</code> with the added point as an argument does not necessarily
+     * return <code>true</code>. The <code>contains</code> method does not return <code>true</code> for points on the
+     * edges of a rectangle. Therefore, if the added 3D point falls on edge of the enlarged rectangle,
+     * <code>contains</code> returns <code>false</code> for that point.
      * 
      * @param newx
      *        the X coordinate of the new point
@@ -651,11 +774,10 @@ public abstract class Rectangle3D implements Cloneable
      * The resulting <code>Rectangle3D</code> is the smallest <code>Rectangle3D</code> that contains
      * both the original <code>Rectangle3D</code> and the specified <code>Point3D</code>.
      * <p>
-     * After adding a point, a call to <code>contains</code> with the added point as an argument
-     * does not necessarily return <code>true</code>. The <code>contains</code> method does not
-     * return <code>true</code> for points on the edges of a rectangle. Therefore, if the added
-     * point falls on edge of the enlarged rectangle, <code>contains</code> returns
-     * <code>false</code> for that point.
+     * After adding a point, a call to <code>contains</code> with the added point as an argument does not necessarily
+     * return <code>true</code>. The <code>contains</code> method does not return <code>true</code> for points on the
+     * edges of a rectangle. Therefore, if the added point falls on edge of the enlarged rectangle,
+     * <code>contains</code> returns <code>false</code> for that point.
      * 
      * @param pt
      *        the new <code>Point3D</code> to add to this <code>Rectangle3D</code>.
@@ -666,8 +788,8 @@ public abstract class Rectangle3D implements Cloneable
     }
 
     /**
-     * Adds a <code>Rectangle3D</code> object to this <code>Rectangle3D</code>. The resulting
-     * <code>Rectangle3D</code> is the union of the two <code>Rectangle3D</code> objects.
+     * Adds a <code>Rectangle3D</code> object to this <code>Rectangle3D</code>. The resulting <code>Rectangle3D</code>
+     * is the union of the two <code>Rectangle3D</code> objects.
      * 
      * @param r
      *        the <code>Rectangle3D</code> to add to this <code>Rectangle3D</code>.
@@ -1141,8 +1263,7 @@ public abstract class Rectangle3D implements Cloneable
         }
 
         /**
-         * Sets the position and size of this <code>Rectangle3D</code> to the specified
-         * <code>integer</code> values.
+         * Sets the position and size of this <code>Rectangle3D</code> to the specified <code>integer</code> values.
          * 
          * @param x
          *        the X coordinate of the minimum corner position of this <code>Rectangle3D</code>
@@ -1313,4 +1434,5 @@ public abstract class Rectangle3D implements Cloneable
             return new Rectangle(x, y, sizeX, sizeY);
         }
     }
+
 }
