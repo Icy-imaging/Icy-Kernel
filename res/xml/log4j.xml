@@ -19,5 +19,4 @@
     <appender-ref ref="console" />
   </root>
 
->>>>>>> refs/heads/develop
 </log4j:configuration>
