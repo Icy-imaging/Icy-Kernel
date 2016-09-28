@@ -10,7 +10,7 @@ import java.awt.Image;
 import plugins.kernel.roi.roi2d.ROI2DShape;
 
 /**
- * Base class of control point change implementation for ROI undoable edition.
+ * Base class of 2D control point change implementation for ROI undoable edition.
  * 
  * @author Stephane
  */

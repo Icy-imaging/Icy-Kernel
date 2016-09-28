@@ -17,12 +17,19 @@ public class BoundsROIEdit extends AbstractROIEdit
     Rectangle5D prevBounds;
     Rectangle5D currentBounds;
 
-    public BoundsROIEdit(ROI roi, Rectangle5D prevBounds)
+    public BoundsROIEdit(ROI roi, Rectangle5D prevBounds, boolean mergeable)
     {
-        super(roi, "ROI position changed");
+        super(roi, "ROI bounds changed");
 
         this.prevBounds = prevBounds;
         this.currentBounds = roi.getBounds5D();
+
+        setMergeable(mergeable);
+    }
+
+    public BoundsROIEdit(ROI roi, Rectangle5D prevBounds)
+    {
+        this(roi, prevBounds, true);
     }
 
     @Override
@@ -65,7 +72,6 @@ public class BoundsROIEdit extends AbstractROIEdit
         return false;
     }
 
-   
     @Override
     public void die()
     {

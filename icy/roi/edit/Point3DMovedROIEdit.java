@@ -3,36 +3,30 @@
  */
 package icy.roi.edit;
 
-import icy.roi.ROI;
-import icy.type.point.Point5D;
+import icy.painter.Anchor3D;
+import icy.roi.ROI3D;
+import icy.type.point.Point3D;
 
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 
 /**
- * Position change implementation for ROI undoable edition.
+ * 3D control point position change implementation for ROI undoable edition.
  * 
  * @author Stephane
  */
-public class PositionROIEdit extends AbstractROIEdit
+public class Point3DMovedROIEdit extends AbstractPoint3DROIEdit
 {
-    Point5D prevPos;
-    Point5D currentPos;
+    protected Point3D prevPos;
+    protected Point3D currentPos;
 
-    public PositionROIEdit(ROI roi, Point5D prevPos, boolean mergeable)
+    public Point3DMovedROIEdit(ROI3D roi, Anchor3D point, Point3D prevPos)
     {
-        super(roi, "ROI position changed");
+        super(roi, point, "ROI point moved");
 
         this.prevPos = prevPos;
-        this.currentPos = roi.getPosition5D();
-
-        setMergeable(mergeable);
-    }
-
-    public PositionROIEdit(ROI roi, Point5D prevPos)
-    {
-        this(roi, prevPos, true);
+        this.currentPos = point.getPosition();
     }
 
     @Override
@@ -41,7 +35,7 @@ public class PositionROIEdit extends AbstractROIEdit
         super.undo();
 
         // undo
-        getROI().setPosition5D(prevPos);
+        point.setPosition(prevPos);
     }
 
     @Override
@@ -50,7 +44,7 @@ public class PositionROIEdit extends AbstractROIEdit
         super.redo();
 
         // redo
-        getROI().setPosition5D(currentPos);
+        point.setPosition(currentPos);
     }
 
     @Override
@@ -59,12 +53,12 @@ public class PositionROIEdit extends AbstractROIEdit
         if (!isMergeable())
             return false;
 
-        if (edit instanceof PositionROIEdit)
+        if (edit instanceof Point3DMovedROIEdit)
         {
-            final PositionROIEdit posEdit = (PositionROIEdit) edit;
+            final Point3DMovedROIEdit posEdit = (Point3DMovedROIEdit) edit;
 
-            // same ROI ?
-            if (posEdit.getROI() == getROI())
+            // same ROI and point ?
+            if ((posEdit.getROI() == getROI()) && (posEdit.getPoint() == getPoint()))
             {
                 // collapse edits
                 currentPos = posEdit.currentPos;

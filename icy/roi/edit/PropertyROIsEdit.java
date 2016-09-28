@@ -25,7 +25,7 @@ public class PropertyROIsEdit extends AbstractROIsEdit
     Object currentValue;
 
     public PropertyROIsEdit(List<? extends ROI> rois, String propertyName, List<Object> previousValues,
-            Object currentValue)
+            Object currentValue, boolean mergeable)
     {
         super(rois, (rois.size() > 1) ? "ROIs " + propertyName + " changed" : "ROI " + propertyName + " changed");
 
@@ -36,6 +36,14 @@ public class PropertyROIsEdit extends AbstractROIsEdit
         this.propertyName = propertyName;
         this.previousValues = previousValues;
         this.currentValue = currentValue;
+
+        setMergeable(mergeable);
+    }
+
+    public PropertyROIsEdit(List<? extends ROI> rois, String propertyName, List<Object> previousValues,
+            Object currentValue)
+    {
+        this(rois, propertyName, previousValues, currentValue, true);
     }
 
     @Override
