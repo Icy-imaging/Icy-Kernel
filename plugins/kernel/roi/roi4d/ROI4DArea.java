@@ -18,6 +18,9 @@
  */
 package plugins.kernel.roi.roi4d;
 
+import java.awt.geom.Point2D;
+import java.util.Map.Entry;
+
 import icy.roi.BooleanMask3D;
 import icy.roi.BooleanMask4D;
 import icy.roi.ROI;
@@ -25,10 +28,6 @@ import icy.roi.ROI3D;
 import icy.type.point.Point4D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle4D;
-
-import java.awt.geom.Point2D;
-import java.util.Map.Entry;
-
 import plugins.kernel.roi.roi3d.ROI3DArea;
 
 /**
@@ -145,7 +144,8 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
      * @param roiSlice
      *        the 3D ROI to set
      * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
+     *        <code>true</code> if the given slice should be merged with the existing slice, or
+     *        <code>false</code> to
      *        replace the existing slice.
      */
     public void setSlice(int t, ROI3D roiSlice, boolean merge)
@@ -173,8 +173,8 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
         else if (newSlice instanceof ROI3D)
             setSlice(t, new ROI3DArea(((ROI3D) newSlice).getBooleanMask(true)));
         else
-            throw new IllegalArgumentException("Can't add the result of the merge operation on 3D slice " + t + ": "
-                    + newSlice.getClassName());
+            throw new IllegalArgumentException(
+                    "Can't add the result of the merge operation on 3D slice " + t + ": " + newSlice.getClassName());
     }
 
     /**
@@ -255,12 +255,15 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
         {
             for (int t = bounds.t; t < bounds.t + bounds.sizeT; t++)
             {
-                final ROI3DArea roi = slices.get(Integer.valueOf(t));
+                final ROI3DArea roi = getSlice(t);
 
-                if (roi.isEmpty())
-                    removeSlice(t);
-                else
-                    roi.optimizeBounds();
+                if (roi != null)
+                {
+                    if (roi.isEmpty())
+                        removeSlice(t);
+                    else
+                        roi.optimizeBounds();
+                }
             }
         }
         finally
