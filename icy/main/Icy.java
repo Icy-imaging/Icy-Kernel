@@ -18,6 +18,19 @@
  */
 package icy.main;
 
+import java.awt.EventQueue;
+import java.beans.PropertyVetoException;
+import java.io.File;
+import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
+import javax.swing.WindowConstants;
+
 import icy.action.ActionManager;
 import icy.common.Version;
 import icy.file.FileUtil;
@@ -62,20 +75,6 @@ import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 import ij.ImageJ;
-
-import java.awt.EventQueue;
-import java.beans.PropertyVetoException;
-import java.io.File;
-import java.nio.channels.FileLock;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JOptionPane;
-import javax.swing.WindowConstants;
-
 import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
 
@@ -491,10 +490,15 @@ public class Icy
             }
         }
 
-        // welcome tip !
-        final ToolTipFrame tooltip = new ToolTipFrame("<html>Access the main menu by clicking on top left icon<br>" + "<img src=\""
-                + Icy.class.getResource("/res/image/help/main_menu.png").toString() + "\" /></html>", 30, "mainMenuTip");
-        tooltip.setSize(456, 240);
+        if (!Icy.getMainInterface().isHeadLess())
+        {
+            // welcome tip !
+            final ToolTipFrame tooltip = new ToolTipFrame(
+                    "<html>Access the main menu by clicking on top left icon<br>" + "<img src=\""
+                            + Icy.class.getResource("/res/image/help/main_menu.png").toString() + "\" /></html>",
+                    30, "mainMenuTip");
+            tooltip.setSize(456, 240);
+        }
     }
 
     static void fatalError(Throwable t, boolean headless)
@@ -882,7 +886,8 @@ public class Icy
 
     /**
      * Clear the plugin command line arguments.<br>
-     * This method should be called after the launching plugin actually 'consumed' the startup arguments.
+     * This method should be called after the launching plugin actually 'consumed' the startup
+     * arguments.
      */
     public static void clearCommandLinePluginArgs()
     {
@@ -1280,7 +1285,8 @@ public class Icy
 
             System.out.println("VTK " + vv + " library successfully loaded...");
 
-            // final vtkJavaGarbageCollector vtkJavaGarbageCollector = vtkObjectBase.JAVA_OBJECT_MANAGER
+            // final vtkJavaGarbageCollector vtkJavaGarbageCollector =
+            // vtkObjectBase.JAVA_OBJECT_MANAGER
             // .getAutoGarbageCollector();
             //
             // set auto garbage collection for VTK (every 20 seconds should be enough)
@@ -1297,8 +1303,8 @@ public class Icy
                 final String osVer = SystemUtil.getOSVersion();
 
                 if (osVer.startsWith("10.6") || osVer.startsWith("10.5"))
-                    System.out.println("VTK 6.3 is not supported on OSX " + osVer
-                            + ", version 10.7 or above is required.");
+                    System.out.println(
+                            "VTK 6.3 is not supported on OSX " + osVer + ", version 10.7 or above is required.");
             }
         }
     }

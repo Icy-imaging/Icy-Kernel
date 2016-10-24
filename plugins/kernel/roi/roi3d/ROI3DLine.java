@@ -3,6 +3,14 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.math.Line3DIterator;
 import icy.painter.Anchor3D;
@@ -15,15 +23,6 @@ import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.util.XMLUtil;
 import icy.vtk.IcyVtkPanel;
-
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-import java.util.List;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkTubeFilter;
 
@@ -114,6 +113,10 @@ public class ROI3DLine extends ROI3DShape
 
         protected void updateVtkTubeRadius()
         {
+            // VTK object not yet initialized
+            if (actor == null)
+                return;
+
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
@@ -125,7 +128,7 @@ public class ROI3DLine extends ROI3DShape
                 return;
 
             // update tube radius base on canvas scale X and image scale X
-            final double radius = canvas.canvasToImageLogDeltaX(2) * scaling[0];
+            final double radius = canvas.canvasToImageLogDeltaX((int) getStroke()) * scaling[0];
 
             if (tubeFilter.GetRadius() != radius)
             {
@@ -181,7 +184,7 @@ public class ROI3DLine extends ROI3DShape
         addPoint(this.pt1);
         addPoint(this.pt2);
 
-        // set icon 
+        // set icon
         setIcon(ResourceUtil.ICON_ROI_LINE);
     }
 
@@ -213,7 +216,7 @@ public class ROI3DLine extends ROI3DShape
     {
         this(new Point3D.Double(), new Point3D.Double());
     }
-    
+
     @Override
     public String getDefaultName()
     {

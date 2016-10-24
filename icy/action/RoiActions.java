@@ -18,6 +18,20 @@
  */
 package icy.action;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.w3c.dom.Document;
+
 import icy.clipboard.Clipboard;
 import icy.file.FileUtil;
 import icy.gui.dialog.MessageDialog;
@@ -42,24 +56,8 @@ import icy.util.ClassUtil;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
 import icy.util.XMLUtil;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
-
-import org.w3c.dom.Document;
-
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
 import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
 import plugins.kernel.roi.roi4d.ROI4DStackRectangle;
@@ -227,8 +225,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction copyLinkAction = new IcyAbstractAction("Copy link", new IcyIcon(
-            ResourceUtil.ICON_LINK_COPY), "Copy link of selected ROI to clipboard (Alt+C)", KeyEvent.VK_C,
+    public static IcyAbstractAction copyLinkAction = new IcyAbstractAction("Copy link",
+            new IcyIcon(ResourceUtil.ICON_LINK_COPY), "Copy link of selected ROI to clipboard (Alt+C)", KeyEvent.VK_C,
             InputEvent.ALT_MASK)
     {
         /**
@@ -345,8 +343,9 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction pasteLinkAction = new IcyAbstractAction("Paste link", new IcyIcon(
-            ResourceUtil.ICON_LINK_PASTE), "Paste ROI link from clipboard (Alt+V)", KeyEvent.VK_V, InputEvent.ALT_MASK)
+    public static IcyAbstractAction pasteLinkAction = new IcyAbstractAction("Paste link",
+            new IcyIcon(ResourceUtil.ICON_LINK_PASTE), "Paste ROI link from clipboard (Alt+V)", KeyEvent.VK_V,
+            InputEvent.ALT_MASK)
     {
         /**
          * 
@@ -519,8 +518,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction boolNotAction = new IcyAbstractAction("NOT",
-            new IcyIcon(ResourceUtil.ICON_ROI_NOT), "Boolean NOT operation",
+    public static IcyAbstractAction boolNotAction = new IcyAbstractAction("Inversion",
+            new IcyIcon(ResourceUtil.ICON_ROI_NOT), "Boolean inversion operation",
             "Create a new ROI representing the inverse of selected ROI", true, "Computing inverse...")
     {
         /**
@@ -563,8 +562,8 @@ public class RoiActions
 
                         case 3:
                             final ROI3D roi3d = (ROI3D) roi;
-                            final ROI3DStackRectangle seqRoi3d = new ROI3DStackRectangle(sequence.getBounds5D()
-                                    .toRectangle3D());
+                            final ROI3DStackRectangle seqRoi3d = new ROI3DStackRectangle(
+                                    sequence.getBounds5D().toRectangle3D());
                             // set on same position
                             seqRoi3d.setT(roi3d.getT());
                             seqRoi3d.setC(roi3d.getC());
@@ -573,8 +572,8 @@ public class RoiActions
 
                         case 4:
                             final ROI4D roi4d = (ROI4D) roi;
-                            final ROI4DStackRectangle seqRoi4d = new ROI4DStackRectangle(sequence.getBounds5D()
-                                    .toRectangle4D());
+                            final ROI4DStackRectangle seqRoi4d = new ROI4DStackRectangle(
+                                    sequence.getBounds5D().toRectangle4D());
                             // set on same position
                             seqRoi4d.setC(roi4d.getC());
                             seqRoi = seqRoi4d;
@@ -632,8 +631,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction boolOrAction = new IcyAbstractAction("OR", new IcyIcon(ResourceUtil.ICON_ROI_OR),
-            "Boolean OR operation", "Create a new ROI representing the union of selected ROIs", true,
+    public static IcyAbstractAction boolOrAction = new IcyAbstractAction("Union", new IcyIcon(ResourceUtil.ICON_ROI_OR),
+            "Boolean union operation", "Create a new ROI representing the union of selected ROIs", true,
             "Computing union...")
     {
         /**
@@ -690,8 +689,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction boolAndAction = new IcyAbstractAction("AND",
-            new IcyIcon(ResourceUtil.ICON_ROI_AND), "Boolean AND operation",
+    public static IcyAbstractAction boolAndAction = new IcyAbstractAction("Intersection",
+            new IcyIcon(ResourceUtil.ICON_ROI_AND), "Boolean intersection operation",
             "Create a new ROI representing the intersection of selected ROIs", true, "Computing intersection...")
     {
         /**
@@ -748,8 +747,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction boolXorAction = new IcyAbstractAction("XOR",
-            new IcyIcon(ResourceUtil.ICON_ROI_XOR), "Boolean XOR operation",
+    public static IcyAbstractAction boolXorAction = new IcyAbstractAction("Exclusive union",
+            new IcyIcon(ResourceUtil.ICON_ROI_XOR), "Boolean exclusive union operation",
             "Create a new ROI representing the exclusive union of selected ROIs", true, "Computing exclusive union...")
     {
         /**
@@ -806,8 +805,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction boolSubtractAction = new IcyAbstractAction("SUBTRACT", new IcyIcon(
-            ResourceUtil.ICON_ROI_SUB), "Boolean subtraction",
+    public static IcyAbstractAction boolSubtractAction = new IcyAbstractAction("Subtraction",
+            new IcyIcon(ResourceUtil.ICON_ROI_SUB), "Boolean subtraction",
             "Create 2 ROIs representing the result of (A - B) and (B - A)", true, "Computing subtraction...")
     {
         /**
@@ -882,8 +881,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export", new IcyIcon(
-            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export ROI table in a XLS file", true,
+    public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export",
+            new IcyIcon(ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export ROI table in a XLS file", true,
             "Exporting ROI informations...")
     {
         /**
@@ -981,8 +980,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction settingAction = new IcyAbstractAction("Preferences", new IcyIcon(
-            ResourceUtil.ICON_COG), "ROI table preferences")
+    public static IcyAbstractAction settingAction = new IcyAbstractAction("Preferences",
+            new IcyIcon(ResourceUtil.ICON_COG), "ROI table preferences")
     {
         @Override
         public boolean doAction(ActionEvent e)
@@ -1000,8 +999,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction convertToStackAction = new IcyAbstractAction("3D stack", new IcyIcon(
-            ResourceUtil.ICON_LAYER_V2), "Convert to 3D stack ROI",
+    public static IcyAbstractAction convertToStackAction = new IcyAbstractAction("3D stack",
+            new IcyIcon(ResourceUtil.ICON_LAYER_V2), "Convert to 3D stack ROI",
             "Convert selected 2D ROI to 3D stack ROI by stacking it along the Z axis.")
     {
         @Override
@@ -1065,8 +1064,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction convertToMaskAction = new IcyAbstractAction("To mask", new IcyIcon(
-            ResourceUtil.ICON_BOOL_MASK), "Convert Shape ROI to Mask ROI",
+    public static IcyAbstractAction convertToMaskAction = new IcyAbstractAction("To mask",
+            new IcyIcon(ResourceUtil.ICON_BOOL_MASK), "Convert Shape ROI to Mask ROI",
             "Convert selected Shape ROI to Mask ROI by using their boolean mask.")
     {
         @Override
@@ -1130,8 +1129,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction convertToShapeAction = new IcyAbstractAction("To shape", new IcyIcon(
-            ResourceUtil.ICON_ROI_POLYGON), "Convert Mask ROI to Polygon shape ROI",
+    public static IcyAbstractAction convertToShapeAction = new IcyAbstractAction("To shape",
+            new IcyIcon(ResourceUtil.ICON_ROI_POLYGON), "Convert Mask ROI to Polygon shape ROI",
             "Convert selected Mask ROI to Shape ROI using polygon approximation.")
     {
         @Override
@@ -1193,8 +1192,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction separateObjectsAction = new IcyAbstractAction("Separate", new IcyIcon(
-            "separate_obj", true), "Separate objects from selected Mask ROI",
+    public static IcyAbstractAction separateObjectsAction = new IcyAbstractAction("Separate",
+            new IcyIcon("separate_obj", true), "Separate objects from selected Mask ROI",
             "Separate connected components from selected Mask ROI.")
     {
         @Override
@@ -1256,8 +1255,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction manualCutAction = new IcyAbstractAction("Manual cut", new IcyIcon(
-            ResourceUtil.ICON_CUT), "Manual cut/split ROI",
+    public static IcyAbstractAction manualCutAction = new IcyAbstractAction("Manual cut",
+            new IcyIcon(ResourceUtil.ICON_CUT), "Manual cut/split ROI",
             "Manual cut/split ROI by drawing a straight 2D line over it.")
     {
         @Override
@@ -1275,8 +1274,8 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction autoSplitAction = new IcyAbstractAction("Auto split", new IcyIcon(
-            "split_roi", true), "Automatic split selected ROI",
+    public static IcyAbstractAction autoSplitAction = new IcyAbstractAction("Auto split",
+            new IcyIcon("split_roi", true), "Automatic split selected ROI",
             "Automatic split selected ROI using shape and size information.")
     {
         @Override
