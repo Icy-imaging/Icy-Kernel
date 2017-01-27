@@ -2828,7 +2828,7 @@ public class BooleanMask2D implements Cloneable
             oldBounds.translate(-bounds.x, -bounds.y);
             newBounds.translate(-bounds.x, -bounds.y);
 
-            final boolean[] newMask = new boolean[newBounds.width * newBounds.height];
+            final boolean[] newMask = new boolean[Math.max(0, newBounds.width) * Math.max(0, newBounds.height)];
             final Rectangle intersect = newBounds.intersection(oldBounds);
 
             if (!intersect.isEmpty())

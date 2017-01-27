@@ -107,7 +107,6 @@ public class ROI2DPolygon extends ROI2DShape
         this(new Point2D.Double());
 
         setPoints(points);
-        setCreating(false);
         unselectAllPoints();
     }
 
@@ -120,7 +119,6 @@ public class ROI2DPolygon extends ROI2DShape
         this(new Point2D.Double());
 
         setPolygon(polygon);
-        setCreating(false);
         unselectAllPoints();
     }
 
@@ -129,7 +127,6 @@ public class ROI2DPolygon extends ROI2DShape
         this(new Point2D.Double());
 
         setPolygon2D(polygon);
-        setCreating(false);
         unselectAllPoints();
     }
 

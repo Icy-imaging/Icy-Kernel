@@ -18,7 +18,7 @@ import icy.util.StringUtil;
  */
 public class ROIGroupIdDescriptor extends ROIDescriptor
 {
-    public static final String ID = "GroupId";
+    public static final String ID = "Group id";
 
     public ROIGroupIdDescriptor()
     {

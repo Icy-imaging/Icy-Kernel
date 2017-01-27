@@ -78,17 +78,20 @@ public class AuditStorage implements XMLPersistent
     {
         final List<PluginIdent> empties = new ArrayList<PluginIdent>();
 
-        // clean statistics
-        for (Entry<PluginIdent, PluginStorage> entry : pluginStats.entrySet())
+        synchronized (pluginStats)
         {
-            entry.getValue().clean();
-            if (entry.getValue().isEmpty())
-                empties.add(entry.getKey());
-        }
+            // clean statistics
+            for (Entry<PluginIdent, PluginStorage> entry : pluginStats.entrySet())
+            {
+                entry.getValue().clean();
+                if (entry.getValue().isEmpty())
+                    empties.add(entry.getKey());
+            }
 
-        // remove empty ones
-        for (PluginIdent ident : empties)
-            pluginStats.remove(ident);
+            // remove empty ones
+            for (PluginIdent ident : empties)
+                pluginStats.remove(ident);
+        }
     }
 
     private void autoSave()
@@ -106,12 +109,17 @@ public class AuditStorage implements XMLPersistent
 
     private PluginStorage getStorage(PluginIdent ident, boolean autoCreate)
     {
-        PluginStorage result = pluginStats.get(ident);
+        PluginStorage result;
 
-        if ((result == null) && autoCreate)
+        synchronized (pluginStats)
         {
-            result = new PluginStorage();
-            pluginStats.put(ident, result);
+            result = pluginStats.get(ident);
+
+            if ((result == null) && autoCreate)
+            {
+                result = new PluginStorage();
+                pluginStats.put(ident, result);
+            }
         }
 
         return result;
@@ -174,10 +182,16 @@ public class AuditStorage implements XMLPersistent
     public boolean upload(int id)
     {
         final List<PluginIdent> dones = new ArrayList<PluginIdent>();
+        final List<Entry<PluginIdent, PluginStorage>> entries;
+
+        synchronized (pluginStats)
+        {
+            entries = new ArrayList<Entry<PluginIdent, PluginStorage>>(pluginStats.entrySet());
+        }
 
         try
         {
-            for (Entry<PluginIdent, PluginStorage> entry : pluginStats.entrySet())
+            for (Entry<PluginIdent, PluginStorage> entry : entries)
             {
                 if (entry.getValue().upload(id, entry.getKey()))
                     dones.add(entry.getKey());
@@ -190,8 +204,11 @@ public class AuditStorage implements XMLPersistent
         finally
         {
             // remove stats which has been correctly uploaded
-            for (PluginIdent ident : dones)
-                pluginStats.remove(ident);
+            synchronized (pluginStats)
+            {
+                for (PluginIdent ident : dones)
+                    pluginStats.remove(ident);
+            }
         }
 
         return pluginStats.isEmpty();
@@ -203,16 +220,19 @@ public class AuditStorage implements XMLPersistent
         if (node == null)
             return false;
 
-        pluginStats.clear();
-        for (Node n : XMLUtil.getChildren(node, ID_PLUGIN))
+        synchronized (pluginStats)
         {
-            final PluginIdent ident = new PluginIdent();
-            final PluginStorage storage = new PluginStorage();
+            pluginStats.clear();
+            for (Node n : XMLUtil.getChildren(node, ID_PLUGIN))
+            {
+                final PluginIdent ident = new PluginIdent();
+                final PluginStorage storage = new PluginStorage();
 
-            ident.loadFromXMLShort(n);
-            storage.loadFromXML(n);
+                ident.loadFromXMLShort(n);
+                storage.loadFromXML(n);
 
-            pluginStats.put(ident, storage);
+                pluginStats.put(ident, storage);
+            }
         }
 
         return true;
@@ -226,12 +246,15 @@ public class AuditStorage implements XMLPersistent
 
         XMLUtil.removeAllChildren(node);
 
-        for (Entry<PluginIdent, PluginStorage> entry : pluginStats.entrySet())
+        synchronized (pluginStats)
         {
-            final Node n = XMLUtil.addElement(node, ID_PLUGIN);
+            for (Entry<PluginIdent, PluginStorage> entry : pluginStats.entrySet())
+            {
+                final Node n = XMLUtil.addElement(node, ID_PLUGIN);
 
-            entry.getKey().saveToXMLShort(n);
-            entry.getValue().saveToXML(n);
+                entry.getKey().saveToXMLShort(n);
+                entry.getValue().saveToXML(n);
+            }
         }
 
         return true;
@@ -250,7 +273,7 @@ public class AuditStorage implements XMLPersistent
         private static final String ID_DATE = "date";
         private static final String ID_VALUE = "value";
 
-        private static final long DAY_TO_KEEP = 7L;
+        private static final long DAY_TO_KEEP = 30L;
 
         private final Map<Long, Long> launchStats;
         private final Map<Long, Long> instanceStats;
@@ -377,7 +400,9 @@ public class AuditStorage implements XMLPersistent
 
             try
             {
-                NetworkUtil.postData(Audit.URL_AUDIT_PLUGIN, params);
+                // null return means website did not accepted them...
+                if (NetworkUtil.postData(Audit.URL_AUDIT_PLUGIN, params) == null)
+                    return false;
             }
             catch (IOException e)
             {

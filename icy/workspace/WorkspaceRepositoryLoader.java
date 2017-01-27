@@ -204,15 +204,16 @@ public class WorkspaceRepositoryLoader
         // request interrupt
         instance.loadRunner.interrupt();
 
-        // wait for end processing
-        try
-        {
-            instance.loadRunner.join();
-        }
-        catch (InterruptedException e)
-        {
-            // ignore
-        }
+        // We don't need to wait... can make the preferences panel to lag on validation
+//        // wait for end processing
+//        try
+//        {
+//            instance.loadRunner.join();
+//        }
+//        catch (InterruptedException e)
+//        {
+//            // ignore
+//        }
 
         // start it again
         instance.startLoad();

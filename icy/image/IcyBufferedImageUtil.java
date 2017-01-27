@@ -22,6 +22,7 @@ import icy.image.lut.LUT;
 import icy.math.Scaler;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayType;
 import icy.type.collection.array.ArrayUtil;
 
 import java.awt.Point;
@@ -164,7 +165,13 @@ public class IcyBufferedImageUtil
 
         // use image lut when no specific lut
         if (lut == null)
+        {
+            // manually update bounds if needed before doing RGB conversion from internal LUT
+            if (!source.getAutoUpdateChannelBounds())
+                source.updateChannelsBounds();
+
             return argbImageBuilder.buildARGBImage(source, source.createCompatibleLUT(false), dest);
+        }
 
         return argbImageBuilder.buildARGBImage(source, lut, dest);
     }
@@ -687,6 +694,484 @@ public class IcyBufferedImageUtil
             return null;
 
         return rotate(source, source.getSizeX() / 2d, source.getSizeY() / 2d, angle, FilterType.BILINEAR);
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image byte data array
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param signed
+     *        consider input byte data as signed (only meaningful when filter is enabled)
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output buffer (single dimension array with same data type as source image data array).
+     */
+    static void downscaleBy2(byte[] input, int sizeX, int sizeY, boolean signed, boolean filter, byte[] output)
+    {
+        final int halfSizeX = sizeX / 2;
+        final int halfSizeY = sizeY / 2;
+
+        if (filter)
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                {
+                    int val;
+
+                    if (signed)
+                    {
+                        // accumulate 4 pixels
+                        val = input[inOffset + 0];
+                        val += input[inOffset + 1];
+                        val += input[inOffset + sizeX + 0];
+                        val += input[inOffset + sizeX + 1];
+                    }
+                    else
+                    {
+                        // accumulate 4 pixels
+                        val = input[inOffset + 0] & 0xFF;
+                        val += input[inOffset + 1] & 0xFF;
+                        val += input[inOffset + sizeX + 0] & 0xFF;
+                        val += input[inOffset + sizeX + 1] & 0xFF;
+                    }
+
+                    // divide by 4
+                    val >>= 2;
+
+                    // store result
+                    output[outOff++] = (byte) val;
+                }
+
+                inOff += sizeX * 2;
+            }
+        }
+        else
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                    output[outOff++] = input[inOffset];
+
+                inOff += sizeX * 2;
+            }
+        }
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image byte data array
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param signed
+     *        consider input byte data as signed (only meaningful when filter is enabled)
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output buffer (single dimension array with same data type as source image data array).
+     */
+    static void downscaleBy2(short[] input, int sizeX, int sizeY, boolean signed, boolean filter, short[] output)
+    {
+        final int halfSizeX = sizeX / 2;
+        final int halfSizeY = sizeY / 2;
+
+        if (filter)
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                {
+                    int val;
+
+                    if (signed)
+                    {
+                        // accumulate 4 pixels
+                        val = input[inOffset + 0];
+                        val += input[inOffset + 1];
+                        val += input[inOffset + sizeX + 0];
+                        val += input[inOffset + sizeX + 1];
+                    }
+                    else
+                    {
+                        // accumulate 4 pixels
+                        val = input[inOffset + 0] & 0xFFFF;
+                        val += input[inOffset + 1] & 0xFFFF;
+                        val += input[inOffset + sizeX + 0] & 0xFFFF;
+                        val += input[inOffset + sizeX + 1] & 0xFFFF;
+                    }
+
+                    // divide by 4
+                    val >>= 2;
+
+                    // store result
+                    output[outOff++] = (short) val;
+                }
+
+                inOff += sizeX * 2;
+            }
+        }
+        else
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                    output[outOff++] = input[inOffset];
+
+                inOff += sizeX * 2;
+            }
+        }
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image byte data array
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param signed
+     *        consider input byte data as signed (only meaningful when filter is enabled)
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output buffer (single dimension array with same data type as source image data array).
+     */
+    static void downscaleBy2(int[] input, int sizeX, int sizeY, boolean signed, boolean filter, int[] output)
+    {
+        final int halfSizeX = sizeX / 2;
+        final int halfSizeY = sizeY / 2;
+
+        if (filter)
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                {
+                    long val;
+
+                    if (signed)
+                    {
+                        // accumulate 4 pixels
+                        val = input[inOffset + 0];
+                        val += input[inOffset + 1];
+                        val += input[inOffset + sizeX + 0];
+                        val += input[inOffset + sizeX + 1];
+                    }
+                    else
+                    {
+                        // accumulate 4 pixels
+                        val = input[inOffset + 0] & 0xFFFFFFFFL;
+                        val += input[inOffset + 1] & 0xFFFFFFFFL;
+                        val += input[inOffset + sizeX + 0] & 0xFFFFFFFFL;
+                        val += input[inOffset + sizeX + 1] & 0xFFFFFFFFL;
+                    }
+
+                    // divide by 4
+                    val >>= 2;
+
+                    // store result
+                    output[outOff++] = (int) val;
+                }
+
+                inOff += sizeX * 2;
+            }
+        }
+        else
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                    output[outOff++] = input[inOffset];
+
+                inOff += sizeX * 2;
+            }
+        }
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image byte data array
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output buffer (single dimension array with same data type as source image data array).
+     */
+    static void downscaleBy2(float[] input, int sizeX, int sizeY, boolean filter, float[] output)
+    {
+        final int halfSizeX = sizeX / 2;
+        final int halfSizeY = sizeY / 2;
+
+        if (filter)
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                {
+                    float val;
+
+                    // accumulate 4 pixels
+                    val = input[inOffset + 0];
+                    val += input[inOffset + 1];
+                    val += input[inOffset + sizeX + 0];
+                    val += input[inOffset + sizeX + 1];
+                    // divide by 4
+                    val /= 4f;
+
+                    // store result
+                    output[outOff++] = val;
+                }
+
+                inOff += sizeX * 2;
+            }
+        }
+        else
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                    output[outOff++] = input[inOffset];
+
+                inOff += sizeX * 2;
+            }
+        }
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image byte data array
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output buffer (single dimension array with same data type as source image data array).
+     */
+    static void downscaleBy2(double[] input, int sizeX, int sizeY, boolean filter, double[] output)
+    {
+        final int halfSizeX = sizeX / 2;
+        final int halfSizeY = sizeY / 2;
+
+        if (filter)
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                {
+                    double val;
+
+                    // accumulate 4 pixels
+                    val = input[inOffset + 0];
+                    val += input[inOffset + 1];
+                    val += input[inOffset + sizeX + 0];
+                    val += input[inOffset + sizeX + 1];
+                    // divide by 4
+                    val /= 4d;
+
+                    // store result
+                    output[outOff++] = val;
+                }
+
+                inOff += sizeX * 2;
+            }
+        }
+        else
+        {
+            int inOff = 0;
+            int outOff = 0;
+
+            for (int y = 0; y < halfSizeY; y++)
+            {
+                for (int x = 0, inOffset = inOff; x < halfSizeX; x++, inOffset += 2)
+                    output[outOff++] = input[inOffset];
+
+                inOff += sizeX * 2;
+            }
+        }
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image data array (single dimension)
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param signed
+     *        consider input byte data as signed (only meaningful when filter is enabled)
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output buffer (single dimension array with same data type as source image data array).
+     *        If set to <code>null</code> a new array is allocated.
+     * @return output buffer containing the down scaled version of input image data.
+     */
+    public static Object downscaleBy2(Object input, int sizeX, int sizeY, boolean signed, boolean filter, Object output)
+    {
+        if (input == null)
+            return output;
+
+        final ArrayType arrayType = ArrayUtil.getArrayType(input);
+        final Object result = ArrayUtil.allocIfNull(output, arrayType, (sizeX / 2) * (sizeY / 2));
+
+        switch (arrayType.getDataType().getJavaType())
+        {
+            case BYTE:
+                downscaleBy2((byte[]) input, sizeX, sizeY, signed, filter, (byte[]) result);
+                break;
+
+            case SHORT:
+                downscaleBy2((short[]) input, sizeX, sizeY, signed, filter, (short[]) result);
+                break;
+
+            case INT:
+                downscaleBy2((int[]) input, sizeX, sizeY, signed, filter, (int[]) result);
+                break;
+
+            case FLOAT:
+                downscaleBy2((float[]) input, sizeX, sizeY, filter, (float[]) result);
+                break;
+
+            case DOUBLE:
+                downscaleBy2((double[]) input, sizeX, sizeY, filter, (double[]) result);
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image data array (single dimension)
+     * @param sizeX
+     *        width of source image
+     * @param sizeY
+     *        height of source image
+     * @param signed
+     *        consider input byte data as signed (only meaningful when filter is enabled)
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @return output buffer containing the down scaled version of input image data.
+     */
+    public static Object downscaleBy2(Object input, int sizeX, int sizeY, boolean signed, boolean filter)
+    {
+        return downscaleBy2(input, sizeX, sizeY, signed, filter, null);
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     * @param output
+     *        output image receiving the result (should be of same type as input image with X and Y resolution divided
+     *        by 2). If set to <code>null</code> a new image is created.
+     */
+    public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter, IcyBufferedImage output)
+    {
+        if (input == null)
+            return output;
+
+        final IcyBufferedImage result;
+        final int sizeX = input.getSizeX();
+        final int sizeY = input.getSizeY();
+        final int sizeC = input.getSizeC();
+
+        if (output != null)
+            result = output;
+        else
+            // create an empty image with specified size and current colormodel description
+            result = new IcyBufferedImage(sizeX / 2, sizeY / 2, input.getIcyColorModel());
+
+        for (int c = 0; c < sizeC; c++)
+            downscaleBy2(input.getDataXY(c), sizeX, sizeY, input.isSignedDataType(), filter, result.getDataXY(c));
+
+        return result;
+    }
+
+    /**
+     * Returns a down scaled by a factor of 2 of the input image (X and Y resolution are divided by 2).<br>
+     * This function is specifically optimized for factor 2 down scaling.
+     * 
+     * @param input
+     *        input image
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
+     *        neighbor is used)
+     */
+    public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter)
+    {
+        return downscaleBy2(input, filter, null);
     }
 
     /**

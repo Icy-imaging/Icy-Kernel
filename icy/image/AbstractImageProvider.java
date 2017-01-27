@@ -4,11 +4,17 @@
 package icy.image;
 
 import icy.common.exception.UnsupportedFormatException;
+import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.sequence.MetaDataUtil;
+import icy.system.SystemUtil;
+import icy.system.thread.Processor;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import loci.formats.ome.OMEXMLMetadataImpl;
 
@@ -21,6 +27,70 @@ import loci.formats.ome.OMEXMLMetadataImpl;
  */
 public abstract class AbstractImageProvider implements ImageProvider
 {
+    /**
+     * Used for multi thread tile image reading.
+     * 
+     * @author Stephane
+     */
+    class TileImageReader implements Runnable
+    {
+        final int serie;
+        final int resolution;
+        final Rectangle region;
+        final int z;
+        final int t;
+        final int c;
+        final IcyBufferedImage result;
+        boolean done;
+        boolean failed;
+
+        public TileImageReader(int serie, int resolution, Rectangle region, int z, int t, int c, IcyBufferedImage result)
+        {
+            super();
+
+            this.serie = serie;
+            this.resolution = resolution;
+            this.region = region;
+            this.z = z;
+            this.t = t;
+            this.c = c;
+            this.result = result;
+            done = false;
+            failed = false;
+        }
+
+        public TileImageReader(int serie, int resolution, Rectangle region, int z, int t, IcyBufferedImage result)
+        {
+            this(serie, resolution, region, z, t, -1, result);
+        }
+
+        @Override
+        public void run()
+        {
+            if (Thread.interrupted())
+            {
+                failed = true;
+                return;
+            }
+
+            try
+            {
+                // get image tile
+                final IcyBufferedImage img = getImage(serie, resolution, region, z, t, c);
+                // compute resolution divider
+                final int divider = (int) Math.pow(2, resolution);
+                // copy tile to image result
+                result.copyData(img, null, new Point(region.x / divider, region.y / divider));
+            }
+            catch (Exception e)
+            {
+                failed = true;
+            }
+
+            done = true;
+        }
+    }
+
     public static final int DEFAULT_THUMBNAIL_SIZE = 160;
 
     // default implementation, override it if you need specific value for faster tile access
@@ -47,14 +117,13 @@ public abstract class AbstractImageProvider implements ImageProvider
         return Math.min(maxHeight, sy);
     }
 
-    // default implementation which use the getImage(..) method, override it for better support /
-    // performance.
+    // default implementation which use the getImage(..) method, override it for better support / performance
     @Override
     public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
     {
         final OMEXMLMetadataImpl meta = getMetaData();
-        final int sx = MetaDataUtil.getSizeX(meta, serie);
-        final int sy = MetaDataUtil.getSizeY(meta, serie);
+        int sx = MetaDataUtil.getSizeX(meta, serie);
+        int sy = MetaDataUtil.getSizeY(meta, serie);
         final int sz = MetaDataUtil.getSizeZ(meta, serie);
         final int st = MetaDataUtil.getSizeT(meta, serie);
 
@@ -68,11 +137,17 @@ public abstract class AbstractImageProvider implements ImageProvider
         // final thumbnail size
         final int tnx = (int) Math.round(sx * ratio);
         final int tny = (int) Math.round(sy * ratio);
-        final int resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
+        int resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
 
         // take middle image for thumbnail
         IcyBufferedImage result = getImage(serie, resolution, sz / 2, st / 2);
-        // scale it to desired dimension
+        
+        sx = result.getSizeX();
+        sy = result.getSizeY();
+        // wanted sub resolution of the image (
+        resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
+
+        // scale it to desired dimension (fast enough as here we have a small image)
         return IcyBufferedImageUtil.scale(result, tnx, tny, FilterType.BILINEAR);
     }
 
@@ -120,7 +195,161 @@ public abstract class AbstractImageProvider implements ImageProvider
     }
 
     /**
-     * Returns the image resolution that best suit to the size resolution.
+     * Returns the image located at specified position using tile by tile reading (if supported by the importer).<br>
+     * This method is useful to read a sub resolution of a very large image which cannot fit in memory and also to take
+     * advantage of multi threading.
+     * 
+     * @param serie
+     *        Serie index for multi serie image (use 0 if unsure).
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure).<br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default image resolution while level 1 is base image
+     *        resolution / 2 and so on...
+     * @param z
+     *        Z position of the image (slice) we want retrieve
+     * @param t
+     *        T position of the image (frame) we want retrieve
+     * @param c
+     *        C position of the image (channel) we want retrieve.<br>
+     *        -1 is a special value meaning we want all channel.
+     * @param tileW
+     *        width of the tile (better to use a multiple of 2)
+     * @param tileH
+     *        height of the tile (better to use a multiple of 2)
+     * @param listener
+     *        Progression listener
+     */
+    public IcyBufferedImage getImageByTile(int serie, int resolution, int z, int t, int c, int tileW, int tileH,
+            ProgressListener listener) throws UnsupportedFormatException, IOException
+    {
+        final OMEXMLMetadataImpl meta = getMetaData();
+        final int sizeX = MetaDataUtil.getSizeX(meta, serie);
+        final int sizeY = MetaDataUtil.getSizeY(meta, serie);
+
+        // resolution divider
+        final int divider = (int) Math.pow(2, resolution);
+        // allocate result
+        final IcyBufferedImage result = new IcyBufferedImage(sizeX / divider, sizeY / divider, MetaDataUtil.getSizeC(
+                meta, serie), MetaDataUtil.getDataType(meta, serie));
+        // create processor
+        final Processor readerProcessor = new Processor(Math.max(1, SystemUtil.getNumberOfCPUs() - 1));
+
+        readerProcessor.setThreadName("Image tile reader");
+        result.beginUpdate();
+
+        try
+        {
+            final List<Rectangle> tiles = getTileList(sizeX, sizeY, tileW, tileH);
+
+            // submit all tasks
+            for (Rectangle tile : tiles)
+            {
+                // wait a bit if the process queue is full
+                while (readerProcessor.isFull())
+                {
+                    try
+                    {
+                        Thread.sleep(0);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        // interrupt all processes
+                        readerProcessor.shutdownNow();
+                        break;
+                    }
+                }
+
+                // submit next task
+                readerProcessor.submit(new TileImageReader(serie, resolution, tile, z, t, c, result));
+
+                // display progression
+                if (listener != null)
+                {
+                    // process cancel requested ?
+                    if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
+                    {
+                        // interrupt processes
+                        readerProcessor.shutdownNow();
+                        break;
+                    }
+                }
+            }
+
+            // wait for completion
+            while (readerProcessor.isProcessing())
+            {
+                try
+                {
+                    Thread.sleep(1);
+                }
+                catch (InterruptedException e)
+                {
+                    // interrupt all processes
+                    readerProcessor.shutdownNow();
+                    break;
+                }
+
+                // display progression
+                if (listener != null)
+                {
+                    // process cancel requested ?
+                    if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
+                    {
+                        // interrupt processes
+                        readerProcessor.shutdownNow();
+                        break;
+                    }
+                }
+            }
+
+            // last wait for completion just in case we were interrupted
+            readerProcessor.waitAll();
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        return result;
+    }
+
+    /**
+     * Get the list of tiles to fill the given XY plan size.
+     * 
+     * @param sizeX
+     *        plan sizeX
+     * @param sizeY
+     *        plan sizeY
+     * @param tileW
+     *        tile width
+     * @param tileH
+     *        tile height
+     */
+    public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
+    {
+        final List<Rectangle> result = new ArrayList<Rectangle>();
+        int x, y;
+
+        for (y = 0; y < (sizeY - tileH); y += tileH)
+        {
+            for (x = 0; x < (sizeX - tileW); x += tileW)
+                result.add(new Rectangle(x, y, tileW, tileH));
+            // last tile column
+            result.add(new Rectangle(x, y, sizeX - x, tileH));
+        }
+
+        // last tiles row
+        for (x = 0; x < (sizeX - tileW); x += tileW)
+            result.add(new Rectangle(x, y, tileW, sizeY - y));
+        // last column/row tile
+        result.add(new Rectangle(x, y, sizeX - x, sizeY - y));
+
+        return result;
+    }
+
+    /**
+     * Returns the sub image resolution which best suit to the desired size.
      * 
      * @param sizeX
      *        original image width

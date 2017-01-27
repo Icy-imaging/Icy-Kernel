@@ -233,8 +233,6 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
 
             for (int t = 0; t < rect.sizeT; t++)
                 setSlice(t + rect.t, new ROI3DArea(mask[t]));
-
-            optimizeBounds();
         }
         finally
         {

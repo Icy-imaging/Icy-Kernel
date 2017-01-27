@@ -12,7 +12,7 @@ import icy.type.rectangle.Rectangle5D;
  */
 public class ROISizeZDescriptor extends ROIDescriptor
 {
-    public static final String ID = "SizeZ";
+    public static final String ID = "Size Z";
 
     public ROISizeZDescriptor()
     {

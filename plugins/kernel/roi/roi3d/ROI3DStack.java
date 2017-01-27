@@ -41,9 +41,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
@@ -369,22 +371,30 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     /**
-     * Sets the slice for the given Z position.
+     * Sets the ROI slice for the given Z position.
      */
     public void setSlice(int z, R roi2d)
     {
-        if (roi2d == null)
-            throw new IllegalArgumentException("Cannot set an empty slice in a 3D ROI");
+        // nothing to do
+        if (getSlice(z) == roi2d)
+            return;
 
-        // set Z, T and C position
-        roi2d.setZ(z);
-        roi2d.setT(getT());
-        roi2d.setC(getC());
-        // listen events from this ROI and its overlay
-        roi2d.addListener(this);
-        roi2d.getOverlay().addOverlayListener(this);
+        // remove previous
+        removeSlice(z);
 
-        slices.put(Integer.valueOf(z), roi2d);
+        if (roi2d != null)
+        {
+            // set Z, T and C position
+            roi2d.setZ(z);
+            roi2d.setT(getT());
+            roi2d.setC(getC());
+            // listen events from this ROI and its overlay
+            roi2d.addListener(this);
+            roi2d.getOverlay().addOverlayListener(this);
+
+            // set new slice
+            slices.put(Integer.valueOf(z), roi2d);
+        }
 
         // notify ROI changed
         roiChanged(true);
@@ -403,10 +413,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         {
             result.removeListener(this);
             result.getOverlay().removeOverlayListener(this);
-        }
 
-        // notify ROI changed
-        roiChanged(true);
+            // notify ROI changed
+            roiChanged(true);
+        }
 
         return result;
     }
@@ -428,6 +438,422 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
 
         slices.clear();
         roiChanged(true);
+    }
+
+    /**
+     * Add the specified {@link ROI3DStack} content to this ROI3DStack
+     */
+    public void add(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                add(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Exclusively add the specified {@link ROI3DStack} content to this ROI3DStack
+     */
+    public void exclusiveAdd(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                exclusiveAdd(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Process intersection of the specified {@link ROI3DStack} with this ROI3DStack.
+     */
+    public void intersect(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            final Set<Integer> keys = roi.slices.keySet();
+            final Set<Integer> toRemove = new HashSet<Integer>();
+
+            // remove slices which are not contained
+            for (Integer key : slices.keySet())
+                if (!keys.contains(key))
+                    toRemove.add(key);
+
+            // do remove first
+            for (Integer key : toRemove)
+                removeSlice(key.intValue());
+
+            // then process intersection
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                intersect(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Remove the specified {@link ROI3DStack} from this ROI3DStack
+     */
+    public void subtract(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                subtract(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    @Override
+    public ROI add(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    add((ROI3DStack) roi3d);
+                    return this;
+                }
+            }
+        }
+        else if (roiClass.isInstance(roi))
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            // only if on same position
+            if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+            {
+                try
+                {
+                    add(roi2d.getZ(), (R) roi2d);
+                    return this;
+                }
+                catch (UnsupportedOperationException e)
+                {
+                    // not supported, try generic method instead
+                    return super.add(roi, allowCreate);
+                }
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI intersect(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    intersect((ROI3DStack) roi3d);
+                    return this;
+                }
+            }
+            else if (roiClass.isInstance(roi))
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+
+                // only if on same position
+                if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+                {
+                    try
+                    {
+                        intersect(roi2d.getZ(), (R) roi2d);
+                        return this;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        // not supported, try generic method instead
+                        return super.intersect(roi, allowCreate);
+                    }
+                }
+            }
+        }
+
+        return super.intersect(roi, allowCreate);
+    }
+
+    @Override
+    public ROI exclusiveAdd(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    exclusiveAdd((ROI3DStack) roi3d);
+                    return this;
+                }
+            }
+            else if (roiClass.isInstance(roi))
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+
+                // only if on same position
+                if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+                {
+                    try
+                    {
+                        exclusiveAdd(roi2d.getZ(), (R) roi2d);
+                        return this;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        // not supported, try generic method instead
+                        return super.add(roi, allowCreate);
+                    }
+                }
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI subtract(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    subtract((ROI3DStack<R>) roi3d);
+                    return this;
+                }
+            }
+            else if (roiClass.isInstance(roi))
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+
+                // only if on same position
+                if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+                {
+                    try
+                    {
+                        subtract(roi2d.getZ(), (R) roi2d);
+                        return this;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        // not supported, try generic method instead
+                        return super.subtract(roi, allowCreate);
+                    }
+                }
+            }
+        }
+
+        return super.subtract(roi, allowCreate);
+    }
+
+    /**
+     * Adds content of specified <code>ROI</code> slice into the <code>ROI</code> slice at given Z position.
+     * The resulting content of this <code>ROI</code> will include the union of both ROI's contents.<br>
+     * If no slice was present at the specified Z position then the method is equivalent to
+     * {@link #setSlice(int, ROI2D)}
+     * 
+     * @param z
+     *        the position where the slice must be merged
+     * @param roiSlice
+     *        the 2D ROI to merge
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be added to this ROI
+     */
+    public void add(int z, R roiSlice)
+    {
+        if (roiSlice == null)
+            return;
+
+        final R currentSlice = getSlice(z);
+        final ROI newSlice;
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI union
+            newSlice = currentSlice.add(roiSlice, true);
+
+            // check the resulting ROI is the same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+        }
+        else
+            // get a copy
+            newSlice = roiSlice.getCopy();
+
+        // set slice
+        setSlice(z, (R) newSlice);
+    }
+
+    /**
+     * Sets the content of the <code>ROI</code> slice at given Z position to be the union of its current content and the
+     * content of the specified <code>ROI</code>, minus their intersection.
+     * The resulting <code>ROI</code> will include only content that were contained in either this <code>ROI</code> or
+     * in the specified <code>ROI</code>, but not in both.<br>
+     * If no slice was present at the specified Z position then the method is equivalent to
+     * {@link #setSlice(int, ROI2D)}
+     * 
+     * @param z
+     *        the position where the slice must be merged
+     * @param roiSlice
+     *        the 2D ROI to merge
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be exclusively added to this ROI
+     */
+    public void exclusiveAdd(int z, R roiSlice)
+    {
+        if (roiSlice == null)
+            return;
+
+        final R currentSlice = getSlice(z);
+        final ROI newSlice;
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI exclusive union
+            newSlice = currentSlice.exclusiveAdd(roiSlice, true);
+
+            // check the resulting ROI is same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+        }
+        else
+            // get a copy
+            newSlice = roiSlice.getCopy();
+
+        if (newSlice.isEmpty())
+            removeSlice(z);
+        else
+            setSlice(z, (R) newSlice);
+    }
+
+    /**
+     * Sets the content of the <code>ROI</code> slice at given Z position to the intersection of
+     * its current content and the content of the specified <code>ROI</code>.
+     * The resulting ROI will include only contents that were contained in both ROI.<br>
+     * If no slice was present at the specified Z position then the method does nothing.
+     * 
+     * @param z
+     *        the position where the slice must be merged
+     * @param roiSlice
+     *        the 2D ROI to merge
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be intersected with this ROI
+     */
+    public void intersect(int z, R roiSlice)
+    {
+        // better to throw an exception here than removing slice
+        if (roiSlice == null)
+            throw new IllegalArgumentException("Cannot intersect an empty slice in a 3D ROI");
+
+        final R currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI intersection
+            final ROI newSlice = currentSlice.intersect(roiSlice, true);
+
+            // check the resulting ROI is same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+
+            if (newSlice.isEmpty())
+                removeSlice(z);
+            else
+                setSlice(z, (R) newSlice);
+        }
+    }
+
+    /**
+     * Subtract the specified <code>ROI</code> content from the <code>ROI</code> slice at given Z position.<br>
+     * If no slice was present at the specified Z position then the method does nothing.
+     * 
+     * @param z
+     *        the position where the subtraction should be done
+     * @param roiSlice
+     *        the 2D ROI to subtract from Z slice
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be subtracted from this ROI
+     */
+    public void subtract(int z, R roiSlice) throws UnsupportedOperationException
+    {
+        if (roiSlice == null)
+            return;
+
+        final R currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI subtraction
+            final ROI newSlice = currentSlice.subtract(roiSlice, true);
+
+            // check the resulting ROI is same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+
+            if (newSlice.isEmpty())
+                removeSlice(z);
+            else
+                setSlice(z, (R) newSlice);
+        }
     }
 
     /**
@@ -625,7 +1051,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             result += slices.lastEntry().getValue().getNumberOfPoints() * psx * psy;
 
             for (R slice : slices.values())
-                result += slice.getPerimeter(sequence) * psz;
+                result += slice.getLength(sequence) * psz;
         }
 
         return result;

@@ -605,15 +605,15 @@ public class SystemUtil
     }
 
     /**
-     * Return total amount of free memory available to the JVM
+     * Return total amount of free memory available to the JVM (in bytes)
      */
     public static long getJavaFreeMemory()
     {
-        return Runtime.getRuntime().freeMemory();
+        return getJavaMaxMemory() - getJavaUsedMemory();
     }
 
     /**
-     * Return maximum amount of memory the JVM will attempt to use
+     * Return maximum amount of memory the JVM will attempt to use (in bytes)
      */
     public static long getJavaMaxMemory()
     {
@@ -621,11 +621,28 @@ public class SystemUtil
     }
 
     /**
-     * Return total memory currently in use by the JVM
+     * @deprecated Use {@link #getJavaAllocatedMemory()} instead.
      */
+    @Deprecated
     public static long getJavaTotalMemory()
     {
+        return getJavaAllocatedMemory();
+    }
+
+    /**
+     * Return memory currently allocated by the JVM (in bytes)
+     */
+    public static long getJavaAllocatedMemory()
+    {
         return Runtime.getRuntime().totalMemory();
+    }
+
+    /**
+     * Return actual memory used by the JVM (in bytes)
+     */
+    public static long getJavaUsedMemory()
+    {
+        return getJavaAllocatedMemory() - Runtime.getRuntime().freeMemory();
     }
 
     private static OperatingSystemMXBean getOSMXBean()

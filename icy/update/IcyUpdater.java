@@ -483,5 +483,4 @@ public class IcyUpdater
         // you have to exit application then...
         return true;
     }
-
 }

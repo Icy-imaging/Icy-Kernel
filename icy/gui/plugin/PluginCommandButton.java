@@ -23,7 +23,7 @@ import icy.gui.component.button.IcyCommandToggleButton;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
-import icy.resource.icon.BasicResizableIcon;
+import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
@@ -41,7 +41,7 @@ public class PluginCommandButton
     /**
      * Set a plugin button with specified action
      */
-    public static void setButton(final AbstractCommandButton button, final PluginDescriptor plugin, boolean doAction)
+    public static void setButton(final AbstractCommandButton button, final PluginDescriptor plugin, boolean doAction, boolean alpha)
     {
         final String name = plugin.getName();
         final String className = plugin.getClassName();
@@ -49,7 +49,8 @@ public class PluginCommandButton
         // update text & icon
         button.setText(name);
         // set icon
-        button.setIcon(new BasicResizableIcon(plugin.getIcon()));
+//        button.setIcon(new BasicResizableIcon(plugin.getIcon()));
+        button.setIcon(new IcyIcon(plugin.getIconAsImage(), alpha));
         // save class name here
         button.setName(className);
 
@@ -90,13 +91,13 @@ public class PluginCommandButton
      */
     public static void setButton(AbstractCommandButton button, PluginDescriptor plugin)
     {
-        setButton(button, plugin, true);
+        setButton(button, plugin, true, false);
     }
 
     /**
      * Build a plugin button
      */
-    public static AbstractCommandButton createButton(PluginDescriptor plugin, boolean toggle, boolean doAction)
+    public static AbstractCommandButton createButton(PluginDescriptor plugin, boolean toggle, boolean doAction, boolean alpha)
     {
         final AbstractCommandButton result;
 
@@ -106,7 +107,7 @@ public class PluginCommandButton
         else
             result = new IcyCommandButton();
 
-        setButton(result, plugin, doAction);
+        setButton(result, plugin, doAction, alpha);
 
         return result;
     }
@@ -117,14 +118,14 @@ public class PluginCommandButton
     public static IcyCommandButton createButton(PluginDescriptor plugin)
     {
         // build with default action listener
-        return (IcyCommandButton) createButton(plugin, false, true);
+        return (IcyCommandButton) createButton(plugin, false, true, false);
     }
 
     /**
      * Build a plugin toggle button with default action (execute plugin) if enable.
      */
-    public static IcyCommandToggleButton createToggleButton(PluginDescriptor plugin, boolean doAction)
+    public static IcyCommandToggleButton createToggleButton(PluginDescriptor plugin, boolean doAction, boolean alpha)
     {
-        return (IcyCommandToggleButton) createButton(plugin, true, doAction);
+        return (IcyCommandToggleButton) createButton(plugin, true, doAction, alpha);
     }
 }

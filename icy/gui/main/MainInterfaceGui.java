@@ -921,7 +921,8 @@ public class MainInterfaceGui implements MainInterface
     @Deprecated
     public synchronized void addListener(MainListener listener)
     {
-        mainListeners.add(listener);
+        if (listener != null)
+            mainListeners.add(listener);
     }
 
     @Override
@@ -934,7 +935,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void addGlobalViewerListener(GlobalViewerListener listener)
     {
-        globalViewerListeners.add(listener);
+        if (listener != null)
+            globalViewerListeners.add(listener);
     }
 
     @Override
@@ -946,7 +948,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void addGlobalSequenceListener(GlobalSequenceListener listener)
     {
-        globalSequenceListeners.add(listener);
+        if (listener != null)
+            globalSequenceListeners.add(listener);
     }
 
     @Override
@@ -958,7 +961,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void addGlobalROIListener(GlobalROIListener listener)
     {
-        globalROIListeners.add(listener);
+        if (listener != null)
+            globalROIListeners.add(listener);
     }
 
     @Override
@@ -970,7 +974,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void addGlobalOverlayListener(GlobalOverlayListener listener)
     {
-        globalOverlayListeners.add(listener);
+        if (listener != null)
+            globalOverlayListeners.add(listener);
     }
 
     @Override
@@ -982,7 +987,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void addGlobalPluginListener(GlobalPluginListener listener)
     {
-        listeners.add(GlobalPluginListener.class, listener);
+        if (listener != null)
+            listeners.add(GlobalPluginListener.class, listener);
     }
 
     @Override
@@ -994,7 +1000,8 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void addCanExitListener(AcceptListener listener)
     {
-        listeners.add(WeakAcceptListener.class, new WeakAcceptListener(listener));
+        if (listener != null)
+            listeners.add(WeakAcceptListener.class, new WeakAcceptListener(listener));
     }
 
     @Override

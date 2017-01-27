@@ -336,7 +336,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (!roi.loadFromXML(node))
                 return null;
 
-            roi.setCreating(false);
             roi.setSelected(false);
         }
 
@@ -1434,7 +1433,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public ROIPainter getPainter()
     {
-        return painter;
+        return getOverlay();
     }
 
     /**
@@ -2322,7 +2321,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
     {
-        final boolean[] result = new boolean[width * height];
+        final boolean[] result = new boolean[Math.max(0, width) * Math.max(0, height)];
 
         // simple and basic implementation, override it to have better performance
         int offset = 0;
@@ -2462,10 +2461,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * The resulting content of this <code>ROI</code> will include
      * the union of both ROI's contents.<br>
      * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
-     * If that is not
-     * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
-     * in a new created ROI.
+     * If that is not the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter
+     * is set to <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new
+     * created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2511,10 +2509,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * its current content and the content of the specified <code>ROI</code>.
      * The resulting ROI will include only contents that were contained in both ROI.<br>
      * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
-     * If that is not
-     * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
-     * in a new created ROI.
+     * If that is not the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter
+     * is set to <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new
+     * created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2608,10 +2605,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Subtract the specified <code>ROI</code> content from current <code>ROI</code>.<br>
      * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
-     * If that is not
-     * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
-     * in a new created ROI.
+     * If that is not the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter
+     * is set to <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new
+     * created ROI.
      * 
      * @param roi
      *        the <code>ROI</code> to subtract from the current <code>ROI</code>

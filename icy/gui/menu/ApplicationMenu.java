@@ -192,7 +192,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 importPanel.addButtonGroup("Sequence importer");
                 for (PluginDescriptor plugin : sequenceImporterPlugins)
                 {
-                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
+                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false, false);
 
                     button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
@@ -254,7 +254,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
 
                 for (PluginDescriptor plugin : importerPlugins)
                 {
-                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
+                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false, false);
 
                     button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()

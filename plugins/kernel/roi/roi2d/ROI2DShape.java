@@ -802,6 +802,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 if (canvas3d.get() != cnv)
                     canvas3d = new WeakReference<VtkCanvas>(cnv);
 
+                // initialize VTK objects if not yet done
+                if (actor == null)
+                    initVtkObjects();
+
                 // FIXME : need a better implementation
                 final double[] s = cnv.getVolumeScale();
 
@@ -817,10 +821,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 // need to rebuild 3D data structures ?
                 if (needRebuild)
                 {
-                    // initialize VTK objects if not yet done
-                    if (actor == null)
-                        initVtkObjects();
-
                     // request rebuild 3D objects
                     ThreadUtil.runSingle(this);
                     needRebuild = false;
@@ -862,6 +862,14 @@ public abstract class ROI2DShape extends ROI2D implements Shape
          * Draw the shape
          */
         protected void drawShape(Graphics2D g, Sequence sequence, IcyCanvas canvas, boolean simplified)
+        {
+            drawShape(g, sequence, canvas, shape, simplified);
+        }
+
+        /**
+         * Draw the shape
+         */
+        protected void drawShape(Graphics2D g, Sequence sequence, IcyCanvas canvas, Shape shape, boolean simplified)
         {
             final Graphics2D g2 = (Graphics2D) g.create();
 

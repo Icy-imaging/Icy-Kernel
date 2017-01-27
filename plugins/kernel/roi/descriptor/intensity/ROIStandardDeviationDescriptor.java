@@ -16,7 +16,7 @@ import icy.sequence.SequenceEvent.SequenceEventSourceType;
  */
 public class ROIStandardDeviationDescriptor extends ROIDescriptor
 {
-    public static final String ID = "StandardDeviation";
+    public static final String ID = "Standard deviation";
 
     public ROIStandardDeviationDescriptor()
     {

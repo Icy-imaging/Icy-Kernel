@@ -714,6 +714,10 @@ public class ROI3DShape extends ROI3D implements Shape3D
                 if (canvas3d.get() != cnv)
                     canvas3d = new WeakReference<VtkCanvas>(cnv);
 
+                // initialize VTK objects if not yet done
+                if (actor == null)
+                    initVtkObjects();
+
                 // FIXME : need a better implementation
                 final double[] s = cnv.getVolumeScale();
 
@@ -729,10 +733,6 @@ public class ROI3DShape extends ROI3D implements Shape3D
                 // need to rebuild 3D data structures ?
                 if (needRebuild)
                 {
-                    // initialize VTK objects if not yet done
-                    if (actor == null)
-                        initVtkObjects();
-
                     // request rebuild 3D objects
                     ThreadUtil.runSingle(this);
                     needRebuild = false;

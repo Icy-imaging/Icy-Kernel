@@ -92,6 +92,9 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import plugins.kernel.roi.tool.ROILineCutter;
+import plugins.kernel.roi.tool.plugin.ROILineCutterPlugin;
+
 /**
  * New Canvas 2D : default ICY 2D viewer.<br>
  * Support translation / scale and rotation transformation.<br>
@@ -971,8 +974,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             if (roi != null)
                             {
                                 roi.setCreating(true);
-                                // attach to sequence
-                                seq.addROI(roi, true);
+                                
+                                // attach to sequence (hacky method to avoid undoing ROI cutting)
+                                seq.addROI(roi, !roiClassName.equals(ROILineCutterPlugin.class.getName()));
                                 // then do exclusive selection
                                 seq.setSelectedROI(roi);
                             }

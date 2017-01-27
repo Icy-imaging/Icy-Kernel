@@ -29,6 +29,7 @@ import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
@@ -76,7 +77,7 @@ public class Audit
     // directly use application preferences here
     static XMLPreferences prefs;
 
-    private static AuditStorage storage;
+    static AuditStorage storage;
     private static boolean initialized = false;
     private static boolean auditDone;
 
@@ -117,10 +118,19 @@ public class Audit
             // upload each 24 hours
             if (currentTime > (prefs.getLong(ID_LAST_UPLOAD_DATE, 0L) + dayInterval))
             {
-                // upload usage statistics
-                storage.upload(id);
                 // save upload time whatever happened
                 prefs.putLong(ID_LAST_UPLOAD_DATE, System.currentTimeMillis());
+
+                // do that in background as it can take sometime if website does not reply...
+                ThreadUtil.bgRun(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // upload usage statistics
+                        storage.upload(id);
+                    }
+                });
             }
         }
 
@@ -365,20 +375,28 @@ public class Audit
         // id param ok ?
         if (params != null)
         {
-            // set action
-            params.put(ID_ACTION, "unlink");
+            // do that in background as it can take sometime...
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // set action
+                    params.put(ID_ACTION, "unlink");
 
-            try
-            {
-                // and post
-                NetworkUtil.postData(URL_LINK_USER, params);
-            }
-            catch (IOException e)
-            {
-                // can't unlink on web site, not a big deal...
-                System.err.print("Warning: cannot unlink online user infos.");
-                IcyExceptionHandler.showErrorMessage(e, false, false);
-            }
+                    try
+                    {
+                        // and post
+                        NetworkUtil.postData(URL_LINK_USER, params);
+                    }
+                    catch (IOException e)
+                    {
+                        // can't unlink on web site, not a big deal...
+                        System.err.print("Warning: cannot unlink online user infos.");
+                        IcyExceptionHandler.showErrorMessage(e, false, false);
+                    }
+                }
+            });
         }
 
         // reset attached user login and name

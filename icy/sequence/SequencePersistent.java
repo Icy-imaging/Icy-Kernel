@@ -27,11 +27,11 @@ import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
@@ -62,29 +62,7 @@ public class SequencePersistent implements XMLPersistent
 
     private String getXMLFileName()
     {
-        String seqFilename = sequence.getFilename();
-
-        if (StringUtil.isEmpty(seqFilename))
-            return null;
-
-        // remove some problematic character for XML file
-        seqFilename = FileUtil.cleanPath(seqFilename);
-
-        // retrieve the serie index
-        final int serieNum = sequence.getSerieIndex();
-
-        // multi serie image ?
-        if (serieNum != 0)
-            // use a specific filename
-            seqFilename = String.format("%s_S%d", seqFilename, Integer.valueOf(serieNum));
-
-        final File file = new File(seqFilename);
-
-        // filename reference a directory --> use "<directory>/meta.xml"
-        if (file.isDirectory())
-            return seqFilename + "/meta.xml";
-
-        return FileUtil.setExtension(seqFilename, ".xml");
+        return sequence.getOutputBaseName("meta") + sequence.getOutputExtension() + XMLUtil.FILE_DOT_EXTENSION;
     }
 
     /**
@@ -192,6 +170,9 @@ public class SequencePersistent implements XMLPersistent
         if (nodeMeta == null)
             return true;
 
+        sequence.setPositionX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_X, 0d));
+        sequence.setPositionY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Y, 0d));
+        sequence.setPositionZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Z, 0d));
         sequence.setPixelSizeX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, 1d));
         sequence.setPixelSizeY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, 1d));
         sequence.setPixelSizeZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, 1d));
@@ -280,6 +261,9 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeMeta != null)
         {
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_POSITION_X, sequence.getPositionX());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Y, sequence.getPositionY());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Z, sequence.getPositionZ());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, sequence.getPixelSizeX());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, sequence.getPixelSizeY());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, sequence.getPixelSizeZ());
@@ -375,5 +359,40 @@ public class SequencePersistent implements XMLPersistent
     public Node setNode(String name)
     {
         return XMLUtil.setElement(getRootNode(), name);
+    }
+
+    /**
+     * Returns <code>true</code> if the specified Document represents a valid XML persistence document.
+     */
+    public static boolean isValidXMLPersitence(Document doc)
+    {
+        if (doc == null)
+            return false;
+
+        final Element rootNode = XMLUtil.getRootElement(doc);
+
+        return (XMLUtil.getElement(rootNode, Sequence.ID_NAME) != null)
+                && (XMLUtil.getElement(rootNode, ID_META) != null) && (XMLUtil.getElement(rootNode, ID_ROIS) != null)
+                && (XMLUtil.getElement(rootNode, ID_OVERLAYS) != null);
+    }
+
+    /**
+     * Returns <code>true</code> if the specified path represents a valid XML persistence file.
+     */
+    public static boolean isValidXMLPersitence(String path)
+    {
+        if ((path != null) && FileUtil.exists(path))
+        {
+            try
+            {
+                return isValidXMLPersitence(XMLUtil.loadDocument(path, true));
+            }
+            catch (Exception e)
+            {
+                // ignore
+            }
+        }
+
+        return false;
     }
 }

@@ -189,6 +189,55 @@ public class ImageJUtil
     }
 
     /**
+     * Convert the ImageJ {@link ImagePlus} image at position [Z,T] into an Icy image
+     */
+    public static IcyBufferedImage convertToIcyBufferedImage(ImagePlus image, int z, int t, int sizeX, int sizeY,
+            int sizeC, int type, boolean signed16)
+    {
+        // set position
+        image.setPosition(1, z + 1, t + 1);
+
+        // directly use the buffered image to do the conversion...
+        if ((sizeC == 1) && ((type == ImagePlus.COLOR_256) || (type == ImagePlus.COLOR_RGB)))
+            return IcyBufferedImage.createFrom(image.getBufferedImage());
+
+        final ImageProcessor ip = image.getProcessor();
+        final Object data = Array1DUtil.copyOf(ip.getPixels());
+        final DataType dataType = ArrayUtil.getDataType(data);
+        final Object[] datas = Array2DUtil.createArray(dataType, sizeC);
+
+        // first channel data (get a copy)
+        datas[0] = data;
+        // special case of 16 bits signed data --> subtract 32768
+        if (signed16)
+            datas[0] = ArrayMath.subtract(datas[0], Double.valueOf(32768));
+
+        // others channels data
+        for (int c = 1; c < sizeC; c++)
+        {
+            image.setPosition(c + 1, z + 1, t + 1);
+            datas[c] = Array1DUtil.copyOf(image.getProcessor().getPixels());
+            // special case of 16 bits signed data --> subtract 32768
+            if (signed16)
+                datas[c] = ArrayMath.subtract(datas, Double.valueOf(32768));
+        }
+
+        // create a single image from all channels
+        return new IcyBufferedImage(sizeX, sizeY, datas, signed16);
+    }
+
+    /**
+     * Convert the ImageJ {@link ImagePlus} image at position [Z,T] into an Icy image
+     */
+    public static IcyBufferedImage convertToIcyBufferedImage(ImagePlus image, int z, int t)
+    {
+        final int[] dim = image.getDimensions(true);
+
+        return convertToIcyBufferedImage(image, z, t, dim[0], dim[1], dim[2], image.getType(), image
+                .getLocalCalibration().isSigned16Bit());
+    }
+
+    /**
      * Convert the specified ImageJ {@link ImagePlus} object to Icy {@link Sequence}
      */
     public static Sequence convertToIcySequence(ImagePlus image, ProgressListener progressListener)
@@ -219,39 +268,9 @@ public class ImageJUtil
                     if (progressListener != null)
                         progressListener.notifyProgress(position, len);
 
-                    image.setPosition(1, z + 1, t + 1);
+                    result.setImage(t, z, convertToIcyBufferedImage(image, z, t, sizeX, sizeY, sizeC, type, signed16));
 
-                    // separate RGB channel
-                    if ((sizeC == 1) && ((type == ImagePlus.COLOR_256) || (type == ImagePlus.COLOR_RGB)))
-                        result.setImage(t, z, IcyBufferedImage.createFrom(image.getBufferedImage()));
-                    else
-                    {
-                        final ImageProcessor ip = image.getProcessor();
-                        final Object data = Array1DUtil.copyOf(ip.getPixels());
-                        final DataType dataType = ArrayUtil.getDataType(data);
-                        final Object[] datas = Array2DUtil.createArray(dataType, sizeC);
-
-                        // first channel data (get a copy)
-                        datas[0] = data;
-                        // special case of 16 bits signed data --> subtract 32768
-                        if (signed16)
-                            datas[0] = ArrayMath.subtract(datas[0], Double.valueOf(32768));
-
-                        // others channels data
-                        for (int c = 1; c < sizeC; c++)
-                        {
-                            image.setPosition(c + 1, z + 1, t + 1);
-                            datas[c] = Array1DUtil.copyOf(image.getProcessor().getPixels());
-                            // special case of 16 bits signed data --> subtract 32768
-                            if (signed16)
-                                datas[c] = ArrayMath.subtract(datas, Double.valueOf(32768));
-                        }
-
-                        // create a single image from all channels
-                        result.setImage(t, z, new IcyBufferedImage(sizeX, sizeY, datas, signed16));
-
-                        position++;
-                    }
+                    position++;
                 }
             }
 

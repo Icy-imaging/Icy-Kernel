@@ -919,6 +919,10 @@ public class ROI2DArea extends ROI2D
                 if (canvas3d.get() != cnv)
                     canvas3d = new WeakReference<VtkCanvas>(cnv);
 
+                // initialize VTK objects if not yet done
+                if (surfaceActor == null)
+                    initVtkObjects();
+
                 // FIXME : need a better implementation
                 final double[] s = cnv.getVolumeScale();
 
@@ -934,10 +938,6 @@ public class ROI2DArea extends ROI2D
                 // need to rebuild 3D data structures ?
                 if (needRebuild)
                 {
-                    // initialize VTK objects if not yet done
-                    if (surfaceActor == null)
-                        initVtkObjects();
-
                     // request rebuild 3D objects
                     ThreadUtil.runSingle(this);
                     needRebuild = false;
@@ -1034,11 +1034,11 @@ public class ROI2DArea extends ROI2D
     /**
      * image containing the mask
      */
-    BufferedImage imageMask;
+    protected BufferedImage imageMask;
     /**
      * rectangle bounds
      */
-    Rectangle bounds;
+    protected Rectangle bounds;
 
     /**
      * internals
@@ -1215,6 +1215,7 @@ public class ROI2DArea extends ROI2D
     /**
      * Returns true if the ROI is empty (the mask does not contains any point).
      */
+    @Override
     public boolean isEmpty()
     {
         if (bounds.isEmpty())
@@ -1297,12 +1298,12 @@ public class ROI2DArea extends ROI2D
     @Deprecated
     public Color getMaskColor()
     {
-        return getPainter().getDisplayColor();
+        return getOverlay().getDisplayColor();
     }
 
     void updateMaskColor(boolean rebuildImage)
     {
-        final Color color = getPainter().getDisplayColor();
+        final Color color = getOverlay().getDisplayColor();
 
         // roi color changed ?
         if (!previousColor.equals(color))
@@ -1659,12 +1660,12 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Remove the specified {@link ROI2DArea} from this ROI2DArea
+     * Subtract the specified {@link ROI2DArea} from this ROI2DArea
      */
-    public void remove(ROI2DArea mask)
+    public void subtract(ROI2DArea roi)
     {
-        final Rectangle boundsToRemove = mask.getBounds();
-        final byte[] maskToRemove = mask.maskData;
+        final Rectangle boundsToRemove = roi.getBounds();
+        final byte[] maskToRemove = roi.maskData;
         final byte[] data;
         final Rectangle bnds;
 
@@ -1706,9 +1707,9 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Remove the specified {@link BooleanMask2D} from this ROI2DArea
+     * Subtract the specified {@link BooleanMask2D} from this ROI2DArea
      */
-    public void remove(BooleanMask2D mask)
+    public void subtract(BooleanMask2D mask)
     {
         final Rectangle boundsToRemove = mask.bounds;
         final boolean[] maskToRemove = mask.mask;
@@ -1750,6 +1751,24 @@ public class ROI2DArea extends ROI2D
 
         // notify roi changed
         roiChanged(true);
+    }
+
+    /**
+     * @deprecated Use {@link #subtract(ROI2DArea)} instead
+     */
+    @Deprecated
+    public void remove(ROI2DArea roi)
+    {
+        subtract(roi);
+    }
+
+    /**
+     * @deprecated Use {@link #subtract(BooleanMask2D)} instead
+     */
+    @Deprecated
+    public void remove(BooleanMask2D mask)
+    {
+        subtract(mask);
     }
 
     /**
@@ -1827,7 +1846,7 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public ROI2DAreaPainter getPainter()
+    public ROI2DAreaPainter getOverlay()
     {
         return (ROI2DAreaPainter) super.painter;
     }
@@ -1897,7 +1916,7 @@ public class ROI2DArea extends ROI2D
      */
     public void addBrush(Point2D pos)
     {
-        getPainter().addToMask(pos);
+        getOverlay().addToMask(pos);
     }
 
     /**
@@ -1907,7 +1926,7 @@ public class ROI2DArea extends ROI2D
      */
     public void removeBrush(Point2D pos)
     {
-        getPainter().removeFromMask(pos);
+        getOverlay().removeFromMask(pos);
     }
 
     /**
@@ -2080,11 +2099,11 @@ public class ROI2DArea extends ROI2D
             if ((getZ() == roi2d.getZ()) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
             {
                 if (roi2d instanceof ROI2DArea)
-                    remove((ROI2DArea) roi2d);
+                    subtract((ROI2DArea) roi2d);
                 else if (roi2d instanceof ROI2DShape)
                     updateMask(((ROI2DShape) roi2d).getShape(), true, true, true, true);
                 else
-                    remove(roi2d.getBooleanMask(true));
+                    subtract(roi2d.getBooleanMask(true));
 
                 return this;
             }
@@ -2257,7 +2276,7 @@ public class ROI2DArea extends ROI2D
     @Override
     public boolean[] getBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
-        final boolean[] result = new boolean[w * h];
+        final boolean[] result = new boolean[Math.max(0, w) * Math.max(0, h)];
         final byte[] data;
         final Rectangle bnds;
 
@@ -2361,8 +2380,9 @@ public class ROI2DArea extends ROI2D
         // mask empty ? --> just clear the ROI
         if ((mask == null) || mask.isEmpty())
             clear();
+        // don't need bounds optimization as BooleanMask2D should be already optimized
         else
-            setAsBooleanMask(mask.bounds, mask.mask);
+            setAsBooleanMask(mask.bounds, mask.mask, false);
     }
 
     /**
@@ -2372,14 +2392,53 @@ public class ROI2DArea extends ROI2D
      * @param r
      * @param booleanMask
      */
-    protected void setAsByteMask(Rectangle r, byte[] mask)
+    protected void setAsByteMask(Rectangle r, byte[] mask, boolean doBoundsOptimization)
     {
         // reset image with new rectangle
         updateImage(r);
 
         System.arraycopy(mask, 0, maskData, 0, r.width * r.height);
 
-        optimizeBounds();
+        if (doBoundsOptimization)
+        {
+            // optimize bounds
+            if (isUpdating())
+                boundsNeedUpdate = true;
+            else
+                optimizeBounds();
+        }
+
+        // notify roi changed
+        roiChanged(true);
+    }
+
+    /**
+     * Set the mask from a boolean array.<br>
+     * r represents the region defined by the boolean array.
+     * 
+     * @param r
+     * @param booleanMask
+     */
+    protected void setAsBooleanMask(Rectangle r, boolean[] booleanMask, boolean doBoundsOptimization)
+    {
+        // reset image with new rectangle
+        updateImage(r);
+
+        final byte[] data = maskData;
+
+        for (int i = 0; i < data.length; i++)
+            data[i] = (byte) (booleanMask[i] ? 1 : 0);
+
+        if (doBoundsOptimization)
+        {
+            // optimize bounds
+            if (isUpdating())
+                boundsNeedUpdate = true;
+            else
+                optimizeBounds();
+        }
+
+        // notify roi changed
         roiChanged(true);
     }
 
@@ -2392,16 +2451,7 @@ public class ROI2DArea extends ROI2D
      */
     public void setAsBooleanMask(Rectangle r, boolean[] booleanMask)
     {
-        // reset image with new rectangle
-        updateImage(r);
-
-        final byte[] data = maskData;
-
-        for (int i = 0; i < data.length; i++)
-            data[i] = (byte) (booleanMask[i] ? 1 : 0);
-
-        optimizeBounds();
-        roiChanged(true);
+        setAsBooleanMask(r, booleanMask, true);
     }
 
     public void setAsBooleanMask(int x, int y, int w, int h, boolean[] booleanMask)
@@ -2427,10 +2477,10 @@ public class ROI2DArea extends ROI2D
                 }
                 // we need to rebuild shape
                 if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
-                    ((ROI2DAreaPainter) getOverlay()).needRebuild = true;
+                    getOverlay().needRebuild = true;
                 else
                 {
-                    final ROI2DAreaPainter overlay = ((ROI2DAreaPainter) getOverlay());
+                    final ROI2DAreaPainter overlay = getOverlay();
 
                     // z position change ? --> need total rebuild
                     if (overlay.lastBuildPosZ != getZ())
@@ -2443,7 +2493,7 @@ public class ROI2DArea extends ROI2D
 
             case FOCUS_CHANGED:
             case SELECTION_CHANGED:
-                ((ROI2DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                getOverlay().updateVtkDisplayProperties();
                 break;
 
             case PROPERTY_CHANGED:
@@ -2451,7 +2501,7 @@ public class ROI2DArea extends ROI2D
 
                 if (StringUtil.equals(property, PROPERTY_STROKE) || StringUtil.equals(property, PROPERTY_COLOR)
                         || StringUtil.equals(property, PROPERTY_OPACITY))
-                    ((ROI2DAreaPainter) getOverlay()).updateVtkDisplayProperties();
+                    getOverlay().updateVtkDisplayProperties();
                 break;
 
             default:
@@ -2486,7 +2536,7 @@ public class ROI2DArea extends ROI2D
                 return false;
 
             // set the ROI from the unpacked boolean mask
-            setAsByteMask(rect, data);
+            setAsByteMask(rect, data, false);
         }
         finally
         {

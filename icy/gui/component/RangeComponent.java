@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -58,7 +59,9 @@ public class RangeComponent extends JPanel implements ChangeListener
         highSpinner.addChangeListener(this);
         slider.addChangeListener(this);
 
-        setLayout(new BorderLayout());
+        slider.setBorder(new EmptyBorder(0, 0, 0, 0));
+
+        setLayout(new BorderLayout(0, 0));
 
         if (orientation == SwingConstants.VERTICAL)
         {

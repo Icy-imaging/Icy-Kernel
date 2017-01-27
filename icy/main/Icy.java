@@ -18,19 +18,6 @@
  */
 package icy.main;
 
-import java.awt.EventQueue;
-import java.beans.PropertyVetoException;
-import java.io.File;
-import java.nio.channels.FileLock;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JOptionPane;
-import javax.swing.WindowConstants;
-
 import icy.action.ActionManager;
 import icy.common.Version;
 import icy.file.FileUtil;
@@ -75,6 +62,20 @@ import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 import ij.ImageJ;
+
+import java.awt.EventQueue;
+import java.beans.PropertyVetoException;
+import java.io.File;
+import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
+import javax.swing.WindowConstants;
+
 import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
 
@@ -97,7 +98,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.8.7.0");
+    public static Version version = new Version("1.8.8.0");
 
     /**
      * Main interface
@@ -493,10 +494,9 @@ public class Icy
         if (!Icy.getMainInterface().isHeadLess())
         {
             // welcome tip !
-            final ToolTipFrame tooltip = new ToolTipFrame(
-                    "<html>Access the main menu by clicking on top left icon<br>" + "<img src=\""
-                            + Icy.class.getResource("/res/image/help/main_menu.png").toString() + "\" /></html>",
-                    30, "mainMenuTip");
+            final ToolTipFrame tooltip = new ToolTipFrame("<html>Access the main menu by clicking on top left icon<br>"
+                    + "<img src=\"" + Icy.class.getResource("/res/image/help/main_menu.png").toString()
+                    + "\" /></html>", 30, "mainMenuTip");
             tooltip.setSize(456, 240);
         }
     }
@@ -624,7 +624,9 @@ public class Icy
     }
 
     /**
-     * exit
+     * Exit Icy, returns <code>true</code> if the operation should success.<br>
+     * Note that the method is asynchronous so you still have a bit of time to execute some stuff before the application
+     * actually exit.
      */
     public static boolean exit(final boolean restart)
     {
@@ -1303,8 +1305,8 @@ public class Icy
                 final String osVer = SystemUtil.getOSVersion();
 
                 if (osVer.startsWith("10.6") || osVer.startsWith("10.5"))
-                    System.out.println(
-                            "VTK 6.3 is not supported on OSX " + osVer + ", version 10.7 or above is required.");
+                    System.out.println("VTK 6.3 is not supported on OSX " + osVer
+                            + ", version 10.7 or above is required.");
             }
         }
     }

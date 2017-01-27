@@ -750,6 +750,9 @@ public class XMLUtil
     @SuppressWarnings("null")
     public static Element getElement(Node node, String name)
     {
+        if (node == null)
+            return null;
+
         final String filteredName = filterString(name);
         int tries = 3;
         RuntimeException exception = null;

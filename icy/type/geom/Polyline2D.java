@@ -264,11 +264,11 @@ public class Polyline2D implements Shape, Cloneable
         {
             double[] tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(xpoints, 0, tmp, 0, npoints);
             xpoints = tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(ypoints, 0, tmp, 0, npoints);
             ypoints = tmp;
         }

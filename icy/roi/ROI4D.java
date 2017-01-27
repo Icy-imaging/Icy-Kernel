@@ -586,7 +586,7 @@ public abstract class ROI4D extends ROI
     {
         // not on the correct C position --> return empty mask
         if (!isActiveFor(c))
-            return new boolean[width * height];
+            return new boolean[Math.max(0, width) * Math.max(0, height)];
 
         return getBooleanMask2D(x, y, width, height, z, t, inclusive);
     }
@@ -615,7 +615,7 @@ public abstract class ROI4D extends ROI
      */
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, boolean inclusive)
     {
-        final boolean[] result = new boolean[width * height];
+        final boolean[] result = new boolean[Math.max(0, width) * Math.max(0, height)];
 
         // simple and basic implementation, override it to have better performance
         int offset = 0;

@@ -180,7 +180,9 @@ public class ApplicationPreferences
     {
         // we want a big permgen space for the class loader
         return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImage -XX:MaxPermSize=128M");
+                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImage "
+                        + "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImageInternal "
+                        + "-XX:MaxPermSize=128M");
     }
 
     /**

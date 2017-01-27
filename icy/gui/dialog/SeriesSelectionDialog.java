@@ -53,6 +53,11 @@ import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
+/**
+ * Dialog used to select which serie to open for multi serie image.
+ * 
+ * @author Stephane
+ */
 public class SeriesSelectionDialog extends ActionDialog implements Runnable
 {
     /**

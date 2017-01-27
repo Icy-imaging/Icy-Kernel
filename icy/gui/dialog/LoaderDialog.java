@@ -21,8 +21,7 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
 /**
- * Loader dialog used to load resource or image from the {@link FileImporter} or
- * {@link SequenceFileImporter}.
+ * Loader dialog used to load resource or image from the {@link FileImporter} or {@link SequenceFileImporter}.
  * 
  * @author Stephane
  * @see Loader
@@ -142,9 +141,6 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         // display loader
         final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
 
-        // cancel preview refresh (for big file)
-        optionPanel.cancelPreview();
-
         // action confirmed ?
         if (value == JFileChooser.APPROVE_OPTION)
         {
@@ -157,27 +153,57 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
             // load if requested
             if (autoLoad)
             {
+                // get selected paths
+                final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles()));
+                // first path
+                final String firstPath = paths.get(0);
                 // get the selected importer from file filter
                 final Object importer = getImporter(getFileFilterIndex());
 
-                if (importer instanceof FileImporter)
+                // multi file or folder loading
+                if ((paths.size() > 1) || FileUtil.isDirectory(firstPath))
                 {
-                    // load selected non image file(s)
-                    Loader.load((FileImporter) importer, CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())),
-                            true);
-                }
-                else if (importer instanceof SequenceFileImporter)
-                {
-                    // load selected image file(s)
-                    Loader.load((SequenceFileImporter) importer,
-                            CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())), isSeparateSequenceSelected(),
-                            isAutoOrderSelected(), true);
+                    if (importer instanceof FileImporter)
+                    {
+                        // load selected non image file(s)
+                        Loader.load((FileImporter) importer, paths, true);
+                    }
+                    else if (importer instanceof SequenceFileImporter)
+                    {
+
+                        // load selected image file(s)
+                        Loader.load((SequenceFileImporter) importer, paths, isSeparateSequenceSelected(),
+                                isAutoOrderSelected(), true);
+                    }
+                    else
+                    {
+                        // load selected file(s)
+                        Loader.load(paths, isSeparateSequenceSelected(), isAutoOrderSelected(), true);
+                    }
                 }
                 else
                 {
-                    // load selected file(s)
-                    Loader.load(CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())),
-                            isSeparateSequenceSelected(), isAutoOrderSelected(), true);
+                    // single file loading
+                    if (importer instanceof FileImporter)
+                    {
+                        // load selected non image file
+                        Loader.load((FileImporter) importer, paths, true);
+                    }
+                    else if (importer instanceof SequenceFileImporter)
+                    {
+
+                        // load selected image file with advanced option
+                        Loader.load((SequenceFileImporter) importer, firstPath, -1, optionPanel.getResolutionLevel(),
+                                null, optionPanel.getZMin(), optionPanel.getZMax(), optionPanel.getTMin(),
+                                optionPanel.getTMax(), optionPanel.getChannel(), true, true);
+                    }
+                    else
+                    {
+                        // load selected file
+                        Loader.load(null, firstPath, -1, optionPanel.getResolutionLevel(), null, optionPanel.getZMin(),
+                                optionPanel.getZMax(), optionPanel.getTMin(), optionPanel.getTMax(),
+                                optionPanel.getChannel(), true, true);
+                    }
                 }
             }
         }
@@ -278,7 +304,6 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
     public void propertyChange(PropertyChangeEvent evt)
     {
         final String prop = evt.getPropertyName();
-        final boolean imageFilter = isImageFilter();
 
         if (prop.equals(JFileChooser.FILE_FILTER_CHANGED_PROPERTY))
             updateGUI();
@@ -295,6 +320,9 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
             updateOptionPanel();
         }
+        // closing ? --> do some final operation on option panel
+        else if (prop.equals("JFileChooserDialogIsClosingProperty"))
+            optionPanel.closingFromEDT();
         else
             updateOptionPanel();
     }
@@ -329,7 +357,6 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         else
             multi = false;
 
-        optionPanel.setSeparateSequenceEnabled(multi);
-        optionPanel.setAutoOrderEnabled(multi);
+        optionPanel.setMultiFile(multi);
     }
 }

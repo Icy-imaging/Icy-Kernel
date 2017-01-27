@@ -17,7 +17,7 @@ import icy.util.StringUtil;
  */
 public class ROIReadOnlyDescriptor extends ROIDescriptor
 {
-    public static final String ID = "ReadOnly";
+    public static final String ID = "Read only";
 
     public ROIReadOnlyDescriptor()
     {

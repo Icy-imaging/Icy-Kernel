@@ -4,6 +4,7 @@
 package icy.plugin.abstract_;
 
 import icy.common.exception.UnsupportedFormatException;
+import icy.common.listener.ProgressListener;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
 import icy.plugin.interface_.PluginNoEDTConstructor;
@@ -11,12 +12,12 @@ import icy.sequence.SequenceIdImporter;
 
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.util.List;
 
 import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
- * Plugin specialized for Sequence id import operation (see the {@link SequenceIdImporter}
- * interface)
+ * Plugin specialized for Sequence id import operation (see the {@link SequenceIdImporter} interface)
  * 
  * @see PluginImporter
  * @see PluginFileImporter
@@ -114,6 +115,23 @@ public abstract class PluginSequenceIdImporter extends Plugin implements Sequenc
     public IcyBufferedImage getImage(int z, int t) throws UnsupportedFormatException, IOException
     {
         return interfaceHelper.getImage(z, t);
+    }
+
+    /**
+     * See {@link AbstractImageProvider#getImageByTile(int, int, int, int, int, int, int,ProgressListener)}
+     */
+    public IcyBufferedImage getImageByTile(int serie, int resolution, int z, int t, int c, int tileW, int tileH,
+            ProgressListener listener) throws UnsupportedFormatException, IOException
+    {
+        return interfaceHelper.getImageByTile(serie, resolution, z, t, c, tileW, tileH, listener);
+    }
+
+    /**
+     * See {@link AbstractImageProvider#getTileList(int, int, int, int)}
+     */
+    public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
+    {
+        return AbstractImageProvider.getTileList(sizeX, sizeY, tileW, tileH);
     }
 
     /**

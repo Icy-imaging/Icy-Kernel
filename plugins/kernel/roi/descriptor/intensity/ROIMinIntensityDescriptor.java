@@ -16,7 +16,7 @@ import icy.sequence.SequenceEvent.SequenceEventSourceType;
  */
 public class ROIMinIntensityDescriptor extends ROIDescriptor
 {
-    public static final String ID = "MinIntensity";
+    public static final String ID = "Min intensity";
 
     public ROIMinIntensityDescriptor()
     {

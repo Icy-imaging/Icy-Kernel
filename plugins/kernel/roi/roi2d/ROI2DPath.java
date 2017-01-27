@@ -82,7 +82,7 @@ public class ROI2DPath extends ROI2DShape
         else
             this.openPath = openPath;
 
-        // set icon (default name is defined by getDefaultName()) 
+        // set icon (default name is defined by getDefaultName())
         setIcon(ResourceUtil.ICON_ROI_POLYLINE);
     }
 
@@ -129,7 +129,7 @@ public class ROI2DPath extends ROI2DShape
     {
         this(new Path2D.Double(Path2D.WIND_NON_ZERO));
     }
-    
+
     @Override
     public String getDefaultName()
     {
@@ -461,7 +461,7 @@ public class ROI2DPath extends ROI2DShape
             {
                 for (Node n : nodesPoint)
                 {
-                    final PathAnchor2D pt = new PathAnchor2D();
+                    final PathAnchor2D pt = (PathAnchor2D) createAnchor(new Point2D.Double());
                     pt.loadPositionFromXML(n);
                     addPoint(pt);
                 }

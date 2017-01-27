@@ -228,8 +228,6 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
 
             for (int c = 0; c < rect.sizeC; c++)
                 setSlice(c + rect.c, new ROI4DArea(mask[c]));
-
-            optimizeBounds();
         }
         finally
         {

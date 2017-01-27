@@ -287,15 +287,15 @@ public class Polyline3D implements Shape3D, Cloneable
         {
             double[] tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(xpoints, 0, tmp, 0, npoints);
             xpoints = tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(ypoints, 0, tmp, 0, npoints);
             ypoints = tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(zpoints, 0, tmp, 0, npoints);
             zpoints = tmp;
         }

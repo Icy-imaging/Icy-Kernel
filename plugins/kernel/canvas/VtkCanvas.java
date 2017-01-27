@@ -7,6 +7,7 @@ import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
+import icy.common.exception.TooLargeArrayException;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
@@ -286,7 +287,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         // initialize text info actor (need to be done before the first getImageData() call !
         textInfo = new vtkTextActor();
-        textInfo.SetInput("No enough memory to display this 3D image !");
+        textInfo.SetInput("Not enough memory to display this 3D image !");
         textInfo.SetPosition(10, 10);
         // not visible by default
         textInfo.SetVisibility(0);
@@ -487,7 +488,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                             }
                         }
                     });
-
+                    
                     // sleep a bit to offer a bit of responsiveness
                     ThreadUtil.sleep(l);
                     // and refresh
@@ -1468,6 +1469,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                         sequence.getSizeZ(), 1);
             }
         }
+        catch (TooLargeArrayException e)
+        {
+            // cannot allocate a such large contiguous array
+            return null;
+        }
         catch (OutOfMemoryError e)
         {
             // just not enough memory
@@ -2187,7 +2193,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         }
     }
 
-    protected void invokeOnEDT(Runnable task) throws InterruptedException
+    protected synchronized void invokeOnEDT(Runnable task) throws InterruptedException
     {
         // in initialization --> just execute
         if (edtTask == null)
@@ -2213,7 +2219,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         }
     }
 
-    protected void invokeOnEDTSilent(Runnable task)
+    protected synchronized void invokeOnEDTSilent(Runnable task)
     {
         try
         {
@@ -2534,6 +2540,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
          */
         protected void updateCursor(boolean consumedByCanvas)
         {
+            // don't change custom cursor
+            if (getCursor().getType() == Cursor.CUSTOM_CURSOR)
+                return;
+
+            // consumed by canvas --> return it to origin
             if (consumedByCanvas)
             {
                 GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
@@ -2779,5 +2790,4 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             return new vtkProp[] {imageVolume.getVolume()};
         }
     }
-
 }

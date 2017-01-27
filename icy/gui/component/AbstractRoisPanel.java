@@ -573,7 +573,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         nameFilter.setText(name);
     }
 
-    protected void computeROIResults(ROIResults roiResults, Sequence seq, ColumnInfo columnInfo)
+    protected boolean computeROIResults(ROIResults roiResults, Sequence seq, ColumnInfo columnInfo)
     {
         final Map<ColumnInfo, DescriptorResult> results = roiResults.descriptorResults;
         final ROIDescriptor descriptor = columnInfo.descriptor;
@@ -670,10 +670,12 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                     }
                 }
 
-                // refresh table data
-                refreshTableData();
+                // we updated result
+                return true;
             }
         }
+
+        return false;
     }
 
     /**
@@ -1078,7 +1080,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 && basicDescriptorComputer.hasPendingComputation()
                 && advancedDescriptorComputer.hasPendingComputation();
 
-        // still pending descriptor task ? 
+        // still pending descriptor task ?
         if (hasPendingTask)
         {
             // avoid too much table data update
@@ -1358,61 +1360,15 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             for (ColumnInfo columnInfo : exportColumnInfos)
             {
                 if (columnInfo.visible)
-                {
+                {                    
                     // try to retrieve result for this column
-                    DescriptorResult result = descriptorResults.get(columnInfo);
+                    final DescriptorResult result = descriptorResults.get(columnInfo);
 
-                    // not yet computed --> do it now
+                    // not yet created/computed --> create it and compute it now
                     if (result == null)
                     {
-                        final ROIDescriptor descriptor = columnInfo.descriptor;
-                        final PluginROIDescriptor plugin;
-
-                        // get the corresponding plugin
-                        synchronized (descriptorMap)
-                        {
-                            plugin = descriptorMap.get(descriptor);
-                        }
-
-                        if (plugin != null)
-                        {
-                            final Map<ROIDescriptor, Object> newResults;
-
-                            try
-                            {
-                                // need computation per channel ?
-                                if (descriptor.separateChannel())
-                                {
-                                    // retrieve the ROI for this channel
-                                    final ROI subRoi = results.getRoiForChannel(columnInfo.channel);
-
-                                    if (subRoi == null)
-                                        throw new UnsupportedOperationException("Can't retrieve sub ROI for channel "
-                                                + columnInfo.channel);
-
-                                    newResults = plugin.compute(subRoi, seq);
-                                }
-                                else
-                                    newResults = plugin.compute(results.roi, seq);
-
-                                for (Entry<ROIDescriptor, Object> entryNewResult : newResults.entrySet())
-                                {
-                                    // get the column for this result
-                                    final ColumnInfo resultColumnInfo = getColumnInfo(exportColumnInfos,
-                                            entryNewResult.getKey(), columnInfo.channel);
-                                    // create result
-                                    result = new DescriptorResult(resultColumnInfo);
-                                    // and put it in map
-                                    descriptorResults.put(resultColumnInfo, result);
-                                    // and set result value
-                                    result.setValue(entryNewResult.getValue());
-                                }
-                            }
-                            catch (UnsupportedOperationException e)
-                            {
-                                // ignore
-                            }
-                        }
+                        descriptorResults.put(columnInfo, new DescriptorResult(columnInfo));
+                        computeROIResults(results, seq, columnInfo);
                     }
                 }
             }
@@ -2090,12 +2046,17 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                 columnInfos = results.keySet().toArray(new ColumnInfo[results.size()]);
             }
 
+            boolean needUpdate = false;
             for (ColumnInfo columnInfo : columnInfos)
             {
                 // only compute a specific kind of descriptor
                 if (columnInfo.getDescriptorType() == type)
-                    AbstractRoisPanel.this.computeROIResults(roiResults, seq, columnInfo);
+                    needUpdate |= AbstractRoisPanel.this.computeROIResults(roiResults, seq, columnInfo);
             }
+
+            // need to refresh data
+            if (needUpdate)
+                refreshTableData();
         }
     }
 
@@ -2401,7 +2362,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             final String id = descriptor.getId();
 
             return (StringUtil.equals(id, ROIIconDescriptor.ID)) || (StringUtil.equals(id, ROIColorDescriptor.ID))
-                    || (StringUtil.equals(id, ROINameDescriptor.ID))|| (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+                    || (StringUtil.equals(id, ROINameDescriptor.ID))
+                    || (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionXDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionYDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionZDescriptor.ID))
@@ -2533,7 +2495,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             final String id = descriptor.getId();
 
             // we don't want to display name for these descriptors
-            if (StringUtil.equals(id, ROIIconDescriptor.ID) || StringUtil.equals(id, ROIColorDescriptor.ID) || StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+            if (StringUtil.equals(id, ROIIconDescriptor.ID) || StringUtil.equals(id, ROIColorDescriptor.ID)
+                    || StringUtil.equals(id, ROIGroupIdDescriptor.ID))
                 showName = false;
             else
                 showName = true;

@@ -18,21 +18,13 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Map.Entry;
-
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
+import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
@@ -42,6 +34,18 @@ import icy.type.rectangle.Rectangle3D;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
@@ -322,6 +326,18 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (polyData != null)
                 VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
+        
+        @Override
+        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // provide backward compatibility
+            if (imagePoint != null)
+                mouseClick(e, imagePoint.toPoint2D(), canvas);
+            else
+                mouseClick(e, (Point2D) null, canvas);
+
+            // cancel the default action of ROIPainter implementation which unselecting ROI on right click
+        }
 
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
@@ -456,8 +472,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         {
             for (int z = zMin; z <= zMax; z++)
                 setSlice(z, new ROI2DArea(mask2d));
-
-            optimizeBounds();
         }
         finally
         {
@@ -530,46 +544,339 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * Sets the ROI slice at given Z position to this 3D ROI
+     * Add the specified {@link BooleanMask3D} content to this ROI3DArea
+     */
+    public void add(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                add(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Add the specified BooleanMask2D with the existing slice at given Z position.<br>
+     * If there is no slice at this Z position then the method is equivalent to {@link #setSlice(int, ROI2DArea)} with
+     * <code>new ROI2DArea(maskSlice)</code>
+     * 
+     * @param z
+     *        the position where the slice must be added
+     * @param maskSlice
+     *        the 2D boolean mask to merge
+     */
+    public void add(int z, BooleanMask2D maskSlice)
+    {
+        if (maskSlice == null)
+            return;
+
+        final ROI2DArea currentSlice = getSlice(z);
+
+        if (currentSlice != null)
+            // merge slices
+            currentSlice.add(maskSlice);
+        else
+            // add new slice
+            setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    /**
+     * Exclusively add the specified {@link BooleanMask3D} content to this ROI3DArea
+     */
+    public void exclusiveAdd(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                exclusiveAdd(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Exclusively add the specified BooleanMask2D with the existing slice at given Z position.<br>
+     * If there is no slice at this Z position then the method is equivalent to {@link #setSlice(int, ROI2DArea)} with
+     * <code>new ROI2DArea(maskSlice)</code>
+     * 
+     * @param z
+     *        the position where the slice must be exclusively added
+     * @param maskSlice
+     *        the 2D boolean mask to merge
+     */
+    public void exclusiveAdd(int z, BooleanMask2D maskSlice)
+    {
+        if (maskSlice == null)
+            return;
+
+        final ROI2DArea currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // process exclusive add
+            currentSlice.exclusiveAdd(maskSlice);
+            // remove it if empty
+            if (currentSlice.isEmpty())
+                removeSlice(z);
+        }
+        // add new slice
+        else
+            setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    /**
+     * Intersect the specified {@link BooleanMask3D} content with this ROI3DArea
+     */
+    public void intersect(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            final Set<Integer> keys = mask.mask.keySet();
+            final Set<Integer> toRemove = new HashSet<Integer>();
+
+            // remove slices which are not contained
+            for (Integer key : slices.keySet())
+                if (!keys.contains(key))
+                    toRemove.add(key);
+
+            // do remove first
+            for (Integer key : toRemove)
+                removeSlice(key.intValue());
+
+            // then process intersection
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                intersect(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Intersect the specified BooleanMask2D with the existing slice at given Z position.
      * 
      * @param z
      *        the position where the slice must be set
-     * @param roiSlice
-     *        the 2D ROI to set
-     * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or
-     *        <code>false</code> to
-     *        replace the existing slice.
+     * @param maskSlice
+     *        the 2D boolean mask to merge
      */
-    public void setSlice(int z, ROI2D roiSlice, boolean merge)
+    public void intersect(int z, BooleanMask2D maskSlice)
     {
-        if (roiSlice == null)
-            throw new IllegalArgumentException("Cannot add an empty slice in a 3D ROI");
+        // better to throw an exception here than removing slice
+        if (maskSlice == null)
+            throw new IllegalArgumentException("Cannot intersect an empty slice in a 3D ROI");
 
         final ROI2DArea currentSlice = getSlice(z);
-        final ROI newSlice;
+
+        if (currentSlice != null)
+        {
+            // build ROI from mask
+            final ROI2DArea roi = new ROI2DArea(maskSlice);
+
+            // set same position as slice
+            roi.setT(currentSlice.getT());
+            roi.setZ(currentSlice.getZ());
+            roi.setC(currentSlice.getC());
+            // compute intersection
+            currentSlice.intersect(roi, false);
+
+            // remove it if empty
+            if (currentSlice.isEmpty())
+                removeSlice(z);
+        }
+    }
+
+    /**
+     * Subtract the specified {@link BooleanMask3D} from this ROI3DArea
+     */
+    public void subtract(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                subtract(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Subtract the specified BooleanMask2D from the existing slice at given Z position.<br>
+     * 
+     * @param z
+     *        the position where the slice must be subtracted
+     * @param maskSlice
+     *        the 2D boolean mask to subtract
+     */
+    public void subtract(int z, BooleanMask2D maskSlice)
+    {
+        if (maskSlice == null)
+            return;
+
+        final ROI2DArea currentSlice = getSlice(z);
 
         // merge both slice
-        if ((currentSlice != null) && merge)
+        if (currentSlice != null)
         {
-            // we need to modify the Z, T and C position so we do the merge correctly
-            roiSlice.setZ(z);
-            roiSlice.setT(getT());
-            roiSlice.setC(getC());
-            // do ROI union
-            newSlice = currentSlice.getUnion(roiSlice);
+            // process exclusive add
+            currentSlice.subtract(maskSlice);
+            // remove it if empty
+            if (currentSlice.isEmpty())
+                removeSlice(z);
         }
-        else
-            newSlice = roiSlice;
-
-        if (newSlice instanceof ROI2DArea)
-            setSlice(z, (ROI2DArea) newSlice);
-        else if (newSlice instanceof ROI2D)
-            setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
-        else
-            throw new IllegalArgumentException(
-                    "Can't add the result of the merge operation on 2D slice " + z + ": " + newSlice.getClassName());
     }
+
+    @Override
+    public ROI add(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    add((ROI3DArea) roi3d);
+                else
+                    add(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI exclusiveAdd(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    exclusiveAdd((ROI3DArea) roi3d);
+                else
+                    exclusiveAdd(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.exclusiveAdd(roi, allowCreate);
+    }
+
+    @Override
+    public ROI intersect(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    intersect((ROI3DArea) roi3d);
+                else
+                    intersect(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.intersect(roi, allowCreate);
+    }
+
+    @Override
+    public ROI subtract(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    subtract((ROI3DArea) roi3d);
+                else
+                    subtract(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.subtract(roi, allowCreate);
+    }
+
+    /**
+     * Sets the BooleanMask2D slice at given Z position to this 3D ROI
+     * 
+     * @param z
+     *        the position where the slice must be set
+     * @param maskSlice
+     *        the BooleanMask2D to set
+     */
+    public void setSlice(int z, BooleanMask2D maskSlice)
+    {
+        // empty mask --> just remove previous
+        if (maskSlice == null)
+        {
+            removeSlice(z);
+            return;
+        }
+
+        setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    // /**
+    // * Merge the specified ROI with the existing slice at given Z position.<br>
+    // * If there is no slice at this Z position then the method is equivalent to {@link #setSlice(int, ROI2DArea)}
+    // *
+    // * @param z
+    // * the position where the slice must be set
+    // * @param roiSlice
+    // * the 2D ROI to merge
+    // */
+    // public void addROI2DSlice(int z, ROI2D roiSlice)
+    // {
+    // if (roiSlice == null)
+    // return;
+    //
+    // final ROI2DArea currentSlice = getSlice(z);
+    //
+    // // merge both slice
+    // if (currentSlice != null)
+    // {
+    // // we need to modify the Z, T and C position so we do the merge correctly
+    // roiSlice.setZ(z);
+    // roiSlice.setT(getT());
+    // roiSlice.setC(getC());
+    // // do ROI union
+    // currentSlice.add(roiSlice, true);
+    // }
+    // else
+    // setSlice(z, new ROI2DArea(roiSlice.getBooleanMask(true)));
+    // }
 
     /**
      * Returns true if the ROI is empty (the mask does not contains any point).
@@ -585,8 +892,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()}
-     *             instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()} instead.
      */
     @Deprecated
     public Point3D[] getEdgePoints()
@@ -595,8 +901,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()}
-     *             instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getPoints()} instead.
      */
     @Deprecated
     public Point3D[] getPoints()
@@ -702,7 +1007,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 
     /**
      * Optimize the bounds size to the minimum surface which still include all mask.<br>
-     * You should call it after consecutive remove operations.
+     * You should call it after consecutive remove operations if you directly addressed mask data.
      */
     public void optimizeBounds()
     {

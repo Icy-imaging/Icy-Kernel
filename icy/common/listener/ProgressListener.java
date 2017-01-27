@@ -25,5 +25,14 @@ package icy.common.listener;
  */
 public interface ProgressListener
 {
+    /**
+     * Notify progression of the current task
+     * 
+     * @param position
+     *        current position of completion
+     * @param length
+     *        final position of completion
+     * @return <code>false</code> if the cancellation of the task has been requested, <code>true</code> otherwise
+     */
     public boolean notifyProgress(double position, double length);
 }

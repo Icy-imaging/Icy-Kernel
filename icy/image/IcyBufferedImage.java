@@ -20,6 +20,7 @@ package icy.image;
 
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
+import icy.common.exception.TooLargeArrayException;
 import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
 import icy.image.colormap.IcyColorMap;
@@ -111,14 +112,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     /**
      * Create an IcyBufferedImage (multi component) from a list of BufferedImage.<br>
-     * IMPORTANT : source images can be used as part or as the whole result<br>
-     * so consider them as "lost"
+     * IMPORTANT : source images can be used as part or as the whole result so consider them as 'lost'.
      * 
      * @param imageList
      *        list of {@link BufferedImage}
      * @return {@link IcyBufferedImage}
+     * @throws IllegalArgumentException
+     *         if imageList is empty or contains incompatible images.
      */
-    public static IcyBufferedImage createFrom(List<? extends BufferedImage> imageList)
+    public static IcyBufferedImage createFrom(List<? extends BufferedImage> imageList) throws IllegalArgumentException
     {
         if (imageList.size() == 0)
             throw new IllegalArgumentException("imageList should contains at least 1 image");
@@ -198,6 +200,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             return new IcyBufferedImage(w, h, ((DataBufferByte) db).getBankData(), signedDataType);
         else if (db instanceof DataBufferShort)
             return new IcyBufferedImage(w, h, ((DataBufferShort) db).getBankData(), signedDataType);
+        else if (db instanceof DataBufferUShort)
+            return new IcyBufferedImage(w, h, ((DataBufferUShort) db).getBankData(), signedDataType);
         else if (db instanceof DataBufferInt)
             return new IcyBufferedImage(w, h, ((DataBufferInt) db).getBankData(), signedDataType);
         else if (db instanceof DataBufferFloat)
@@ -244,7 +248,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         // sort of IcyBufferedImage (JAI can return that type) --> no conversion needed
         if (image.getColorModel() instanceof IcyColorModel)
-            return new IcyBufferedImage((IcyColorModel) image.getColorModel(), image.getRaster());
+            return new IcyBufferedImage(IcyColorModel.createInstance((IcyColorModel) image.getColorModel(), false,
+                    false), image.getRaster());
 
         final int w = image.getWidth();
         final int h = image.getHeight();
@@ -316,23 +321,23 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
             throws FormatException, IOException
     {
-        return LociImporterPlugin.getThumbnailCompatible(reader, z, t);
+        return LociImporterPlugin.getThumbnailCompatible(reader, z, t, -1);
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getThumbnail(IFormatReader, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnail(IFormatReader, int, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createThumbnailFrom(IFormatReader reader, int z, int t) throws FormatException,
             IOException
     {
-        return LociImporterPlugin.getThumbnail(reader, z, t);
+        return LociImporterPlugin.getThumbnail(reader, z, t, -1);
     }
 
     /**
@@ -1975,16 +1980,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public byte[] getDataCopyXYCAsByte(byte[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final byte[][] banks = ((DataBufferByte) getRaster().getDataBuffer()).getBankData();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final byte[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2005,21 +2013,24 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public short[] getDataCopyXYCAsShort(short[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final DataBuffer db = getRaster().getDataBuffer();
         final short[][] banks;
         if (db instanceof DataBufferUShort)
             banks = ((DataBufferUShort) db).getBankData();
         else
             banks = ((DataBufferShort) db).getBankData();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final short[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2040,16 +2051,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public int[] getDataCopyXYCAsInt(int[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final int[][] banks = ((DataBufferInt) getRaster().getDataBuffer()).getBankData();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final int[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2070,16 +2084,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public float[] getDataCopyXYCAsFloat(float[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final float[][] banks = ((DataBufferFloat) getRaster().getDataBuffer()).getBankData();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final float[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2100,16 +2117,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public double[] getDataCopyXYCAsDouble(double[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final double[][] banks = ((DataBufferDouble) getRaster().getDataBuffer()).getBankData();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final double[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2250,10 +2270,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public byte[] getDataCopyCXYAsByte(byte[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final byte[][] banks = ((DataBufferByte) getRaster().getDataBuffer()).getBankData();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2280,15 +2303,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public short[] getDataCopyCXYAsShort(short[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final DataBuffer db = getRaster().getDataBuffer();
         final short[][] banks;
         if (db instanceof DataBufferUShort)
             banks = ((DataBufferUShort) db).getBankData();
         else
             banks = ((DataBufferShort) db).getBankData();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2315,10 +2341,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public int[] getDataCopyCXYAsInt(int[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final int[][] banks = ((DataBufferInt) getRaster().getDataBuffer()).getBankData();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2345,10 +2374,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public float[] getDataCopyCXYAsFloat(float[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final float[][] banks = ((DataBufferFloat) getRaster().getDataBuffer()).getBankData();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2375,10 +2407,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public double[] getDataCopyCXYAsDouble(double[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final double[][] banks = ((DataBufferDouble) getRaster().getDataBuffer()).getBankData();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -3096,6 +3131,66 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         dataChanged();
 
         return true;
+    }
+
+    /**
+     * Copy data to specified location from an data array.
+     * 
+     * @param data
+     *        source data array (should be same type than image data type)
+     * @param dataDim
+     *        source data dimension (array length should be >= Dimension.width * Dimension.heigth)
+     * @param signed
+     *        if the source data array should be considered as signed data (meaningful for integer data type only)
+     * @param dstPt
+     *        destination X,Y position (assume [0,0] if null)
+     * @param dstChannel
+     *        destination channel
+     */
+    public void copyData(Object data, Dimension dataDim, boolean signed, Point dstPt, int dstChannel)
+    {
+        if ((data == null) || (dataDim == null))
+            return;
+
+        // source image size
+        final Rectangle adjSrcRect = new Rectangle(dataDim);
+        // negative destination x position
+        if (dstPt.x < 0)
+            // adjust source rect
+            adjSrcRect.x += -dstPt.x;
+        // negative destination y position
+        if (dstPt.y < 0)
+            // adjust source rect
+            adjSrcRect.y += -dstPt.y;
+
+        final Rectangle dstRect = new Rectangle(dstPt.x, dstPt.y, adjSrcRect.width, adjSrcRect.height);
+        // limit to destination image size
+        final Rectangle adjDstRect = dstRect.intersection(new Rectangle(getSizeX(), getSizeY()));
+
+        final int w = Math.min(adjSrcRect.width, adjDstRect.width);
+        final int h = Math.min(adjSrcRect.height, adjDstRect.height);
+
+        // nothing to copy
+        if ((w == 0) || (h == 0))
+            return;
+
+        final Object dst = getDataXY(dstChannel);
+        final int srcSizeX = dataDim.width;
+        final int dstSizeX = getSizeX();
+
+        int srcOffset = adjSrcRect.x + (adjSrcRect.y * srcSizeX);
+        int dstOffset = adjDstRect.x + (adjDstRect.y * dstSizeX);
+
+        for (int y = 0; y < h; y++)
+        {
+            // do data copy (and conversion if needed)
+            ArrayUtil.arrayToArray(data, srcOffset, dst, dstOffset, w, signed);
+            srcOffset += srcSizeX;
+            dstOffset += dstSizeX;
+        }
+
+        // notify data changed
+        dataChanged();
     }
 
     /**

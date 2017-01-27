@@ -88,8 +88,18 @@ public class SequencePropertiesDialog extends ActionDialog
                         break;
                 }
 
+                // time interval
                 sequence.setTimeInterval(valueInSec);
 
+                // position
+                sequence.setPositionX(UnitUtil.getValueInUnit(panel.getPositionXValue(), panel.getPositionXUnit(),
+                        UnitPrefix.MICRO));
+                sequence.setPositionY(UnitUtil.getValueInUnit(panel.getPositionYValue(), panel.getPositionYUnit(),
+                        UnitPrefix.MICRO));
+                sequence.setPositionZ(UnitUtil.getValueInUnit(panel.getPositionZValue(), panel.getPositionZUnit(),
+                        UnitPrefix.MICRO));
+
+                // channel name
                 for (int c = 0; c < sequence.getSizeC(); c++)
                     sequence.setChannelName(c, panel.getChannelNameFieldValue(c));
 

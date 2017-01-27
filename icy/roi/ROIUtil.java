@@ -26,10 +26,12 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
 import icy.type.DataIteratorUtil;
 import icy.type.dimension.Dimension5D;
+import icy.type.geom.Line2DUtil;
 import icy.type.geom.Polygon2D;
 import icy.type.point.Point3D;
 import icy.type.point.Point4D;
 import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle2DUtil;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
@@ -37,6 +39,7 @@ import icy.util.ShapeUtil.BooleanOperator;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -77,6 +80,12 @@ import plugins.kernel.roi.roi5d.ROI5DArea;
  */
 public class ROIUtil
 {
+    final public static String STACK_SUFFIX = " stack";
+    final public static String MASK_SUFFIX = " mask";
+    final public static String SHAPE_SUFFIX = " shape";
+    final public static String OBJECT_SUFFIX = " object";
+    final public static String PART_SUFFIX = " part";
+
     /**
      * Returns all available ROI descriptors (see {@link ROIDescriptor}) and their attached plugin
      * (see {@link PluginROIDescriptor}).<br/>
@@ -1430,7 +1439,7 @@ public class ROIUtil
             // unselect all control points
             result.unselectAllPoints();
             // keep original ROI informations
-            result.setName(roi.getName() + " stack");
+            result.setName(roi.getName() + STACK_SUFFIX);
             copyROIProperties(roi, result, false);
         }
 
@@ -1489,8 +1498,16 @@ public class ROIUtil
 
         // get result
         final ROI result = getOpResult(dim, mask, bounds);
+
         // keep original ROI informations
-        result.setName(roi.getName() + " mask");
+        String newName = roi.getName() + MASK_SUFFIX;
+        // check if we can shorter name
+        final String cancelableSuffix = SHAPE_SUFFIX + MASK_SUFFIX;
+        if (newName.endsWith(cancelableSuffix))
+            newName = newName.substring(0, newName.length() - cancelableSuffix.length());
+        // set name
+        result.setName(newName);
+        // copy properties
         copyROIProperties(roi, result, false);
 
         return result;
@@ -1538,8 +1555,16 @@ public class ROIUtil
 
             // convert to ROI polygon
             final ROI2DPolygon result = new ROI2DPolygon(Polygon2D.getPolygon2D(points2D, dev));
+
             // keep original ROI informations
-            result.setName(roi.getName() + " shape");
+            String newName = roi.getName() + SHAPE_SUFFIX;
+            // check if we can shorter name
+            final String cancelableSuffix = MASK_SUFFIX + SHAPE_SUFFIX;
+            if (newName.endsWith(cancelableSuffix))
+                newName = newName.substring(0, newName.length() - cancelableSuffix.length());
+            // set name
+            result.setName(newName);
+            // copy properties
             copyROIProperties(roi, result, false);
 
             return result;
@@ -1575,7 +1600,7 @@ public class ROIUtil
                 if (!componentRoi.isEmpty())
                 {
                     // keep original ROI informations
-                    componentRoi.setName(roi.getName() + " object #" + ind++);
+                    componentRoi.setName(roi.getName() + OBJECT_SUFFIX + " #" + ind++);
                     copyROIProperties(roi, componentRoi, false);
 
                     result.add(componentRoi);
@@ -1613,6 +1638,103 @@ public class ROIUtil
 
         throw new UnsupportedOperationException(
                 "ROIUtil.getConnectedComponents(ROI): Operation not supported for this ROI: " + roi.getName());
+    }
+
+    static boolean computePolysFromLine(Line2D line, Point2D edgePt1, Point2D edgePt2, Polygon2D poly1,
+            Polygon2D poly2, boolean inner)
+    {
+        final Line2D edgeLine = new Line2D.Double(edgePt1, edgePt2);
+
+        // they intersect ?
+        if (edgeLine.intersectsLine(line))
+        {
+            final Point2D intersection = Line2DUtil.getIntersection(edgeLine, line);
+
+            // are we inside poly2 ?
+            if (inner)
+            {
+                // add intersection to poly2
+                poly2.addPoint(intersection);
+                // add intersection and pt2 to poly1
+                poly1.addPoint(intersection);
+                poly1.addPoint(edgePt2);
+            }
+            else
+            {
+                // add intersection to poly1
+                poly1.addPoint(intersection);
+                // add intersection and pt2 to poly2
+                poly2.addPoint(intersection);
+                poly2.addPoint(edgePt2);
+            }
+
+            // we changed region
+            return !inner;
+        }
+
+        // inside poly2 --> add point to poly2
+        if (inner)
+            poly2.addPoint(edgePt2);
+        else
+            poly1.addPoint(edgePt2);
+
+        // same region
+        return inner;
+    }
+
+    /**
+     * Cut the specified ROI with the given Line2D (extended to ROI bounds) and return the 2 resulting ROI in a list.<br>
+     * If the specified ROI cannot be cut by the given Line2D then <code>null</code> is returned.
+     */
+    public static List<ROI> split(ROI roi, Line2D line)
+    {
+        final Rectangle2D bounds2d = roi.getBounds5D().toRectangle2D();
+        // need to enlarge bounds a bit to avoid roundness issues on line intersection
+        final Rectangle2D extendedBounds2d = Rectangle2DUtil.getScaledRectangle(bounds2d, 1.1d, true);
+        // enlarge line to ROI bounds
+        final Line2D extendedLine = Rectangle2DUtil.getIntersectionLine(extendedBounds2d, line);
+
+        // if the extended line intersects the ROI bounds
+        if ((extendedLine != null) && bounds2d.intersectsLine(extendedLine))
+        {
+            final List<ROI> result = new ArrayList<ROI>();
+            final Point2D topLeft = new Point2D.Double(bounds2d.getMinX(), bounds2d.getMinY());
+            final Point2D topRight = new Point2D.Double(bounds2d.getMaxX(), bounds2d.getMinY());
+            final Point2D bottomRight = new Point2D.Double(bounds2d.getMaxX(), bounds2d.getMaxY());
+            final Point2D bottomLeft = new Point2D.Double(bounds2d.getMinX(), bounds2d.getMaxY());
+            final Polygon2D poly1 = new Polygon2D();
+            final Polygon2D poly2 = new Polygon2D();
+            boolean inner;
+
+            // add first point to poly1
+            poly1.addPoint(topLeft);
+            // we are inside poly1 for now
+            inner = false;
+
+            // compute the 2 rectangle part (polygon) from top, right, bottom and left lines
+            inner = computePolysFromLine(extendedLine, topLeft, topRight, poly1, poly2, inner);
+            inner = computePolysFromLine(extendedLine, topRight, bottomRight, poly1, poly2, inner);
+            inner = computePolysFromLine(extendedLine, bottomRight, bottomLeft, poly1, poly2, inner);
+            inner = computePolysFromLine(extendedLine, bottomLeft, topLeft, poly1, poly2, inner);
+
+            // get intersection result from both polygon
+            final ROI roiPart1 = new ROI2DPolygon(poly1).getIntersection(roi);
+            final ROI roiPart2 = new ROI2DPolygon(poly2).getIntersection(roi);
+
+            // keep original ROI informations
+            roiPart1.setName(roi.getName() + PART_SUFFIX + " #1");
+            copyROIProperties(roi, roiPart1, false);
+            roiPart2.setName(roi.getName() + PART_SUFFIX + " #2");
+            copyROIProperties(roi, roiPart2, false);
+
+            // add to result list
+            result.add(roiPart1);
+            result.add(roiPart2);
+
+            return result;
+        }
+
+        return null;
     }
 
     /**
