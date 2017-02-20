@@ -60,9 +60,17 @@ public class SequencePersistent implements XMLPersistent
         document = XMLUtil.createDocument(true);
     }
 
+    /**
+     * Should return <code>null</code> if Sequence is not identified (no file name)
+     */
     private String getXMLFileName()
     {
-        return sequence.getOutputBaseName("meta") + sequence.getOutputExtension() + XMLUtil.FILE_DOT_EXTENSION;
+        final String baseName = sequence.getOutputBaseName("meta");
+
+        if (StringUtil.isEmpty(baseName))
+            return null;
+
+        return baseName + sequence.getOutputExtension() + XMLUtil.FILE_DOT_EXTENSION;
     }
 
     /**

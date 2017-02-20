@@ -82,7 +82,7 @@ public class ROI3DPoint extends ROI3DShape
         // }
 
         @Override
-        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {
@@ -159,22 +159,22 @@ public class ROI3DPoint extends ROI3DShape
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
         @Override
-        protected void rebuildVtkObjects()
+        protected boolean rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return;
+                return false;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return;
+                return false;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return;
+                return false;
 
             final Point3D pos = getPoint();
 
@@ -199,43 +199,42 @@ public class ROI3DPoint extends ROI3DShape
 
             // need to repaint
             painterChanged();
+
+            return true;
         }
 
         @Override
-        protected void updateVtkDisplayProperties()
+        protected boolean updateVtkDisplayProperties()
         {
-            if (actor != null)
+            if (actor == null)
+                return false;
+
+            final VtkCanvas cnv = canvas3d.get();
+            final Color col = getDisplayColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+            // final float opacity = getOpacity();
+
+            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+            // we need to lock canvas as actor can be accessed during rendering
+            if (vtkPanel != null)
+                vtkPanel.lock();
+            try
             {
-                final VtkCanvas cnv = canvas3d.get();
-                final Color col = getDisplayColor();
-                final double r = col.getRed() / 255d;
-                final double g = col.getGreen() / 255d;
-                final double b = col.getBlue() / 255d;
-                // final float opacity = getOpacity();
-
-                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-                // we need to lock canvas as actor can be accessed during rendering
-                if (vtkPanel != null)
-                {
-                    vtkPanel.lock();
-                    try
-                    {
-                        actor.GetProperty().SetColor(r, g, b);
-                    }
-                    finally
-                    {
-                        vtkPanel.unlock();
-                    }
-                }
-                else
-                {
-                    actor.GetProperty().SetColor(r, g, b);
-                }
-
-                // need to repaint
-                painterChanged();
+                actor.GetProperty().SetColor(r, g, b);
             }
+            finally
+            {
+                if (vtkPanel != null)
+                    vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
+
+            return true;
         }
     }
 

@@ -304,7 +304,7 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
     {
         setPosition(position.x, position.y, value);
     }
-    
+
     /**
      * Get anchor position (return the internal reference)
      */
@@ -678,17 +678,17 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
     /**
      * update 3D painter for 3D canvas (called only when VTK is loaded).
      */
-    protected void rebuildVtkObjects()
+    protected boolean rebuildVtkObjects()
     {
         final VtkCanvas canvas = canvas3d.get();
         // canvas was closed
         if (canvas == null)
-            return;
+            return false;
 
         final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
         // canvas was closed
         if (vtkPanel == null)
-            return;
+            return false;
 
         final Point3D pos = getPosition();
 
@@ -710,75 +710,67 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
 
         // need to repaint
         painterChanged();
+
+        return true;
     }
 
-    protected void updateVtkDisplayProperties()
+    protected boolean updateVtkDisplayProperties()
     {
-        if (actor != null)
+        if (actor == null)
+            return false;
+
+        final VtkCanvas cnv = canvas3d.get();
+        final Color col = isSelected() ? getSelectedColor() : getColor();
+        final double r = col.getRed() / 255d;
+        final double g = col.getGreen() / 255d;
+        final double b = col.getBlue() / 255d;
+        // final float opacity = getOpacity();
+
+        final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+        // we need to lock canvas as actor can be accessed during rendering
+        if (vtkPanel != null)
+            vtkPanel.lock();
+        try
         {
-            final VtkCanvas cnv = canvas3d.get();
-            final Color col = isSelected() ? getSelectedColor() : getColor();
-            final double r = col.getRed() / 255d;
-            final double g = col.getGreen() / 255d;
-            final double b = col.getBlue() / 255d;
-            // final float opacity = getOpacity();
-
-            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-            // we need to lock canvas as actor can be accessed during rendering
-            if (vtkPanel != null)
+            actor.GetProperty().SetColor(r, g, b);
+            if (isVisible())
             {
-                vtkPanel.lock();
-                try
-                {
-                    actor.GetProperty().SetColor(r, g, b);
-                    if (isVisible())
-                    {
-                        actor.SetVisibility(1);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                    }
-                    else
-                    {
-                        actor.SetVisibility(0);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                    }
-                }
-                finally
-                {
-                    vtkPanel.unlock();
-                }
+                actor.SetVisibility(1);
+                vtkInfo.Set(VtkCanvas.visibilityKey, 1);
             }
             else
             {
-                actor.GetProperty().SetColor(r, g, b);
-                if (isVisible())
-                {
-                    actor.SetVisibility(1);
-                    vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                }
-                else
-                {
-                    actor.SetVisibility(0);
-                    vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                }
+                actor.SetVisibility(0);
+                vtkInfo.Set(VtkCanvas.visibilityKey, 0);
             }
-
-            // need to repaint
-            painterChanged();
         }
+        finally
+        {
+            if (vtkPanel != null)
+                vtkPanel.unlock();
+        }
+
+        // need to repaint
+        painterChanged();
+
+        return true;
     }
 
-    protected void updateVtkRadius()
+    protected boolean updateVtkRadius()
     {
         final VtkCanvas canvas = canvas3d.get();
         // canvas was closed
         if (canvas == null)
-            return;
+            return false;
 
         final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
         // canvas was closed
         if (vtkPanel == null)
-            return;
+            return false;
+
+        if (vtkSource == null)
+            return false;
 
         // update sphere radius base on canvas scale X
         final double radius = getAdjRay(canvas) * scaling[0];
@@ -800,6 +792,8 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
             // need to repaint
             painterChanged();
         }
+
+        return true;
     }
 
     @Override

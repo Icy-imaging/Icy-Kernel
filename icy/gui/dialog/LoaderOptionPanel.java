@@ -29,6 +29,7 @@ import icy.gui.component.model.SpecialValueSpinnerModel;
 import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -70,6 +71,21 @@ public class LoaderOptionPanel extends JPanel
             boolean thumbnailDone = false;
 
             metadata = null;
+
+            if (StringUtil.isEmpty(fileId))
+            {
+                preview.setImage(null);
+                preview.setTitle("");
+                preview.setInfos("");
+                preview.setInfos2("");
+
+                metadata = new OMEXMLMetadataImpl();
+
+                metaDataDone = true;
+                thumbnailDone = true;
+
+                return;
+            }
 
             preview.setImage(ResourceUtil.ICON_WAIT);
             preview.setTitle("loading...");

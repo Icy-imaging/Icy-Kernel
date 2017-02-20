@@ -943,9 +943,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Returns the region (X,Y) from original image if this image is a crop of the original image.<br>
-     * Default value is <code>null</code> (no crop)
-     * Returns the position offset (X,Y,Z) in pixel from the origin image (defined by {@link #getFilename()}).<br>
-     * By default it returns (0,0,0) but it can returns a different value if this image is a crop of the original image.
+     * Default value is <code>null</code> (full size).
      */
     public Rectangle getOriginXYRegion()
     {

@@ -114,6 +114,8 @@ public abstract class ROI3D extends ROI
                 return false;
             if (imagePoint == null)
                 return false;
+            if (!canSetPosition())
+                return false;
 
             double dx = imagePoint.getX() - startDragMousePosition.getX();
             double dy = imagePoint.getY() - startDragMousePosition.getY();
@@ -122,21 +124,27 @@ public abstract class ROI3D extends ROI
             // shift action --> limit to one direction
             if (EventUtil.isShiftDown(e))
             {
+                // X or Z drag
                 if (Math.abs(dx) > Math.abs(dy))
                 {
-                    dy = 0;
-                    if (Math.abs(dx) > Math.abs(dz))
-                        dz = 0;
+                    dy = 0d;
+
+                    // Z drag
+                    if (Math.abs(dz) > Math.abs(dx))
+                        dx = 0d;
                     else
-                        dx = 0;
+                        dz = 0d;
                 }
+                // Y or Z drag
                 else
                 {
-                    dx = 0;
-                    if (Math.abs(dy) > Math.abs(dz))
-                        dz = 0;
+                    dx = 0d;
+
+                    // Z drag
+                    if (Math.abs(dz) > Math.abs(dy))
+                        dy = 0d;
                     else
-                        dy = 0;
+                        dz = 0d;
                 }
             }
 
@@ -273,12 +281,12 @@ public abstract class ROI3D extends ROI
         /**
          * Draw the ROI
          */
-        protected abstract void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas);
+        public abstract void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas);
 
         /**
          * Draw the ROI name
          */
-        protected void drawName(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        public void drawName(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {

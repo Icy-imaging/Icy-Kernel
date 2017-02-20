@@ -62,7 +62,7 @@ public class FileActions
 
         public OpenSequenceRegionAction(int resolution)
         {
-            super("Open at resolution 1/" + ((int) Math.pow(2, resolution)), null, "Open region at resolution 1/"
+            super("Open at resolution 1/" + ((int) Math.pow(2, resolution)), null, "Open image region at resolution 1/"
                     + ((int) Math.pow(2, resolution)),
                     "Open the selected region from the original image at resolution 1/"
                             + ((int) Math.pow(2, resolution)), true, null);
@@ -77,7 +77,6 @@ public class FileActions
 
             if (sequence != null)
             {
-                final int originRes = sequence.getOriginResolution();
                 final String path = sequence.getFilename();
 
                 if (!StringUtil.isEmpty(path))
@@ -113,8 +112,9 @@ public class FileActions
                     }
 
                     final ROI roi = rois.get(0);
-                    final Rectangle bounds = SequenceUtil.getOriginRectangle(roi.getBounds5D().toRectangle2D().getBounds(),sequence);
-                    
+                    final Rectangle bounds = SequenceUtil.getOriginRectangle(roi.getBounds5D().toRectangle2D()
+                            .getBounds(), sequence);
+
                     if (!bounds.isEmpty())
                     {
                         final Sequence regionSequence = Loader.loadSequence(null, path, sequence.getSerieIndex(),
@@ -261,9 +261,8 @@ public class FileActions
     };
 
     public static IcyAbstractAction openSequenceAction = new IcyAbstractAction("Open", new IcyIcon(
-            ResourceUtil.ICON_OPEN), "Open a sequence",
-            "Display a file selection dialog and choose the sequence file to open", KeyEvent.VK_O,
-            SystemUtil.getMenuCtrlMask())
+            ResourceUtil.ICON_OPEN), "Open a file", "Display a file selection dialog and choose the file to open",
+            KeyEvent.VK_O, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 

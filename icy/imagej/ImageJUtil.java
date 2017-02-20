@@ -433,7 +433,8 @@ public class ImageJUtil
                 final ROI2DPath roiPath = new ROI2DPath(((ShapeRoi) roi).getShape());
                 final Rectangle2D.Double roiBounds = roi.getFloatBounds();
                 // we have to adjust position as Shape do not contains it
-                roiPath.setPosition2D(new Point2D.Double(roiBounds.x, roiBounds.y));
+                if (roiPath.canSetPosition())
+                    roiPath.setPosition2D(new Point2D.Double(roiBounds.x, roiBounds.y));
                 result.add(roiPath);
                 break;
 

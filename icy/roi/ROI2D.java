@@ -174,6 +174,8 @@ public abstract class ROI2D extends ROI
                 return false;
             if (imagePoint == null)
                 return false;
+            if (!canSetPosition())
+                return false;
 
             double dx = imagePoint.getX() - startDragMousePosition.getX();
             double dy = imagePoint.getY() - startDragMousePosition.getY();
@@ -341,12 +343,12 @@ public abstract class ROI2D extends ROI
         /**
          * Draw the ROI
          */
-        protected abstract void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas);
+        public abstract void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas);
 
         /**
          * Draw the ROI name
          */
-        protected void drawName(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        public void drawName(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {

@@ -208,22 +208,22 @@ public class ROI2DArea extends ROI2D
         /**
          * rebuild VTK objects (called only when VTK canvas is selected).
          */
-        protected void rebuildVtkObjects()
+        protected boolean rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return;
+                return false;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return;
+                return false;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return;
+                return false;
 
             // get previous polydata object
             final vtkPolyData previousPolyData = polyData;
@@ -289,77 +289,58 @@ public class ROI2DArea extends ROI2D
             }
 
             // update color and others properties
-            updateVtkDisplayProperties();
+            return updateVtkDisplayProperties();
         }
 
-        protected void updateVtkDisplayProperties()
+        protected boolean updateVtkDisplayProperties()
         {
-            if (surfaceActor != null)
+            if (surfaceActor == null)
+                return false;
+
+            final VtkCanvas cnv = canvas3d.get();
+            final Color col = getDisplayColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+            // final double strk = getStroke();
+            // final float opacity = getOpacity();
+
+            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+            // we need to lock canvas as actor can be accessed during rendering
+            if (vtkPanel != null)
+                vtkPanel.lock();
+            try
             {
-                final VtkCanvas cnv = canvas3d.get();
-                final Color col = getDisplayColor();
-                final double r = col.getRed() / 255d;
-                final double g = col.getGreen() / 255d;
-                final double b = col.getBlue() / 255d;
-                // final double strk = getStroke();
-                // final float opacity = getOpacity();
-
-                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-                // we need to lock canvas as actor can be accessed during rendering
-                if (vtkPanel != null)
+                // set actors color
+                outlineActor.GetProperty().SetColor(r, g, b);
+                if (isSelected())
                 {
-                    vtkPanel.lock();
-                    try
-                    {
-                        // set actors color
-                        outlineActor.GetProperty().SetColor(r, g, b);
-                        if (isSelected())
-                        {
-                            outlineActor.GetProperty().SetRepresentationToWireframe();
-                            outlineActor.SetVisibility(1);
-                            vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                        }
-                        else
-                        {
-                            outlineActor.GetProperty().SetRepresentationToPoints();
-                            outlineActor.SetVisibility(0);
-                            vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                        }
-                        surfaceActor.GetProperty().SetColor(r, g, b);
-                        // opacity here is about ROI content, global opacity is handled by Layer
-                        // surfaceActor.GetProperty().SetOpacity(opacity);
-                        setVtkObjectsColor(col);
-                    }
-                    finally
-                    {
-                        vtkPanel.unlock();
-                    }
+                    outlineActor.GetProperty().SetRepresentationToWireframe();
+                    outlineActor.SetVisibility(1);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 1);
                 }
                 else
                 {
-                    outlineActor.GetProperty().SetColor(r, g, b);
-                    if (isSelected())
-                    {
-                        outlineActor.GetProperty().SetRepresentationToWireframe();
-                        outlineActor.SetVisibility(1);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                    }
-                    else
-                    {
-                        outlineActor.GetProperty().SetRepresentationToPoints();
-                        outlineActor.SetVisibility(0);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                    }
-                    surfaceActor.GetProperty().SetColor(r, g, b);
-                    // opacity here is about ROI content, gobal opacity is handled by Layer
-                    // surfaceActor.GetProperty().SetOpacity(opacity);
-                    setVtkObjectsColor(col);
+                    outlineActor.GetProperty().SetRepresentationToPoints();
+                    outlineActor.SetVisibility(0);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 0);
                 }
-
-                // need to repaint
-                painterChanged();
+                surfaceActor.GetProperty().SetColor(r, g, b);
+                // opacity here is about ROI content, global opacity is handled by Layer
+                // surfaceActor.GetProperty().SetOpacity(opacity);
+                setVtkObjectsColor(col);
             }
+            finally
+            {
+                if (vtkPanel != null)
+                    vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
+
+            return true;
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -370,22 +351,22 @@ public class ROI2DArea extends ROI2D
                 VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
 
-        protected void updateVtkObjectsBounds()
+        protected boolean updateVtkObjectsBounds()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return;
+                return false;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return;
+                return false;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return;
+                return false;
 
             final Rectangle3D bounds = getBounds5D().toRectangle3D();
             // apply scaling on bounds
@@ -420,6 +401,8 @@ public class ROI2DArea extends ROI2D
             {
                 vtkPanel.unlock();
             }
+            
+            return true;            
         }
 
         void updateCursor()
@@ -835,7 +818,7 @@ public class ROI2DArea extends ROI2D
          * Draw the ROI itself
          */
         @Override
-        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {
@@ -1845,6 +1828,13 @@ public class ROI2DArea extends ROI2D
         updateMask(shape, remove, true, false, false);
     }
 
+    @Deprecated
+    @Override
+    public ROI2DAreaPainter getPainter()
+    {
+        return getOverlay();
+    }
+
     @Override
     public ROI2DAreaPainter getOverlay()
     {
@@ -2345,6 +2335,7 @@ public class ROI2DArea extends ROI2D
     {
         translateX += dx;
         translateY += dy;
+
         // convert to integer
         final int dxi = (int) translateX;
         final int dyi = (int) translateY;
@@ -2352,9 +2343,11 @@ public class ROI2DArea extends ROI2D
         translateX -= dxi;
         translateY -= dyi;
 
-        bounds.translate(dxi, dyi);
-
-        roiChanged(false);
+        if ((dxi != 0) || (dyi != 0))
+        {
+            bounds.translate(dxi, dyi);
+            roiChanged(false);
+        }
     }
 
     @Override

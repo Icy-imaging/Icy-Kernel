@@ -2932,6 +2932,8 @@ public class Loader
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
+        final int sizeX = (region == null) ? MetaDataUtil.getSizeX(metadata, serie) : region.width;
+        final int sizeY = (region == null) ? MetaDataUtil.getSizeY(metadata, serie) : region.height;
         final int sizeZ = MetaDataUtil.getSizeZ(metadata, serie);
         final int sizeT = MetaDataUtil.getSizeT(metadata, serie);
         final int sizeC = MetaDataUtil.getSizeC(metadata, serie);
@@ -2957,7 +2959,7 @@ public class Loader
             adjMaxT = Math.min(maxT, sizeT - 1);
 
         // check that we can open the image
-        checkOpening(metadata, serie, resolution, (adjMaxZ - adjMinZ) + 1, (adjMaxT - adjMinT) + 1,
+        checkOpening(resolution, sizeX, sizeY, sizeC, (adjMaxZ - adjMinZ) + 1, (adjMaxT - adjMinT) + 1, MetaDataUtil.getDataType(metadata, serie),
                 " Try to open a sub resolution or sub part of the image only.");
 
         // create result sequence with desired serie metadata

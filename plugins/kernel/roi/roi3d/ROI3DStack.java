@@ -24,6 +24,7 @@ import icy.painter.OverlayListener;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
+import icy.roi.ROI2D.ROI2DPainter;
 import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.roi.ROIListener;
@@ -1125,12 +1126,12 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             final R roi = entry.getValue();
             final int newZ = roi.getZ() + z;
 
-            // only positive value accepted
-            if (newZ >= 0)
-            {
+//            // only positive value accepted
+//            if (newZ >= 0)
+//            {
                 roi.setZ(newZ);
                 slices.put(Integer.valueOf(newZ), roi);
-            }
+//            }
         }
 
         // notify ROI changed
@@ -1265,22 +1266,13 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         return true;
     }
 
-    public class ROI3DStackPainter extends ROIPainter
+    public class ROI3DStackPainter extends ROI3DPainter
     {
-        // protected R getSliceForCanvas(IcyCanvas canvas)
-        // {
-        // final int z = canvas.getPositionZ();
-        //
-        // if (z >= 0)
-        // return getSlice(z);
-        //
-        // return null;
-        // }
-
         protected ROIPainter getSliceOverlayForCanvas(IcyCanvas canvas)
         {
             final int z = canvas.getPositionZ();
 
+            // canvas position of -1 mean 3D canvas (all Z visible)
             if (z >= 0)
                 return getSliceOverlay(z);
 
@@ -1447,7 +1439,8 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1455,16 +1448,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.paint(g, sequence, canvas);
             }
+            // use default parent implementation
+            else
+                super.paint(g, sequence, canvas);
         }
 
         @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.keyPressed(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1472,16 +1465,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.keyPressed(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.keyPressed(e, imagePoint, canvas);
         }
 
         @Override
         public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.keyReleased(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1489,16 +1482,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.keyReleased(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.keyReleased(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseEntered(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseEntered(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1506,16 +1499,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseEntered(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseEntered(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseExited(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseExited(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1523,16 +1516,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseExited(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseExited(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseMove(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1540,16 +1533,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseMove(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseMove(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseDrag(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1557,16 +1550,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseDrag(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseDrag(e, imagePoint, canvas);
         }
 
         @Override
         public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mousePressed(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1574,16 +1567,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mousePressed(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mousePressed(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseReleased(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1591,16 +1584,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseReleased(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseReleased(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseClick(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1608,16 +1601,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseClick(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseClick(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseWheelMoved(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1625,6 +1618,25 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseWheelMoved(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseWheelMoved(e, imagePoint, canvas);
+        }
+
+        @Override
+        public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            // 2D canvas --> use slice implementation if possible
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
+            {
+                // forward event to current slice
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
+
+                if (sliceOverlay instanceof ROI2DPainter)
+                    ((ROI2DPainter) sliceOverlay).drawROI(g, sequence, canvas);
+            }
+
+            // nothing to do...
         }
     }
 }

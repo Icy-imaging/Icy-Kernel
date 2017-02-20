@@ -2972,17 +2972,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         result.beginUpdate();
         try
         {
-            final Point5D pos = result.getPosition5D();
+            if (result.canSetPosition())
+            {
+                final Point5D pos = result.getPosition5D();
 
-            // set Z, T, C position
-            if (z != -1)
-                pos.setZ(z);
-            if (t != -1)
-                pos.setT(t);
-            if (c != -1)
-                pos.setC(c);
+                // set Z, T, C position
+                if (z != -1)
+                    pos.setZ(z);
+                if (t != -1)
+                    pos.setT(t);
+                if (c != -1)
+                    pos.setC(c);
 
-            result.setPosition5D(pos);
+                result.setPosition5D(pos);
+            }
 
             // copy other properties
             result.setColor(getColor());

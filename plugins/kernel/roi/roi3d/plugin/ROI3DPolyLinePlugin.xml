@@ -4,6 +4,7 @@
 <version>1.0.0.0</version>
 <description>Polyline type ROI (3D)
 Add new point to the polyline with left click and press ESC when you're done.
+You can change Z slice position by using UP/DOWN keys while dragging a point to change its Z position.
 You can add new point on selected ROI by using left click while pressing CONTROL key.
 Use the DELETE key to remove a focused point or to remove the ROI when it is selected or focused.</description>
 <classname>plugins.kernel.roi.roi3d.plugin.ROI3DPolyLinePlugin</classname>

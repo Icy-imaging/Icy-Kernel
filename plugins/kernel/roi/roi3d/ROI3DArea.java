@@ -24,6 +24,7 @@ import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
 import icy.roi.ROI;
+import icy.roi.ROI2D;
 import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
@@ -166,22 +167,22 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         /**
          * rebuild VTK objects (called only when VTK canvas is selected).
          */
-        protected void rebuildVtkObjects()
+        protected boolean rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return;
+                return false;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return;
+                return false;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return;
+                return false;
 
             // get previous polydata object
             final vtkPolyData previousPolyData = polyData;
@@ -249,74 +250,55 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             updateVtkDisplayProperties();
         }
 
-        protected void updateVtkDisplayProperties()
+        protected boolean updateVtkDisplayProperties()
         {
-            if (surfaceActor != null)
+            if (surfaceActor == null)
+                return false;
+
+            final VtkCanvas cnv = canvas3d.get();
+            final Color col = getDisplayColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+            // final double strk = getStroke();
+            // final float opacity = getOpacity();
+
+            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+            // we need to lock canvas as actor can be accessed during rendering
+            if (vtkPanel != null)
+                vtkPanel.lock();
+            try
             {
-                final VtkCanvas cnv = canvas3d.get();
-                final Color col = getDisplayColor();
-                final double r = col.getRed() / 255d;
-                final double g = col.getGreen() / 255d;
-                final double b = col.getBlue() / 255d;
-                // final double strk = getStroke();
-                // final float opacity = getOpacity();
-
-                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-                // we need to lock canvas as actor can be accessed during rendering
-                if (vtkPanel != null)
+                // set actors color
+                outlineActor.GetProperty().SetColor(r, g, b);
+                if (isSelected())
                 {
-                    vtkPanel.lock();
-                    try
-                    {
-                        // set actors color
-                        outlineActor.GetProperty().SetColor(r, g, b);
-                        if (isSelected())
-                        {
-                            outlineActor.GetProperty().SetRepresentationToWireframe();
-                            outlineActor.SetVisibility(1);
-                            vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                        }
-                        else
-                        {
-                            outlineActor.GetProperty().SetRepresentationToPoints();
-                            outlineActor.SetVisibility(0);
-                            vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                        }
-                        surfaceActor.GetProperty().SetColor(r, g, b);
-                        // opacity here is about ROI content, global opacity is handled by Layer
-                        // surfaceActor.GetProperty().SetOpacity(opacity);
-                        setVtkObjectsColor(col);
-                    }
-                    finally
-                    {
-                        vtkPanel.unlock();
-                    }
+                    outlineActor.GetProperty().SetRepresentationToWireframe();
+                    outlineActor.SetVisibility(1);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 1);
                 }
                 else
                 {
-                    outlineActor.GetProperty().SetColor(r, g, b);
-                    if (isSelected())
-                    {
-                        outlineActor.GetProperty().SetRepresentationToWireframe();
-                        outlineActor.SetVisibility(1);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                    }
-                    else
-                    {
-                        outlineActor.GetProperty().SetRepresentationToPoints();
-                        outlineActor.SetVisibility(0);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                    }
-                    surfaceActor.GetProperty().SetColor(r, g, b);
-                    // opacity here is about ROI content, global opacity is handled by Layer
-                    // surfaceActor.GetProperty().SetOpacity(opacity);
-                    setVtkObjectsColor(col);
+                    outlineActor.GetProperty().SetRepresentationToPoints();
+                    outlineActor.SetVisibility(0);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 0);
                 }
-
-                // need to repaint
-                painterChanged();
+                surfaceActor.GetProperty().SetColor(r, g, b);
+                // opacity here is about ROI content, global opacity is handled by Layer
+                // surfaceActor.GetProperty().SetOpacity(opacity);
+                setVtkObjectsColor(col);
             }
+            finally
+            {
+                if (vtkPanel != null)
+                    vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
+
+            return true;
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -326,7 +308,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (polyData != null)
                 VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
-        
+
         @Override
         public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
@@ -846,6 +828,42 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         }
 
         setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    /**
+     * @deprecated Use one of these methods instead :<br>
+     *             {@link #setSlice(int, ROI2DArea)}, {@link #setSlice(int, BooleanMask2D)},
+     *             {@link #add(int, ROI2DArea)} or {@link #add(BooleanMask3D)}
+     */
+    @Deprecated
+    public void setSlice(int z, ROI2D roiSlice, boolean merge)
+    {
+        if (roiSlice == null)
+            throw new IllegalArgumentException("Cannot add an empty slice in a 3D ROI");
+
+        final ROI2DArea currentSlice = getSlice(z);
+        final ROI newSlice;
+
+        // merge both slice
+        if ((currentSlice != null) && merge)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI union
+            newSlice = currentSlice.getUnion(roiSlice);
+        }
+        else
+            newSlice = roiSlice;
+
+        if (newSlice instanceof ROI2DArea)
+            setSlice(z, (ROI2DArea) newSlice);
+        else if (newSlice instanceof ROI2D)
+            setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
+        else
+            throw new IllegalArgumentException("Can't add the result of the merge operation on 2D slice " + z + ": "
+                    + newSlice.getClassName());
     }
 
     // /**

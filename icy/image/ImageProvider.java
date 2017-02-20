@@ -47,24 +47,28 @@ public interface ImageProvider
     public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the tile width for the specified serie of the image.<br>
+     * Returns the (optimal) tile width for the specified serie of the image.<br>
      * This method allow to know the best tile size to use when using the sub region image loading
-     * operations.
+     * operations.<br>
+     * This method should returns <code>0</code> if tile loading is not supported and <code>-1</code> if any tile size
+     * can be used.
      * 
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
-     * @return tile width
+     * @return optimal tile width
      */
     public int getTileWidth(int serie) throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the tile height for the specified serie of the image.<br>
+     * Returns the (optimal) tile height for the specified serie of the image.<br>
      * This method allow to know the best tile size to use when using the sub region image loading
-     * operations.
+     * operations.<br>
+     * This method should returns <code>0</code> if tile loading is not supported and <code>-1</code> if any tile size
+     * can be used.
      * 
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
-     * @return tile height
+     * @return optimal tile height
      */
     public int getTileHeight(int serie) throws UnsupportedFormatException, IOException;
 

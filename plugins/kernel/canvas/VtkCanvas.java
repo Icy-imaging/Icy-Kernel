@@ -488,7 +488,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                             }
                         }
                     });
-                    
+
                     // sleep a bit to offer a bit of responsiveness
                     ThreadUtil.sleep(l);
                     // and refresh
@@ -1696,7 +1696,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             return 1d;
 
         // FIXME: from where come that x2 factor
-        final double result = (2 * getImageSizeX() * getVolumeScale()[0]) / dist;
+        final double result = (2 * getImageSizeX() * getVolumeScale()[0]) / Math.sqrt(dist);
 
         return result;
     }
@@ -1710,7 +1710,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             return 1d;
 
         // FIXME: from where come that x2 factor
-        final double result = (2 * getImageSizeY() * getVolumeScale()[1]) / dist;
+        final double result = (2 * getImageSizeY() * getVolumeScale()[1]) / Math.sqrt(dist);
 
         return result;
     }

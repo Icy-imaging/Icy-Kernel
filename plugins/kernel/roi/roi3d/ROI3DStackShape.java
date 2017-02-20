@@ -43,7 +43,7 @@ public abstract class ROI3DStackShape extends ROI3DStack<ROI2DShape>
     {
         super(roiClass);
     }
-    
+
     @Override
     protected ROIPainter createPainter()
     {
@@ -174,22 +174,22 @@ public abstract class ROI3DStackShape extends ROI3DStack<ROI2DShape>
         /**
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
-        protected void rebuildVtkObjects()
+        protected boolean rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return;
+                return false;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return;
+                return false;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return;
+                return false;
 
             // get bounds
             final Rectangle3D bounds = getBounds3D();
@@ -320,80 +320,60 @@ public abstract class ROI3DStackShape extends ROI3DStack<ROI2DShape>
             }
 
             // update color and others properties
-            updateVtkDisplayProperties();
+            return updateVtkDisplayProperties();
         }
 
-        protected void updateVtkDisplayProperties()
+        protected boolean updateVtkDisplayProperties()
         {
-            if (actor != null)
+            if (actor == null)
+                return false;
+
+            final VtkCanvas cnv = canvas3d.get();
+            final vtkProperty vtkProperty = actor.GetProperty();
+            final Color col = getDisplayColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+            final double strk = getStroke();
+            // final float opacity = getOpacity();
+
+            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+            // we need to lock canvas as actor can be accessed during rendering
+            if (vtkPanel != null)
+                vtkPanel.lock();
+            try
             {
-                final VtkCanvas cnv = canvas3d.get();
-                final vtkProperty vtkProperty = actor.GetProperty();
-                final Color col = getDisplayColor();
-                final double r = col.getRed() / 255d;
-                final double g = col.getGreen() / 255d;
-                final double b = col.getBlue() / 255d;
-                final double strk = getStroke();
-                // final float opacity = getOpacity();
-
-                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-                // we need to lock canvas as actor can be accessed during rendering
-                if (vtkPanel != null)
+                // set actors color
+                outlineActor.GetProperty().SetColor(r, g, b);
+                if (isSelected())
                 {
-                    vtkPanel.lock();
-                    try
-                    {
-                        // set actors color
-                        outlineActor.GetProperty().SetColor(r, g, b);
-                        if (isSelected())
-                        {
-                            outlineActor.GetProperty().SetRepresentationToWireframe();
-                            outlineActor.SetVisibility(1);
-                            vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                        }
-                        else
-                        {
-                            outlineActor.GetProperty().SetRepresentationToPoints();
-                            outlineActor.SetVisibility(0);
-                            vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                        }
-                        vtkProperty.SetColor(r, g, b);
-                        vtkProperty.SetPointSize(strk);
-                        // opacity here is about ROI content, global opacity is handled by Layer
-                        // vtkProperty.SetOpacity(opacity);
-                        setVtkObjectsColor(col);
-                    }
-                    finally
-                    {
-                        vtkPanel.unlock();
-                    }
+                    outlineActor.GetProperty().SetRepresentationToWireframe();
+                    outlineActor.SetVisibility(1);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 1);
                 }
                 else
                 {
-                    outlineActor.GetProperty().SetColor(r, g, b);
-                    if (isSelected())
-                    {
-                        outlineActor.GetProperty().SetRepresentationToWireframe();
-                        outlineActor.SetVisibility(1);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 1);
-                    }
-                    else
-                    {
-                        outlineActor.GetProperty().SetRepresentationToPoints();
-                        outlineActor.SetVisibility(0);
-                        vtkInfo.Set(VtkCanvas.visibilityKey, 0);
-                    }
-                    vtkProperty.SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
-                    vtkProperty.SetPointSize(strk);
-                    // opacity here is about ROI content, global opacity is handled by Layer
-                    // vtkProperty.SetOpacity(opacity);
-                    setVtkObjectsColor(col);
+                    outlineActor.GetProperty().SetRepresentationToPoints();
+                    outlineActor.SetVisibility(0);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 0);
                 }
-
-                // need to repaint
-                painterChanged();
+                vtkProperty.SetColor(r, g, b);
+                vtkProperty.SetPointSize(strk);
+                // opacity here is about ROI content, global opacity is handled by Layer
+                // vtkProperty.SetOpacity(opacity);
+                setVtkObjectsColor(col);
             }
+            finally
+            {
+                if (vtkPanel != null)
+                    vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
+
+            return true;
         }
 
         protected void setVtkObjectsColor(Color color)

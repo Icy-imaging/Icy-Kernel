@@ -317,6 +317,8 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
             // refresh preview
             if (f != null)
                 optionPanel.updatePreview(f.getAbsolutePath());
+            else
+                optionPanel.updatePreview("");
 
             updateOptionPanel();
         }

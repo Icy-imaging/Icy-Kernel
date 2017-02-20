@@ -18,6 +18,7 @@
  */
 package icy.roi;
 
+import icy.image.IcyBufferedImage;
 import icy.image.IntensityInfo;
 import icy.math.DataIteratorMath;
 import icy.math.MathUtil;
@@ -25,6 +26,8 @@ import icy.plugin.interface_.PluginROIDescriptor;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
 import icy.type.DataIteratorUtil;
+import icy.type.DataType;
+import icy.type.collection.CollectionUtil;
 import icy.type.dimension.Dimension5D;
 import icy.type.geom.Line2DUtil;
 import icy.type.geom.Polygon2D;
@@ -1738,6 +1741,164 @@ public class ROIUtil
     }
 
     /**
+     * Convert a list of ROI into a binary / labeled Sequence.
+     * 
+     * @param inputRois
+     *        list of ROI to convert
+     * @param sizeX
+     *        the wanted size X of output Sequence, if set to <code>0</code> then Sequence size X is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeY
+     *        the wanted size Y of output Sequence, if set to <code>0</code> then Sequence size Y is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeC
+     *        the wanted size C of output Sequence, if set to <code>0</code> then Sequence size C is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeZ
+     *        the wanted size Z of output Sequence, if set to <code>0</code> then Sequence size Z is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeT
+     *        the wanted size T of output Sequence, if set to <code>0</code> then Sequence size T is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param dataType
+     *        the wanted dataType of output Sequence
+     * @param label
+     *        if set to <code>true</code> then each ROI will be draw as a separate label (value) in the sequence
+     *        starting from 1.
+     */
+    public static Sequence convertToSequence(List<ROI> inputRois, int sizeX, int sizeY, int sizeC, int sizeZ,
+            int sizeT, DataType dataType, boolean label)
+    {
+        final List<ROI> rois = new ArrayList<ROI>();
+        final Rectangle5D bounds = new Rectangle5D.Double();
+
+        try
+        {
+            // compute the union of all ROI
+            final ROI roi = ROIUtil.merge(inputRois, BooleanOperator.OR);
+            // get bounds of result
+            bounds.add(roi.getBounds5D());
+            // add this single ROI to list
+            rois.add(roi);
+        }
+        catch (Exception e)
+        {
+            for (ROI roi : inputRois)
+            {
+                // compute global bounds
+                if (roi != null)
+                {
+                    bounds.add(roi.getBounds5D());
+                    rois.add(roi);
+                }
+            }
+        }
+
+        int sX = sizeX;
+        int sY = sizeY;
+        int sC = sizeC;
+        int sZ = sizeZ;
+        int sT = sizeT;
+
+        if (sX == 0)
+            sX = (int) bounds.getSizeX();
+        if (sY == 0)
+            sY = (int) bounds.getSizeY();
+        if (sC == 0)
+            sC = (bounds.isInfiniteC() ? 1 : (int) bounds.getSizeC());
+        if (sZ == 0)
+            sZ = (bounds.isInfiniteZ() ? 1 : (int) bounds.getSizeZ());
+        if (sT == 0)
+            sT = (bounds.isInfiniteT() ? 1 : (int) bounds.getSizeT());
+
+        // empty base dimension and empty result --> generate a empty 320x240 image
+        if (sX == 0)
+            sX = 320;
+        if (sY == 0)
+            sY = 240;
+        if (sC == 0)
+            sC = 1;
+        if (sZ == 0)
+            sZ = 1;
+        if (sT == 0)
+            sT = 1;
+
+        final Sequence out = new Sequence("ROI conversion");
+
+        out.beginUpdate();
+        try
+        {
+            for (int t = 0; t < sT; t++)
+                for (int z = 0; z < sZ; z++)
+                    out.setImage(t, z, new IcyBufferedImage(sX, sY, sC, dataType));
+
+            double fillValue = 1d;
+
+            // set value from ROI(s)
+            for (ROI roi : rois)
+            {
+                if (!roi.getBounds5D().isEmpty())
+                    DataIteratorUtil.set(new SequenceDataIterator(out, roi), fillValue);
+
+                if (label)
+                    fillValue += 1d;
+            }
+
+            // notify data changed
+            out.dataChanged();
+        }
+        finally
+        {
+            out.endUpdate();
+        }
+
+        return out;
+    }
+
+    /**
+     * Convert a list of ROI into a binary / labeled Sequence.
+     * 
+     * @param inputRois
+     *        list of ROI to convert
+     * @param sequence
+     *        the sequence used to define the wanted sequence dimension in return.<br>
+     *        If this field is <code>null</code> then the global ROI bounds will be used to define the Sequence
+     *        dimension
+     * @param label
+     *        if set to <code>true</code> then each ROI will be draw as a separate label (value) in the sequence
+     *        starting from 1.
+     */
+    public static Sequence convertToSequence(List<ROI> inputRois, Sequence sequence, boolean label)
+    {
+        if (sequence == null)
+            return convertToSequence(inputRois, 0, 0, 0, 0, 0, label ? ((inputRois.size() > 255) ? DataType.USHORT
+                    : DataType.UBYTE) : DataType.UBYTE, label);
+
+        return convertToSequence(inputRois, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
+                sequence.getSizeZ(), sequence.getSizeT(), sequence.getDataType_(), label);
+    }
+
+    /**
+     * Convert a single ROI into a binary / labeled Sequence.
+     * 
+     * @param inputRoi
+     *        ROI to convert
+     * @param sequence
+     *        the sequence used to define the wanted sequence dimension in return.<br>
+     *        If this field is <code>null</code> then the global ROI bounds will be used to define the Sequence
+     *        dimension
+     */
+    public static Sequence convertToSequence(ROI inputRoi, Sequence sequence)
+    {
+        return convertToSequence(CollectionUtil.createArrayList(inputRoi), sequence, false);
+    }
+
+    /**
      * Copy properties (name, color...) from <code>source</code> ROI and apply it to <code>destination</code> ROI.
      */
     public static void copyROIProperties(ROI source, ROI destination, boolean copyName)
@@ -1753,5 +1914,4 @@ public class ROIUtil
         destination.setReadOnly(source.isReadOnly());
         destination.setSelected(source.isSelected());
     }
-
 }
