@@ -439,7 +439,7 @@ public class XMLUtil
 
         final DocumentType doctype = doc.getDoctype();
         final DOMSource domSource = new DOMSource(doc);
-        final StreamResult streamResult = new StreamResult(f);
+        final StreamResult streamResult = new StreamResult(f.getAbsolutePath());
 
         try
         {

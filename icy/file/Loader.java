@@ -2959,7 +2959,8 @@ public class Loader
             adjMaxT = Math.min(maxT, sizeT - 1);
 
         // check that we can open the image
-        checkOpening(resolution, sizeX, sizeY, sizeC, (adjMaxZ - adjMinZ) + 1, (adjMaxT - adjMinT) + 1, MetaDataUtil.getDataType(metadata, serie),
+        checkOpening(resolution, sizeX, sizeY, sizeC, (adjMaxZ - adjMinZ) + 1, (adjMaxT - adjMinT) + 1,
+                MetaDataUtil.getDataType(metadata, serie),
                 " Try to open a sub resolution or sub part of the image only.");
 
         // create result sequence with desired serie metadata
@@ -3609,14 +3610,14 @@ public class Loader
                 int end = StringUtil.getNextNonDigitCharIndex(result, st);
                 if (end < 0)
                     end = result.length();
-                final int size = end - st;
+//                final int size = end - st;
 
                 // remove number from name if number size < 6
-                if (size < 6)
+//                if (size < 6)
                     result = result.substring(0, st) + result.substring(end);
                 // pass to next
-                else
-                    pos = end;
+//                else
+//                    pos = end;
             }
             else
                 // done
@@ -3692,8 +3693,8 @@ public class Loader
                     endInd = len;
 
                 // add number only if < 100000 (else it can be a date or id...)
-                if ((endInd - startInd) < 6)
-                {
+//                if ((endInd - startInd) < 6)
+//                {
                     // get prefix
                     final String prefix = getPositionPrefix(name, startInd - 1);
                     // get value
@@ -3701,7 +3702,7 @@ public class Loader
 
                     // add the position info
                     result.addChunk(prefix, value);
-                }
+//                }
 
                 // adjust index
                 index = endInd;

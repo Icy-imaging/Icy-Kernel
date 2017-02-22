@@ -1769,6 +1769,14 @@ public class SequenceUtil
                 }
             }
 
+            // preserve channel informations
+            for (int c = 0; c < source.getSizeC(); c++)
+            {
+                output.setChannelName(c, source.getChannelName(c));
+                output.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+                output.setColormap(c, source.getColorMap(c));
+            }
+
             output.setName(source.getName() + " (" + output.getDataType_() + ")");
         }
         finally
@@ -1810,6 +1818,14 @@ public class SequenceUtil
         finally
         {
             result.endUpdate();
+        }
+
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            result.setChannelName(c, source.getChannelName(c));
+            result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            result.setColormap(c, source.getColorMap(c));
         }
 
         result.setName(source.getName() + " (rotated)");
@@ -1887,7 +1903,16 @@ public class SequenceUtil
             result.endUpdate();
         }
 
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            result.setChannelName(c, source.getChannelName(c));
+            result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            result.setColormap(c, source.getColorMap(c));
+        }
+
         result.setName(source.getName() + " (resized)");
+        
         // content was resized ?
         if (resizeContent)
         {
@@ -1958,6 +1983,8 @@ public class SequenceUtil
         final int endZ;
         final int startT;
         final int endT;
+        final int startC;
+        final int endC;
 
         if (region.isInfiniteZ())
         {
@@ -1979,6 +2006,16 @@ public class SequenceUtil
             startT = Math.max(0, region.t);
             endT = Math.min(source.getSizeT(), region.t + region.sizeT);
         }
+        if (region.isInfiniteC())
+        {
+            startC = 0;
+            endC = source.getSizeC();
+        }
+        else
+        {
+            startC = Math.max(0, region.c);
+            endC = Math.min(source.getSizeC(), region.c + region.sizeC);
+        }
 
         result.beginUpdate();
         try
@@ -1987,19 +2024,26 @@ public class SequenceUtil
             {
                 for (int z = startZ; z < endZ; z++)
                 {
-                    final IcyBufferedImage img = source.getImage(t, z);
+                    IcyBufferedImage img = source.getImage(t, z);
 
                     if (img != null)
-                        result.setImage(t - startT, z - startZ,
-                                IcyBufferedImageUtil.getSubImage(img, region2d, region.c, region.sizeC));
-                    else
-                        result.setImage(t - startT, z - startZ, null);
+                        img = IcyBufferedImageUtil.getSubImage(img, region2d, startC, (endC - startC) + 1);
+
+                    result.setImage(t - startT, z - startZ, img);
                 }
             }
         }
         finally
         {
             result.endUpdate();
+        }
+
+        // preserve channel informations
+        for (int c = startC; c < endC; c++)
+        {
+            result.setChannelName(c - startC, source.getChannelName(c));
+            result.setDefaultColormap(c - startC, source.getDefaultColorMap(c), true);
+            result.setColormap(c - startC, source.getColorMap(c));
         }
 
         result.setName(source.getName() + " (crop)");
@@ -2129,6 +2173,15 @@ public class SequenceUtil
                 for (Overlay overlay : source.getOverlays())
                     result.addOverlay(overlay);
             }
+            
+            // preserve channel informations
+            for (int c = 0; c < source.getSizeC(); c++)
+            {
+                result.setChannelName(c, source.getChannelName(c));
+                result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+                result.setColormap(c, source.getColorMap(c));
+            }
+            
             if (nameSuffix)
                 result.setName(source.getName() + " (copy)");
         }

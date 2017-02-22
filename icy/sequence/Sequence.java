@@ -3574,6 +3574,20 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Set the default colormap for the specified channel
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colormap to copy
+     * @see #getDefaultColorMap(int)
+     */
+    public void setDefaultColormap(int channel, IcyColorMap map)
+    {
+        setDefaultColormap(channel, map, map.isAlpha());
+    }
+
+    /**
      * Get the user colormap for the specified channel.<br>
      * User colormap is saved in the XML persistent data and reloaded when opening the Sequence.
      * 
@@ -3613,6 +3627,21 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         if (channel < lut.getNumChannel())
             lut.getLutChannel(channel).setColorMap(map, setAlpha);
+    }
+
+    /**
+     * Set the user colormap for the specified channel.<br>
+     * User colormap is saved in the XML persistent data and reloaded when opening the Sequence.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colormap to copy
+     * @see #getColorMap(int)
+     */
+    public void setColormap(int channel, IcyColorMap map)
+    {
+        setColormap(channel, map, map.isAlpha());
     }
 
     /**
@@ -3661,7 +3690,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Internal use only.
      */
-    private double[][] adjustBounds(double[][] curBounds, double[][] bounds)
+    private static double[][] adjustBounds(double[][] curBounds, double[][] bounds)
     {
         if (bounds == null)
             return curBounds;

@@ -247,7 +247,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             }
 
             // update color and others properties
-            updateVtkDisplayProperties();
+            return updateVtkDisplayProperties();
         }
 
         protected boolean updateVtkDisplayProperties()

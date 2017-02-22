@@ -1065,6 +1065,14 @@ public class Saver
         // usually give better save performance
         writer.setWriteSequentially(true);
 
+        // specific to TIFF writer
+        if (writer instanceof TiffWriter)
+        {
+            // > 2GB --> use big tiff
+            if (MetaDataUtil.getDataSize(metadata, 0, 0) > 2000000000L)
+                ((TiffWriter) writer).setBigTiff(true);
+        }
+
         final int sizeC = compatibleSequence.getSizeC();
         // get endianess
         final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();

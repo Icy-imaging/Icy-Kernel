@@ -1695,11 +1695,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         if (dist <= 0d)
             return 1d;
 
+        final double imageSizeX = getImageSizeX();
         // FIXME: from where come that x2 factor
-        final double result = (2 * getImageSizeX() * getVolumeScale()[0]) / Math.sqrt(dist);
+        final double result = (2 * imageSizeX * getVolumeScale()[0]) / dist;
+        final double canvasImageRatio = getCanvasSizeX() / ((imageSizeX == 0d) ? 1d : imageSizeX);
 
-        return result;
-    }
+        return result * canvasImageRatio;
+          }
 
     @Override
     public double getScaleY()
@@ -1709,10 +1711,12 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         if (dist <= 0d)
             return 1d;
 
+        final double imageSizeY = getImageSizeY();
         // FIXME: from where come that x2 factor
-        final double result = (2 * getImageSizeY() * getVolumeScale()[1]) / Math.sqrt(dist);
+        final double result = (2 * imageSizeY * getVolumeScale()[1]) / dist;
+        final double canvasImageRatio = getCanvasSizeY() / ((imageSizeY == 0d) ? 1d : imageSizeY);
 
-        return result;
+        return result * canvasImageRatio;
     }
 
     @Override
