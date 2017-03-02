@@ -165,9 +165,14 @@ public abstract class IcyCanvas3D extends IcyCanvas
     }
 
     /**
-     * Convert specified image point to canvas point
+     * Convert specified image point to canvas point.
      */
-    public abstract Point imageToCanvas(double x, double y, double z);
+    @SuppressWarnings("static-method")
+    public Point imageToCanvas(double x, double y, double z)
+    {
+        // default implementation, must be override in IcyCanvas3D implementation
+        return new Point(0, 0);
+    }
 
     /**
      * Convert specified image point to canvas point
@@ -180,7 +185,12 @@ public abstract class IcyCanvas3D extends IcyCanvas
     /**
      * Convert specified canvas point to image point
      */
-    public abstract Point3D.Double canvasToImage(int x, int y);
+    @SuppressWarnings("static-method")
+    public Point3D.Double canvasToImage(int x, int y)
+    {
+        // default implementation, must be override in IcyCanvas3D implementation
+        return new Point3D.Double(0d, 0d, 0d);
+    }
 
     /**
      * Convert specified canvas point to image point

@@ -25,7 +25,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,7 +56,7 @@ public abstract class AbstractClassLoader extends ClassLoader
     public AbstractClassLoader(ClassLoader parent)
     {
         super(parent);
-        
+
         addDefaultLoaders();
     }
 
@@ -79,7 +81,7 @@ public abstract class AbstractClassLoader extends ClassLoader
     @Override
     public Class loadClass(String className) throws ClassNotFoundException
     {
-        return (loadClass(className, true));
+        return loadClass(className, true);
     }
 
     /**
@@ -127,13 +129,19 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (name == null || name.trim().equals(""))
             return null;
 
+        final List<ProxyClassLoader> loadersDone = new ArrayList<ProxyClassLoader>();
+
         for (ProxyClassLoader l : loaders)
         {
-            if (l.isEnabled())
+            // don't search in same loader
+            if (l.isEnabled() && !loadersDone.contains(l))
             {
                 final InputStream is = l.getResourceAsStream(name);
                 if (is != null)
                     return is;
+
+                // loader done
+                loadersDone.add(l);
             }
         }
 
@@ -146,13 +154,19 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (name == null || name.trim().equals(""))
             return null;
 
+        final List<ProxyClassLoader> loadersDone = new ArrayList<ProxyClassLoader>();
+
         for (ProxyClassLoader l : loaders)
         {
-            if (l.isEnabled())
+            // don't search in same loader
+            if (l.isEnabled() && !loadersDone.contains(l))
             {
                 final URL url = l.getResource(name);
                 if (url != null)
                     return url;
+
+                // loader done
+                loadersDone.add(l);
             }
         }
 
@@ -165,25 +179,25 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (name == null || name.trim().equals(""))
             return null;
 
-        final List<URL> result = new ArrayList<URL>();
+        final Set<URL> result = new HashSet<URL>();
+        final List<ProxyClassLoader> loadersDone = new ArrayList<ProxyClassLoader>();
 
         for (ProxyClassLoader l : loaders)
         {
-            if (l.isEnabled())
+            // don't search in same loader
+            if (l.isEnabled() && !loadersDone.contains(l))
             {
                 final Enumeration<URL> urls = l.getResources(name);
 
                 if (urls != null)
                 {
+                    // avoid duplicate using Set here
                     while (urls.hasMoreElements())
-                    {
-                        final URL url = urls.nextElement();
-
-                        // avoid duplicate
-                        if (!result.contains(url))
-                            result.add(url);
-                    }
+                        result.add(urls.nextElement());
                 }
+
+                // loader done
+                loadersDone.add(l);
             }
         }
 

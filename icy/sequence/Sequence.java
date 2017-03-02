@@ -864,7 +864,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // not null --> add a specific extension
         if (xyRegion != null)
-            result += "_XY[" + xyRegion.x + "," + xyRegion.y + "-" + xyRegion.width + "," + xyRegion.height + "]";
+            result += "_XY(" + xyRegion.x + "," + xyRegion.y + "-" + xyRegion.width + "," + xyRegion.height + ")";
 
         // retrieve the Z range
         final int zMin = getOriginZRangeMin();
@@ -872,7 +872,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // sub Z range --> add a specific extension
         if ((zMin != -1) || (zMax != -1))
-            result += "_Z[" + zMin + "," + zMax + "]";
+            result += "_Z(" + zMin + "-" + zMax + ")";
 
         // retrieve the T range
         final int tMin = getOriginTRangeMin();
@@ -880,7 +880,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // sub T range --> add a specific extension
         if ((tMin != -1) || (tMax != -1))
-            result += "_T[" + tMin + "," + tMax + "]";
+            result += "_T(" + tMin + "-" + tMax + ")";
 
         // retrieve the original channel
         final int channel = getOriginChannel();
@@ -2967,8 +2967,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Set an image at the specified position.<br/>
-     * Note that the image duplicated/transformed internally before being attached to the Sequence
-     * object.
+     * Note that the image will be transformed in IcyBufferedImage internally if needed
      * 
      * @param t
      *        T position

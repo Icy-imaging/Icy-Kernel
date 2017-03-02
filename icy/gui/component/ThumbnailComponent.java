@@ -41,7 +41,7 @@ public class ThumbnailComponent extends JToggleButton
     private static final long serialVersionUID = 6742578649112198581L;
 
     // GUI
-    private JLabel imageComp;
+    private ImageComponent imageComp;
     private JLabel titleLabel;
     private JLabel infosLabel;
     private JLabel infos2Label;
@@ -69,10 +69,7 @@ public class ThumbnailComponent extends JToggleButton
         setMargin(new Insets(2, 2, 2, 2));
         setLayout(new BorderLayout());
 
-        imageComp = new JLabel();
-        imageComp.setHorizontalAlignment(SwingConstants.CENTER);
-        imageComp.setOpaque(false);
-
+        imageComp = new ImageComponent();
         add(imageComp, BorderLayout.CENTER);
 
         final JPanel southPanel = new JPanel();
@@ -105,26 +102,35 @@ public class ThumbnailComponent extends JToggleButton
     {
         if (img == null)
         {
-            imageComp.setIcon(null);
+            imageComp.setImage(null);
             return;
         }
 
+        Image image = img;
+
         // be sure image data are ready
-        ImageUtil.waitImageReady(img);
+        ImageUtil.waitImageReady(image);
 
-        final float ix = img.getWidth(null);
-        final float iy = img.getHeight(null);
+        float ix = image.getWidth(null);
+        float iy = image.getHeight(null);
 
-        if ((ix > 0f) && (iy > 0f) && (imageComp.getWidth() != 0) && (imageComp.getHeight() != 0))
+        if ((ix <= 0f) || (iy <= 0f))
+        {
+            image = ResourceUtil.ICON_DELETE;
+            ix = image.getWidth(null);
+            iy = image.getHeight(null);
+        }
+
+        if ((imageComp.getWidth() != 0) && (imageComp.getHeight() != 0))
         {
             final float sx = imageComp.getWidth() / ix;
             final float sy = imageComp.getHeight() / iy;
             final float s = Math.min(sx, sy);
 
-            imageComp.setIcon(ResourceUtil.getImageIcon(ImageUtil.scaleQuality(img, (int) (ix * s), (int) (iy * s))));
+            image = ImageUtil.scaleQuality(img, (int) (ix * s), (int) (iy * s));
         }
-        else
-            imageComp.setIcon(ResourceUtil.getImageIcon(ResourceUtil.ICON_DELETE));
+
+        imageComp.setImage(image);
     }
 
     public String getTitle()

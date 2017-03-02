@@ -45,17 +45,47 @@ public class NumberTextField extends IcyTextField
         public void valueChanged(double newValue, boolean validate);
     }
 
-    private double value;
-    private List<ValueChangeListener> listeners;
+    protected double value;
+    protected boolean integer;
+    protected List<ValueChangeListener> listeners;
+
+    /**
+     * Constructor
+     */
+    public NumberTextField(boolean integer)
+    {
+        super();
+
+        value = 0;
+        this.integer = integer;
+        listeners = new ArrayList<ValueChangeListener>();
+    }
 
     /**
      * Constructor
      */
     public NumberTextField()
     {
-        super();
-        value = 0;
-        listeners = new ArrayList<ValueChangeListener>();
+        this(false);
+    }
+
+    /**
+     * Return true if the range use integer number
+     */
+    public boolean isInteger()
+    {
+        return integer;
+    }
+
+    /**
+     * Return true if the range use integer number
+     */
+    public void setInteger(boolean integer)
+    {
+        this.integer = integer;
+
+        // force value adjustment
+        setNumericValue(value);
     }
 
     /**
@@ -87,7 +117,10 @@ public class NumberTextField extends IcyTextField
      */
     public void setNumericValue(double value)
     {
-        setText(Double.toString(value));
+        if (integer)
+            setText(Integer.toString((int) value));
+        else
+            setText(Double.toString(value));
     }
 
     protected void valueChanged(boolean validate)
@@ -106,6 +139,9 @@ public class NumberTextField extends IcyTextField
         {
             final String text = getText();
             value = text.isEmpty() ? 0.0 : Double.parseDouble(text);
+            // force integer
+            if (integer)
+                value = (int) value;
             setForeground(Color.BLACK);
         }
         catch (NumberFormatException err)

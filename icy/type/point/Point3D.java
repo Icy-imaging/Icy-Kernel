@@ -136,6 +136,34 @@ public abstract class Point3D implements Cloneable
     }
 
     /**
+     * Translate this <code>Point3D</code> by the specified <code>double</code> coordinates.
+     * 
+     * @param x
+     *        the X translation value
+     * @param y
+     *        the Y translation value
+     * @param z
+     *        the Z translation value
+     */
+    public void translate(double x, double y, double z)
+    {
+        setX(getX() + x);
+        setY(getY() + y);
+        setZ(getZ() + z);
+    }
+
+    /**
+     * Translate this <code>Point3D</code> by the specified <code>Point3D</code> coordinates.
+     * 
+     * @param p
+     *        the specified <code>Point3D</code> used to translate this <code>Point3D</code>
+     */
+    public void translate(Point3D p)
+    {
+        translate(p.getX(), p.getY(), p.getZ());
+    }
+
+    /**
      * Convert to 2D point
      */
     public abstract Point2D toPoint2D();

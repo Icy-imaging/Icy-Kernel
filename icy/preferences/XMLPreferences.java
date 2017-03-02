@@ -19,6 +19,7 @@
 package icy.preferences;
 
 import icy.util.ClassUtil;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.io.File;
@@ -210,6 +211,9 @@ public class XMLPreferences
 
     private Element getSection(String name)
     {
+        if (StringUtil.isEmpty(name))
+            return currentElement;
+
         Element element;
 
         // absolute path
@@ -220,6 +224,7 @@ public class XMLPreferences
             // we test first current node is still existing
             if (!exists())
                 return null;
+
             element = currentElement;
         }
 
@@ -235,7 +240,7 @@ public class XMLPreferences
 
     private Element setSection(String name)
     {
-        if (name == null)
+        if (StringUtil.isEmpty(name))
             return currentElement;
 
         Element element;
@@ -248,6 +253,7 @@ public class XMLPreferences
             // we test first current node is still existing
             if (!exists())
                 return null;
+
             element = currentElement;
         }
 

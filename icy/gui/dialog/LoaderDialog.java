@@ -194,13 +194,13 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
                         // load selected image file with advanced option
                         Loader.load((SequenceFileImporter) importer, firstPath, -1, optionPanel.getResolutionLevel(),
-                                null, optionPanel.getZMin(), optionPanel.getZMax(), optionPanel.getTMin(),
+                                optionPanel.getXYRegion(), optionPanel.getZMin(), optionPanel.getZMax(), optionPanel.getTMin(),
                                 optionPanel.getTMax(), optionPanel.getChannel(), true, true);
                     }
                     else
                     {
                         // load selected file
-                        Loader.load(null, firstPath, -1, optionPanel.getResolutionLevel(), null, optionPanel.getZMin(),
+                        Loader.load(null, firstPath, -1, optionPanel.getResolutionLevel(), optionPanel.getXYRegion(), optionPanel.getZMin(),
                                 optionPanel.getZMax(), optionPanel.getTMin(), optionPanel.getTMax(),
                                 optionPanel.getChannel(), true, true);
                     }

@@ -31,6 +31,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
+ * Component letting user to define a range (RangeSlider + 2 inputs fields)
+ * 
  * @author Stephane
  */
 public class RangeComponent extends JPanel implements ChangeListener

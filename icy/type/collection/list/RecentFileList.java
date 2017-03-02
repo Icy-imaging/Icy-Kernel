@@ -168,29 +168,33 @@ public class RecentFileList extends RecentList
     {
         final XMLPreferences pref = preferences.node(key);
 
-        // remove all children
-        pref.removeChildren();
-
-        // then save
-        if (value != null)
+        // need to check as preferences can have been cleared here
+        if (pref != null)
         {
-            final String[] filenames = (String[]) value;
-            final int numFile = filenames.length;
+            // remove all children
+            pref.removeChildren();
 
-            // save size
-            pref.putInt(ID_NB_FILE, numFile);
+            // then save
+            if (value != null)
+            {
+                final String[] filenames = (String[]) value;
+                final int numFile = filenames.length;
 
-            // save filenames
-            for (int i = 0; i < numFile; i++)
-                pref.put(ID_FILE + i, filenames[i]);
+                // save size
+                pref.putInt(ID_NB_FILE, numFile);
+
+                // save filenames
+                for (int i = 0; i < numFile; i++)
+                    pref.put(ID_FILE + i, filenames[i]);
+            }
+            else
+            {
+                // save size
+                pref.putInt(ID_NB_FILE, 0);
+            }
+
+            // then clean
+            pref.clean();
         }
-        else
-        {
-            // save size
-            pref.putInt(ID_NB_FILE, 0);
-        }
-
-        // then clean
-        pref.clean();
     }
 }

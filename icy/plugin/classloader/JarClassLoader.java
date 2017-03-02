@@ -19,6 +19,10 @@
 
 package icy.plugin.classloader;
 
+import icy.plugin.classloader.exception.JclException;
+import icy.plugin.classloader.exception.ResourceNotFoundException;
+import icy.system.IcyExceptionHandler;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import icy.plugin.classloader.exception.JclException;
-import icy.plugin.classloader.exception.ResourceNotFoundException;
-import icy.system.IcyExceptionHandler;
 
 /**
  * Reads the class bytes from jar files and other resources using
@@ -226,8 +226,8 @@ public class JarClassLoader extends AbstractClassLoader
             }
             catch (ResourceNotFoundException e)
             {
-                throw new JclException(
-                        "Class could not be unloaded " + "[Possible reason: Class belongs to the system]", e);
+                throw new JclException("Class could not be unloaded "
+                        + "[Possible reason: Class belongs to the system]", e);
             }
         }
     }
@@ -298,10 +298,12 @@ public class JarClassLoader extends AbstractClassLoader
                     // we got a severe error here --> throw an exception
                     throw new ClassNotFoundException(className, e);
                 }
+
                 if (classBytes == null)
                     return null;
 
                 result = defineClass(className, classBytes, 0, classBytes.length);
+
                 if (result == null)
                     return null;
             }

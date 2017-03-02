@@ -66,6 +66,8 @@ public abstract class ROI2DRectShape extends ROI2DShape
     protected final Anchor2D bottomLeft;
     protected final Anchor2D bottomRight;
 
+    protected boolean internalPositionSet;
+
     /**
      * 
      */
@@ -79,10 +81,14 @@ public abstract class ROI2DRectShape extends ROI2DShape
         this.bottomRight = createAnchor(bottomRight);
         // select the bottom right point by default for interactive mode
         this.bottomRight.setSelected(true);
+
+        internalPositionSet = false;
+
+        // order is important as we compute distance from connected points
         addPoint(this.topLeft);
         addPoint(this.topRight);
-        addPoint(this.bottomLeft);
         addPoint(this.bottomRight);
+        addPoint(this.bottomLeft);
     }
 
     @Override
@@ -151,26 +157,38 @@ public abstract class ROI2DRectShape extends ROI2DShape
     @Override
     public void controlPointPositionChanged(Anchor2D source)
     {
-        // adjust dependents anchors
-        if (source == topLeft)
+        // we are modifying internally the position --> exit
+        if (internalPositionSet)
+            return;
+
+        internalPositionSet = true;
+        try
         {
-            bottomLeft.setX(topLeft.getX());
-            topRight.setY(topLeft.getY());
+            // adjust dependents anchors
+            if (source == topLeft)
+            {
+                bottomLeft.setX(topLeft.getX());
+                topRight.setY(topLeft.getY());
+            }
+            else if (source == topRight)
+            {
+                bottomRight.setX(topRight.getX());
+                topLeft.setY(topRight.getY());
+            }
+            else if (source == bottomLeft)
+            {
+                topLeft.setX(bottomLeft.getX());
+                bottomRight.setY(bottomLeft.getY());
+            }
+            else if (source == bottomRight)
+            {
+                topRight.setX(bottomRight.getX());
+                bottomLeft.setY(bottomRight.getY());
+            }
         }
-        else if (source == topRight)
+        finally
         {
-            bottomRight.setX(topRight.getX());
-            topLeft.setY(topRight.getY());
-        }
-        else if (source == bottomLeft)
-        {
-            topLeft.setX(bottomLeft.getX());
-            bottomRight.setY(bottomLeft.getY());
-        }
-        else if (source == bottomRight)
-        {
-            topRight.setX(bottomRight.getX());
-            bottomLeft.setY(bottomRight.getY());
+            internalPositionSet = false;
         }
 
         super.controlPointPositionChanged(source);

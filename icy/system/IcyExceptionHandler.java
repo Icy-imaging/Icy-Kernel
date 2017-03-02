@@ -26,7 +26,9 @@ import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginIdent;
+import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
+import icy.plugin.interface_.PluginBundled;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
@@ -418,7 +420,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final String javaId;
         final String osId;
         final String memory;
-        final String pluginId;
+        String pluginId;
         String pluginDepsId;
         final Map<String, String> values = new HashMap<String, String>();
 
@@ -449,12 +451,35 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
             values.put(NetworkUtil.ID_PLUGINCLASSNAME, className);
             values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
-            pluginId = "Plugin " + plugin.toString() + "\n\n";
+            pluginId = "Plugin " + plugin.toString();
 
-            if (plugin.getRequired().size() > 0)
+            // determine origin plugin
+            PluginDescriptor originPlugin = plugin;
+
+            // bundled plugin ?
+            if (plugin.isBundled())
+            {
+                try
+                {
+                    // get original plugin
+                    originPlugin = PluginLoader.getPlugin(((PluginBundled) PluginLauncher.create(plugin))
+                            .getMainPluginClassName());
+                    // add bundle info
+                    pluginId = "Bundled in " + originPlugin.toString();
+                }
+                catch (Throwable t)
+                {
+                    // miss bundle info
+                    pluginId = "Bundled plugin (could not retrieve origin plugin)";
+                }
+            }
+
+            pluginId += "\n\n";
+
+            if (originPlugin.getRequired().size() > 0)
             {
                 pluginDepsId = "Dependances:\n";
-                for (PluginIdent ident : plugin.getRequired())
+                for (PluginIdent ident : originPlugin.getRequired())
                 {
                     final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
 

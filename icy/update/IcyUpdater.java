@@ -58,7 +58,6 @@ import javax.swing.event.ListSelectionListener;
  */
 public class IcyUpdater
 {
-
     private final static int ANNOUNCE_SHOWTIME = 15;
 
     public final static String PARAM_ARCH = "arch";
@@ -143,7 +142,7 @@ public class IcyUpdater
                 checkingFrame = null;
 
             final String params = PARAM_ARCH + "=" + SystemUtil.getOSArchIdString() + "&" + PARAM_VERSION + "="
-                    + Icy.version;
+                    + Icy.version.toShortString();
 
             try
             {
@@ -431,7 +430,8 @@ public class IcyUpdater
     private static boolean canDoUpdate()
     {
         // check for updater presence
-        boolean requiredFilesExist = FileUtil.exists(Updater.UPDATER_NAME);
+        boolean requiredFilesExist = FileUtil.exists(FileUtil.getApplicationDirectory() + FileUtil.separator
+                + Updater.UPDATER_NAME);
         // // in update directory ?
         // requiredFilesExist |= FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator +
         // Updater.UPDATER_NAME);
@@ -455,7 +455,8 @@ public class IcyUpdater
             if (FileUtil.exists(updateName))
             {
                 // replace updater
-                if (!FileUtil.rename(updateName, Updater.UPDATER_NAME, true))
+                if (!FileUtil.rename(updateName, FileUtil.getApplicationDirectory() + FileUtil.separator
+                        + Updater.UPDATER_NAME, true))
                 {
                     System.err.println("Can't update 'Upater.jar', Update process can't continue.");
                     return false;
@@ -478,7 +479,7 @@ public class IcyUpdater
             params += Updater.ARG_NOSTART + " ";
 
         // launch updater
-        SystemUtil.execJAR(Updater.UPDATER_NAME, params);
+        SystemUtil.execJAR(FileUtil.getApplicationDirectory() + FileUtil.separator + Updater.UPDATER_NAME, params);
 
         // you have to exit application then...
         return true;

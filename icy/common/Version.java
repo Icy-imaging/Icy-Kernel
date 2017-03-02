@@ -183,6 +183,23 @@ public class Version implements Comparable<Version>
         return (major == 0) && (minor == 0) && (revision == 0) && (build == 0) && !beta;
     }
 
+    public String toShortString()
+    {
+        if (isEmpty())
+            return "";
+
+        String result;
+
+        result = Integer.toString(major) + ".";
+        result += Integer.toString(minor) + ".";
+        result += Integer.toString(revision) + ".";
+        result += Integer.toString(build);
+        if (beta)
+            result += "b";
+
+        return result;
+    }
+
     @Override
     public boolean equals(Object obj)
     {

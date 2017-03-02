@@ -56,6 +56,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -88,7 +89,7 @@ import vtk.vtkTextProperty;
  * @author Stephane
  */
 @SuppressWarnings("deprecation")
-public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, SettingChangeListener
+public class VtkCanvas extends Canvas3D implements ActionListener, SettingChangeListener
 {
     /**
      * 
@@ -149,38 +150,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected static final String ID_SPECULAR = VtkSettingPanel.PROPERTY_SPECULAR;
 
     /**
-     * Property to update
-     */
-    protected static class Property
-    {
-        String name;
-        Object value;
-
-        public Property(String name, Object value)
-        {
-            super();
-
-            this.name = name;
-            this.value = value;
-        }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (obj instanceof Property)
-                return name.equals(((Property) obj).name);
-
-            return super.equals(obj);
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return name.hashCode();
-        }
-    };
-
-    /**
      * basic vtk objects
      */
     protected vtkRenderer renderer;
@@ -214,9 +183,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     /**
      * internals
      */
-    protected final Thread propertiesUpdater;
+    protected PropertiesUpdater propertiesUpdater;
+    protected VtkOverlayUpdater overlayUpdater;
     protected XMLPreferences preferences;
-    protected final LinkedBlockingQueue<Property> propertiesToUpdate;
     protected final EDTTask<Object> edtTask;
     protected boolean initialized;
 
@@ -238,9 +207,9 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         pickedObject = null;
 
-        // create the processor
-        propertiesUpdater = new Thread(this, "VTK canvas properties updater");
-        propertiesToUpdate = new LinkedBlockingQueue<VtkCanvas.Property>(256);
+        // create the properties and the VTK overlay updater processors
+        propertiesUpdater = new PropertiesUpdater();
+        overlayUpdater = new VtkOverlayUpdater();
 
         preferences = CanvasPreferences.getPreferences().node(PREF_ID);
 
@@ -439,63 +408,15 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         // create EDTTask object
         edtTask = new EDTTask<Object>();
-        // start the properties updater thread
+        // start the properties and VTK overlay updater processors
         propertiesUpdater.start();
+        overlayUpdater.start();
 
         // initialized !
         initialized = true;
 
-        // add layers actors (better to do it in background as it can take a lot of time when we have many layers / ROI)
-        ThreadUtil.bgRun(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                final vtkProp[] props = VtkUtil.getLayersProps(getLayers(false));
-                final int len = props.length;
-
-                // do it by packet of 1000
-                for (int i = 0; i < len; i += 1000)
-                {
-                    final int l = Math.min(1000, len - i);
-                    final vtkProp[] propPacket = new vtkProp[l];
-
-                    // VTKCanvas has been closed --> interrupt process
-                    if (!initialized)
-                        break;
-
-                    System.arraycopy(props, i, propPacket, 0, l);
-
-                    invokeOnEDTSilent(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            final vtkRenderer r = getRenderer();
-                            final vtkCamera cam = getCamera();
-
-                            if ((r != null) && (cam != null))
-                            {
-                                for (vtkProp actor : propPacket)
-                                {
-                                    // refresh camera property for this specific kind of actor
-                                    if (actor instanceof vtkCubeAxesActor)
-                                        ((vtkCubeAxesActor) actor).SetCamera(cam);
-                                }
-
-                                // add all actors
-                                VtkUtil.addProps(r, propPacket);
-                            }
-                        }
-                    });
-
-                    // sleep a bit to offer a bit of responsiveness
-                    ThreadUtil.sleep(l);
-                    // and refresh
-                    refresh();
-                }
-            }
-        });
+        // add layers actors
+        overlayUpdater.addProps(VtkUtil.getLayersProps(getLayers(false)));
     }
 
     @Override
@@ -507,7 +428,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             ThreadUtil.sleep(1);
 
         propertiesUpdater.interrupt();
-        propertiesToUpdate.clear();
         try
         {
             // be sure there is no more processing here
@@ -517,9 +437,21 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         {
             // can ignore safely
         }
+        overlayUpdater.interrupt();
+        try
+        {
+            // be sure there is no more processing here
+            overlayUpdater.join();
+        }
+        catch (InterruptedException e)
+        {
+            // can ignore safely
+        }
 
         // no more initialized (prevent extra useless processing)
         initialized = false;
+        propertiesUpdater = null;
+        overlayUpdater = null;
 
         // VTK stuff in EDT
         invokeOnEDTSilent(new Runnable()
@@ -1326,90 +1258,29 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
     protected void addLayerActors(Layer layer)
     {
-        // not yet initialized
-        if ((renderer == null) || (panel3D == null))
+        // not yet (or no more) initialized
+        if (overlayUpdater == null)
             return;
 
-        final vtkProp[] props = VtkUtil.getLayerProps(layer);
-
-        if (props.length > 0)
-        {
-            invokeOnEDTSilent(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    for (vtkProp actor : props)
-                    {
-                        // refresh camera property for this specific kind of actor
-                        if (actor instanceof vtkCubeAxesActor)
-                            ((vtkCubeAxesActor) actor).SetCamera(camera);
-
-                        VtkUtil.addProp(renderer, actor);
-                    }
-                }
-            });
-        }
-
-        // need refresh
-        refresh();
+        overlayUpdater.addProps(VtkUtil.getLayerProps(layer));
     }
 
     protected void removeLayerActors(Layer layer)
     {
-        // not yet initialized
-        if ((renderer == null) || (panel3D == null))
+        // not yet (or no more) initialized
+        if (overlayUpdater == null)
             return;
 
-        final vtkProp[] props = VtkUtil.getLayerProps(layer);
-
-        if (props.length > 0)
-        {
-            invokeOnEDTSilent(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    for (vtkProp actor : props)
-                        VtkUtil.removeProp(renderer, actor);
-                }
-            });
-        }
-
-        // need refresh
-        refresh();
+        overlayUpdater.removeProps(VtkUtil.getLayerProps(layer));
     }
 
     protected void addLayersActors(List<Layer> layers)
     {
-        // not yet initialized
-        if ((renderer == null) || (panel3D == null))
+        // not yet (or no more) initialized
+        if (overlayUpdater == null)
             return;
 
-        final vtkProp[] props = VtkUtil.getLayersProps(layers);
-
-        if (props.length > 0)
-        {
-            invokeOnEDTSilent(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    for (vtkProp actor : props)
-                    {
-                        // refresh camera property for this specific kind of actor
-                        if (actor instanceof vtkCubeAxesActor)
-                            ((vtkCubeAxesActor) actor).SetCamera(camera);
-                    }
-
-                    // add all actors
-                    VtkUtil.addProps(renderer, props);
-                }
-            });
-        }
-
-        // need refresh
-        refresh();
+        overlayUpdater.addProps(VtkUtil.getLayersProps(layers));
     }
 
     protected void updateBoundingBoxSize()
@@ -1435,35 +1306,17 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         final int posC = getPositionC();
 
         final Object data;
-        long size;
 
         try
         {
             if (posC == -1)
             {
-                size = sequence.getSizeX();
-                size *= sequence.getSizeY();
-                size *= sequence.getSizeZ();
-                size *= sequence.getSizeC();
-
-                // can't allocate
-                if (size > Integer.MAX_VALUE)
-                    return null;
-
                 data = sequence.getDataCopyCXYZ(posT);
                 result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
                         sequence.getSizeZ(), sequence.getSizeC());
             }
             else
             {
-                size = sequence.getSizeX();
-                size *= sequence.getSizeY();
-                size *= sequence.getSizeZ();
-
-                // can't allocate
-                if (size > Integer.MAX_VALUE)
-                    return null;
-
                 data = sequence.getDataCopyXYZ(posT, posC);
                 result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
                         sequence.getSizeZ(), 1);
@@ -1701,7 +1554,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         final double canvasImageRatio = getCanvasSizeX() / ((imageSizeX == 0d) ? 1d : imageSizeX);
 
         return result * canvasImageRatio;
-          }
+    }
 
     @Override
     public double getScaleY()
@@ -1889,315 +1742,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         return getRenderedImage(t, c);
     }
 
-    protected void updateProperty(Property prop) throws InterruptedException
-    {
-        final String name = prop.name;
-        final Object value = prop.value;
-
-        if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_AMBIENT))
-        {
-            final double d = ((Double) value).doubleValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setAmbient(d);
-                }
-            });
-
-            preferences.putDouble(ID_AMBIENT, d);
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_DIFFUSE))
-        {
-            final double d = ((Double) value).doubleValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setDiffuse(d);
-                }
-            });
-
-            preferences.putDouble(ID_DIFFUSE, d);
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR))
-        {
-            final double d = ((Double) value).doubleValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setSpecular(d);
-                }
-            });
-
-            preferences.putDouble(ID_SPECULAR, d);
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BG_COLOR))
-        {
-            final Color color = (Color) value;
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    setBackgroundColorInternal(color);
-                }
-            });
-
-            preferences.putInt(ID_BGCOLOR, color.getRGB());
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_INTERPOLATION))
-        {
-            final int i = ((Integer) value).intValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setInterpolationMode(i);
-                }
-            });
-
-            preferences.putInt(ID_INTERPOLATION, i);
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_MAPPER))
-        {
-            final boolean gpuRendering = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setGPURendering(gpuRendering);
-                }
-            });
-
-            preferences.putInt(ID_MAPPER, gpuRendering ? 1 : 0);
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BLENDING))
-        {
-            final VtkVolumeBlendType type = (VtkVolumeBlendType) value;
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setBlendingMode(type);
-                }
-            });
-
-            preferences.putInt(ID_BLENDING, getVolumeBlendingMode().ordinal());
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SAMPLE))
-        {
-            final int i = ((Integer) value).intValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setSampleResolution(i);
-                }
-            });
-
-            preferences.putDouble(ID_SAMPLE, i);
-        }
-        else if (StringUtil.equals(name, PROPERTY_AXES))
-        {
-            final boolean b = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    panel3D.setAxisOrientationDisplayEnable(b);
-                }
-            });
-
-            preferences.putBoolean(ID_AXES, b);
-        }
-        else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX))
-        {
-            final boolean b = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    boundingBox.SetVisibility(b ? 1 : 0);
-                }
-            });
-
-            preferences.putBoolean(ID_BOUNDINGBOX, b);
-        }
-        else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_GRID))
-        {
-            final boolean b = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    rulerBox.SetDrawXGridlines(b ? 1 : 0);
-                    rulerBox.SetDrawYGridlines(b ? 1 : 0);
-                    rulerBox.SetDrawZGridlines(b ? 1 : 0);
-                }
-            });
-
-            preferences.putBoolean(ID_BOUNDINGBOX_GRID, b);
-        }
-        else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_RULES))
-        {
-            final boolean b = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    rulerBox.SetXAxisTickVisibility(b ? 1 : 0);
-                    rulerBox.SetXAxisMinorTickVisibility(b ? 1 : 0);
-                    rulerBox.SetYAxisTickVisibility(b ? 1 : 0);
-                    rulerBox.SetYAxisMinorTickVisibility(b ? 1 : 0);
-                    rulerBox.SetZAxisTickVisibility(b ? 1 : 0);
-                    rulerBox.SetZAxisMinorTickVisibility(b ? 1 : 0);
-                }
-            });
-
-            preferences.putBoolean(ID_BOUNDINGBOX_RULES, b);
-        }
-        else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_LABELS))
-        {
-            final boolean b = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    rulerBox.SetXAxisLabelVisibility(b ? 1 : 0);
-                    rulerBox.SetYAxisLabelVisibility(b ? 1 : 0);
-                    rulerBox.SetZAxisLabelVisibility(b ? 1 : 0);
-                }
-            });
-
-            preferences.putBoolean(ID_BOUNDINGBOX_LABELS, b);
-        }
-        else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SHADING))
-        {
-            final boolean b = ((Boolean) value).booleanValue();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    imageVolume.setShade(b);
-                }
-            });
-
-            preferences.putBoolean(ID_SHADING, b);
-        }
-        else if (StringUtil.equals(name, PROPERTY_LUT))
-        {
-            updateLut();
-        }
-        else if (StringUtil.equals(name, PROPERTY_SCALE))
-        {
-            final double[] oldScale = getVolumeScale();
-            final double[] newScale = (double[]) value;
-
-            if (!Arrays.equals(oldScale, newScale))
-            {
-                invokeOnEDT(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        imageVolume.setScale(newScale);
-                        // need to update bounding box as well
-                        updateBoundingBoxSize();
-                    }
-                });
-            }
-        }
-        else if (StringUtil.equals(name, PROPERTY_DATA))
-        {
-            final vtkImageData data = getImageData();
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    // set image data
-                    updateImageData(data);
-                }
-            });
-        }
-        else if (StringUtil.equals(name, PROPERTY_BOUNDS))
-        {
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    updateBoundingBoxSize();
-                }
-            });
-        }
-        else if (StringUtil.equals(name, PROPERTY_LAYERS_VISIBLE))
-        {
-            final Layer layer = (Layer) value;
-
-            invokeOnEDT(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    refreshLayerProperties(layer);
-                }
-            });
-        }
-    }
-
-    @Override
-    public void run()
-    {
-        while (!propertiesUpdater.isInterrupted())
-        {
-            try
-            {
-                updateProperty(propertiesToUpdate.take());
-            }
-            catch (InterruptedException e)
-            {
-                // just end process
-                return;
-            }
-
-            // need to refresh rendering
-            if (propertiesToUpdate.isEmpty())
-                refresh();
-        }
-    }
-
-    protected synchronized void invokeOnEDT(Runnable task) throws InterruptedException
+    protected void invokeOnEDT(Runnable task) throws InterruptedException
     {
         // in initialization --> just execute
         if (edtTask == null)
@@ -2223,7 +1768,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         }
     }
 
-    protected synchronized void invokeOnEDTSilent(Runnable task)
+    protected void invokeOnEDTSilent(Runnable task)
     {
         try
         {
@@ -2468,16 +2013,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     {
         final Property prop = new Property(name, value);
 
-        // remove previous property of same name
-        if (propertiesToUpdate.remove(prop))
-        {
-            // if we already had a layers visible update then we update all layers
-            if (name.equals(PROPERTY_LAYERS_VISIBLE))
-                prop.value = null;
-        }
-
-        // add the property
-        propertiesToUpdate.add(prop);
+        propertiesUpdater.submit(prop);
     }
 
     /*
@@ -2792,6 +2328,524 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         {
             // return the image volume as prop
             return new vtkProp[] {imageVolume.getVolume()};
+        }
+    }
+
+    /**
+     * Property to update
+     */
+    protected static class Property
+    {
+        String name;
+        Object value;
+
+        public Property(String name, Object value)
+        {
+            super();
+
+            this.name = name;
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof Property)
+                return name.equals(((Property) obj).name);
+
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return name.hashCode();
+        }
+    };
+
+    /**
+     * Properties updater helper class
+     */
+    protected class PropertiesUpdater extends Thread
+    {
+        final LinkedBlockingQueue<Property> toUpdate;
+
+        public PropertiesUpdater()
+        {
+            super("VTK canvas properties updater");
+
+            toUpdate = new LinkedBlockingQueue<VtkCanvas.Property>(256);
+        }
+
+        public synchronized void submit(Property prop)
+        {
+            // remove previous property of same name
+            if (toUpdate.remove(prop))
+            {
+                // if we already had a layers visible update then we update all layers
+                if (prop.name.equals(PROPERTY_LAYERS_VISIBLE))
+                    prop.value = null;
+            }
+
+            // add the property
+            toUpdate.add(prop);
+        }
+
+        protected void updateProperty(Property prop) throws InterruptedException
+        {
+            final String name = prop.name;
+            final Object value = prop.value;
+
+            if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_AMBIENT))
+            {
+                final double d = ((Double) value).doubleValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setAmbient(d);
+                    }
+                });
+
+                preferences.putDouble(ID_AMBIENT, d);
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_DIFFUSE))
+            {
+                final double d = ((Double) value).doubleValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setDiffuse(d);
+                    }
+                });
+
+                preferences.putDouble(ID_DIFFUSE, d);
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR))
+            {
+                final double d = ((Double) value).doubleValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setSpecular(d);
+                    }
+                });
+
+                preferences.putDouble(ID_SPECULAR, d);
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BG_COLOR))
+            {
+                final Color color = (Color) value;
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        setBackgroundColorInternal(color);
+                    }
+                });
+
+                preferences.putInt(ID_BGCOLOR, color.getRGB());
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_INTERPOLATION))
+            {
+                final int i = ((Integer) value).intValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setInterpolationMode(i);
+                    }
+                });
+
+                preferences.putInt(ID_INTERPOLATION, i);
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_MAPPER))
+            {
+                final boolean gpuRendering = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setGPURendering(gpuRendering);
+                    }
+                });
+
+                preferences.putInt(ID_MAPPER, gpuRendering ? 1 : 0);
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BLENDING))
+            {
+                final VtkVolumeBlendType type = (VtkVolumeBlendType) value;
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setBlendingMode(type);
+                    }
+                });
+
+                preferences.putInt(ID_BLENDING, getVolumeBlendingMode().ordinal());
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SAMPLE))
+            {
+                final int i = ((Integer) value).intValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setSampleResolution(i);
+                    }
+                });
+
+                preferences.putDouble(ID_SAMPLE, i);
+            }
+            else if (StringUtil.equals(name, PROPERTY_AXES))
+            {
+                final boolean b = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        panel3D.setAxisOrientationDisplayEnable(b);
+                    }
+                });
+
+                preferences.putBoolean(ID_AXES, b);
+            }
+            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX))
+            {
+                final boolean b = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        boundingBox.SetVisibility(b ? 1 : 0);
+                    }
+                });
+
+                preferences.putBoolean(ID_BOUNDINGBOX, b);
+            }
+            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_GRID))
+            {
+                final boolean b = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        rulerBox.SetDrawXGridlines(b ? 1 : 0);
+                        rulerBox.SetDrawYGridlines(b ? 1 : 0);
+                        rulerBox.SetDrawZGridlines(b ? 1 : 0);
+                    }
+                });
+
+                preferences.putBoolean(ID_BOUNDINGBOX_GRID, b);
+            }
+            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_RULES))
+            {
+                final boolean b = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        rulerBox.SetXAxisTickVisibility(b ? 1 : 0);
+                        rulerBox.SetXAxisMinorTickVisibility(b ? 1 : 0);
+                        rulerBox.SetYAxisTickVisibility(b ? 1 : 0);
+                        rulerBox.SetYAxisMinorTickVisibility(b ? 1 : 0);
+                        rulerBox.SetZAxisTickVisibility(b ? 1 : 0);
+                        rulerBox.SetZAxisMinorTickVisibility(b ? 1 : 0);
+                    }
+                });
+
+                preferences.putBoolean(ID_BOUNDINGBOX_RULES, b);
+            }
+            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_LABELS))
+            {
+                final boolean b = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        rulerBox.SetXAxisLabelVisibility(b ? 1 : 0);
+                        rulerBox.SetYAxisLabelVisibility(b ? 1 : 0);
+                        rulerBox.SetZAxisLabelVisibility(b ? 1 : 0);
+                    }
+                });
+
+                preferences.putBoolean(ID_BOUNDINGBOX_LABELS, b);
+            }
+            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SHADING))
+            {
+                final boolean b = ((Boolean) value).booleanValue();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        imageVolume.setShade(b);
+                    }
+                });
+
+                preferences.putBoolean(ID_SHADING, b);
+            }
+            else if (StringUtil.equals(name, PROPERTY_LUT))
+            {
+                updateLut();
+            }
+            else if (StringUtil.equals(name, PROPERTY_SCALE))
+            {
+                final double[] oldScale = getVolumeScale();
+                final double[] newScale = (double[]) value;
+
+                if (!Arrays.equals(oldScale, newScale))
+                {
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setScale(newScale);
+                            // need to update bounding box as well
+                            updateBoundingBoxSize();
+                        }
+                    });
+                }
+            }
+            else if (StringUtil.equals(name, PROPERTY_DATA))
+            {
+                final vtkImageData data = getImageData();
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // set image data
+                        updateImageData(data);
+                    }
+                });
+            }
+            else if (StringUtil.equals(name, PROPERTY_BOUNDS))
+            {
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateBoundingBoxSize();
+                    }
+                });
+            }
+            else if (StringUtil.equals(name, PROPERTY_LAYERS_VISIBLE))
+            {
+                final Layer layer = (Layer) value;
+
+                invokeOnEDT(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        refreshLayerProperties(layer);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void run()
+        {
+            while (!isInterrupted())
+            {
+                try
+                {
+                    updateProperty(toUpdate.take());
+                }
+                catch (InterruptedException e)
+                {
+                    // just end process
+                    break;
+                }
+
+                // need to refresh rendering
+                if (toUpdate.isEmpty())
+                    refresh();
+            }
+
+            // help GC
+            toUpdate.clear();
+        }
+    }
+
+    /**
+     * VTK overlay updater helper class
+     */
+    protected class VtkOverlayUpdater extends Thread
+    {
+        final LinkedList<vtkProp> propToAdd;
+        final LinkedList<vtkProp> propToRemove;
+
+        public VtkOverlayUpdater()
+        {
+            super("VTK canvas overlay updater");
+
+            propToAdd = new LinkedList<vtkProp>();
+            propToRemove = new LinkedList<vtkProp>();
+        }
+
+        public void addProp(vtkProp prop)
+        {
+            synchronized (propToAdd)
+            {
+                propToAdd.add(prop);
+            }
+        }
+
+        public void removeProp(vtkProp prop)
+        {
+            synchronized (propToRemove)
+            {
+                propToRemove.add(prop);
+            }
+        }
+
+        public void addProps(List<vtkProp> props)
+        {
+            synchronized (propToAdd)
+            {
+                propToAdd.addAll(props);
+            }
+        }
+
+        public void removeProps(List<vtkProp> props)
+        {
+            synchronized (propToRemove)
+            {
+                propToRemove.addAll(props);
+            }
+        }
+
+        public void addProps(vtkProp[] props)
+        {
+            synchronized (propToAdd)
+            {
+                for (vtkProp prop : props)
+                    propToAdd.add(prop);
+            }
+        }
+
+        public void removeProps(vtkProp[] props)
+        {
+            synchronized (propToAdd)
+            {
+                for (vtkProp prop : props)
+                    propToRemove.add(prop);
+            }
+        }
+
+        @Override
+        public void run()
+        {
+            while (!isInterrupted())
+            {
+                while (!isInterrupted() && !propToAdd.isEmpty())
+                {
+                    invokeOnEDTSilent(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            final vtkRenderer r = getRenderer();
+                            final vtkCamera cam = getCamera();
+                            int done = 0;
+
+                            if ((r != null) && (cam != null))
+                            {
+                                // add actor by packet of 1000
+                                while (!propToAdd.isEmpty() && (done++ < 1000))
+                                {
+                                    final vtkProp prop = propToAdd.removeFirst();
+
+                                    // actor not yet present in renderer ?
+                                    if (r.HasViewProp(prop) == 0)
+                                    {
+                                        // refresh camera property for this specific kind of actor
+                                        if (prop instanceof vtkCubeAxesActor)
+                                            ((vtkCubeAxesActor) prop).SetCamera(cam);
+
+                                        // add the actor to the renderer
+                                        r.AddViewProp(prop);
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // sleep a bit to offer a bit of responsiveness
+                    ThreadUtil.sleep(10);
+                    // and refresh
+                    refresh();
+                }
+
+                while (!isInterrupted() && !propToRemove.isEmpty())
+                {
+                    invokeOnEDTSilent(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            final vtkRenderer r = getRenderer();
+                            final vtkCamera cam = getCamera();
+                            int done = 0;
+
+                            if ((r != null) && (cam != null))
+                            {
+                                // remove actors from renderer by packet of 1000
+                                while (!propToRemove.isEmpty() && (done++ < 1000))
+                                    r.RemoveViewProp(propToRemove.removeFirst());
+                            }
+                        }
+                    });
+
+                    // sleep a bit to offer a bit of responsiveness
+                    ThreadUtil.sleep(10);
+                    // and refresh
+                    refresh();
+                }
+
+                // sleep a bit
+                ThreadUtil.sleep(1);
+            }
+
+            // help GC
+            propToAdd.clear();
+            propToRemove.clear();
         }
     }
 }

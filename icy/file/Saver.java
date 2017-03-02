@@ -777,7 +777,7 @@ public class Saver
                     sequence.setName(FileUtil.getFileName(filePath, false));
 
                 // save whole sequence into a single file
-                savedSequence = save(formatWriter, sequence, fixedFilePath, -1, -1, fps, saveFrame);
+                savedSequence = save(writer, sequence, fixedFilePath, -1, -1, fps, saveFrame);
 
                 // we set filename on actual saved Sequence
                 savedSequence.setFilename(filePath);
