@@ -20,7 +20,6 @@ package icy.gui.inspector;
 
 import icy.gui.component.AbstractRoisPanel;
 import icy.main.Icy;
-import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.preferences.GeneralPreferences;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
@@ -151,4 +150,6 @@ public class RoisPanel extends AbstractRoisPanel
             super.roiChanged(event);
         }
     }
+
+   
 }

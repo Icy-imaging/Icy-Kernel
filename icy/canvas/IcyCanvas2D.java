@@ -24,6 +24,7 @@ import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
+import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -547,6 +548,18 @@ public abstract class IcyCanvas2D extends IcyCanvas
     public Rectangle2D getImageVisibleRect()
     {
         return canvasToImage(getCanvasVisibleRect());
+    }
+    
+    /**
+     * Adjust view position and possibly scaling factor to ensure the specified region become visible.<br>
+     * It's up to the Canvas implementation to decide how to make the region visible.
+     * 
+     * @param region
+     *        the region we want to see
+     */
+    public void centerOn(Rectangle region)
+    {
+        // override it in Canvas implementation
     }
 
     /**

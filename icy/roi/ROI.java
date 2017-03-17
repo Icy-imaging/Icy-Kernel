@@ -23,6 +23,7 @@ import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
+import icy.gui.inspector.RoisPanel;
 import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.plugin.abstract_.Plugin;
@@ -1143,8 +1144,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 // and process ROI stuff now
                 if (isActiveFor(canvas))
                 {
+                    final int clickCount = e.getClickCount();
+
                     // single click
-                    if (e.getClickCount() == 1)
+                    if (clickCount == 1)
                     {
                         // right click action
                         if (EventUtil.isRightMouseButton(e))
@@ -1152,6 +1155,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                             // unselect (don't consume event)
                             if (isSelected())
                                 ROI.this.setSelected(false);
+                        }
+                    }
+                    // double click
+                    else if (clickCount == 2)
+                    {
+                        // focused ?
+                        if (isFocused())
+                        {
+                            // show in ROI panel
+                            final RoisPanel roiPanel = Icy.getMainInterface().getRoisPanel();
+
+                            if (roiPanel != null)
+                            {
+                                roiPanel.scrollTo(ROI.this);
+                                // consume event
+                                e.consume();
+                            }
                         }
                     }
                 }

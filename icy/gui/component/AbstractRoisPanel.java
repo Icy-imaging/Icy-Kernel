@@ -19,6 +19,9 @@
 package icy.gui.component;
 
 import icy.action.RoiActions;
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.renderer.ImageTableCellRenderer;
@@ -26,6 +29,8 @@ import icy.gui.inspector.RoiSettingFrame;
 import icy.gui.main.ActiveSequenceListener;
 import icy.gui.util.GuiUtil;
 import icy.gui.util.LookAndFeelUtil;
+import icy.gui.viewer.Viewer;
+import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
@@ -53,6 +58,8 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -399,6 +406,24 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         roiTable.setSortable(true);
         // set highlight
         roiTable.setHighlighters(HighlighterFactory.createSimpleStriping());
+        roiTable.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mousePressed(MouseEvent event)
+            {
+                if (event.getClickCount() == 2)
+                {
+                    final int c = roiTable.columnAtPoint(event.getPoint());
+                    TableColumn col = null;
+
+                    if (c != -1)
+                        col = roiTable.getColumn(c);
+
+                    if ((col == null) || !col.getHeaderValue().equals(new ROINameDescriptor().getName()))
+                        roiTableDoubleClicked();
+                }
+            }
+        });
 
         // set header settings
         final JTableHeader tableHeader = roiTable.getTableHeader();
@@ -875,6 +900,17 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         }
 
         return result;
+    }
+
+    /**
+     * Display the roi in the table (scroll if needed)
+     */
+    public void scrollTo(ROI roi)
+    {
+        final int index = getRoiIndex(roi);
+
+        if (index != -1)
+            roiTable.scrollRowToVisible(index);
     }
 
     protected void refreshRoiNumbers()
@@ -1360,7 +1396,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             for (ColumnInfo columnInfo : exportColumnInfos)
             {
                 if (columnInfo.visible)
-                {                    
+                {
                     // try to retrieve result for this column
                     final DescriptorResult result = descriptorResults.get(columnInfo);
 
@@ -1459,6 +1495,36 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         }
 
         refreshRoiNumbers();
+    }
+
+    // called when a ROI has been double clicked in the ROI table
+    protected void roiTableDoubleClicked()
+    {
+        final List<ROI> selectedRois = getSelectedRois();
+
+        if (selectedRois.size() > 0)
+        {
+            final ROI selected = selectedRois.get(0);
+            // get active viewer
+            final Viewer v = Icy.getMainInterface().getActiveViewer();
+
+            if ((v != null) && (selected != null))
+            {
+                // get canvas
+                final IcyCanvas c = v.getCanvas();
+
+                if (c instanceof IcyCanvas2D)
+                {
+                    // center view on selected ROI
+                    ((IcyCanvas2D) c).centerOn(selected.getBounds5D().toRectangle2D().getBounds());
+                }
+                else if (c instanceof IcyCanvas3D)
+                {
+                    // center view on selected ROI
+                    ((IcyCanvas3D) c).centerOn(selected.getBounds5D().toRectangle3D().toInteger());
+                }
+            }
+        }
     }
 
     @Override

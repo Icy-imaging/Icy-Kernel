@@ -88,7 +88,7 @@ public class IcyUpdater
      */
     public static boolean isCheckingForUpdate()
     {
-        return checking;
+        return checking || ThreadUtil.hasWaitingBgSingleTask(checker);
     }
 
     /**

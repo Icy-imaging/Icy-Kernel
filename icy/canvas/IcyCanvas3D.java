@@ -21,6 +21,7 @@ package icy.canvas;
 import icy.gui.viewer.Viewer;
 import icy.sequence.DimensionId;
 import icy.type.point.Point3D;
+import icy.type.rectangle.Rectangle3D;
 
 import java.awt.Point;
 
@@ -198,5 +199,17 @@ public abstract class IcyCanvas3D extends IcyCanvas
     public Point3D.Double canvasToImage(Point point)
     {
         return canvasToImage(point.x, point.y);
+    }
+
+    /**
+     * Adjust view position and possibly scaling factor to ensure the specified region become visible.<br>
+     * It's up to the Canvas implementation to decide how to make the region visible.
+     * 
+     * @param region
+     *        the region we want to see
+     */
+    public void centerOn(Rectangle3D.Integer region)
+    {
+        // override it in Canvas implementation
     }
 }

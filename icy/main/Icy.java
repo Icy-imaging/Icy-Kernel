@@ -80,16 +80,23 @@ import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
 
 /**
+ * <h3>Icy - copyright 2017 Institut Pasteur</h3> An open community platform for bio image analysis<br>
+ * <i>http://icy.bioimageanalysis.org</i><br>
  * <br>
- * ICY: Image Analysis Software <br>
- * Institut Pasteur <br>
- * Unite d analyse d images quantitative <br>
- * 25,28 Rue du Docteur Roux <br>
- * 75015 Paris - France
- * 
- * @author Fabrice de Chaumont, Stephane Dallongeville
+ * Icy has been created by the Bio Image Analysis team at Institut Pasteur<br>
+ * <i>https://research.pasteur.fr/fr/team/bioimage-analysis</i><br>
+ * <br>
+ * Icy is free and open source, it has been funded both by Institut Pasteur and the FBI consortium<br>
+ * <i>https://france-bioimaging.org</i><br>
+ * <br>
+ * Source code is always provided in the main application package (in the icy.jar archive file) but can be also browsed
+ * from the GitHub repository<br>
+ * <i>https://github.com/Icy-imaging/Icy-Kernel</i><br>
+ * <br>
+ *
+ * @author Stephane Dallongeville
+ * @author Fabrice de Chaumont
  */
-
 public class Icy
 {
     public static final String LIB_PATH = "lib";
@@ -98,7 +105,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.9.0.0b");
+    public static Version version = new Version("1.9.0.0");
 
     /**
      * Main interface
@@ -377,7 +384,8 @@ public class Icy
             Icy.getMainInterface().addSequence(Loader.loadSequence(FileUtil.getGenericPath(startupImage), 0, false));
 
         // wait while updates are occurring before starting command line plugin...
-        while (PluginInstaller.isProcessing() || WorkspaceInstaller.isProcessing())
+        while (PluginUpdater.isCheckingForUpdate() || PluginInstaller.isProcessing()
+                || WorkspaceInstaller.isProcessing())
             ThreadUtil.sleep(1);
 
         if (startupPluginName != null)

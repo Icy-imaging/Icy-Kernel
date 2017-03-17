@@ -48,9 +48,11 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle2DUtil;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 
 import java.awt.AlphaComposite;
@@ -92,7 +94,6 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import plugins.kernel.roi.tool.ROILineCutter;
 import plugins.kernel.roi.tool.plugin.ROILineCutterPlugin;
 
 /**
@@ -974,7 +975,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             if (roi != null)
                             {
                                 roi.setCreating(true);
-                                
+
                                 // attach to sequence (hacky method to avoid undoing ROI cutting)
                                 seq.addROI(roi, !roiClassName.equals(ROILineCutterPlugin.class.getName()));
                                 // then do exclusive selection
@@ -2230,6 +2231,60 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     protected void centerMouseOnView()
     {
         setMousePos(getCanvasSizeX() >> 1, getCanvasSizeY() >> 1);
+    }
+
+    @Override
+    public void centerOn(Rectangle region)
+    {
+        final Rectangle2D imageRectMax = Rectangle2DUtil.getScaledRectangle(new Rectangle(getImageSizeX(),
+                getImageSizeY()), 1.5d, true);
+
+        Rectangle2D adjusted = Rectangle2DUtil.getScaledRectangle(region, 2d, true);
+
+        // get undersize
+        double wu = Math.max(0, 100d - adjusted.getWidth());
+        double hu = Math.max(0, 100d - adjusted.getHeight());
+
+        // enlarge a bit to have at least a 100x100 rectangle
+        if ((wu > 0) || (hu > 0))
+            ShapeUtil.enlarge(adjusted, wu, hu, true);
+
+        // get overflow on original image size
+        double wo = Math.max(0, adjusted.getWidth() - imageRectMax.getWidth());
+        double ho = Math.max(0, adjusted.getHeight() - imageRectMax.getHeight());
+
+        // reduce a bit to clip on max image size
+        if ((wo > 0) || (ho > 0))
+            ShapeUtil.enlarge(adjusted, -wo, -ho, true);
+
+        final Rectangle viewRect = new Rectangle(getViewComponent().getSize());
+
+        // calculate new scale factors
+        final double scaleX = viewRect.width / adjusted.getWidth();
+        final double scaleY = viewRect.height / adjusted.getHeight();
+
+        // get point on canvas
+        final int offX;
+        final int offY;
+        final double newScale;
+
+        if (scaleX < scaleY)
+        {
+            newScale = scaleX;
+            // use scale X, adapt offset Y
+            offX = (int) (adjusted.getX() * newScale);
+            offY = (int) ((adjusted.getY() * newScale) - ((viewRect.height - (adjusted.getHeight() * newScale)) / 2d));
+        }
+        else
+        {
+            newScale = scaleY;
+            // use scale Y, adapt offset X
+            offX = (int) ((adjusted.getX() * newScale) - ((viewRect.width - (adjusted.getWidth() * newScale)) / 2d));
+            offY = (int) (adjusted.getY() * newScale);
+        }
+
+        // apply new position and scaling
+        setTransform(-offX, -offY, newScale, newScale, smoothTransform.getDestValue(ROT), true);
     }
 
     /**
