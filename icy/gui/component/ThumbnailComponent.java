@@ -18,13 +18,10 @@
  */
 package icy.gui.component;
 
-import icy.gui.util.ComponentUtil;
-import icy.image.ImageUtil;
-import icy.resource.ResourceUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 
@@ -32,6 +29,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+
+import icy.gui.util.ComponentUtil;
+import icy.image.ImageUtil;
+import icy.resource.ResourceUtil;
 
 public class ThumbnailComponent extends JToggleButton
 {
@@ -45,6 +46,7 @@ public class ThumbnailComponent extends JToggleButton
     private JLabel titleLabel;
     private JLabel infosLabel;
     private JLabel infos2Label;
+    private boolean shortDisplay;
 
     /**
      * Create the thumbnail.
@@ -55,6 +57,8 @@ public class ThumbnailComponent extends JToggleButton
     public ThumbnailComponent(boolean selectable)
     {
         super();
+
+        shortDisplay = false;
 
         setMinimumSize(new Dimension(120, 12));
         setPreferredSize(new Dimension(160, 160));
@@ -74,22 +78,41 @@ public class ThumbnailComponent extends JToggleButton
 
         final JPanel southPanel = new JPanel();
         southPanel.setOpaque(false);
-        southPanel.setLayout(new GridLayout(0, 1, 0, 0));
+        GridBagLayout gbl_southPanel = new GridBagLayout();
+        gbl_southPanel.columnWidths = new int[] {0, 0};
+        gbl_southPanel.rowHeights = new int[] {0, 0, 0, 0};
+        gbl_southPanel.columnWeights = new double[] {1.0, Double.MIN_VALUE};
+        gbl_southPanel.rowWeights = new double[] {0.0, 0.0, 0.0, Double.MIN_VALUE};
+        southPanel.setLayout(gbl_southPanel);
 
         titleLabel = new JLabel();
-        southPanel.add(titleLabel);
+        GridBagConstraints gbc_titleLabel = new GridBagConstraints();
+        gbc_titleLabel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_titleLabel.insets = new Insets(0, 0, 0, 0);
+        gbc_titleLabel.gridx = 0;
+        gbc_titleLabel.gridy = 0;
+        southPanel.add(titleLabel, gbc_titleLabel);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         titleLabel.setText(" ");
         titleLabel.setHorizontalTextPosition(SwingConstants.LEADING);
         ComponentUtil.setFontBold(titleLabel);
         infosLabel = new JLabel();
-        southPanel.add(infosLabel);
+        GridBagConstraints gbc_infosLabel = new GridBagConstraints();
+        gbc_infosLabel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_infosLabel.insets = new Insets(0, 0, 0, 0);
+        gbc_infosLabel.gridx = 0;
+        gbc_infosLabel.gridy = 1;
+        southPanel.add(infosLabel, gbc_infosLabel);
         infosLabel.setHorizontalAlignment(SwingConstants.CENTER);
         infosLabel.setText(" ");
         infosLabel.setHorizontalTextPosition(SwingConstants.LEADING);
         ComponentUtil.setFontSize(infosLabel, 11);
         infos2Label = new JLabel();
-        southPanel.add(infos2Label);
+        GridBagConstraints gbc_infos2Label = new GridBagConstraints();
+        gbc_infos2Label.fill = GridBagConstraints.HORIZONTAL;
+        gbc_infos2Label.gridx = 0;
+        gbc_infos2Label.gridy = 2;
+        southPanel.add(infos2Label, gbc_infos2Label);
         infos2Label.setHorizontalAlignment(SwingConstants.CENTER);
         infos2Label.setText(" ");
         infos2Label.setHorizontalTextPosition(SwingConstants.LEADING);
@@ -131,6 +154,29 @@ public class ThumbnailComponent extends JToggleButton
         }
 
         imageComp.setImage(image);
+    }
+
+    /**
+     * @return the shortDisplay property
+     * @see #setShortDisplay(boolean)
+     */
+    public boolean getShortDisplay()
+    {
+        return shortDisplay;
+    }
+
+    /**
+     * When set to true, only 'infos' is visible otherwise title, infos and infos2 are all visible
+     */
+    public void setShortDisplay(boolean value)
+    {
+        if (shortDisplay != value)
+        {
+            shortDisplay = value;
+
+            titleLabel.setVisible(!value);
+            infos2Label.setVisible(!value);
+        }
     }
 
     public String getTitle()

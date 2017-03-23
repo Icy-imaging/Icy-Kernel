@@ -18,7 +18,15 @@
  */
 package icy.action;
 
-import icy.file.Loader;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import icy.file.Saver;
 import icy.gui.dialog.ImageSaverDialog;
 import icy.gui.dialog.LoaderDialog;
@@ -40,15 +48,6 @@ import icy.type.DataType;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * File actions (open / save / close...)
  * 
@@ -56,93 +55,93 @@ import java.util.List;
  */
 public class FileActions
 {
-    public static class OpenSequenceRegionAction extends IcyAbstractAction
-    {
-        final int resolution;
+    // public static class OpenSequenceRegionAction extends IcyAbstractAction
+    // {
+    // final int resolution;
+    //
+    // public OpenSequenceRegionAction(int resolution)
+    // {
+    // super("Open at resolution 1/" + ((int) Math.pow(2, resolution)), null,
+    // "Open image region at resolution 1/" + ((int) Math.pow(2, resolution)),
+    // "Open the selected region from the original image at resolution 1/"
+    // + ((int) Math.pow(2, resolution)),
+    // true, null);
+    //
+    // this.resolution = resolution;
+    // }
+    //
+    // @Override
+    // public boolean doAction(ActionEvent e)
+    // {
+    // final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+    //
+    // if (sequence != null)
+    // {
+    // final String path = sequence.getFilename();
+    //
+    // if (!StringUtil.isEmpty(path))
+    // {
+    // List<ROI> rois = sequence.getROIs();
+    // int size = rois.size();
+    //
+    // if (size == 0)
+    // {
+    // MessageDialog.showDialog(
+    // "There is no ROI in the current sequence.\nYou need a ROI to define the region to open.",
+    // MessageDialog.INFORMATION_MESSAGE);
+    // return false;
+    // }
+    // else if (size > 1)
+    // {
+    // rois = sequence.getSelectedROIs();
+    // size = rois.size();
+    //
+    // if (size == 0)
+    // {
+    // MessageDialog.showDialog("You need to select a ROI to do this operation.",
+    // MessageDialog.INFORMATION_MESSAGE);
+    // return false;
+    // }
+    // else if (size > 1)
+    // {
+    // MessageDialog.showDialog("You must have only one selected ROI to do this operation.",
+    // MessageDialog.INFORMATION_MESSAGE);
+    // return false;
+    // }
+    // }
+    //
+    // final ROI roi = rois.get(0);
+    // final Rectangle bounds = SequenceUtil
+    // .getOriginRectangle(roi.getBounds5D().toRectangle2D().getBounds(), sequence);
+    //
+    // if (!bounds.isEmpty())
+    // {
+    // final Sequence regionSequence = Loader.loadSequence(null, path, sequence.getSerieIndex(),
+    // resolution, bounds, -1, -1, -1, -1, -1, false, true);
+    //
+    // if (regionSequence != null)
+    // {
+    // Icy.getMainInterface().addSequence(regionSequence);
+    // return true;
+    // }
+    // }
+    // }
+    // }
+    //
+    // return false;
+    // }
+    //
+    // @Override
+    // public boolean isEnabled()
+    // {
+    // final Sequence seq = Icy.getMainInterface().getActiveSequence();
+    //
+    // return super.isEnabled() && (seq != null) && (!StringUtil.isEmpty(seq.getFilename()) && seq.hasROI());
+    // }
+    // }
 
-        public OpenSequenceRegionAction(int resolution)
-        {
-            super("Open at resolution 1/" + ((int) Math.pow(2, resolution)), null, "Open image region at resolution 1/"
-                    + ((int) Math.pow(2, resolution)),
-                    "Open the selected region from the original image at resolution 1/"
-                            + ((int) Math.pow(2, resolution)), true, null);
-
-            this.resolution = resolution;
-        }
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-
-            if (sequence != null)
-            {
-                final String path = sequence.getFilename();
-
-                if (!StringUtil.isEmpty(path))
-                {
-                    List<ROI> rois = sequence.getROIs();
-                    int size = rois.size();
-
-                    if (size == 0)
-                    {
-                        MessageDialog
-                                .showDialog(
-                                        "There is no ROI in the current sequence.\nYou need a ROI to define the region to open.",
-                                        MessageDialog.INFORMATION_MESSAGE);
-                        return false;
-                    }
-                    else if (size > 1)
-                    {
-                        rois = sequence.getSelectedROIs();
-                        size = rois.size();
-
-                        if (size == 0)
-                        {
-                            MessageDialog.showDialog("You need to select a ROI to do this operation.",
-                                    MessageDialog.INFORMATION_MESSAGE);
-                            return false;
-                        }
-                        else if (size > 1)
-                        {
-                            MessageDialog.showDialog("You must have only one selected ROI to do this operation.",
-                                    MessageDialog.INFORMATION_MESSAGE);
-                            return false;
-                        }
-                    }
-
-                    final ROI roi = rois.get(0);
-                    final Rectangle bounds = SequenceUtil.getOriginRectangle(roi.getBounds5D().toRectangle2D()
-                            .getBounds(), sequence);
-
-                    if (!bounds.isEmpty())
-                    {
-                        final Sequence regionSequence = Loader.loadSequence(null, path, sequence.getSerieIndex(),
-                                resolution, bounds, -1, -1, -1, -1, -1, false, true);
-
-                        if (regionSequence != null)
-                        {
-                            Icy.getMainInterface().addSequence(regionSequence);
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        @Override
-        public boolean isEnabled()
-        {
-            final Sequence seq = Icy.getMainInterface().getActiveSequence();
-
-            return super.isEnabled() && (seq != null) && (!StringUtil.isEmpty(seq.getFilename()) && seq.hasROI());
-        }
-    }
-
-    public static IcyAbstractAction clearRecentFilesAction = new IcyAbstractAction("Clear recent files", new IcyIcon(
-            ResourceUtil.ICON_DOC_COPY), "Clear recent files", "Clear the list of last opened files")
+    public static IcyAbstractAction clearRecentFilesAction = new IcyAbstractAction("Clear recent files",
+            new IcyIcon(ResourceUtil.ICON_DOC_COPY), "Clear recent files", "Clear the list of last opened files")
     {
         /**
          * 
@@ -164,8 +163,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction newSequenceAction = new IcyAbstractAction("Create", new IcyIcon(
-            ResourceUtil.ICON_DOC_NEW), "Create an empty sequence")
+    public static IcyAbstractAction newSequenceAction = new IcyAbstractAction("Create",
+            new IcyIcon(ResourceUtil.ICON_DOC_NEW), "Create an empty sequence")
     {
         /**
          * 
@@ -181,8 +180,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction newGraySequenceAction = new IcyAbstractAction("Create gray sequence", new IcyIcon(
-            ResourceUtil.ICON_DOC_NEW), "Create a new gray sequence",
+    public static IcyAbstractAction newGraySequenceAction = new IcyAbstractAction("Create gray sequence",
+            new IcyIcon(ResourceUtil.ICON_DOC_NEW), "Create a new gray sequence",
             "Create a new single channel (gray level) sequence.")
     {
         /**
@@ -207,8 +206,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction newRGBSequenceAction = new IcyAbstractAction("Create RGB sequence", new IcyIcon(
-            ResourceUtil.ICON_DOC_NEW), "Create a new RGB color sequence",
+    public static IcyAbstractAction newRGBSequenceAction = new IcyAbstractAction("Create RGB sequence",
+            new IcyIcon(ResourceUtil.ICON_DOC_NEW), "Create a new RGB color sequence",
             "Create a 3 channels sequence (red, green, blue).")
     {
         /**
@@ -233,8 +232,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction newARGBSequenceAction = new IcyAbstractAction("Create RGBA sequence", new IcyIcon(
-            ResourceUtil.ICON_DOC_NEW), "Create a new RGBA color sequence",
+    public static IcyAbstractAction newARGBSequenceAction = new IcyAbstractAction("Create RGBA sequence",
+            new IcyIcon(ResourceUtil.ICON_DOC_NEW), "Create a new RGBA color sequence",
             "Create a 4 channels sequence (red, green, blue, alpha).")
     {
         /**
@@ -260,9 +259,9 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction openSequenceAction = new IcyAbstractAction("Open", new IcyIcon(
-            ResourceUtil.ICON_OPEN), "Open a file", "Display a file selection dialog and choose the file to open",
-            KeyEvent.VK_O, SystemUtil.getMenuCtrlMask())
+    public static IcyAbstractAction openSequenceAction = new IcyAbstractAction("Open...",
+            new IcyIcon(ResourceUtil.ICON_OPEN), "Open a file",
+            "Display a file selection dialog and choose the file to open", KeyEvent.VK_O, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -277,8 +276,82 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction saveSequenceAction = new IcyAbstractAction("Save", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence with its default filename")
+    public static IcyAbstractAction openSequenceRegionAction = new IcyAbstractAction("Open region...",
+            new IcyIcon(ResourceUtil.ICON_CROP), "Open selected region",
+            "Open the selected ROI region from the original image")
+    {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -2771137583765180575L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final String path = sequence.getFilename();
+
+                if (!StringUtil.isEmpty(path))
+                {
+                    List<ROI> rois = sequence.getROIs();
+                    int size = rois.size();
+
+                    if (size == 0)
+                    {
+                        MessageDialog.showDialog(
+                                "There is no ROI in the current sequence.\nYou need a ROI to define the region to open.",
+                                MessageDialog.INFORMATION_MESSAGE);
+                        return false;
+                    }
+                    else if (size > 1)
+                    {
+                        rois = sequence.getSelectedROIs();
+                        size = rois.size();
+
+                        if (size == 0)
+                        {
+                            MessageDialog.showDialog("You need to select a ROI to do this operation.",
+                                    MessageDialog.INFORMATION_MESSAGE);
+                            return false;
+                        }
+                        else if (size > 1)
+                        {
+                            MessageDialog.showDialog("You must have only one selected ROI to do this operation.",
+                                    MessageDialog.INFORMATION_MESSAGE);
+                            return false;
+                        }
+                    }
+
+                    final ROI roi = rois.get(0);
+                    final Rectangle bounds = SequenceUtil
+                            .getOriginRectangle(roi.getBounds5D().toRectangle2D().getBounds(), sequence);
+
+                    if (!bounds.isEmpty())
+                        new LoaderDialog(path, bounds, true);
+                    else
+                        new LoaderDialog(path, null, true);
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
+
+            return super.isEnabled() && (seq != null) && (!StringUtil.isEmpty(seq.getFilename()) && seq.hasROI());
+        }
+    };
+
+    public static IcyAbstractAction saveSequenceAction = new IcyAbstractAction("Save",
+            new IcyIcon(ResourceUtil.ICON_SAVE), "Save active sequence",
+            "Save the active sequence with its default filename")
     {
         /**
          * 
@@ -319,9 +392,9 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction saveDefaultSequenceAction = new IcyAbstractAction("Save...", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence under selected file name",
-            KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
+    public static IcyAbstractAction saveDefaultSequenceAction = new IcyAbstractAction("Save...",
+            new IcyIcon(ResourceUtil.ICON_SAVE), "Save active sequence",
+            "Save the active sequence under selected file name", KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -348,9 +421,9 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction saveAsSequenceAction = new IcyAbstractAction("Save as...", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence under selected file name",
-            KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
+    public static IcyAbstractAction saveAsSequenceAction = new IcyAbstractAction("Save as...",
+            new IcyIcon(ResourceUtil.ICON_SAVE), "Save active sequence",
+            "Save the active sequence under selected file name", KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -377,9 +450,9 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction saveMetaDataAction = new IcyAbstractAction("Save metadata", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence metadata", "Save the metadata of the active sequence now",
-            true, "Saving metadata...")
+    public static IcyAbstractAction saveMetaDataAction = new IcyAbstractAction("Save metadata",
+            new IcyIcon(ResourceUtil.ICON_SAVE), "Save active sequence metadata",
+            "Save the metadata of the active sequence now", true, "Saving metadata...")
     {
         /**
          * 
@@ -401,8 +474,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction closeSequenceAction = new IcyAbstractAction("Close", new IcyIcon(
-            ResourceUtil.ICON_CLOSE), "Close active sequence", "Close the current active sequence")
+    public static IcyAbstractAction closeSequenceAction = new IcyAbstractAction("Close",
+            new IcyIcon(ResourceUtil.ICON_CLOSE), "Close active sequence", "Close the current active sequence")
     {
         /**
          * 
@@ -424,8 +497,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction closeCurrentSequenceAction = new IcyAbstractAction("Close sequence", new IcyIcon(
-            ResourceUtil.ICON_CLOSE), "Close active sequence", "Close the current active sequence")
+    public static IcyAbstractAction closeCurrentSequenceAction = new IcyAbstractAction("Close sequence",
+            new IcyIcon(ResourceUtil.ICON_CLOSE), "Close active sequence", "Close the current active sequence")
     {
         /**
          * 
@@ -447,8 +520,9 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction closeOthersSequencesAction = new IcyAbstractAction("Close others", new IcyIcon(
-            ResourceUtil.ICON_CLOSE), "Close others sequences", "Close all opened sequences except the active one.")
+    public static IcyAbstractAction closeOthersSequencesAction = new IcyAbstractAction("Close others",
+            new IcyIcon(ResourceUtil.ICON_CLOSE), "Close others sequences",
+            "Close all opened sequences except the active one.")
     {
         /**
          * 
@@ -468,8 +542,8 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction closeAllSequencesAction = new IcyAbstractAction("Close all", new IcyIcon(
-            ResourceUtil.ICON_CLOSE), "Close all sequences", "Close all opened sequences.")
+    public static IcyAbstractAction closeAllSequencesAction = new IcyAbstractAction("Close all",
+            new IcyIcon(ResourceUtil.ICON_CLOSE), "Close all sequences", "Close all opened sequences.")
     {
         /**
          * 

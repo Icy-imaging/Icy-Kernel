@@ -1,5 +1,15 @@
 package icy.gui.dialog;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.util.List;
+
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+
 import icy.file.FileImporter;
 import icy.file.FileUtil;
 import icy.file.Loader;
@@ -10,15 +20,6 @@ import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.util.List;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 
 /**
  * Loader dialog used to load resource or image from the {@link FileImporter} or {@link SequenceFileImporter}.
@@ -94,10 +95,14 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
      * or<br>
      * <code>new LoaderDialog();</code>
      * 
+     * @param defaultPath
+     *        default file path (can be null)
+     * @param region
+     *        default XY region (can be null)
      * @param autoLoad
      *        If true the selected file(s) are automatically loaded.
      */
-    public LoaderDialog(boolean autoLoad)
+    public LoaderDialog(String defaultPath, Rectangle region, boolean autoLoad)
     {
         super();
 
@@ -106,12 +111,10 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         fileImporters = Loader.getFileImporters();
 
         // create option panel
-        optionPanel = new LoaderOptionPanel(preferences.getBoolean(ID_SEPARATE, false), preferences.getBoolean(
-                ID_AUTOORDER, true));
+        optionPanel = new LoaderOptionPanel(preferences.getBoolean(ID_SEPARATE, false),
+                preferences.getBoolean(ID_AUTOORDER, true));
 
-        // can't use WindowsPositionSaver as JFileChooser is a fake JComponent
-        // only dimension is stored
-        setCurrentDirectory(new File(GeneralPreferences.getLoaderFolder()));
+        // we can only store dimension for JFileChooser
         setPreferredSize(new Dimension(preferences.getInt(ID_WIDTH, 600), preferences.getInt(ID_HEIGTH, 400)));
 
         setMultiSelectionEnabled(true);
@@ -130,10 +133,41 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         // add "all files" filter
         addChoosableFileFilter(allFileFilter);
 
-        // set last used file filter
-        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, allImagesFileFilter.getDescription())));
+        // we use a default path ?
+        if (defaultPath != null)
+        {
+            // set all files filter
+            setFileFilter(allFileFilter);
+
+            final File file = new File(defaultPath);
+
+            if (file.isDirectory())
+                setCurrentDirectory(file);
+            else
+                setSelectedFile(file);
+        }
+        else
+        {
+            // set last used file filter
+            setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, allImagesFileFilter.getDescription())));
+            // set last used directory
+            setCurrentDirectory(new File(GeneralPreferences.getLoaderFolder()));
+        }
+
         // setting GUI
         updateGUI();
+
+        // we use a default path ?
+        if (defaultPath != null)
+        {
+            // refresh preview
+            optionPanel.updatePreview(defaultPath);
+            updateOptionPanel();
+        }
+
+        // have a default XY region ?
+        if (region != null)
+            optionPanel.setXYRegion(region);
 
         // listen file filter change
         addPropertyChangeListener(this);
@@ -194,15 +228,15 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
                         // load selected image file with advanced option
                         Loader.load((SequenceFileImporter) importer, firstPath, -1, optionPanel.getResolutionLevel(),
-                                optionPanel.getXYRegion(), optionPanel.getZMin(), optionPanel.getZMax(), optionPanel.getTMin(),
-                                optionPanel.getTMax(), optionPanel.getChannel(), true, true);
+                                optionPanel.getXYRegion(), optionPanel.getZMin(), optionPanel.getZMax(),
+                                optionPanel.getTMin(), optionPanel.getTMax(), optionPanel.getChannel(), true, true);
                     }
                     else
                     {
                         // load selected file
-                        Loader.load(null, firstPath, -1, optionPanel.getResolutionLevel(), optionPanel.getXYRegion(), optionPanel.getZMin(),
-                                optionPanel.getZMax(), optionPanel.getTMin(), optionPanel.getTMax(),
-                                optionPanel.getChannel(), true, true);
+                        Loader.load(null, firstPath, -1, optionPanel.getResolutionLevel(), optionPanel.getXYRegion(),
+                                optionPanel.getZMin(), optionPanel.getZMax(), optionPanel.getTMin(),
+                                optionPanel.getTMax(), optionPanel.getChannel(), true, true);
                     }
                 }
             }
@@ -214,11 +248,31 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
     }
 
     /**
+     * Display a dialog to select image or resource file(s) and load them.<br>
+     * <br>
+     * To only get selected files from the dialog you must do:<br>
+     * <code> LoaderDialog dialog = new LoaderDialog(false);</code><br>
+     * <code> File[] selectedFiles = dialog.getSelectedFiles()</code><br>
+     * <br>
+     * To directly load selected files just use:<br>
+     * <code>new LoaderDialog(true);</code><br>
+     * or<br>
+     * <code>new LoaderDialog();</code>
+     * 
+     * @param autoLoad
+     *        If true the selected file(s) are automatically loaded.
+     */
+    public LoaderDialog(boolean autoLoad)
+    {
+        this(null, null, autoLoad);
+    }
+
+    /**
      * Display a dialog to select file(s) and load them.
      */
     public LoaderDialog()
     {
-        this(true);
+        this(null, null, true);
     }
 
     protected FileFilter getFileFilter(String description)
@@ -300,6 +354,62 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         return optionPanel.isAutoOrderSelected();
     }
 
+    /**
+     * Get selected resolution level
+     */
+    public int getResolutionLevel()
+    {
+        return optionPanel.getResolutionLevel();
+    }
+
+    /**
+     * Get selected XY region (when region loading is enabled)
+     */
+    public Rectangle getXYRegion()
+    {
+        return optionPanel.getXYRegion();
+    }
+
+    /**
+     * Get minimum Z (Z range selection)
+     */
+    public int getZMin()
+    {
+        return optionPanel.getZMin();
+    }
+
+    /**
+     * Get maximum Z (Z range selection)
+     */
+    public int getZMax()
+    {
+        return optionPanel.getZMax();
+    }
+
+    /**
+     * Get minimum T (T range selection)
+     */
+    public int getTMin()
+    {
+        return optionPanel.getTMin();
+    }
+
+    /**
+     * Get maximum T (T range selection)
+     */
+    public int getTMax()
+    {
+        return optionPanel.getTMax();
+    }
+
+    /**
+     * Get channel selection (-1 for all)
+     */
+    public int getChannel()
+    {
+        return optionPanel.getChannel();
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {
@@ -336,11 +446,13 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
             setDialogTitle("Load image file(s)");
             setAccessory(optionPanel);
             updateOptionPanel();
+            revalidate();
         }
         else
         {
             setDialogTitle("Load file(s)");
             setAccessory(null);
+            revalidate();
         }
     }
 
@@ -351,13 +463,11 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
         if (numFile > 1)
             multi = true;
-        else if (numFile == 1)
+        else
         {
             final File file = getSelectedFile();
-            multi = file.isDirectory();
+            multi = (file != null) && file.isDirectory();
         }
-        else
-            multi = false;
 
         optionPanel.setMultiFile(multi);
     }

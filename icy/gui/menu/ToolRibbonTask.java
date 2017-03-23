@@ -18,12 +18,33 @@
  */
 package icy.gui.menu;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
+
+import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
+import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
+import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
+import org.pushingpixels.flamingo.api.common.JCommandToggleButton;
+import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
+import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
+import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
+import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
+import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
+import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
+import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
+
 import icy.action.FileActions;
-import icy.action.FileActions.OpenSequenceRegionAction;
 import icy.action.RoiActions;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleButton;
+import icy.gui.inspector.RoisPanel;
 import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;
@@ -39,29 +60,6 @@ import icy.roi.ROI3D;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-
-import javax.swing.event.EventListenerList;
-
-import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
-import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
-import org.pushingpixels.flamingo.api.common.JCommandButton;
-import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
-import org.pushingpixels.flamingo.api.common.JCommandToggleButton;
-import org.pushingpixels.flamingo.api.common.RichTooltip;
-import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
-import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
-import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
-import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
-import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
-import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
-import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
-
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi2d.ROI2DShape;
 import plugins.kernel.roi.roi2d.plugin.ROI2DAreaPlugin;
@@ -120,14 +118,14 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     public static class FileRibbonBand extends JRibbonBand
     {
         /**
-     *
-     */
+        *
+        */
         private static final long serialVersionUID = -2677243480668715388L;
 
-        public static final String BAND_NAME = "File";
+        public static final String BAND_NAME = "Image file";
 
         final IcyCommandButton openButton;
-        final IcyCommandButton openAreaButton;
+        final IcyCommandButton openRegionButton;
         final IcyCommandButton saveButton;
 
         public FileRibbonBand()
@@ -135,27 +133,28 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_DOC));
 
             openButton = new IcyCommandButton(FileActions.openSequenceAction);
-            openAreaButton = new IcyCommandButton("Open region", new IcyIcon(ResourceUtil.ICON_CROP));
-            openAreaButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
-            openAreaButton.setPopupRichTooltip(new RichTooltip("Open selected region",
-                    "Open the selected ROI region from the original image at a specific resolution level"));
-            openAreaButton.setPopupCallback(new PopupPanelCallback()
-            {
-                @Override
-                public JPopupPanel getPopupPanel(JCommandButton commandButton)
-                {
-                    final JCommandPopupMenu result = new JCommandPopupMenu();
-
-                    for (int r = 0; r < 5; r++)
-                        result.addMenuButton(new IcyCommandMenuButton(new OpenSequenceRegionAction(r)));
-
-                    return result;
-                }
-            });
+            openRegionButton = new IcyCommandButton(FileActions.openSequenceRegionAction);
+            // openAreaButton = new IcyCommandButton("Open region", new IcyIcon(ResourceUtil.ICON_CROP));
+            // openAreaButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+            // openAreaButton.setPopupRichTooltip(new RichTooltip("Open selected region",
+            // "Open the selected ROI region from the original image at a specific resolution level"));
+            // openAreaButton.setPopupCallback(new PopupPanelCallback()
+            // {
+            // @Override
+            // public JPopupPanel getPopupPanel(JCommandButton commandButton)
+            // {
+            // final JCommandPopupMenu result = new JCommandPopupMenu();
+            //
+            // for (int r = 0; r < 5; r++)
+            // result.addMenuButton(new IcyCommandMenuButton(new OpenSequenceRegionAction(r)));
+            //
+            // return result;
+            // }
+            // });
             saveButton = new IcyCommandButton(FileActions.saveAsSequenceAction);
 
             addCommandButton(openButton, RibbonElementPriority.MEDIUM);
-            addCommandButton(openAreaButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(openRegionButton, RibbonElementPriority.MEDIUM);
             addCommandButton(saveButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
@@ -166,8 +165,8 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
         {
             final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
-            openAreaButton.setEnabled((sequence != null) && (!StringUtil.isEmpty(sequence.getFilename()))
-                    && sequence.hasROI());
+            openRegionButton.setEnabled(
+                    (sequence != null) && (!StringUtil.isEmpty(sequence.getFilename())) && sequence.hasSelectedROI());
             saveButton.setEnabled(Icy.getMainInterface().getActiveSequence() != null);
         }
     }
@@ -180,14 +179,14 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         public ROI2DBand()
         {
-            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_DOC));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_ROI_POLYGON));
 
             startGroup();
 
             pluginButtons = new ArrayList<IcyCommandToggleButton>();
 
             // refresh buttons (don't set button group and listener at this point)
-            setVisible(setROIFromPlugins(pluginButtons, this, getROIPlugins(), null, null));
+            setHidden(setROIFromPlugins(pluginButtons, this, getROIPlugins(), null, null));
             updateButtonsState();
 
             RibbonUtil.setRestrictiveResizePolicies(this);
@@ -227,14 +226,14 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         public ROI3DBand()
         {
-            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_DOC));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_CUBE_3D));
 
             startGroup();
 
             pluginButtons = new ArrayList<IcyCommandToggleButton>();
 
             // refresh buttons (don't set button group and listener at this point)
-            setVisible(setROIFromPlugins(pluginButtons, this, getROIPlugins(), null, null));
+            setHidden(setROIFromPlugins(pluginButtons, this, getROIPlugins(), null, null));
             updateButtonsState();
 
             RibbonUtil.setRestrictiveResizePolicies(this);
@@ -270,14 +269,14 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         public ROIExtBand()
         {
-            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_DOC));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_ROI));
 
             startGroup();
 
             pluginButtons = new ArrayList<IcyCommandToggleButton>();
 
             // refresh buttons (don't set button group and listener at this point)
-            setVisible(setROIFromPlugins(pluginButtons, this, getROIPlugins(), null, null));
+            setHidden(setROIFromPlugins(pluginButtons, this, getROIPlugins(), null, null));
             updateButtonsState();
 
             RibbonUtil.setRestrictiveResizePolicies(this);
@@ -349,7 +348,8 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
                         if (!(roi instanceof ROI2DShape))
                             convertShapeEnable = true;
                     }
-                    if (!((roi instanceof ROI2DArea) || (roi instanceof ROI3DArea) || (roi instanceof ROI4DArea) || (roi instanceof ROI5DArea)))
+                    if (!((roi instanceof ROI2DArea) || (roi instanceof ROI3DArea) || (roi instanceof ROI4DArea)
+                            || (roi instanceof ROI5DArea)))
                         convertMaskEnable = true;
                     if (roi instanceof ROI3D)
                     {
@@ -378,7 +378,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         public ROIBooleanOpBand()
         {
-            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_ROI_OR));
 
             booleanUnionButton = new IcyCommandButton(RoiActions.boolOrAction);
             booleanIntersectionButton = new IcyCommandButton(RoiActions.boolAndAction);
@@ -431,7 +431,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             booleanInversionButton.setEnabled(singleOp);
             booleanExclusiveUnionButton.setEnabled(boolOp);
             booleanSubtractionButton.setEnabled(boolOp);
-            booleanOthersButton.setEnabled(singleOp);
+            // booleanOthersButton.setEnabled(singleOp);
         }
     }
 
@@ -445,19 +445,19 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         public ROISeparationBand()
         {
-            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_ROI_COMP));
 
             // conversion
             separateObjectsButton = new IcyCommandButton(RoiActions.separateObjectsAction);
-            cutButton = PluginCommandButton.createToggleButton(
-                    PluginLoader.getPlugin(ROILineCutterPlugin.class.getName()), false, true);
+            cutButton = PluginCommandButton
+                    .createToggleButton(PluginLoader.getPlugin(ROILineCutterPlugin.class.getName()), false, true);
             splitButton = new IcyCommandButton(RoiActions.autoSplitAction);
             addCommandButton(separateObjectsButton, RibbonElementPriority.MEDIUM);
             addCommandButton(cutButton, RibbonElementPriority.MEDIUM);
-//            addCommandButton(splitButton, RibbonElementPriority.MEDIUM);
+            // addCommandButton(splitButton, RibbonElementPriority.MEDIUM);
 
             cutButton.setEnabled(false);
-            
+
             setToolTipText("Separation tools for ROI");
             RibbonUtil.setRestrictiveResizePolicies(this);
         }
@@ -484,80 +484,116 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
         }
     }
 
-//    static class ROIMorphoBand extends JRibbonBand
-//    {
-//        public static final String BAND_NAME = "Morphology";
-//
-//        final IcyCommandButton erodeButton;
-//        final IcyCommandButton dilateButton;
-//        final IcyCommandButton fillHoledilateButton;
-//        final IcyCommandButton otherButton;
-//
-//        public ROIMorphoBand()
-//        {
-//            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
-//
-//            booleanUnionButton = new IcyCommandButton(RoiActions.boolOrAction);
-//            booleanIntersectionButton = new IcyCommandButton(RoiActions.boolAndAction);
-//            booleanInversionButton = new IcyCommandMenuButton(RoiActions.boolNotAction);
-//            booleanExclusiveUnionButton = new IcyCommandMenuButton(RoiActions.boolXorAction);
-//            booleanSubtractionButton = new IcyCommandMenuButton(RoiActions.boolSubtractAction);
-//
-//            booleanOthersButton = new IcyCommandButton("Other operation");
-//            booleanOthersButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
-//            booleanOthersButton.setPopupCallback(new PopupPanelCallback()
-//            {
-//                @Override
-//                public JPopupPanel getPopupPanel(JCommandButton arg0)
-//                {
-//                    final JCommandPopupMenu result = new JCommandPopupMenu();
-//
-//                    result.addMenuButton(booleanInversionButton);
-//                    result.addMenuButton(booleanExclusiveUnionButton);
-//                    result.addMenuButton(booleanSubtractionButton);
-//
-//                    return result;
-//                }
-//            });
-//            booleanOthersButton.setEnabled(false);
-//
-//            addCommandButton(booleanUnionButton, RibbonElementPriority.MEDIUM);
-//            addCommandButton(booleanIntersectionButton, RibbonElementPriority.MEDIUM);
-//            addCommandButton(booleanOthersButton, RibbonElementPriority.MEDIUM);
-//
-//            setToolTipText("Morphological operator for ROI");
-//            RibbonUtil.setRestrictiveResizePolicies(this);
-//        }
-//
-//        public void updateButtonsState()
-//        {
-//            boolean separateObjEnable = false;
-//            boolean cutEnable = false;
-//            boolean splitEnable = false;
-//            final Sequence seq = Icy.getMainInterface().getActiveSequence();
-//
-//            if (seq != null)
-//            {
-//                final List<ROI> selectedRois = seq.getSelectedROIs();
-//
-//                cutEnable = seq.hasROI();
-//                separateObjEnable = !selectedRois.isEmpty();
-//                splitEnable = !selectedRois.isEmpty();
-//            }
-//
-//            separateObjectsButton.setEnabled(separateObjEnable);
-//            cutButton.setEnabled(cutEnable);
-//            splitButton.setEnabled(splitEnable);
-//        }
-//    }
+    // static class ROIMorphoBand extends JRibbonBand
+    // {
+    // public static final String BAND_NAME = "Morphology";
+    //
+    // final IcyCommandButton erodeButton;
+    // final IcyCommandButton dilateButton;
+    // final IcyCommandButton fillHoledilateButton;
+    // final IcyCommandButton otherButton;
+    //
+    // public ROIMorphoBand()
+    // {
+    // super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
+    //
+    // booleanUnionButton = new IcyCommandButton(RoiActions.boolOrAction);
+    // booleanIntersectionButton = new IcyCommandButton(RoiActions.boolAndAction);
+    // booleanInversionButton = new IcyCommandMenuButton(RoiActions.boolNotAction);
+    // booleanExclusiveUnionButton = new IcyCommandMenuButton(RoiActions.boolXorAction);
+    // booleanSubtractionButton = new IcyCommandMenuButton(RoiActions.boolSubtractAction);
+    //
+    // booleanOthersButton = new IcyCommandButton("Other operation");
+    // booleanOthersButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+    // booleanOthersButton.setPopupCallback(new PopupPanelCallback()
+    // {
+    // @Override
+    // public JPopupPanel getPopupPanel(JCommandButton arg0)
+    // {
+    // final JCommandPopupMenu result = new JCommandPopupMenu();
+    //
+    // result.addMenuButton(booleanInversionButton);
+    // result.addMenuButton(booleanExclusiveUnionButton);
+    // result.addMenuButton(booleanSubtractionButton);
+    //
+    // return result;
+    // }
+    // });
+    // booleanOthersButton.setEnabled(false);
+    //
+    // addCommandButton(booleanUnionButton, RibbonElementPriority.MEDIUM);
+    // addCommandButton(booleanIntersectionButton, RibbonElementPriority.MEDIUM);
+    // addCommandButton(booleanOthersButton, RibbonElementPriority.MEDIUM);
+    //
+    // setToolTipText("Morphological operator for ROI");
+    // RibbonUtil.setRestrictiveResizePolicies(this);
+    // }
+    //
+    // public void updateButtonsState()
+    // {
+    // boolean separateObjEnable = false;
+    // boolean cutEnable = false;
+    // boolean splitEnable = false;
+    // final Sequence seq = Icy.getMainInterface().getActiveSequence();
+    //
+    // if (seq != null)
+    // {
+    // final List<ROI> selectedRois = seq.getSelectedROIs();
+    //
+    // cutEnable = seq.hasROI();
+    // separateObjEnable = !selectedRois.isEmpty();
+    // splitEnable = !selectedRois.isEmpty();
+    // }
+    //
+    // separateObjectsButton.setEnabled(separateObjEnable);
+    // cutButton.setEnabled(cutEnable);
+    // splitButton.setEnabled(splitEnable);
+    // }
+    // }
+
+    static class ROIIOBand extends JRibbonBand
+    {
+        public static final String BAND_NAME = "ROI file";
+
+        final IcyCommandButton loadFromXMLButton;
+        final IcyCommandButton saveToXMLButton;
+        final IcyCommandButton exportToXLSButton;
+
+        public ROIIOBand()
+        {
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_OPEN));
+
+            // conversion
+            loadFromXMLButton = new IcyCommandButton(RoiActions.loadAction);
+            saveToXMLButton = new IcyCommandButton(RoiActions.saveAction);
+            exportToXLSButton = new IcyCommandButton(RoiActions.xlsExportAction);
+            addCommandButton(loadFromXMLButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(saveToXMLButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(exportToXLSButton, RibbonElementPriority.MEDIUM);
+
+            setToolTipText("File operations for ROI");
+            RibbonUtil.setRestrictiveResizePolicies(this);
+        }
+
+        public void updateButtonsState()
+        {
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
+            final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
+
+            loadFromXMLButton.setEnabled(seq != null);
+            saveToXMLButton.setEnabled((seq != null) && seq.hasSelectedROI());
+            exportToXLSButton.setEnabled((roisPanel != null) && (roisPanel.getVisibleRois().size() > 0));
+        }
+    }
 
     final FileRibbonBand fileBand;
     final ROI2DBand roi2dBand;
     final ROI3DBand roi3dBand;
     final ROIExtBand roiExtBand;
     final ROIConversionBand roiConversionBand;
-    final ROIBooleanOpBand roiBooleanOpBand;
     final ROISeparationBand roiSeparationBand;
+    final ROIBooleanOpBand roiBooleanOpBand;
+    final ROIIOBand roiIOBand;
 
     final CommandToggleButtonGroup buttonGroup;
     final ActionListener buttonActionListener;
@@ -572,7 +608,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     public ToolRibbonTask()
     {
         super(NAME, new FileRibbonBand(), new ROI2DBand(), new ROI3DBand(), new ROIExtBand(), new ROIConversionBand(),
-                new ROISeparationBand(), new ROIBooleanOpBand());
+                new ROISeparationBand(), new ROIBooleanOpBand(), new ROIIOBand());
         // super(NAME,, new ROIRibbonBand());
 
         setResizeSequencingPolicy(new CoreRibbonResizeSequencingPolicies.CollapseFromLast(this));
@@ -585,6 +621,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
         roiConversionBand = (ROIConversionBand) RibbonUtil.getBand(this, ROIConversionBand.BAND_NAME);
         roiSeparationBand = (ROISeparationBand) RibbonUtil.getBand(this, ROISeparationBand.BAND_NAME);
         roiBooleanOpBand = (ROIBooleanOpBand) RibbonUtil.getBand(this, ROIBooleanOpBand.BAND_NAME);
+        roiIOBand = (ROIIOBand) RibbonUtil.getBand(this, ROIIOBand.BAND_NAME);
 
         // create button state updater
         buttonUpdater = new Runnable()
@@ -605,8 +642,9 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
                         roi3dBand.updateButtonsState();
                         roiExtBand.updateButtonsState();
                         roiConversionBand.updateButtonsState();
-                        roiBooleanOpBand.updateButtonsState();
                         roiSeparationBand.updateButtonsState();
+                        roiBooleanOpBand.updateButtonsState();
+                        roiIOBand.updateButtonsState();
                     }
                 });
             }
@@ -652,13 +690,13 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     protected void refreshROIButtons()
     {
         // refresh 2D ROI buttons
-        roi2dBand.setVisible(setROIFromPlugins(roi2dBand.pluginButtons, roi2dBand, ROI2DBand.getROIPlugins(),
+        roi2dBand.setHidden(setROIFromPlugins(roi2dBand.pluginButtons, roi2dBand, ROI2DBand.getROIPlugins(),
                 buttonGroup, buttonActionListener));
         // refresh 3D ROI buttons
-        roi3dBand.setVisible(setROIFromPlugins(roi3dBand.pluginButtons, roi3dBand, ROI3DBand.getROIPlugins(),
+        roi3dBand.setHidden(setROIFromPlugins(roi3dBand.pluginButtons, roi3dBand, ROI3DBand.getROIPlugins(),
                 buttonGroup, buttonActionListener));
         // refresh external ROI buttons
-        roiExtBand.setVisible(setROIFromPlugins(roiExtBand.pluginButtons, roiExtBand, ROIExtBand.getROIPlugins(),
+        roiExtBand.setHidden(setROIFromPlugins(roiExtBand.pluginButtons, roiExtBand, ROIExtBand.getROIPlugins(),
                 buttonGroup, buttonActionListener));
 
         roi2dBand.updateButtonsState();
@@ -669,8 +707,6 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     protected static boolean setROIFromPlugins(List<IcyCommandToggleButton> pluginButtons, JRibbonBand band,
             List<PluginDescriptor> roiPlugins, CommandToggleButtonGroup buttonGroup, ActionListener al)
     {
-        boolean notEmpty = false;
-
         // remove previous plugin buttons
         for (IcyCommandToggleButton button : pluginButtons)
         {
@@ -684,7 +720,8 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         for (PluginDescriptor plugin : roiPlugins)
         {
-            final IcyCommandToggleButton button = PluginCommandButton.createToggleButton(plugin, false, plugin.isKernelPlugin());
+            final IcyCommandToggleButton button = PluginCommandButton.createToggleButton(plugin, false,
+                    plugin.isKernelPlugin());
 
             if (plugin.getClassName().equals(ROI2DAreaPlugin.class.getName()))
                 band.addCommandButton(button, RibbonElementPriority.TOP);
@@ -697,10 +734,9 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
                 buttonGroup.add(button);
 
             pluginButtons.add(button);
-            notEmpty = true;
         }
 
-        return notEmpty;
+        return pluginButtons.isEmpty();
     }
 
     protected IcyCommandToggleButton getButtonFromName(String name)

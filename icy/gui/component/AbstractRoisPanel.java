@@ -56,6 +56,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -446,10 +447,14 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         final IcyButton settingButton = new IcyButton(RoiActions.settingAction);
         settingButton.setHideActionText(true);
         settingButton.setFlat(true);
+        
+        final IcyButton xlsExportButton = new IcyButton(RoiActions.xlsExportAction);
+        xlsExportButton.setHideActionText(true);
+        xlsExportButton.setFlat(true);
 
         setLayout(new BorderLayout());
         add(GuiUtil.createLineBoxPanel(nameFilter, Box.createHorizontalStrut(8), selectedRoiNumberLabel, new JLabel(
-                " / "), roiNumberLabel, Box.createHorizontalStrut(4), settingButton), BorderLayout.NORTH);
+                " / "), roiNumberLabel, Box.createHorizontalStrut(4), settingButton, xlsExportButton), BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
 
         validate();

@@ -158,6 +158,8 @@ public class ResourceUtil
     public static final Image ICON_ROI_XOR = ResourceUtil.getAlphaIconAsImage("roi_xor.png");
     public static final Image ICON_ROI_SUB = ResourceUtil.getAlphaIconAsImage("roi_sub.png");
 
+    public static final Image ICON_ROI_COMP = ResourceUtil.getAlphaIconAsImage("separate_obj.png");
+
     public static final Image ICON_BOOL_MASK = ResourceUtil.getAlphaIconAsImage("boolean_mask.png");
 
     public static final Image ICON_INDENT_DECREASE = ResourceUtil.getAlphaIconAsImage("indent_decrease.png");
@@ -219,6 +221,8 @@ public class ResourceUtil
 
     public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");
     public static final Image ICON_SMILEY_SAD = ResourceUtil.getAlphaIconAsImage("emotion_sad.png");
+
+    public static final Image ICON_CUBE_3D = ResourceUtil.getAlphaIconAsImage("cube.png");
 
     public static final Image ICON_PLUGIN = ResourceUtil.getAlphaIconAsImage("plugin.png");
     public static final Image ICON_DATABASE = ResourceUtil.getAlphaIconAsImage("db.png");

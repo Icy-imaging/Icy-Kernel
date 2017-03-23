@@ -18,20 +18,6 @@
  */
 package icy.gui.dialog;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.file.FileUtil;
-import icy.file.Loader;
-import icy.file.SequenceFileImporter;
-import icy.gui.component.RangeComponent;
-import icy.gui.component.Region2DComponent;
-import icy.gui.component.SpecialValueSpinner;
-import icy.gui.component.ThumbnailComponent;
-import icy.gui.component.model.SpecialValueSpinnerModel;
-import icy.resource.ResourceUtil;
-import icy.sequence.MetaDataUtil;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -40,6 +26,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -53,6 +40,19 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.FileUtil;
+import icy.file.Loader;
+import icy.file.SequenceFileImporter;
+import icy.gui.component.RangeComponent;
+import icy.gui.component.Region2DComponent;
+import icy.gui.component.SpecialValueSpinner;
+import icy.gui.component.ThumbnailComponent;
+import icy.gui.component.model.SpecialValueSpinnerModel;
+import icy.resource.ResourceUtil;
+import icy.sequence.MetaDataUtil;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
 public class LoaderOptionPanel extends JPanel
@@ -176,9 +176,7 @@ public class LoaderOptionPanel extends JPanel
             if (StringUtil.isEmpty(fileId))
             {
                 preview.setImage(null);
-                preview.setTitle("");
                 preview.setInfos("");
-                preview.setInfos2("");
 
                 metadata = new OMEXMLMetadataImpl();
 
@@ -189,9 +187,7 @@ public class LoaderOptionPanel extends JPanel
             }
 
             preview.setImage(ResourceUtil.ICON_WAIT);
-            preview.setTitle("loading...");
-            preview.setInfos("");
-            preview.setInfos2("");
+            preview.setInfos("loading...");
 
             try
             {
@@ -252,12 +248,10 @@ public class LoaderOptionPanel extends JPanel
                                     final int sizeC = MetaDataUtil.getSizeC(metadata, 0);
 
                                     // load metadata first
-                                    preview.setTitle(FileUtil.getFileName(fileId));
                                     preview.setInfos(MetaDataUtil.getSizeX(metadata, 0) + " x "
                                             + MetaDataUtil.getSizeY(metadata, 0) + " - "
                                             + MetaDataUtil.getSizeZ(metadata, 0) + "Z x "
-                                            + MetaDataUtil.getSizeT(metadata, 0) + "T");
-                                    preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                                            + MetaDataUtil.getSizeT(metadata, 0) + "T - " + sizeC + " ch ("
                                             + MetaDataUtil.getDataType(metadata, 0) + ")");
 
                                     metaDataDone = true;
@@ -310,7 +304,7 @@ public class LoaderOptionPanel extends JPanel
                 // cannot read metadata
                 if (!metaDataDone)
                 {
-                    preview.setTitle("Cannot read file");
+                    preview.setInfos("Cannot read file");
 
                     // use Callable as we can get interrupted here...
                     ThreadUtil.invokeNow(new Callable<Boolean>()
@@ -374,6 +368,7 @@ public class LoaderOptionPanel extends JPanel
     protected int pTMin;
     protected int pTMax;
     protected int pCh;
+    protected boolean multiFile;
     protected boolean updatingPanel;
 
     /**
@@ -397,6 +392,7 @@ public class LoaderOptionPanel extends JPanel
         initialize(separate, autoOrder);
 
         // default
+        multiFile = true;
         setMultiFile(false);
         updatePanel();
     }
@@ -407,6 +403,7 @@ public class LoaderOptionPanel extends JPanel
         setLayout(new BorderLayout());
 
         preview = new ThumbnailComponent(false);
+        preview.setShortDisplay(true);
 
         add(preview, BorderLayout.CENTER);
 
@@ -514,7 +511,7 @@ public class LoaderOptionPanel extends JPanel
         optionsPanel.add(resolutionSlider, gbc_resolutionSlider);
 
         xyRegionLabel = new JLabel("XY region");
-        xyRegionLabel.setToolTipText("Rectangular region to load (X,Y,W,H) in original resolution coordinates");
+        xyRegionLabel.setToolTipText("Rectangular region to load (X,Y,W,H) in original resolution coordinates (pixel)");
         GridBagConstraints gbc_xyRegionLabel = new GridBagConstraints();
         gbc_xyRegionLabel.anchor = GridBagConstraints.WEST;
         gbc_xyRegionLabel.insets = new Insets(0, 0, 5, 5);
@@ -710,8 +707,16 @@ public class LoaderOptionPanel extends JPanel
     {
         if (metadata != null)
         {
-            xyRegionComp.setEnabled(xyRegionLoadingCheck.isSelected());
+            final Rectangle2D r = xyRegionComp.getRegion();
+            final int sizeX = MetaDataUtil.getSizeX(metadata, 0);
+            final int sizeY = MetaDataUtil.getSizeY(metadata, 0);
+
             xyRegionLoadingCheck.setEnabled(true);
+            // xyRegionLoadingCheck.setSelected(false);
+            xyRegionComp.setEnabled(xyRegionLoadingCheck.isSelected());
+            // re-init region if out of bounds
+            if ((r.getMaxX() > sizeX) || (r.getMaxY() > sizeY))
+                xyRegionComp.setRegion(0, 0, sizeX, sizeY);
         }
         else
         {
@@ -880,6 +885,14 @@ public class LoaderOptionPanel extends JPanel
         return null;
     }
 
+    public void setXYRegion(Rectangle region)
+    {
+        // enable region loading
+        xyRegionLoadingCheck.setSelected(true);
+        xyRegionComp.setEnabled(true);
+        xyRegionComp.setRegion(region);
+    }
+
     public int getZMin()
     {
         if (zRangeComp.isVisible())
@@ -974,6 +987,12 @@ public class LoaderOptionPanel extends JPanel
      */
     public void setMultiFile(boolean value)
     {
+        // no change
+        if (multiFile == value)
+            return;
+
+        multiFile = value;
+
         final GridBagLayout layout = (GridBagLayout) optionsPanel.getLayout();
         final int margin = value ? 5 : 0;
 
@@ -1006,8 +1025,7 @@ public class LoaderOptionPanel extends JPanel
         resolutionSlider.setVisible(!value);
         xyRegionLabel.setVisible(!value);
         xyRegionComp.setVisible(!value);
-        // default
-        xyRegionLoadingCheck.setSelected(false);
+        xyRegionLoadingCheck.setVisible(!value);
         zRangeLabel.setVisible(!value);
         zRangeComp.setVisible(!value);
         tRangeLabel.setVisible(!value);
@@ -1085,4 +1103,5 @@ public class LoaderOptionPanel extends JPanel
             }
         }
     }
+
 }

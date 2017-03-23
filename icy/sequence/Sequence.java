@@ -18,6 +18,23 @@
  */
 package icy.sequence;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.swing.undo.UndoManager;
+
+import org.w3c.dom.Node;
+
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.exception.TooLargeArrayException;
@@ -71,25 +88,7 @@ import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.swing.undo.UndoManager;
-
 import loci.formats.ome.OMEXMLMetadataImpl;
-
-import org.w3c.dom.Node;
 
 /**
  * Image sequence object.<br>
@@ -2020,6 +2019,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return result;
+    }
+
+    /**
+     * Returns true if the sequence contains at least one selected ROI.
+     */
+    public boolean hasSelectedROI()
+    {
+        return getSelectedROI() != null;
     }
 
     /**
@@ -6619,7 +6626,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     protected void componentBoundsChanged(IcyColorModel colorModel, int component)
     {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
+        updater.changed(
+                new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
     }
 
     // /**
@@ -6783,7 +6791,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         switch (event.getSourceType())
         {
-        // do here global process on sequence data change
+            // do here global process on sequence data change
             case SEQUENCE_DATA:
                 // automatic channel bounds update enabled
                 if (autoUpdateChannelBounds)
