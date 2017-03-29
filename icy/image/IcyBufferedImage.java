@@ -713,8 +713,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
      * when image data is modified.<br>
      * This can consume some time if you make many updates on a large image.<br>
-     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()} block
-     * to avoid severals recalculation.
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
+     * block to avoid
+     * severals recalculation.
      */
     public void setAutoUpdateChannelBounds(boolean value)
     {
@@ -728,7 +729,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
+     *             instead.
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(BufferedImage out, LUT lut)

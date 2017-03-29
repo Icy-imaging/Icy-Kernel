@@ -746,7 +746,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -759,7 +760,8 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -822,7 +824,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -835,7 +838,8 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -898,7 +902,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -911,7 +916,8 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -974,7 +980,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -985,7 +992,8 @@ public class IcyBufferedImageUtil
      *        height of source image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -1036,7 +1044,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -1047,7 +1056,8 @@ public class IcyBufferedImageUtil
      *        height of source image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -1098,7 +1108,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -1111,7 +1122,8 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      *        If set to <code>null</code> a new array is allocated.
@@ -1152,7 +1164,8 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image data (X and Y resolution are
+     * divided by 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
@@ -1165,7 +1178,8 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @return output buffer containing the down scaled version of input image data.
      */
     public static Object downscaleBy2(Object input, int sizeX, int sizeY, boolean signed, boolean filter)
@@ -1174,17 +1188,20 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image (X and Y resolution are divided by
+     * 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
      *        input image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      * @param output
      *        output image receiving the result (should be of same type as input image with X and Y
-     *        resolution divided by 2). If set to <code>null</code> a new image is created.
+     *        resolution divided
+     *        by 2). If set to <code>null</code> a new image is created.
      */
     public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter, IcyBufferedImage output)
     {
@@ -1209,14 +1226,16 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Returns a down scaled by a factor of 2 of the input image (X and Y resolution are divided by 2).<br>
+     * Returns a down scaled by a factor of 2 of the input image (X and Y resolution are divided by
+     * 2).<br>
      * This function is specifically optimized for factor 2 down scaling.
      * 
      * @param input
      *        input image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest neighbor is used)
+     *        (otherwise nearest
+     *        neighbor is used)
      */
     public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter)
     {

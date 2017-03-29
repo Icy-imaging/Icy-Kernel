@@ -1010,7 +1010,8 @@ public class Loader
 
         // get free memory
         long freeInByte = SystemUtil.getJavaFreeMemory() - (16 * 1024 * 1024);
-        // check that we have enough memory for the whole image and for the ARGB image used for display (sizeXY * 4)
+        // check that we have enough memory for the whole image and for the ARGB image used for
+        // display (sizeXY * 4)
         long sizeInByte = (sizeXY * sizeC * sizeZ * sizeT * dataType.getSize()) + (sizeXY * 4);
 
         // not enough memory to store the whole image ?
@@ -1030,10 +1031,13 @@ public class Loader
 
     /**
      * Check if we have enough resource to open the image defined by the given metadata information,
-     * serie index and wanted resolution.<br>
+     * serie index and
+     * wanted resolution.<br>
      * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we
-     * don't have enough memory to store the whole image the method throw an exception with an informative
-     * error message about the encountered limitation.
+     * don't have enough
+     * memory to store the whole image the method throw an exception with an informative error
+     * message about the
+     * encountered limitation.
      * 
      * @param meta
      *        metadata of the image
@@ -1041,7 +1045,8 @@ public class Loader
      *        serie index
      * @param resolution
      *        wanted image resolution: a value of <code>0</code> means full resolution of the
-     *        original image while value <code>1</code> correspond to the resolution / 2.<br>
+     *        original image while value
+     *        <code>1</code> correspond to the resolution / 2.<br>
      *        Formula: <code>resolution / 2^value</code><br>
      * @param sizeZ
      *        number of slice we want to load (can be different from original image sizeZ)
@@ -1063,10 +1068,13 @@ public class Loader
 
     /**
      * Check if we have enough resource to open the image defined by the given metadata information,
-     * serie index and wanted resolution.<br>
+     * serie index and
+     * wanted resolution.<br>
      * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we
-     * don't have enough memory to store the whole image the method throw an exception with an
-     * informative error message about the encountered limitation.
+     * don't have enough
+     * memory to store the whole image the method throw an exception with an informative error
+     * message about the
+     * encountered limitation.
      * 
      * @param meta
      *        metadata of the image
@@ -1074,7 +1082,8 @@ public class Loader
      *        serie index
      * @param resolution
      *        wanted image resolution: a value of <code>0</code> means full resolution of the
-     *        original image while value <code>1</code> correspond to the resolution / 2.<br>
+     *        original image while value
+     *        <code>1</code> correspond to the resolution / 2.<br>
      *        Formula: <code>resolution / 2^value</code><br>
      * @param messageSuffix
      *        message suffix for the exception if wanted
@@ -1446,7 +1455,8 @@ public class Loader
     /**
      * Load and return the image at given position from the specified file path.<br>
      * For lower image level access, you can use {@link #getSequenceFileImporter(String, boolean)}
-     * method and directly work through the returned {@link ImageProvider} interface.
+     * method and
+     * directly work through the returned {@link ImageProvider} interface.
      * 
      * @param path
      *        image file path.
@@ -1676,7 +1686,8 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)} instead.
+     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)}
+     *             instead.
      */
     @Deprecated
     public static Sequence[] loadSequences(File[] files, int serie, boolean separate, boolean autoOrder,
@@ -1721,7 +1732,8 @@ public class Loader
 
     /**
      * Load a list of sequence from the specified list of file with the given
-     * {@link SequenceFileImporter} and returns them.<br>
+     * {@link SequenceFileImporter} and returns
+     * them.<br>
      * As the function can take sometime you should not call it from the AWT EDT.<br>
      * The method returns an empty array if an error occurred or if no file could be opened (not
      * supported).<br>
@@ -1924,7 +1936,8 @@ public class Loader
      * @param importer
      *        Importer used to load the image file.<br>
      *        If set to <code>null</code> the loader will search for a compatible importer and if
-     *        several importers match the user will have to select the appropriate one from a selection dialog if
+     *        several importers
+     *        match the user will have to select the appropriate one from a selection dialog if
      *        <code>showProgress</code> parameter is set to <code>true</code> otherwise the first
      *        compatible importer will be automatically used.
      * @param path
