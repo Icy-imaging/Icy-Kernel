@@ -18,18 +18,6 @@
  */
 package icy.gui.dialog;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.file.Loader;
-import icy.file.SequenceFileImporter;
-import icy.gui.component.ThumbnailComponent;
-import icy.gui.util.ComponentUtil;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
-import icy.main.Icy;
-import icy.resource.ResourceUtil;
-import icy.sequence.MetaDataUtil;
-import icy.util.OMEUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -38,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -49,6 +38,17 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.Loader;
+import icy.file.SequenceFileImporter;
+import icy.gui.component.ThumbnailComponent;
+import icy.gui.util.ComponentUtil;
+import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.main.Icy;
+import icy.resource.ResourceUtil;
+import icy.sequence.MetaDataUtil;
+import icy.util.OMEUtil;
 import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
@@ -363,8 +363,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
      * @throws IOException
      * @throws UnsupportedFormatException
      */
-    public SeriesSelectionDialog(SequenceFileImporter importer, String id) throws UnsupportedFormatException,
-            IOException
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id)
+            throws UnsupportedFormatException, IOException
     {
         this(importer, id, Loader.getMetaData(importer, id));
     }
@@ -496,7 +496,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
                         try
                         {
                             final IcyBufferedImage img = importer.getThumbnail(i);
-                            serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
+                            serieComponents[i]
+                                    .setImage(IcyBufferedImageUtil.toBufferedImage(img, BufferedImage.TYPE_INT_ARGB));
                         }
                         finally
                         {

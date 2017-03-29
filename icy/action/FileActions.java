@@ -136,7 +136,8 @@ public class FileActions
     // {
     // final Sequence seq = Icy.getMainInterface().getActiveSequence();
     //
-    // return super.isEnabled() && (seq != null) && (!StringUtil.isEmpty(seq.getFilename()) && seq.hasROI());
+    // return super.isEnabled() && (seq != null) && (!StringUtil.isEmpty(seq.getFilename()) &&
+    // seq.hasROI());
     // }
     // }
 
@@ -293,48 +294,45 @@ public class FileActions
 
             if (sequence != null)
             {
-                final String path = sequence.getFilename();
+                List<ROI> rois = sequence.getROIs();
+                int size = rois.size();
 
-                if (!StringUtil.isEmpty(path))
+                if (size == 0)
                 {
-                    List<ROI> rois = sequence.getROIs();
-                    int size = rois.size();
+                    MessageDialog.showDialog(
+                            "There is no ROI in the current sequence.\nYou need a ROI to define the region to open.",
+                            MessageDialog.INFORMATION_MESSAGE);
+                    return false;
+                }
+                else if (size > 1)
+                {
+                    rois = sequence.getSelectedROIs();
+                    size = rois.size();
 
                     if (size == 0)
                     {
-                        MessageDialog.showDialog(
-                                "There is no ROI in the current sequence.\nYou need a ROI to define the region to open.",
+                        MessageDialog.showDialog("You need to select a ROI to do this operation.",
                                 MessageDialog.INFORMATION_MESSAGE);
                         return false;
                     }
                     else if (size > 1)
                     {
-                        rois = sequence.getSelectedROIs();
-                        size = rois.size();
-
-                        if (size == 0)
-                        {
-                            MessageDialog.showDialog("You need to select a ROI to do this operation.",
-                                    MessageDialog.INFORMATION_MESSAGE);
-                            return false;
-                        }
-                        else if (size > 1)
-                        {
-                            MessageDialog.showDialog("You must have only one selected ROI to do this operation.",
-                                    MessageDialog.INFORMATION_MESSAGE);
-                            return false;
-                        }
+                        MessageDialog.showDialog("You must have only one selected ROI to do this operation.",
+                                MessageDialog.INFORMATION_MESSAGE);
+                        return false;
                     }
-
-                    final ROI roi = rois.get(0);
-                    final Rectangle bounds = SequenceUtil
-                            .getOriginRectangle(roi.getBounds5D().toRectangle2D().getBounds(), sequence);
-
-                    if (!bounds.isEmpty())
-                        new LoaderDialog(path, bounds, true);
-                    else
-                        new LoaderDialog(path, null, true);
                 }
+
+                final ROI roi = rois.get(0);
+                Rectangle bounds = SequenceUtil.getOriginRectangle(roi.getBounds5D().toRectangle2D().getBounds(),
+                        sequence);
+                String path = sequence.getFilename();
+
+                if (!bounds.isEmpty())
+                    new LoaderDialog(path, bounds, true);
+                else
+                    new LoaderDialog(path, null, true);
+
             }
 
             return false;

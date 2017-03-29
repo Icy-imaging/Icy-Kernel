@@ -144,7 +144,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
             final BufferedImage img = getImage();
 
             if (img instanceof IcyBufferedImage)
-                cache = IcyBufferedImageUtil.getARGBImage((IcyBufferedImage) img);
+                cache = IcyBufferedImageUtil.toBufferedImage((IcyBufferedImage) img, BufferedImage.TYPE_INT_ARGB);
             else
                 cache = img;
 

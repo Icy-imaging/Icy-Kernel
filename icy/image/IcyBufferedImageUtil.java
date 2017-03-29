@@ -18,13 +18,7 @@
  */
 package icy.image;
 
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.type.DataType;
-import icy.type.collection.array.Array1DUtil;
-import icy.type.collection.array.ArrayType;
-import icy.type.collection.array.ArrayUtil;
-
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -38,6 +32,13 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.RotateDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.swing.SwingConstants;
+
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayType;
+import icy.type.collection.array.ArrayUtil;
 
 /**
  * {@link IcyBufferedImage} utilities class.<br>
@@ -77,7 +78,8 @@ public class IcyBufferedImageUtil
 
     /**
      * Draw the source {@link IcyBufferedImage} into the destination {@link BufferedImage}<br>
-     * If <code>dest</code> is null then a new TYPE_INT_ARGB {@link BufferedImage} is returned.<br>
+     * If <code>dest</code> is <code>null</code> then a new TYPE_INT_ARGB {@link BufferedImage} is
+     * returned.<br>
      * 
      * @param source
      *        source image
@@ -88,17 +90,19 @@ public class IcyBufferedImageUtil
      */
     public static BufferedImage toBufferedImage(IcyBufferedImage source, BufferedImage dest, LUT lut)
     {
-        if (dest == null)
-            return getARGBImage(source, lut, null);
+        final BufferedImage result;
 
-        // dest is ARGB, use it directly as destination for getARGBImage(..)
-        if (dest.getType() == BufferedImage.TYPE_INT_ARGB)
-            getARGBImage(source, lut, dest);
+        if (dest == null)
+            result = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        else
+            result = dest;
 
         // else we need to convert to wanted type...
-        dest.getGraphics().drawImage(getARGBImage(source, lut, null), 0, 0, null);
+        final Graphics2D g = result.createGraphics();
+        g.drawImage(getARGBImage(source, lut), 0, 0, null);
+        g.dispose();
 
-        return dest;
+        return result;
     }
 
     /**
@@ -135,9 +139,6 @@ public class IcyBufferedImageUtil
         if (source == null)
             return null;
 
-        if (imageType == BufferedImage.TYPE_INT_ARGB)
-            return getARGBImage(source, lut, null);
-
         final BufferedImage outImg = new BufferedImage(source.getWidth(), source.getHeight(), imageType);
 
         toBufferedImage(source, outImg, lut);
@@ -146,18 +147,43 @@ public class IcyBufferedImageUtil
     }
 
     /**
+     * Convert the current {@link IcyBufferedImage} into a {@link BufferedImage} of the specified
+     * type.
+     * 
+     * @param source
+     *        source image
+     * @param imageType
+     *        wanted image type, only the following is accepted :<br>
+     *        BufferedImage.TYPE_INT_ARGB<br>
+     *        BufferedImage.TYPE_INT_RGB<br>
+     *        BufferedImage.TYPE_BYTE_GRAY<br>
+     * @return BufferedImage
+     */
+    public static BufferedImage toBufferedImage(IcyBufferedImage source, int imageType)
+    {
+        return toBufferedImage(source, imageType, null);
+    }
+
+    /**
      * Draw the source {@link IcyBufferedImage} into the destination ARGB {@link BufferedImage}<br>
-     * If <code>dest</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
-     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} but the output
-     * {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * If <code>dest</code> is <code>null</code> then a new ARGB {@link BufferedImage} is
+     * returned.<br>
+     * This function is faster for ARGB conversion than
+     * {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
+     * but the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB) and the image
+     * cannot be volatile, use {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} for no
+     * ARGB image or if you want volatile accelerated image.
      * 
      * @param source
      *        source image
      * @param dest
-     *        destination image
+     *        destination image. Note that we access image data so it can't be volatile anymore
+     *        which may result in slower drawing
      * @param lut
      *        {@link LUT} is used for color calculation (internal lut is used if null).
+     * @deprecated Use {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} instead.
      */
+    @Deprecated
     public static BufferedImage getARGBImage(IcyBufferedImage source, LUT lut, BufferedImage dest)
     {
         if (source == null)
@@ -180,21 +206,29 @@ public class IcyBufferedImageUtil
      * Draw the source {@link IcyBufferedImage} into the destination ARGB {@link BufferedImage}<br>
      * If <code>dest</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
      * <br>
-     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage)} but
-     * the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * This function is faster for ARGB conversion than
+     * {@link #toBufferedImage(IcyBufferedImage, BufferedImage)}
+     * but the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB) and the image
+     * cannot be volatile, use {@link #toBufferedImage(IcyBufferedImage, BufferedImage)} for no
+     * ARGB image or if you want volatile accelerated image.
      * 
      * @param source
      *        source image
      * @param dest
-     *        destination image
+     *        destination image. Note that we access image data so it can't be volatile anymore
+     *        which may result in slower drawing
+     * @deprecated Use {@link #toBufferedImage(IcyBufferedImage, BufferedImage)} instead.
      */
+    @Deprecated
     public static BufferedImage getARGBImage(IcyBufferedImage source, BufferedImage dest)
     {
         return getARGBImage(source, null, dest);
     }
 
     /**
-     * Convert the current {@link IcyBufferedImage} into a ARGB {@link BufferedImage}.
+     * Convert the current {@link IcyBufferedImage} into a ARGB {@link BufferedImage}.<br>
+     * Note that we access image data so it can't be volatile anymore which may result in slower
+     * drawing.
      * 
      * @param source
      *        source image
@@ -203,18 +237,33 @@ public class IcyBufferedImageUtil
      */
     public static BufferedImage getARGBImage(IcyBufferedImage source, LUT lut)
     {
-        return getARGBImage(source, lut, null);
+        if (source == null)
+            return null;
+
+        // use image lut when no specific lut
+        if (lut == null)
+        {
+            // manually update bounds if needed before doing RGB conversion from internal LUT
+            if (!source.getAutoUpdateChannelBounds())
+                source.updateChannelsBounds();
+
+            return argbImageBuilder.buildARGBImage(source, source.createCompatibleLUT(false));
+        }
+
+        return argbImageBuilder.buildARGBImage(source, lut);
     }
 
     /**
-     * Convert the current {@link IcyBufferedImage} into a ARGB {@link BufferedImage}.
+     * Convert the current {@link IcyBufferedImage} into a ARGB {@link BufferedImage}.<br>
+     * Note that we access image data so it can't be volatile anymore which may result in slower
+     * drawing.
      * 
      * @param source
      *        source image
      */
     public static BufferedImage getARGBImage(IcyBufferedImage source)
     {
-        return getARGBImage(source, null, null);
+        return getARGBImage(source, (LUT) null);
     }
 
     /**
@@ -581,8 +630,8 @@ public class IcyBufferedImageUtil
         if (source == null)
             return null;
 
-        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), source.getSizeC()
-                + num, source.getDataType_());
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(),
+                source.getSizeC() + num, source.getDataType_());
 
         for (int c = 0; c < index; c++)
             result.copyData(source, c, c);
@@ -655,9 +704,9 @@ public class IcyBufferedImageUtil
         }
 
         // use JAI scaler (use a copy to avoid source alteration)
-        final RenderedOp renderedOp = RotateDescriptor.create(getCopy(source), Float.valueOf((float) xOrigin), Float
-                .valueOf((float) yOrigin), Float.valueOf((float) angle), interpolation, null, new RenderingHints(
-                JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_ZERO)));
+        final RenderedOp renderedOp = RotateDescriptor.create(getCopy(source), Float.valueOf((float) xOrigin),
+                Float.valueOf((float) yOrigin), Float.valueOf((float) angle), interpolation, null,
+                new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_ZERO)));
 
         return IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
     }
@@ -709,8 +758,8 @@ public class IcyBufferedImageUtil
      * @param signed
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -785,8 +834,8 @@ public class IcyBufferedImageUtil
      * @param signed
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -861,8 +910,8 @@ public class IcyBufferedImageUtil
      * @param signed
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -935,8 +984,8 @@ public class IcyBufferedImageUtil
      * @param sizeY
      *        height of source image
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -997,8 +1046,8 @@ public class IcyBufferedImageUtil
      * @param sizeY
      *        height of source image
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -1061,8 +1110,8 @@ public class IcyBufferedImageUtil
      * @param signed
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      *        If set to <code>null</code> a new array is allocated.
@@ -1115,8 +1164,8 @@ public class IcyBufferedImageUtil
      * @param signed
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @return output buffer containing the down scaled version of input image data.
      */
     public static Object downscaleBy2(Object input, int sizeX, int sizeY, boolean signed, boolean filter)
@@ -1131,11 +1180,11 @@ public class IcyBufferedImageUtil
      * @param input
      *        input image
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      * @param output
-     *        output image receiving the result (should be of same type as input image with X and Y resolution divided
-     *        by 2). If set to <code>null</code> a new image is created.
+     *        output image receiving the result (should be of same type as input image with X and Y
+     *        resolution divided by 2). If set to <code>null</code> a new image is created.
      */
     public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter, IcyBufferedImage output)
     {
@@ -1166,8 +1215,8 @@ public class IcyBufferedImageUtil
      * @param input
      *        input image
      * @param filter
-     *        enable pixel blending for better representation of the down sampled result image (otherwise nearest
-     *        neighbor is used)
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
      */
     public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter)
     {
@@ -1270,15 +1319,9 @@ public class IcyBufferedImageUtil
             }
 
             // use JAI scaler (use a copy to avoid source alteration)
-            final RenderedOp renderedOp = ScaleDescriptor.create(
-                    getCopy(source),
-                    xScale,
-                    yScale,
-                    Float.valueOf(0f),
-                    Float.valueOf(0f),
-                    interpolation,
-                    new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender
-                            .createInstance(BorderExtender.BORDER_COPY)));
+            final RenderedOp renderedOp = ScaleDescriptor.create(getCopy(source), xScale, yScale, Float.valueOf(0f),
+                    Float.valueOf(0f), interpolation, new RenderingHints(JAI.KEY_BORDER_EXTENDER,
+                            BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
 
             result = IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
         }

@@ -22,7 +22,8 @@ import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
 
 /**
- * Loader dialog used to load resource or image from the {@link FileImporter} or {@link SequenceFileImporter}.
+ * Loader dialog used to load resource or image from the {@link FileImporter} or
+ * {@link SequenceFileImporter}.
  * 
  * @author Stephane
  * @see Loader
@@ -125,11 +126,25 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
         // add file filter from importers
         for (SequenceFileImporter importer : sequenceImporters)
-            for (FileFilter filter : importer.getFileFilters())
-                addChoosableFileFilter(filter);
+        {
+            final List<FileFilter> filters = importer.getFileFilters();
+
+            if (filters != null)
+            {
+                for (FileFilter filter : filters)
+                    addChoosableFileFilter(filter);
+            }
+        }
         for (FileImporter importer : fileImporters)
-            for (FileFilter filter : importer.getFileFilters())
-                addChoosableFileFilter(filter);
+        {
+            final List<FileFilter> filters = importer.getFileFilters();
+
+            if (filters != null)
+            {
+                for (FileFilter filter : filters)
+                    addChoosableFileFilter(filter);
+            }
+        }
         // add "all files" filter
         addChoosableFileFilter(allFileFilter);
 
@@ -318,7 +333,8 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
         for (SequenceFileImporter importer : sequenceImporters)
         {
-            final int count = importer.getFileFilters().size();
+            final List<FileFilter> filters = importer.getFileFilters();
+            final int count = (filters != null) ? filters.size() : 0;
 
             if (filterIndex < (ind + count))
                 return importer;
@@ -327,7 +343,8 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         }
         for (FileImporter importer : fileImporters)
         {
-            final int count = importer.getFileFilters().size();
+            final List<FileFilter> filters = importer.getFileFilters();
+            final int count = (filters != null) ? filters.size() : 0;
 
             if (filterIndex < (ind + count))
                 return importer;

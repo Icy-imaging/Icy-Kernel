@@ -529,8 +529,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     /**
      * Clone the current used reader conserving its properties and current path
      */
-    protected IFormatReader cloneReader() throws FormatException, IOException, InstantiationException,
-            IllegalAccessException
+    protected IFormatReader cloneReader()
+            throws FormatException, IOException, InstantiationException, IllegalAccessException
     {
         if (reader == null)
             return null;
@@ -788,6 +788,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             }
             catch (FormatException e)
             {
+                // we can have here a "Image plane too large. Only 2GB of data can be extracted at
+                // one time." error here --> so can try to use tile loading when we need rescaling
+                if (downScaleLevel > 0)
+                    return getImageByTile(serie, resolution, z, t, c, getTileWidth(serie), getTileHeight(serie), null);
+
                 throw e;
             }
             catch (IOException e)
@@ -813,7 +818,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T) position from the specified {@link IFormatReader} and
+     * Load a thumbnail version of the image located at (Z, T) position from the specified
+     * {@link IFormatReader} and
      * returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -831,7 +837,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T, C) position from the specified {@link IFormatReader} and
+     * Load a thumbnail version of the image located at (Z, T, C) position from the specified
+     * {@link IFormatReader} and
      * returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -868,7 +875,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T) position from the specified {@link IFormatReader} and
+     * Load a thumbnail version of the image located at (Z, T) position from the specified
+     * {@link IFormatReader} and
      * returns it as an IcyBufferedImage.<br>
      * <i>Slow compatible version (load the original image and resize it)</i>
      * 
@@ -887,7 +895,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T, C) position from the specified {@link IFormatReader} and
+     * Load a thumbnail version of the image located at (Z, T, C) position from the specified
+     * {@link IFormatReader} and
      * returns it as an IcyBufferedImage.<br>
      * <i>Slow compatible version (load the original image and resize it)</i>
      * 
@@ -909,7 +918,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a single channel sub image at (Z, T, C) position from the specified {@link IFormatReader}<br>
+     * Load a single channel sub image at (Z, T, C) position from the specified
+     * {@link IFormatReader}<br>
      * and returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -968,8 +978,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      *        T position of the image to load
      * @return {@link IcyBufferedImage}
      */
-    public static IcyBufferedImage getImageCompatible(IFormatReader reader, int z, int t) throws FormatException,
-            IOException
+    public static IcyBufferedImage getImageCompatible(IFormatReader reader, int z, int t)
+            throws FormatException, IOException
     {
         final int sizeX = reader.getSizeX();
         final int sizeY = reader.getSizeY();
@@ -1002,16 +1012,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param c
      *        Channel index to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i> parameter should
+     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
+     *        parameter should
      *        contains thumbnail size
      * @param rawBuffer
-     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY * Datatype.size]) used to
+     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY *
+     *        Datatype.size]) used to
      *        read the whole RGB raw data (can be <code>null</code>)
      * @param channelBuffer
-     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the channel raw data (can be
+     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the
+     *        channel raw data (can be
      *        <code>null</code>)
      * @param pixelBuffer
-     *        pre allocated 1D array pixel data buffer ([SizeX * SizeY]) used to receive the pixel converted data and to
+     *        pre allocated 1D array pixel data buffer ([SizeX * SizeY]) used to receive the pixel
+     *        converted data and to
      *        build the result image (can be <code>null</code>)
      * @return 1D array containing pixels data.<br>
      *         The type of the array depends from the internal image data type
@@ -1028,7 +1042,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
 
         // check we can open the image
-        Loader.checkOpening(reader.getResolution(), rect.width, rect.height, 1, 1, 1, dataType, "");
+        // Loader.checkOpening(reader.getResolution(), rect.width, rect.height, 1, 1, 1, dataType,
+        // "");
 
         // prepare informations
         final int rgbChanCount = reader.getRGBChannelCount();
@@ -1078,7 +1093,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param c
      *        Channel index to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code> parameter is then ignored)
+     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code>
+     *        parameter is then ignored)
      * @return 1D array containing pixels data.<br>
      *         The type of the array depends from the internal image data type
      */
@@ -1098,7 +1114,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a single channel sub image at (Z, T, C) position from the specified {@link IFormatReader}<br>
+     * Load a single channel sub image at (Z, T, C) position from the specified
+     * {@link IFormatReader}<br>
      * and returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -1113,16 +1130,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param c
      *        Channel index to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i> parameter should
+     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
+     *        parameter should
      *        contains thumbnail size
      * @param rawBuffer
-     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY * Datatype.size]) used to
+     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY *
+     *        Datatype.size]) used to
      *        read the whole RGB raw data (can be <code>null</code>)
      * @param channelBuffer
-     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the channel raw data (can be
+     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the
+     *        channel raw data (can be
      *        <code>null</code>)
      * @param pixelBuffer
-     *        pre allocated 1D array pixel data buffer ([SizeX * SizeY]) used to receive the pixel converted data and to
+     *        pre allocated 1D array pixel data buffer ([SizeX * SizeY]) used to receive the pixel
+     *        converted data and to
      *        build the result image (can be <code>null</code>)
      * @return {@link IcyBufferedImage}
      * @throws UnsupportedOperationException
@@ -1187,7 +1208,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load a single channel sub image at (Z, T, C) position from the specified {@link IFormatReader}<br>
+     * Load a single channel sub image at (Z, T, C) position from the specified
+     * {@link IFormatReader}<br>
      * and returns it as an IcyBufferedImage.
      * 
      * @param reader
@@ -1202,7 +1224,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param c
      *        Channel index to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code> parameter is then ignored)
+     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code>
+     *        parameter is then ignored)
      * @return {@link IcyBufferedImage}
      */
     protected static IcyBufferedImage getImageInternal(IFormatReader reader, Rectangle rect, int z, int t, int c,
@@ -1221,7 +1244,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Load the image located at (Z, T) position from the specified IFormatReader and return it as an IcyBufferedImage.
+     * Load the image located at (Z, T) position from the specified IFormatReader and return it as
+     * an IcyBufferedImage.
      * 
      * @param reader
      *        {@link IFormatReader}
@@ -1233,16 +1257,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param t
      *        T position of the image to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i> parameter should
+     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
+     *        parameter should
      *        contains thumbnail size
      * @param rawBuffer
-     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY * Datatype.size]) used to
+     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY *
+     *        Datatype.size]) used to
      *        read the whole RGB raw data (can be <code>null</code>)
      * @param channelBuffer
-     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the channel raw data (can be
+     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the
+     *        channel raw data (can be
      *        <code>null</code>)
      * @param pixelBuffer
-     *        pre allocated 2D array ([SizeC, SizeX*SizeY]) pixel data buffer used to receive the pixel converted data
+     *        pre allocated 2D array ([SizeC, SizeX*SizeY]) pixel data buffer used to receive the
+     *        pixel converted data
      *        and to build the result image (can be <code>null</code>)
      * @return {@link IcyBufferedImage}
      * @throws UnsupportedOperationException
@@ -1264,7 +1292,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final int sizeC = effSizeC * rgbChanCount;
 
         // check we can open the image
-        Loader.checkOpening(reader.getResolution(), sizeX, sizeY, sizeC, 1, 1, dataType, "");
+        // Loader.checkOpening(reader.getResolution(), sizeX, sizeY, sizeC, 1, 1, dataType, "");
 
         final int serie = reader.getSeries();
         // prepare informations
@@ -1405,7 +1433,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param t
      *        T position of the image to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code> parameter is then ignored)
+     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code>
+     *        parameter is then ignored)
      * @return {@link IcyBufferedImage}
      */
     protected static IcyBufferedImage getImageInternal(IFormatReader reader, Rectangle rect, int z, int t,
