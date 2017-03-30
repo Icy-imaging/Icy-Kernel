@@ -1052,6 +1052,14 @@ public class Saver
             MetaDataUtil.setSizeZ(metadata, 0, 1);
         }
 
+        // specific to TIFF writer
+        if (writer instanceof TiffWriter)
+        {
+            // > 2GB --> use big tiff (important to do it before setId(..) call)
+            if (MetaDataUtil.getDataSize(metadata, 0, 0) > 2000000000L)
+                ((TiffWriter) writer).setBigTiff(true);
+        }
+
         // set settings
         writer.setFramesPerSecond(fps);
         // generate metadata
@@ -1064,14 +1072,6 @@ public class Saver
         writer.setSeries(0);
         // usually give better save performance
         writer.setWriteSequentially(true);
-
-        // specific to TIFF writer
-        if (writer instanceof TiffWriter)
-        {
-            // > 2GB --> use big tiff
-            if (MetaDataUtil.getDataSize(metadata, 0, 0) > 2000000000L)
-                ((TiffWriter) writer).setBigTiff(true);
-        }
 
         final int sizeC = compatibleSequence.getSizeC();
         // get endianess
