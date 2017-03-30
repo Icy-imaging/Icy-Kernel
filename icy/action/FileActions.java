@@ -332,7 +332,6 @@ public class FileActions
                     new LoaderDialog(path, bounds, true);
                 else
                     new LoaderDialog(path, null, true);
-
             }
 
             return false;
