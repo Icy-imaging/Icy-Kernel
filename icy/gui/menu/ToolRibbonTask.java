@@ -431,7 +431,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             booleanInversionButton.setEnabled(singleOp);
             booleanExclusiveUnionButton.setEnabled(boolOp);
             booleanSubtractionButton.setEnabled(boolOp);
-            // booleanOthersButton.setEnabled(singleOp);
+            booleanOthersButton.setEnabled(singleOp || boolOp);
         }
     }
 
