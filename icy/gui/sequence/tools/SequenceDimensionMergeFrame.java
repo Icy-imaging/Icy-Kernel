@@ -177,36 +177,44 @@ public class SequenceDimensionMergeFrame extends ActionDialog
                     {
                         final ProgressFrame pf = new ProgressFrame("Merging sequences...");
 
-                        final Sequence out;
-
-                        switch (getDimensionId())
+                        try
                         {
-                            default:
-                            case C:
-                                out = SequenceUtil.concatC(mergePanel.getSequences(), mergePanel.getSelectedChannels(),
-                                        mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled(), pf);
-                                break;
+                            final Sequence out;
 
-                            case Z:
-                                out = SequenceUtil.concatZ(mergePanel.getSequences(), mergePanel.isInterlaceEnabled(),
-                                        mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled(), pf);
-                                break;
+                            switch (getDimensionId())
+                            {
+                                default:
+                                case C:
+                                    out = SequenceUtil.concatC(mergePanel.getSequences(),
+                                            mergePanel.getSelectedChannels(), mergePanel.isFillEmptyImageEnabled(),
+                                            mergePanel.isFitImagesEnabled(), pf);
+                                    break;
 
-                            case T:
-                                out = SequenceUtil.concatT(mergePanel.getSequences(), mergePanel.isInterlaceEnabled(),
-                                        mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled(), pf);
-                                break;
+                                case Z:
+                                    out = SequenceUtil.concatZ(mergePanel.getSequences(),
+                                            mergePanel.isInterlaceEnabled(), mergePanel.isFillEmptyImageEnabled(),
+                                            mergePanel.isFitImagesEnabled(), pf);
+                                    break;
+
+                                case T:
+                                    out = SequenceUtil.concatT(mergePanel.getSequences(),
+                                            mergePanel.isInterlaceEnabled(), mergePanel.isFillEmptyImageEnabled(),
+                                            mergePanel.isFitImagesEnabled(), pf);
+                                    break;
+                            }
+
+                            Icy.getMainInterface().addSequence(out);
                         }
-
-                        Icy.getMainInterface().addSequence(out);
-
-                        pf.close();
+                        finally
+                        {
+                            pf.close();
+                        }
                     }
                 });
             }
         });
 
-        setSize(400, 520);
+        setSize(420, 520);
         ComponentUtil.center(this);
 
         setVisible(true);

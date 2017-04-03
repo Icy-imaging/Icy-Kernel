@@ -36,6 +36,7 @@ public class ActionFrame extends TitledFrame
     protected static final String OK_CMD = "ok";
     protected static final String CANCEL_CMD = "cancel";
 
+    protected final JPanel buttonPanel;
     protected final JButton okBtn;
     protected final JButton cancelBtn;
 
@@ -56,7 +57,7 @@ public class ActionFrame extends TitledFrame
     {
         super(title, resizable, true, false, iconifiable);
 
-        final JPanel buttonPanel = new JPanel();
+        buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 

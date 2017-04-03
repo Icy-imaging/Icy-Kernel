@@ -85,6 +85,12 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     }
 
     @Override
+    public String getDefaultName()
+    {
+        return "ROI4D stack";
+    }
+
+    @Override
     protected ROIPainter createPainter()
     {
         return new ROI5DStackPainter();
@@ -593,6 +599,29 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     {
         // default
         return false;
+    }
+    
+    @Override
+    public void unselectAllPoints()
+    {
+        beginUpdate();
+        try
+        {
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.unselectAllPoints();
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     // default approximated implementation for ROI5DStack

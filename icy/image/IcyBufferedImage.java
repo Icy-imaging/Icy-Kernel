@@ -18,27 +18,8 @@
  */
 package icy.image;
 
-import icy.common.CollapsibleEvent;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
-import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
-import icy.image.colormap.IcyColorMap;
-import icy.image.colormap.LinearColorMap;
-import icy.image.colormodel.IcyColorModel;
-import icy.image.colormodel.IcyColorModelEvent;
-import icy.image.colormodel.IcyColorModelListener;
-import icy.image.lut.LUT;
-import icy.math.ArrayMath;
-import icy.math.MathUtil;
-import icy.math.Scaler;
-import icy.type.DataType;
-import icy.type.TypeUtil;
-import icy.type.collection.array.Array1DUtil;
-import icy.type.collection.array.Array2DUtil;
-import icy.type.collection.array.ArrayUtil;
-import icy.type.collection.array.ByteArrayConvert;
-
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -57,6 +38,26 @@ import java.util.List;
 
 import javax.media.jai.PlanarImage;
 
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.exception.TooLargeArrayException;
+import icy.common.listener.ChangeListener;
+import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
+import icy.image.colormap.IcyColorMap;
+import icy.image.colormap.LinearColorMap;
+import icy.image.colormodel.IcyColorModel;
+import icy.image.colormodel.IcyColorModelEvent;
+import icy.image.colormodel.IcyColorModelListener;
+import icy.image.lut.LUT;
+import icy.math.ArrayMath;
+import icy.math.MathUtil;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.type.TypeUtil;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.Array2DUtil;
+import icy.type.collection.array.ArrayUtil;
+import icy.type.collection.array.ByteArrayConvert;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.gui.SignedByteBuffer;
@@ -111,14 +112,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     /**
      * Create an IcyBufferedImage (multi component) from a list of BufferedImage.<br>
-     * IMPORTANT : source images can be used as part or as the whole result<br>
-     * so consider them as "lost"
+     * IMPORTANT : source images can be used as part or as the whole result so consider them as
+     * 'lost'.
      * 
      * @param imageList
      *        list of {@link BufferedImage}
      * @return {@link IcyBufferedImage}
+     * @throws IllegalArgumentException
+     *         if imageList is empty or contains incompatible images.
      */
-    public static IcyBufferedImage createFrom(List<? extends BufferedImage> imageList)
+    public static IcyBufferedImage createFrom(List<? extends BufferedImage> imageList) throws IllegalArgumentException
     {
         if (imageList.size() == 0)
             throw new IllegalArgumentException("imageList should contains at least 1 image");
@@ -198,6 +201,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             return new IcyBufferedImage(w, h, ((DataBufferByte) db).getBankData(), signedDataType);
         else if (db instanceof DataBufferShort)
             return new IcyBufferedImage(w, h, ((DataBufferShort) db).getBankData(), signedDataType);
+        else if (db instanceof DataBufferUShort)
+            return new IcyBufferedImage(w, h, ((DataBufferUShort) db).getBankData(), signedDataType);
         else if (db instanceof DataBufferInt)
             return new IcyBufferedImage(w, h, ((DataBufferInt) db).getBankData(), signedDataType);
         else if (db instanceof DataBufferFloat)
@@ -244,12 +249,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         // sort of IcyBufferedImage (JAI can return that type) --> no conversion needed
         if (image.getColorModel() instanceof IcyColorModel)
-            return new IcyBufferedImage((IcyColorModel) image.getColorModel(), image.getRaster());
+            return new IcyBufferedImage(
+                    IcyColorModel.createInstance((IcyColorModel) image.getColorModel(), false, false),
+                    image.getRaster());
 
         final int w = image.getWidth();
         final int h = image.getHeight();
         final int type = image.getType();
         final BufferedImage temp;
+        final Graphics g;
 
         // we first want a component based image
         switch (type)
@@ -259,14 +267,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             case BufferedImage.TYPE_USHORT_555_RGB:
             case BufferedImage.TYPE_USHORT_565_RGB:
                 temp = new BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR);
-                temp.getGraphics().drawImage(image, 0, 0, null);
+                g = temp.createGraphics();
+                g.drawImage(image, 0, 0, null);
+                g.dispose();
                 break;
 
             case BufferedImage.TYPE_INT_ARGB:
             case BufferedImage.TYPE_INT_ARGB_PRE:
             case BufferedImage.TYPE_4BYTE_ABGR_PRE:
                 temp = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-                temp.getGraphics().drawImage(image, 0, 0, null);
+                g = temp.createGraphics();
+                g.drawImage(image, 0, 0, null);
+                g.dispose();
                 break;
 
             default:
@@ -276,7 +288,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 {
                     // change it to a basic ABGR components image
                     temp = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-                    temp.getGraphics().drawImage(image, 0, 0, null);
+                    g = temp.createGraphics();
+                    g.drawImage(image, 0, 0, null);
+                    g.dispose();
                 }
                 else
                     temp = image;
@@ -316,27 +330,31 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)} instead.
+     * @deprecated Use
+     *             {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int, int)}
+     *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
             throws FormatException, IOException
     {
-        return LociImporterPlugin.getThumbnailCompatible(reader, z, t);
+        return LociImporterPlugin.getThumbnailCompatible(reader, z, t, -1);
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getThumbnail(IFormatReader, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnail(IFormatReader, int, int, int)}
+     *             instead.
      */
     @Deprecated
-    public static IcyBufferedImage createThumbnailFrom(IFormatReader reader, int z, int t) throws FormatException,
-            IOException
+    public static IcyBufferedImage createThumbnailFrom(IFormatReader reader, int z, int t)
+            throws FormatException, IOException
     {
-        return LociImporterPlugin.getThumbnail(reader, z, t);
+        return LociImporterPlugin.getThumbnail(reader, z, t, -1);
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)}
+     *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int z, int t, int c)
@@ -346,7 +364,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)}
+     *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
@@ -487,8 +506,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * Create an Icy formatted BufferedImage with specified colorModel, width, height and input data.<br>
      * ex : <code>img = new IcyBufferedImage(640, 480, new byte[3][640 * 480], true);</code><br>
      * <br>
-     * This constructor provides the best performance for massive image creation and computation as
-     * it allow you to directly send the data array and disable the channel bounds calculation.
+     * This constructor provides the best performance for massive image creation and computation as it allow you to
+     * directly send the data array and disable the channel bounds calculation.
      * 
      * @param cm
      *        the color model
@@ -498,10 +517,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        image data<br>
      *        Should be a 2D array with first dimension giving the number of component<br>
      *        and second dimension equals to <code>width * height</code><br>
-     *        The array data type specify the internal data type and should match the given color model parameter.
+     *        The array data type specify the internal data type and should match the given color
+     *        model parameter.
      * @param autoUpdateChannelBounds
      *        If true then channel bounds are automatically calculated.<br>
-     *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
+     *        When set to false, you have to set bounds manually by calling
+     *        {@link #updateChannelsBounds()} or #setC
      */
     protected IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
     {
@@ -529,7 +550,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        use signed data for data type
      * @param autoUpdateChannelBounds
      *        If true then channel bounds are automatically calculated.<br>
-     *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
+     *        When set to false, you have to set bounds manually by calling
+     *        {@link #updateChannelsBounds()} or #setC
      */
     public IcyBufferedImage(int width, int height, Object[] data, boolean signed, boolean autoUpdateChannelBounds)
     {
@@ -575,12 +597,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Create a single channel Icy formatted BufferedImage with specified width, height and input
-     * data.<br>
+     * Create a single channel Icy formatted BufferedImage with specified width, height and input data.<br>
      * ex : <code>img = new IcyBufferedImage(640, 480, new byte[640 * 480], true);</code><br>
      * <br>
-     * This constructor provides the best performance for massive image creation and computation as
-     * it allow you to directly send the data array and disable the channel bounds calculation.
+     * This constructor provides the best performance for massive image creation and computation as it allow you to
+     * directly send the data array and disable the channel bounds calculation.
      * 
      * @param width
      * @param height
@@ -592,7 +613,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        use signed data for data type
      * @param autoUpdateChannelBounds
      *        If true then channel bounds are automatically calculated.<br>
-     *        When set to false, you have to set bounds manually by calling {@link #updateChannelsBounds()} or #setC
+     *        When set to false, you have to set bounds manually by calling
+     *        {@link #updateChannelsBounds()} or #setC
      * @see #IcyBufferedImage(int, int, Object[], boolean, boolean)
      */
     public IcyBufferedImage(int width, int height, Object data, boolean signed, boolean autoUpdateChannelBounds)
@@ -652,7 +674,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Create an ICY formatted BufferedImage with specified width, height and IcyColorModel type.<br>
+     * Create an ICY formatted BufferedImage with specified width, height and IcyColorModel
+     * type.<br>
      */
     public IcyBufferedImage(int width, int height, IcyColorModel cm)
     {
@@ -690,7 +713,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
      * when image data is modified.<br>
      * This can consume some time if you make many updates on a large image.<br>
-     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()} block to avoid
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
+     * block to avoid
      * severals recalculation.
      */
     public void setAutoUpdateChannelBounds(boolean value)
@@ -705,7 +729,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
+     *             instead.
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(BufferedImage out, LUT lut)
@@ -714,7 +740,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage)} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage)}
+     *             instead.
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(BufferedImage out)
@@ -723,7 +751,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, LUT, BufferedImage)} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
+     *             instead.
      */
     @Deprecated
     public BufferedImage getARGBImage(LUT lut, BufferedImage out)
@@ -732,7 +762,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, BufferedImage)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, BufferedImage)}
+     *             instead.
      */
     @Deprecated
     public BufferedImage getARGBImage(BufferedImage out)
@@ -759,7 +790,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#convertType(IcyBufferedImage, DataType, Scaler[])} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#convertType(IcyBufferedImage, DataType, Scaler[])}
+     *             instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(DataType dataType, Scaler scaler)
@@ -768,7 +801,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#convertType(IcyBufferedImage,DataType, Scaler[])} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#convertType(IcyBufferedImage,DataType, Scaler[])}
+     *             instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(int dataType, boolean signed, Scaler scaler)
@@ -777,7 +812,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, boolean)} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage, DataType, boolean)}
+     *             instead.
      */
     @Deprecated
     public IcyBufferedImage convertToType(DataType dataType, boolean rescale)
@@ -786,7 +823,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, boolean)} instead
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#convertToType(IcyBufferedImage,DataType, boolean)}
+     *             instead
      */
     @Deprecated
     public IcyBufferedImage convertToType(int dataType, boolean signed, boolean rescale)
@@ -795,7 +834,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)} instead
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
+     *             instead
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(LUT lut, int imageType)
@@ -804,7 +844,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)} instead
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
+     *             instead
      */
     @Deprecated
     public BufferedImage convertToBufferedImage(int imageType, LUT lut)
@@ -822,7 +863,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#getSubImage(IcyBufferedImage, int, int, int, int)} instead
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#getSubImage(IcyBufferedImage, int, int, int, int)}
+     *             instead
      */
     @Deprecated
     public IcyBufferedImage getSubImageCopy(int x, int y, int w, int h)
@@ -921,7 +964,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, boolean, int, int)} instead.
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, boolean, int, int)}
+     *             instead.
      */
     @Deprecated
     public IcyBufferedImage getScaledCopy(int width, int height, boolean resizeContent, int xAlign, int yAlign)
@@ -930,7 +975,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, IcyBufferedImageUtil.FilterType)}
+     * @deprecated Uses
+     *             {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int, IcyBufferedImageUtil.FilterType)}
      *             instead.
      */
     @Deprecated
@@ -949,7 +995,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int, int)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int, int)}
+     *             instead.
      */
     @Deprecated
     public void translate(int dx, int dy, int channel)
@@ -1633,7 +1680,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * create a compatible LUT for this image.
      * 
      * @param createColorModel
-     *        set to <code>true</code> to create a LUT using a new compatible ColorModel else it will use the image
+     *        set to <code>true</code> to create a LUT using a new compatible ColorModel else it
+     *        will use the image
      *        internal ColorModel
      */
     public LUT createCompatibleLUT(boolean createColorModel)
@@ -1975,16 +2023,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public byte[] getDataCopyXYCAsByte(byte[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final byte[][] banks = ((DataBufferByte) getRaster().getDataBuffer()).getBankData();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final byte[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2005,21 +2056,24 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public short[] getDataCopyXYCAsShort(short[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final DataBuffer db = getRaster().getDataBuffer();
         final short[][] banks;
         if (db instanceof DataBufferUShort)
             banks = ((DataBufferUShort) db).getBankData();
         else
             banks = ((DataBufferShort) db).getBankData();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final short[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2040,16 +2094,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public int[] getDataCopyXYCAsInt(int[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final int[][] banks = ((DataBufferInt) getRaster().getDataBuffer()).getBankData();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final int[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2070,16 +2127,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public float[] getDataCopyXYCAsFloat(float[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final float[][] banks = ((DataBufferFloat) getRaster().getDataBuffer()).getBankData();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final float[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2100,16 +2160,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public double[] getDataCopyXYCAsDouble(double[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final double[][] banks = ((DataBufferDouble) getRaster().getDataBuffer()).getBankData();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
         int offset = off;
 
         for (int c = 0; c < sizeC; c++)
         {
             final double[] src = banks[c];
-            System.arraycopy(src, 0, result, offset, len);
+            System.arraycopy(src, 0, result, offset, (int) len);
             offset += len;
         }
 
@@ -2250,10 +2313,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public byte[] getDataCopyCXYAsByte(byte[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final byte[][] banks = ((DataBufferByte) getRaster().getDataBuffer()).getBankData();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2280,15 +2346,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public short[] getDataCopyCXYAsShort(short[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final DataBuffer db = getRaster().getDataBuffer();
         final short[][] banks;
         if (db instanceof DataBufferUShort)
             banks = ((DataBufferUShort) db).getBankData();
         else
             banks = ((DataBufferShort) db).getBankData();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2315,10 +2384,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public int[] getDataCopyCXYAsInt(int[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final int[][] banks = ((DataBufferInt) getRaster().getDataBuffer()).getBankData();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2345,10 +2417,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public float[] getDataCopyCXYAsFloat(float[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final float[][] banks = ((DataBufferFloat) getRaster().getDataBuffer()).getBankData();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2375,10 +2450,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public double[] getDataCopyCXYAsDouble(double[] out, int off)
     {
-        final int len = getSizeX() * getSizeY();
-        final int sizeC = getSizeC();
+        final long sizeC = getSizeC();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeC) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
         final double[][] banks = ((DataBufferDouble) getRaster().getDataBuffer()).getBankData();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeC);
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeC));
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -2883,9 +2961,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param srcImage
      *        source image
      */
-    protected void internalCopyData(int srcChannel, int dstChannel, DataBuffer src_db, DataBuffer dst_db,
-            int[] indices, int[] band_offsets, int[] bank_offsets, int scanlineStride_src, int pixelStride_src,
-            int maxX, int maxY, int decOffsetSrc)
+    protected void internalCopyData(int srcChannel, int dstChannel, DataBuffer src_db, DataBuffer dst_db, int[] indices,
+            int[] band_offsets, int[] bank_offsets, int scanlineStride_src, int pixelStride_src, int maxX, int maxY,
+            int decOffsetSrc)
     {
         final int scanlineStride_dst = getSizeX();
 
@@ -3099,6 +3177,67 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Copy data to specified location from an data array.
+     * 
+     * @param data
+     *        source data array (should be same type than image data type)
+     * @param dataDim
+     *        source data dimension (array length should be >= Dimension.width * Dimension.heigth)
+     * @param signed
+     *        if the source data array should be considered as signed data (meaningful for integer
+     *        data type only)
+     * @param dstPt
+     *        destination X,Y position (assume [0,0] if null)
+     * @param dstChannel
+     *        destination channel
+     */
+    public void copyData(Object data, Dimension dataDim, boolean signed, Point dstPt, int dstChannel)
+    {
+        if ((data == null) || (dataDim == null))
+            return;
+
+        // source image size
+        final Rectangle adjSrcRect = new Rectangle(dataDim);
+        // negative destination x position
+        if (dstPt.x < 0)
+            // adjust source rect
+            adjSrcRect.x += -dstPt.x;
+        // negative destination y position
+        if (dstPt.y < 0)
+            // adjust source rect
+            adjSrcRect.y += -dstPt.y;
+
+        final Rectangle dstRect = new Rectangle(dstPt.x, dstPt.y, adjSrcRect.width, adjSrcRect.height);
+        // limit to destination image size
+        final Rectangle adjDstRect = dstRect.intersection(new Rectangle(getSizeX(), getSizeY()));
+
+        final int w = Math.min(adjSrcRect.width, adjDstRect.width);
+        final int h = Math.min(adjSrcRect.height, adjDstRect.height);
+
+        // nothing to copy
+        if ((w == 0) || (h == 0))
+            return;
+
+        final Object dst = getDataXY(dstChannel);
+        final int srcSizeX = dataDim.width;
+        final int dstSizeX = getSizeX();
+
+        int srcOffset = adjSrcRect.x + (adjSrcRect.y * srcSizeX);
+        int dstOffset = adjDstRect.x + (adjDstRect.y * dstSizeX);
+
+        for (int y = 0; y < h; y++)
+        {
+            // do data copy (and conversion if needed)
+            ArrayUtil.arrayToArray(data, srcOffset, dst, dstOffset, w, signed);
+            srcOffset += srcSizeX;
+            dstOffset += dstSizeX;
+        }
+
+        // notify data changed
+        dataChanged();
+    }
+
+    /**
      * Copy data from an image (notify data changed)
      * 
      * @param srcImage
@@ -3231,8 +3370,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public byte[] getRawData(int c, byte[] out, int offset, boolean little)
     {
         // alloc output array if needed
-        final byte[] result = Array1DUtil.allocIfNull(out, offset
-                + (getSizeX() * getSizeY() * getDataType_().getSize()));
+        final byte[] result = Array1DUtil.allocIfNull(out,
+                offset + (getSizeX() * getSizeY() * getDataType_().getSize()));
 
         return ByteArrayConvert.toByteArray(getDataXY(c), 0, result, offset, little);
     }
@@ -3518,7 +3657,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         switch (event.getType())
         {
-        // do here global process on image data change
+            // do here global process on image data change
             case DATA_CHANGED:
                 // update image components bounds
                 if (autoUpdateChannelBounds)

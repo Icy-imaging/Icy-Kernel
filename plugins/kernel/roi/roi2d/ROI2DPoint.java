@@ -27,14 +27,12 @@ import icy.roi.ROI;
 import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
-import icy.type.point.Point5D.Double;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.vtk.IcyVtkPanel;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -45,14 +43,13 @@ import org.w3c.dom.Node;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
-import vtk.vtkProperty;
 import vtk.vtkSphereSource;
 
 /**
  * ROI 2D Point class.<br>
  * Define a single point ROI<br>
  * 
- * @author Stephane
+ * @author Stephane Dallongeville
  */
 public class ROI2DPoint extends ROI2DShape
 {
@@ -65,7 +62,7 @@ public class ROI2DPoint extends ROI2DShape
         {
             super.finalize();
 
-            // init 3D painters stuff
+            // release extra VTK objects
             if (vtkSource != null)
                 vtkSource.Delete();
         }
@@ -88,18 +85,18 @@ public class ROI2DPoint extends ROI2DShape
             return true;
         }
 
-        @Override
-        public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
-        {
-            super.mouseMove(e, imagePoint, canvas);
+        // @Override
+        // public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
+        // {
+        // super.mouseMove(e, imagePoint, canvas);
+        //
+        // // special case: we want to set focus when we have control point selected
+        // if (hasSelectedPoint())
+        // setFocused(true);
+        // }
 
-            // special case: we want to set focus when we have control point selected
-            if (hasSelectedPoint())
-                setFocused(true);
-        }
-
         @Override
-        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {
@@ -185,11 +182,15 @@ public class ROI2DPoint extends ROI2DShape
             vtkPanel.lock();
             try
             {
-                vtkSource.SetRadius(getStroke());
-                vtkSource.SetCenter(pos.getX(), pos.getY(), curZ);
+                // need to handle scaling on radius and position to keep a "round" sphere (else we obtain ellipsoid)
+                vtkSource.SetRadius(getStroke() * scaling[0]);
+                vtkSource.SetCenter(pos.getX() * scaling[0], pos.getY() * scaling[1], (curZ + 0.5d) * scaling[2]);
                 polyMapper.Update();
 
-                actor.SetScale(scaling);
+                // vtkSource.SetRadius(getStroke());
+                // vtkSource.SetCenter(pos.getX(), pos.getY(), curZ);
+                // polyMapper.Update();
+                // actor.SetScale(scaling);
             }
             finally
             {
@@ -203,38 +204,33 @@ public class ROI2DPoint extends ROI2DShape
         @Override
         protected void updateVtkDisplayProperties()
         {
-            if (actor != null)
+            if (actor == null)
+                return;
+
+            final VtkCanvas cnv = canvas3d.get();
+            final Color col = getDisplayColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+            // final float opacity = getOpacity();
+
+            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+            // we need to lock canvas as actor can be accessed during rendering
+            if (vtkPanel != null)
+                vtkPanel.lock();
+            try
             {
-                final VtkCanvas cnv = canvas3d.get();
-                final Color col = getDisplayColor();
-                final double r = col.getRed() / 255d;
-                final double g = col.getGreen() / 255d;
-                final double b = col.getBlue() / 255d;
-                // final float opacity = getOpacity();
-
-                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-                // we need to lock canvas as actor can be accessed during rendering
-                if (vtkPanel != null)
-                {
-                    vtkPanel.lock();
-                    try
-                    {
-                        actor.GetProperty().SetColor(r, g, b);
-                    }
-                    finally
-                    {
-                        vtkPanel.unlock();
-                    }
-                }
-                else
-                {
-                    actor.GetProperty().SetColor(r, g, b);
-                }
-
-                // need to repaint
-                painterChanged();
+                actor.GetProperty().SetColor(r, g, b);
             }
+            finally
+            {
+                if (vtkPanel != null)
+                    vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
         }
     }
 
@@ -256,22 +252,10 @@ public class ROI2DPoint extends ROI2DShape
         super(new Line2D.Double());
 
         this.position = createAnchor(position);
-
-        // add to the control point list
-        controlPoints.add(this.position);
-
-        this.position.addOverlayListener(anchor2DOverlayListener);
-        this.position.addPositionListener(anchor2DPositionListener);
-
-        // select the point for "interactive" mode
         this.position.setSelected(true);
-        // getOverlay().setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d,
-        // -1d));
+        addPoint(this.position);
 
-        updateShape();
-
-        // set name and icon
-        setName("Point2D");
+        // set icon (default name is defined by getDefaultName())
         setIcon(ResourceUtil.ICON_ROI_POINT);
     }
 
@@ -292,6 +276,12 @@ public class ROI2DPoint extends ROI2DShape
     public ROI2DPoint()
     {
         this(new Point2D.Double());
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "Point2D";
     }
 
     @Override
@@ -349,14 +339,14 @@ public class ROI2DPoint extends ROI2DShape
     {
         return false;
     }
-    
+
     @Override
     public boolean intersects(ROI r)
     {
         // special case of ROI2DPoint
         if (r instanceof ROI2DPoint)
             return onSamePos(((ROI2DPoint) r), false) && ((ROI2DPoint) r).getPoint().equals(getPoint());
-        
+
         return super.intersects(r);
     }
 
@@ -377,6 +367,13 @@ public class ROI2DPoint extends ROI2DShape
                 // stroke changed --> rebuild vtk object
                 if (StringUtil.equals(property, PROPERTY_STROKE))
                     ((ROI2DShapePainter) getOverlay()).needRebuild = true;
+                break;
+
+            case SELECTION_CHANGED:
+                // always select the control point when ROI was just selected
+                if (isSelected())
+                    position.setSelected(true);
+                break;
 
             default:
                 break;

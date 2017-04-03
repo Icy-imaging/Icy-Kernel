@@ -26,15 +26,19 @@ import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginIdent;
+import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
+import icy.plugin.interface_.PluginBundled;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Stephane
@@ -44,6 +48,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     private static final double ERROR_ANTISPAM_TIME = 15 * 1000;
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
     private static long lastErrorDialog = 0;
+    private static long lastReport = 0;
+    private static Set<String> reportedPlugin = new HashSet<String>();
 
     public static void init()
     {
@@ -404,11 +410,17 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      */
     public static void report(PluginDescriptor plugin, String devId, String errorLog)
     {
+        final long current = System.currentTimeMillis();
+
+        // avoid report spam
+        if ((current - lastReport) < ERROR_ANTISPAM_TIME)
+            return;
+
         final String icyId;
         final String javaId;
         final String osId;
         final String memory;
-        final String pluginId;
+        String pluginId;
         String pluginDepsId;
         final Map<String, String> values = new HashMap<String, String>();
 
@@ -429,14 +441,45 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
         if (plugin != null)
         {
-            values.put(NetworkUtil.ID_PLUGINCLASSNAME, plugin.getClassName());
-            values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
-            pluginId = "Plugin " + plugin.toString() + "\n\n";
+            final String className = plugin.getClassName();
 
-            if (plugin.getRequired().size() > 0)
+            // we already reported error for this plugin --> avoid spaming
+            if (reportedPlugin.contains(className))
+                return;
+
+            reportedPlugin.add(className);
+
+            values.put(NetworkUtil.ID_PLUGINCLASSNAME, className);
+            values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
+            pluginId = "Plugin " + plugin.toString();
+
+            // determine origin plugin
+            PluginDescriptor originPlugin = plugin;
+
+            // bundled plugin ?
+            if (plugin.isBundled())
+            {
+                try
+                {
+                    // get original plugin
+                    originPlugin = PluginLoader.getPlugin(((PluginBundled) PluginLauncher.create(plugin))
+                            .getMainPluginClassName());
+                    // add bundle info
+                    pluginId = "Bundled in " + originPlugin.toString();
+                }
+                catch (Throwable t)
+                {
+                    // miss bundle info
+                    pluginId = "Bundled plugin (could not retrieve origin plugin)";
+                }
+            }
+
+            pluginId += "\n\n";
+
+            if (originPlugin.getRequired().size() > 0)
             {
                 pluginDepsId = "Dependances:\n";
-                for (PluginIdent ident : plugin.getRequired())
+                for (PluginIdent ident : originPlugin.getRequired())
                 {
                     final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
 
@@ -466,6 +509,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
 
         // send report
+        lastReport = current;
         NetworkUtil.report(values);
     }
 

@@ -52,8 +52,12 @@ public class RecentFileList extends RecentList
 
         // first remove previous entry
         final int ind = find(paths);
-        if (ind != -1)
-            list.remove(ind);
+
+        synchronized (list)
+        {
+            if (ind != -1)
+                list.remove(ind);
+        }
 
         // add the list
         super.addEntry(paths);
@@ -75,9 +79,12 @@ public class RecentFileList extends RecentList
 
     protected int find(String[] filenames)
     {
-        for (int i = 0; i < list.size(); i++)
-            if (Arrays.equals((String[]) list.get(i), filenames))
-                return i;
+        synchronized (list)
+        {
+            for (int i = 0; i < list.size(); i++)
+                if (Arrays.equals((String[]) list.get(i), filenames))
+                    return i;
+        }
 
         return -1;
     }
@@ -130,10 +137,13 @@ public class RecentFileList extends RecentList
             for (File file : files)
                 allExists = allExists && file.exists();
 
-            // one of the files doesn't exist anymore ?
-            if (!allExists)
-                // remove it from the list
-                list.remove(i);
+            synchronized (list)
+            {
+                // one of the files doesn't exist anymore ?
+                if (!allExists)
+                    // remove it from the list
+                    list.remove(i);
+            }
         }
 
         // save to pref
@@ -149,15 +159,21 @@ public class RecentFileList extends RecentList
         {
             final XMLPreferences pref = preferences.node(key);
 
-            // load size
-            final int numFile = pref.getInt(ID_NB_FILE, 0);
-            final String[] result = new String[numFile];
+            if (pref != null)
+            {
+                synchronized (pref)
+                {
+                    // load size
+                    final int numFile = pref.getInt(ID_NB_FILE, 0);
+                    final String[] result = new String[numFile];
 
-            // load filenames
-            for (int i = 0; i < numFile; i++)
-                result[i] = pref.get(ID_FILE + i, "");
+                    // load filenames
+                    for (int i = 0; i < numFile; i++)
+                        result[i] = pref.get(ID_FILE + i, "");
 
-            return result;
+                    return result;
+                }
+            }
         }
 
         return null;
@@ -168,29 +184,36 @@ public class RecentFileList extends RecentList
     {
         final XMLPreferences pref = preferences.node(key);
 
-        // remove all children
-        pref.removeChildren();
-
-        // then save
-        if (value != null)
+        // need to check as preferences can have been cleared here
+        if (pref != null)
         {
-            final String[] filenames = (String[]) value;
-            final int numFile = filenames.length;
+            synchronized (pref)
+            {
+                // remove all children
+                pref.removeChildren();
 
-            // save size
-            pref.putInt(ID_NB_FILE, numFile);
+                // then save
+                if (value != null)
+                {
+                    final String[] filenames = (String[]) value;
+                    final int numFile = filenames.length;
 
-            // save filenames
-            for (int i = 0; i < numFile; i++)
-                pref.put(ID_FILE + i, filenames[i]);
+                    // save size
+                    pref.putInt(ID_NB_FILE, numFile);
+
+                    // save filenames
+                    for (int i = 0; i < numFile; i++)
+                        pref.put(ID_FILE + i, filenames[i]);
+                }
+                else
+                {
+                    // save size
+                    pref.putInt(ID_NB_FILE, 0);
+                }
+
+                // then clean
+                pref.clean();
+            }
         }
-        else
-        {
-            // save size
-            pref.putInt(ID_NB_FILE, 0);
-        }
-
-        // then clean
-        pref.clean();
     }
 }

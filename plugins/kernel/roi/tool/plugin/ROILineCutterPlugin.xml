@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<root>
+<name>ROI Cutter</name>
+<version>1.0.0.0</version>
+<description>Manual cut/split ROI by drawing a straight 2D line over it.</description>
+<classname>plugins.kernel.roi.tool.plugin.ROILineCutterPlugin</classname>
+</root>

@@ -76,7 +76,7 @@ public abstract class RectAnchor2D extends Anchor2D
             }
 
             // set new position
-            setPosition(new Point2D.Double(pos.getX() + dx, pos.getY() + dy));
+            setPosition(pos.getX() + dx, pos.getY() + dy);
         }
         else
         {
@@ -85,7 +85,7 @@ public abstract class RectAnchor2D extends Anchor2D
             final double dy = y - startDragMousePosition.getY();
 
             // set new position
-            setPosition(new Point2D.Double(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy));
+            setPosition(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy);
         }
 
         return true;

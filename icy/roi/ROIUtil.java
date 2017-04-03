@@ -18,29 +18,34 @@
  */
 package icy.roi;
 
+import icy.image.IcyBufferedImage;
 import icy.image.IntensityInfo;
 import icy.math.DataIteratorMath;
 import icy.math.MathUtil;
-import icy.plugin.PluginDescriptor;
-import icy.plugin.PluginLauncher;
-import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
-import icy.system.IcyExceptionHandler;
 import icy.type.DataIteratorUtil;
+import icy.type.DataType;
+import icy.type.collection.CollectionUtil;
+import icy.type.dimension.Dimension5D;
+import icy.type.geom.Line2DUtil;
+import icy.type.geom.Polygon2D;
 import icy.type.point.Point3D;
 import icy.type.point.Point4D;
 import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle2DUtil;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
-import icy.util.StringUtil;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +64,17 @@ import plugins.kernel.roi.descriptor.measure.ROIMassCenterDescriptorsPlugin;
 import plugins.kernel.roi.descriptor.measure.ROIPerimeterDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROISurfaceAreaDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
+import plugins.kernel.roi.roi2d.ROI2DArea;
+import plugins.kernel.roi.roi2d.ROI2DEllipse;
+import plugins.kernel.roi.roi2d.ROI2DPolygon;
+import plugins.kernel.roi.roi2d.ROI2DRectangle;
+import plugins.kernel.roi.roi2d.ROI2DShape;
+import plugins.kernel.roi.roi3d.ROI3DArea;
+import plugins.kernel.roi.roi3d.ROI3DStackEllipse;
+import plugins.kernel.roi.roi3d.ROI3DStackPolygon;
+import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
+import plugins.kernel.roi.roi4d.ROI4DArea;
+import plugins.kernel.roi.roi5d.ROI5DArea;
 
 /**
  * ROI utilities class.
@@ -67,6 +83,12 @@ import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
  */
 public class ROIUtil
 {
+    final public static String STACK_SUFFIX = " stack";
+    final public static String MASK_SUFFIX = " mask";
+    final public static String SHAPE_SUFFIX = " shape";
+    final public static String OBJECT_SUFFIX = " object";
+    final public static String PART_SUFFIX = " part";
+
     /**
      * Returns all available ROI descriptors (see {@link ROIDescriptor}) and their attached plugin
      * (see {@link PluginROIDescriptor}).<br/>
@@ -819,6 +841,490 @@ public class ROIUtil
     }
 
     /**
+     * Returns the effective ROI number of dimension needed for the specified bounds.
+     */
+    public static int getEffectiveDimension(Rectangle5D bounds)
+    {
+        int result = 5;
+
+        if (bounds.isInfiniteC() || (bounds.getSizeC() <= 1d))
+        {
+            result--;
+            if (bounds.isInfiniteT() || (bounds.getSizeT() <= 1d))
+            {
+                result--;
+                if (bounds.isInfiniteZ() || (bounds.getSizeZ() <= 1d))
+                    result--;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return 5D dimension for specified operation dimension
+     */
+    private static Dimension5D.Integer getOpDim(int dim, Rectangle5D.Integer bounds)
+    {
+        final Dimension5D.Integer result = new Dimension5D.Integer();
+
+        switch (dim)
+        {
+            case 2: // XY ROI with fixed ZTC
+                result.sizeZ = 1;
+                result.sizeT = 1;
+                result.sizeC = 1;
+                break;
+
+            case 3: // XYZ ROI with fixed TC
+                result.sizeZ = bounds.sizeZ;
+                result.sizeT = 1;
+                result.sizeC = 1;
+                break;
+
+            case 4: // XYZT ROI with fixed C
+                result.sizeZ = bounds.sizeZ;
+                result.sizeT = bounds.sizeT;
+                result.sizeC = 1;
+                break;
+
+            default: // XYZTC ROI
+                result.sizeZ = bounds.sizeZ;
+                result.sizeT = bounds.sizeT;
+                result.sizeC = bounds.sizeC;
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Get ROI result for specified 5D mask and operation dimension.
+     */
+    private static ROI getOpResult(int dim, BooleanMask5D mask, Rectangle5D.Integer bounds)
+    {
+        final ROI result;
+
+        switch (dim)
+        {
+            case 2: // XY ROI with fixed ZTC
+                result = new ROI2DArea(mask.getMask2D(bounds.z, bounds.t, bounds.c));
+
+                // set ZTC position
+                result.beginUpdate();
+                try
+                {
+                    ((ROI2D) result).setZ(bounds.z);
+                    ((ROI2D) result).setT(bounds.t);
+                    ((ROI2D) result).setC(bounds.c);
+                }
+                finally
+                {
+                    result.endUpdate();
+                }
+                break;
+
+            case 3: // XYZ ROI with fixed TC
+                result = new ROI3DArea(mask.getMask3D(bounds.t, bounds.c));
+
+                // set TC position
+                result.beginUpdate();
+                try
+                {
+                    ((ROI3D) result).setT(bounds.t);
+                    ((ROI3D) result).setC(bounds.c);
+                }
+                finally
+                {
+                    result.endUpdate();
+                }
+                break;
+
+            case 4: // XYZT ROI with fixed C
+                result = new ROI4DArea(mask.getMask4D(bounds.c));
+                // set C position
+                ((ROI4D) result).setC(bounds.c);
+                break;
+
+            case 5: // XYZTC ROI
+                result = new ROI5DArea(mask);
+                break;
+
+            default:
+                throw new UnsupportedOperationException(
+                        "Can't process boolean operation on a ROI with unknown dimension.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Compute the resulting bounds for <i>union</i> operation between specified ROIs.<br>
+     * It throws an exception if the <i>union</i> operation cannot be done (incompatible dimension).
+     */
+    public static Rectangle5D getUnionBounds(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // null checking
+        if (roi1 == null)
+        {
+            if (roi2 == null)
+                return new Rectangle5D.Double();
+            return roi2.getBounds5D();
+        }
+        else if (roi2 == null)
+            return roi1.getBounds5D();
+
+        final Rectangle5D bounds1 = roi1.getBounds5D();
+        final Rectangle5D bounds2 = roi2.getBounds5D();
+
+        // init infinite dim infos
+        final boolean ic1 = bounds1.isInfiniteC();
+        final boolean ic2 = bounds2.isInfiniteC();
+        final boolean it1 = bounds1.isInfiniteT();
+        final boolean it2 = bounds2.isInfiniteT();
+        final boolean iz1 = bounds1.isInfiniteZ();
+        final boolean iz2 = bounds2.isInfiniteZ();
+
+        // cannot process union when we have an infinite dimension with a finite one
+        if ((ic1 ^ ic2) || (it1 ^ it2) || (iz1 ^ iz2))
+            throw new UnsupportedOperationException("Can't process union on ROI with different infinite dimension");
+
+        // do union
+        Rectangle5D.union(bounds1, bounds2, bounds1);
+
+        // init infinite dim infos on result
+        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
+        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
+        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
+
+        // cannot process union if C dimension is finite but T or Z is infinite
+        if (!ic && (it || iz))
+            throw new UnsupportedOperationException(
+                    "Can't process union on ROI with a finite C dimension and infinite T or Z dimension");
+        // cannot process union if T dimension is finite but Z is infinite
+        if (!it && iz)
+            throw new UnsupportedOperationException(
+                    "Can't process union on ROI with a finite T dimension and infinite Z dimension");
+
+        return bounds1;
+    }
+
+    /**
+     * Compute the resulting bounds for <i>intersection</i> operation between specified ROIs.<br>
+     * It throws an exception if the <i>intersection</i> operation cannot be done (incompatible dimension).
+     */
+    protected static Rectangle5D getIntersectionBounds(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // null checking
+        if ((roi1 == null) || (roi2 == null))
+            return new Rectangle5D.Double();
+
+        final Rectangle5D bounds1 = roi1.getBounds5D();
+        final Rectangle5D bounds2 = roi2.getBounds5D();
+
+        // do intersection
+        Rectangle5D.intersect(bounds1, bounds2, bounds1);
+
+        // init infinite dim infos
+        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
+        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
+        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
+
+        // cannot process intersection if C dimension is finite but T or Z is infinite
+        if (!ic && (it || iz))
+            throw new UnsupportedOperationException(
+                    "Can't process intersection on ROI with a finite C dimension and infinite T or Z dimension");
+        // cannot process intersection if T dimension is finite but Z is infinite
+        if (!it && iz)
+            throw new UnsupportedOperationException(
+                    "Can't process intersection on ROI with a finite T dimension and infinite Z dimension");
+
+        return bounds1;
+    }
+
+    /**
+     * Compute the resulting bounds for <i>subtraction</i> of (roi1 - roi2).<br>
+     * It throws an exception if the <i>subtraction</i> operation cannot be done (incompatible dimension).
+     */
+    protected static Rectangle5D getSubtractionBounds(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // null checking
+        if (roi1 == null)
+            return new Rectangle5D.Double();
+        if (roi2 == null)
+            return roi1.getBounds5D();
+
+        final Rectangle5D bounds1 = roi1.getBounds5D();
+        final Rectangle5D bounds2 = roi2.getBounds5D();
+
+        // init infinite dim infos
+        final boolean ic1 = bounds1.isInfiniteC();
+        final boolean ic2 = bounds2.isInfiniteC();
+        final boolean it1 = bounds1.isInfiniteT();
+        final boolean it2 = bounds2.isInfiniteT();
+        final boolean iz1 = bounds1.isInfiniteZ();
+        final boolean iz2 = bounds2.isInfiniteZ();
+
+        // cannot process subtraction when we have an finite dimension on second ROI
+        // while having a infinite one on the first ROI
+        if (ic1 && !ic2)
+            throw new UnsupportedOperationException(
+                    "Can't process subtraction: ROI 1 has infinite C dimension while ROI 2 has a finite one");
+        if (it1 && !it2)
+            throw new UnsupportedOperationException(
+                    "Can't process subtraction: ROI 1 has infinite T dimension while ROI 2 has a finite one");
+        if (iz1 && !iz2)
+            throw new UnsupportedOperationException(
+                    "Can't process subtraction: ROI 1 has infinite Z dimension while ROI 2 has a finite one");
+
+        return bounds1;
+    }
+
+    /**
+     * Computes union of specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     */
+    public static ROI getUnion(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // null checking
+        if (roi1 == null)
+        {
+            // return empty ROI
+            if (roi2 == null)
+                return new ROI2DArea();
+            // return simple copy
+            return roi2.getCopy();
+        }
+        else if (roi2 == null)
+            return roi1.getCopy();
+
+        final Rectangle5D bounds5D = getUnionBounds(roi1, roi2);
+        final int dim = getEffectiveDimension(bounds5D);
+
+        // we want integer bounds now
+        final Rectangle5D.Integer bounds = bounds5D.toInteger();
+        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
+        // get 3D and 4D bounds
+        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
+        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
+
+        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
+
+        for (int c = 0; c < roiSize.sizeC; c++)
+        {
+            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
+
+            for (int t = 0; t < roiSize.sizeT; t++)
+            {
+                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
+
+                for (int z = 0; z < roiSize.sizeZ; z++)
+                {
+                    mask3D[z] = BooleanMask2D.getUnion(
+                            roi1.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
+                            roi2.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
+                }
+
+                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+            }
+
+            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+        }
+
+        // build the 5D result ROI
+        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
+        // optimize bounds of the new created mask
+        mask.optimizeBounds();
+
+        // get result
+        final ROI result = getOpResult(dim, mask, bounds);
+        // set name
+        result.setName("Union");
+
+        return result;
+    }
+
+    /**
+     * Computes intersection of specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     */
+    public static ROI getIntersection(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // null checking
+        if ((roi1 == null) || (roi2 == null))
+            // return empty ROI
+            return new ROI2DArea();
+
+        final Rectangle5D bounds5D = getIntersectionBounds(roi1, roi2);
+        final int dim = getEffectiveDimension(bounds5D);
+
+        // we want integer bounds now
+        final Rectangle5D.Integer bounds = bounds5D.toInteger();
+        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
+        // get 2D, 3D and 4D bounds
+        final Rectangle bounds2D = (Rectangle) bounds.toRectangle2D();
+        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
+        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
+
+        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
+
+        for (int c = 0; c < roiSize.sizeC; c++)
+        {
+            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
+
+            for (int t = 0; t < roiSize.sizeT; t++)
+            {
+                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
+
+                for (int z = 0; z < roiSize.sizeZ; z++)
+                {
+                    final BooleanMask2D roi1Mask2D = new BooleanMask2D(bounds2D, roi1.getBooleanMask2D(bounds2D,
+                            bounds.z + z, bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D roi2Mask2D = new BooleanMask2D(bounds2D, roi2.getBooleanMask2D(bounds2D,
+                            bounds.z + z, bounds.t + t, bounds.c + c, true));
+
+                    mask3D[z] = BooleanMask2D.getIntersection(roi1Mask2D, roi2Mask2D);
+                }
+
+                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+            }
+
+            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+        }
+
+        // build the 5D result ROI
+        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
+        // optimize bounds of the new created mask
+        mask.optimizeBounds();
+
+        // get result
+        final ROI result = getOpResult(dim, mask, bounds);
+        // set name
+        result.setName("Intersection");
+
+        return result;
+    }
+
+    /**
+     * Compute exclusive union of specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     */
+    public static ROI getExclusiveUnion(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // null checking
+        if (roi1 == null)
+        {
+            // return empty ROI
+            if (roi2 == null)
+                return new ROI2DArea();
+            // return simple copy
+            return roi2.getCopy();
+        }
+        else if (roi2 == null)
+            return roi1.getCopy();
+
+        final Rectangle5D bounds5D = getUnionBounds(roi1, roi2);
+        final int dim = getEffectiveDimension(bounds5D);
+
+        // we want integer bounds now
+        final Rectangle5D.Integer bounds = bounds5D.toInteger();
+        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
+        // get 3D and 4D bounds
+        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
+        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
+
+        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
+
+        for (int c = 0; c < roiSize.sizeC; c++)
+        {
+            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
+
+            for (int t = 0; t < roiSize.sizeT; t++)
+            {
+                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
+
+                for (int z = 0; z < roiSize.sizeZ; z++)
+                {
+                    mask3D[z] = BooleanMask2D.getExclusiveUnion(
+                            roi1.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
+                            roi2.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
+                }
+
+                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+            }
+
+            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+        }
+
+        // build the 5D result ROI
+        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
+        // optimize bounds of the new created mask
+        mask.optimizeBounds();
+
+        // get result
+        final ROI result = getOpResult(dim, mask, bounds);
+        // set name
+        result.setName("Exclusive union");
+
+        return result;
+    }
+
+    /**
+     * Computes the subtraction of roi1 - roi2 and returns result in a new <code>ROI</code>.
+     */
+    public static ROI getSubtraction(ROI roi1, ROI roi2) throws UnsupportedOperationException
+    {
+        // return empty ROI
+        if (roi1 == null)
+            return new ROI2DArea();
+        // return copy of ROI1
+        if (roi2 == null)
+            return roi1.getCopy();
+
+        final Rectangle5D bounds5D = getSubtractionBounds(roi1, roi2);
+        final int dim = getEffectiveDimension(bounds5D);
+
+        // we want integer bounds now
+        final Rectangle5D.Integer bounds = bounds5D.toInteger();
+        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
+        // get 3D and 4D bounds
+        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
+        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
+
+        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
+
+        for (int c = 0; c < roiSize.sizeC; c++)
+        {
+            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
+
+            for (int t = 0; t < roiSize.sizeT; t++)
+            {
+                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
+
+                for (int z = 0; z < roiSize.sizeZ; z++)
+                {
+                    mask3D[z] = BooleanMask2D.getSubtraction(
+                            roi1.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
+                            roi2.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
+                }
+
+                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+            }
+
+            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+        }
+
+        // build the 5D result ROI
+        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
+        // optimize bounds of the new created mask
+        mask.optimizeBounds();
+
+        // get result
+        final ROI result = getOpResult(dim, mask, bounds);
+        // set name
+        result.setName("Substraction");
+
+        return result;
+    }
+
+    /**
      * Merge the specified array of {@link ROI} with the given {@link BooleanOperator}.<br>
      * 
      * @param rois
@@ -910,4 +1416,502 @@ public class ROIUtil
         return roi1.getSubtraction(roi2);
     }
 
+    /**
+     * Converts the specified 2D ROI to 3D Stack ROI (ROI3DStack) by stacking it along the Z axis given zMin and zMax
+     * (inclusive) parameters.
+     * 
+     * @return the converted 3D stack ROI or <code>null</code> if the ROI
+     */
+    public static ROI convertToStack(ROI2D roi, int zMin, int zMax)
+    {
+        ROI result = null;
+
+        if (roi instanceof ROI2DRectangle)
+            result = new ROI3DStackRectangle(((ROI2DRectangle) roi).getRectangle(), zMin, zMax);
+        else if (roi instanceof ROI2DEllipse)
+            result = new ROI3DStackEllipse(((ROI2DEllipse) roi).getEllipse(), zMin, zMax);
+        else if (roi instanceof ROI2DPolygon)
+            result = new ROI3DStackPolygon(((ROI2DPolygon) roi).getPolygon2D(), zMin, zMax);
+        else if (roi instanceof ROI2DArea)
+            result = new ROI3DArea(((ROI2DArea) roi).getBooleanMask(true), zMin, zMax);
+        else if (roi != null)
+            result = new ROI3DArea(roi.getBooleanMask2D(roi.getZ(), roi.getT(), roi.getC(), true), zMin, zMax);
+
+        if ((roi != null) && (result != null))
+        {
+            // unselect all control points
+            result.unselectAllPoints();
+            // keep original ROI informations
+            result.setName(roi.getName() + STACK_SUFFIX);
+            copyROIProperties(roi, result, false);
+        }
+
+        return result;
+    }
+
+    /**
+     * Converts the specified ROI to a boolean mask type ROI (ROI Area).
+     * 
+     * @return the ROI Area corresponding to the input ROI.<br>
+     *         If the ROI is already of boolean mask type then it's directly returned without any conversion.
+     */
+    public static ROI convertToMask(ROI roi)
+    {
+        // no conversion needed
+        if ((roi instanceof ROI2DArea) || (roi instanceof ROI3DArea) || (roi instanceof ROI4DArea)
+                || (roi instanceof ROI5DArea))
+            return roi;
+
+        final Rectangle5D bounds5D = roi.getBounds5D();
+        final int dim = getEffectiveDimension(bounds5D);
+
+        // we want integer bounds now
+        final Rectangle5D.Integer bounds = bounds5D.toInteger();
+        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
+        // get 2D, 3D and 4D bounds
+        final Rectangle bounds2D = (Rectangle) bounds.toRectangle2D();
+        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
+        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
+
+        // build 5D mask result
+        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
+
+        for (int c = 0; c < roiSize.sizeC; c++)
+        {
+            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
+
+            for (int t = 0; t < roiSize.sizeT; t++)
+            {
+                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
+
+                for (int z = 0; z < roiSize.sizeZ; z++)
+                    mask3D[z] = new BooleanMask2D(bounds2D, roi.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t,
+                            bounds.c + c, true));
+
+                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+            }
+
+            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+        }
+
+        // build the 5D result ROI
+        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
+        // optimize bounds of the new created mask
+        mask.optimizeBounds();
+
+        // get result
+        final ROI result = getOpResult(dim, mask, bounds);
+
+        // keep original ROI informations
+        String newName = roi.getName() + MASK_SUFFIX;
+        // check if we can shorter name
+        final String cancelableSuffix = SHAPE_SUFFIX + MASK_SUFFIX;
+        if (newName.endsWith(cancelableSuffix))
+            newName = newName.substring(0, newName.length() - cancelableSuffix.length());
+        // set name
+        result.setName(newName);
+        // copy properties
+        copyROIProperties(roi, result, false);
+
+        return result;
+    }
+
+    /**
+     * Converts the specified ROI to a shape type ROI (ROI Polygon or ROI Mesh).
+     * 
+     * @param roi
+     *        the roi to convert to shape type ROI
+     * @param maxDeviation
+     *        maximum allowed deviation/distance of resulting ROI polygon from the input ROI contour (in pixel).
+     *        Use <code>-1</code> for automatic maximum deviation calculation.
+     * @return the ROI Polygon or ROI Mesh corresponding to the input ROI.<br>
+     *         If the ROI is already of shape type then it's directly returned without any conversion.
+     */
+    public static ROI convertToShape(ROI roi, double maxDeviation) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+            return roi;
+
+        if (roi instanceof ROI2D)
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            // get contour points in connected order
+            final List<Point> points = roi2d.getBooleanMask(true).getConnectedContourPoints();
+
+            // convert to point2D and center points in observed pixel.
+            final List<Point2D> points2D = new ArrayList<Point2D>(points.size());
+            for (Point pt : points)
+                points2D.add(new Point2D.Double(pt.x + 0.5d, pt.y + 0.5d));
+
+            final double dev;
+
+            // auto deviation
+            if (maxDeviation < 0)
+            {
+                // compute it from ROI size
+                final Rectangle2D bnd = roi2d.getBounds2D();
+                dev = Math.log10(Math.sqrt(bnd.getWidth() * bnd.getHeight())) / Math.log10(3);
+            }
+            else
+                dev = maxDeviation;
+
+            // convert to ROI polygon
+            final ROI2DPolygon result = new ROI2DPolygon(Polygon2D.getPolygon2D(points2D, dev));
+
+            // keep original ROI informations
+            String newName = roi.getName() + SHAPE_SUFFIX;
+            // check if we can shorter name
+            final String cancelableSuffix = MASK_SUFFIX + SHAPE_SUFFIX;
+            if (newName.endsWith(cancelableSuffix))
+                newName = newName.substring(0, newName.length() - cancelableSuffix.length());
+            // set name
+            result.setName(newName);
+            // copy properties
+            copyROIProperties(roi, result, false);
+
+            return result;
+        }
+
+        if (roi instanceof ROI3D)
+        {
+            // not yet supported
+            throw new UnsupportedOperationException("ROIUtil.convertToShape(ROI): Operation not supported for 3D ROI.");
+
+        }
+
+        throw new UnsupportedOperationException("ROIUtil.convertToShape(ROI): Operation not supported for this ROI: "
+                + roi.getName());
+    }
+
+    /**
+     * Returns connected component from specified ROI as a list of ROI (Area type).
+     */
+    public static List<ROI> getConnectedComponents(ROI roi) throws UnsupportedOperationException
+    {
+        final List<ROI> result = new ArrayList<ROI>();
+
+        if (roi instanceof ROI2D)
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+            int ind = 0;
+
+            for (BooleanMask2D component : roi2d.getBooleanMask(true).getComponents())
+            {
+                final ROI2DArea componentRoi = new ROI2DArea(component);
+
+                if (!componentRoi.isEmpty())
+                {
+                    // keep original ROI informations
+                    componentRoi.setName(roi.getName() + OBJECT_SUFFIX + " #" + ind++);
+                    copyROIProperties(roi, componentRoi, false);
+
+                    result.add(componentRoi);
+                }
+            }
+
+            return result;
+        }
+
+        if (roi instanceof ROI3D)
+        {
+            // TODO: add label extractor implementation here
+
+            // final ROI3D roi3d = (ROI3D) roi;
+            // int ind = 0;
+            //
+            // for (BooleanMask3D component : roi3d.getBooleanMask(true).getComponents())
+            // {
+            // final ROI2DArea componentRoi = new ROI2DArea(component);
+            //
+            // if (!componentRoi.isEmpty())
+            // {
+            // // keep original ROI informations
+            // componentRoi.setName(roi.getName() + " object #" + ind++);
+            // copyROIProperties(roi, componentRoi, false);
+            //
+            // result.add(componentRoi);
+            // }
+            // }
+
+            // not yet supported
+            throw new UnsupportedOperationException(
+                    "ROIUtil.getConnectedComponents(ROI): Operation not supported yet for 3D ROI.");
+        }
+
+        throw new UnsupportedOperationException(
+                "ROIUtil.getConnectedComponents(ROI): Operation not supported for this ROI: " + roi.getName());
+    }
+
+    static boolean computePolysFromLine(Line2D line, Point2D edgePt1, Point2D edgePt2, Polygon2D poly1,
+            Polygon2D poly2, boolean inner)
+    {
+        final Line2D edgeLine = new Line2D.Double(edgePt1, edgePt2);
+
+        // they intersect ?
+        if (edgeLine.intersectsLine(line))
+        {
+            final Point2D intersection = Line2DUtil.getIntersection(edgeLine, line);
+
+            // are we inside poly2 ?
+            if (inner)
+            {
+                // add intersection to poly2
+                poly2.addPoint(intersection);
+                // add intersection and pt2 to poly1
+                poly1.addPoint(intersection);
+                poly1.addPoint(edgePt2);
+            }
+            else
+            {
+                // add intersection to poly1
+                poly1.addPoint(intersection);
+                // add intersection and pt2 to poly2
+                poly2.addPoint(intersection);
+                poly2.addPoint(edgePt2);
+            }
+
+            // we changed region
+            return !inner;
+        }
+
+        // inside poly2 --> add point to poly2
+        if (inner)
+            poly2.addPoint(edgePt2);
+        else
+            poly1.addPoint(edgePt2);
+
+        // same region
+        return inner;
+    }
+
+    /**
+     * Cut the specified ROI with the given Line2D (extended to ROI bounds) and return the 2 resulting ROI in a list.<br>
+     * If the specified ROI cannot be cut by the given Line2D then <code>null</code> is returned.
+     */
+    public static List<ROI> split(ROI roi, Line2D line)
+    {
+        final Rectangle2D bounds2d = roi.getBounds5D().toRectangle2D();
+        // need to enlarge bounds a bit to avoid roundness issues on line intersection
+        final Rectangle2D extendedBounds2d = Rectangle2DUtil.getScaledRectangle(bounds2d, 1.1d, true);
+        // enlarge line to ROI bounds
+        final Line2D extendedLine = Rectangle2DUtil.getIntersectionLine(extendedBounds2d, line);
+
+        // if the extended line intersects the ROI bounds
+        if ((extendedLine != null) && bounds2d.intersectsLine(extendedLine))
+        {
+            final List<ROI> result = new ArrayList<ROI>();
+            final Point2D topLeft = new Point2D.Double(bounds2d.getMinX(), bounds2d.getMinY());
+            final Point2D topRight = new Point2D.Double(bounds2d.getMaxX(), bounds2d.getMinY());
+            final Point2D bottomRight = new Point2D.Double(bounds2d.getMaxX(), bounds2d.getMaxY());
+            final Point2D bottomLeft = new Point2D.Double(bounds2d.getMinX(), bounds2d.getMaxY());
+            final Polygon2D poly1 = new Polygon2D();
+            final Polygon2D poly2 = new Polygon2D();
+            boolean inner;
+
+            // add first point to poly1
+            poly1.addPoint(topLeft);
+            // we are inside poly1 for now
+            inner = false;
+
+            // compute the 2 rectangle part (polygon) from top, right, bottom and left lines
+            inner = computePolysFromLine(extendedLine, topLeft, topRight, poly1, poly2, inner);
+            inner = computePolysFromLine(extendedLine, topRight, bottomRight, poly1, poly2, inner);
+            inner = computePolysFromLine(extendedLine, bottomRight, bottomLeft, poly1, poly2, inner);
+            inner = computePolysFromLine(extendedLine, bottomLeft, topLeft, poly1, poly2, inner);
+
+            // get intersection result from both polygon
+            final ROI roiPart1 = new ROI2DPolygon(poly1).getIntersection(roi);
+            final ROI roiPart2 = new ROI2DPolygon(poly2).getIntersection(roi);
+
+            // keep original ROI informations
+            roiPart1.setName(roi.getName() + PART_SUFFIX + " #1");
+            copyROIProperties(roi, roiPart1, false);
+            roiPart2.setName(roi.getName() + PART_SUFFIX + " #2");
+            copyROIProperties(roi, roiPart2, false);
+
+            // add to result list
+            result.add(roiPart1);
+            result.add(roiPart2);
+
+            return result;
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert a list of ROI into a binary / labeled Sequence.
+     * 
+     * @param inputRois
+     *        list of ROI to convert
+     * @param sizeX
+     *        the wanted size X of output Sequence, if set to <code>0</code> then Sequence size X is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeY
+     *        the wanted size Y of output Sequence, if set to <code>0</code> then Sequence size Y is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeC
+     *        the wanted size C of output Sequence, if set to <code>0</code> then Sequence size C is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeZ
+     *        the wanted size Z of output Sequence, if set to <code>0</code> then Sequence size Z is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param sizeT
+     *        the wanted size T of output Sequence, if set to <code>0</code> then Sequence size T is computed
+     *        automatically from
+     *        the global ROI bounds.
+     * @param dataType
+     *        the wanted dataType of output Sequence
+     * @param label
+     *        if set to <code>true</code> then each ROI will be draw as a separate label (value) in the sequence
+     *        starting from 1.
+     */
+    public static Sequence convertToSequence(List<ROI> inputRois, int sizeX, int sizeY, int sizeC, int sizeZ,
+            int sizeT, DataType dataType, boolean label)
+    {
+        final List<ROI> rois = new ArrayList<ROI>();
+        final Rectangle5D bounds = new Rectangle5D.Double();
+
+        try
+        {
+            // compute the union of all ROI
+            final ROI roi = ROIUtil.merge(inputRois, BooleanOperator.OR);
+            // get bounds of result
+            bounds.add(roi.getBounds5D());
+            // add this single ROI to list
+            rois.add(roi);
+        }
+        catch (Exception e)
+        {
+            for (ROI roi : inputRois)
+            {
+                // compute global bounds
+                if (roi != null)
+                {
+                    bounds.add(roi.getBounds5D());
+                    rois.add(roi);
+                }
+            }
+        }
+
+        int sX = sizeX;
+        int sY = sizeY;
+        int sC = sizeC;
+        int sZ = sizeZ;
+        int sT = sizeT;
+
+        if (sX == 0)
+            sX = (int) bounds.getSizeX();
+        if (sY == 0)
+            sY = (int) bounds.getSizeY();
+        if (sC == 0)
+            sC = (bounds.isInfiniteC() ? 1 : (int) bounds.getSizeC());
+        if (sZ == 0)
+            sZ = (bounds.isInfiniteZ() ? 1 : (int) bounds.getSizeZ());
+        if (sT == 0)
+            sT = (bounds.isInfiniteT() ? 1 : (int) bounds.getSizeT());
+
+        // empty base dimension and empty result --> generate a empty 320x240 image
+        if (sX == 0)
+            sX = 320;
+        if (sY == 0)
+            sY = 240;
+        if (sC == 0)
+            sC = 1;
+        if (sZ == 0)
+            sZ = 1;
+        if (sT == 0)
+            sT = 1;
+
+        final Sequence out = new Sequence("ROI conversion");
+
+        out.beginUpdate();
+        try
+        {
+            for (int t = 0; t < sT; t++)
+                for (int z = 0; z < sZ; z++)
+                    out.setImage(t, z, new IcyBufferedImage(sX, sY, sC, dataType));
+
+            double fillValue = 1d;
+
+            // set value from ROI(s)
+            for (ROI roi : rois)
+            {
+                if (!roi.getBounds5D().isEmpty())
+                    DataIteratorUtil.set(new SequenceDataIterator(out, roi), fillValue);
+
+                if (label)
+                    fillValue += 1d;
+            }
+
+            // notify data changed
+            out.dataChanged();
+        }
+        finally
+        {
+            out.endUpdate();
+        }
+
+        return out;
+    }
+
+    /**
+     * Convert a list of ROI into a binary / labeled Sequence.
+     * 
+     * @param inputRois
+     *        list of ROI to convert
+     * @param sequence
+     *        the sequence used to define the wanted sequence dimension in return.<br>
+     *        If this field is <code>null</code> then the global ROI bounds will be used to define the Sequence
+     *        dimension
+     * @param label
+     *        if set to <code>true</code> then each ROI will be draw as a separate label (value) in the sequence
+     *        starting from 1.
+     */
+    public static Sequence convertToSequence(List<ROI> inputRois, Sequence sequence, boolean label)
+    {
+        if (sequence == null)
+            return convertToSequence(inputRois, 0, 0, 0, 0, 0, label ? ((inputRois.size() > 255) ? DataType.USHORT
+                    : DataType.UBYTE) : DataType.UBYTE, label);
+
+        return convertToSequence(inputRois, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
+                sequence.getSizeZ(), sequence.getSizeT(), sequence.getDataType_(), label);
+    }
+
+    /**
+     * Convert a single ROI into a binary / labeled Sequence.
+     * 
+     * @param inputRoi
+     *        ROI to convert
+     * @param sequence
+     *        the sequence used to define the wanted sequence dimension in return.<br>
+     *        If this field is <code>null</code> then the global ROI bounds will be used to define the Sequence
+     *        dimension
+     */
+    public static Sequence convertToSequence(ROI inputRoi, Sequence sequence)
+    {
+        return convertToSequence(CollectionUtil.createArrayList(inputRoi), sequence, false);
+    }
+
+    /**
+     * Copy properties (name, color...) from <code>source</code> ROI and apply it to <code>destination</code> ROI.
+     */
+    public static void copyROIProperties(ROI source, ROI destination, boolean copyName)
+    {
+        if ((source == null) || (destination == null))
+            return;
+
+        if (copyName)
+            destination.setName(source.getName());
+        destination.setColor(source.getColor());
+        destination.setOpacity(source.getOpacity());
+        destination.setStroke(source.getStroke());
+        destination.setReadOnly(source.isReadOnly());
+        destination.setSelected(source.isSelected());
+    }
 }

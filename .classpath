@@ -44,11 +44,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/xuggler.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-swingx.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/swingx-all.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/poi-excelant.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml-schemas.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/poi-scratchpad.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/poi.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bioformats.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/gluegen-rt.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/joal.jar"/>

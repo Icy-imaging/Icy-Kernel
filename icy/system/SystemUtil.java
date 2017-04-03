@@ -22,6 +22,7 @@ import icy.file.FileUtil;
 import icy.main.Icy;
 import icy.type.collection.CollectionUtil;
 import icy.util.ReflectionUtil;
+import icy.util.StringUtil;
 
 import java.awt.BufferCapabilities;
 import java.awt.Desktop;
@@ -326,14 +327,14 @@ public class SystemUtil
     {
         return getDefaultGraphicsConfiguration();
     }
-    
+
     /**
      * Return all available screen devices.
      */
     public static List<GraphicsDevice> getScreenDevices()
     {
-    	final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
-    	  
+        final List<GraphicsDevice> result = new ArrayList<GraphicsDevice>();
+
         if (Icy.getMainInterface().isHeadLess())
             return result;
 
@@ -604,15 +605,15 @@ public class SystemUtil
     }
 
     /**
-     * Return total amount of free memory available to the JVM
+     * Return total amount of free memory available to the JVM (in bytes)
      */
     public static long getJavaFreeMemory()
     {
-        return Runtime.getRuntime().freeMemory();
+        return getJavaMaxMemory() - getJavaUsedMemory();
     }
 
     /**
-     * Return maximum amount of memory the JVM will attempt to use
+     * Return maximum amount of memory the JVM will attempt to use (in bytes)
      */
     public static long getJavaMaxMemory()
     {
@@ -620,11 +621,28 @@ public class SystemUtil
     }
 
     /**
-     * Return total memory currently in use by the JVM
+     * @deprecated Use {@link #getJavaAllocatedMemory()} instead.
      */
+    @Deprecated
     public static long getJavaTotalMemory()
     {
+        return getJavaAllocatedMemory();
+    }
+
+    /**
+     * Return memory currently allocated by the JVM (in bytes)
+     */
+    public static long getJavaAllocatedMemory()
+    {
         return Runtime.getRuntime().totalMemory();
+    }
+
+    /**
+     * Return actual memory used by the JVM (in bytes)
+     */
+    public static long getJavaUsedMemory()
+    {
+        return getJavaAllocatedMemory() - Runtime.getRuntime().freeMemory();
     }
 
     private static OperatingSystemMXBean getOSMXBean()
@@ -789,7 +807,33 @@ public class SystemUtil
      */
     public static String getJavaVersion()
     {
-        return getProperty("java.runtime.version");
+        String result = getProperty("java.runtime.version");
+
+        if (result.equals("unknow"))
+            result = getProperty("java.version");
+
+        return result;
+    }
+
+    /**
+     * Returns the JVM version in number format (ex: 1.6091)
+     */
+    public static double getJavaVersionAsNumber()
+    {
+        String version = getJavaVersion().replaceAll("[^\\d.]", "");
+        final int firstSepInd = version.indexOf('.');
+
+        if (firstSepInd >= 0)
+        {
+            int lastSepInd = version.lastIndexOf('.');
+            while (lastSepInd != firstSepInd)
+            {
+                version = version.substring(0, lastSepInd) + version.substring(lastSepInd + 1);
+                lastSepInd = version.lastIndexOf('.');
+            }
+        }
+
+        return StringUtil.parseDouble(version, 0);
     }
 
     /**
@@ -932,12 +976,12 @@ public class SystemUtil
         if (!isWindows())
             return false;
 
-        final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
-        if (arch.endsWith("64"))
-            return true;
-
         final String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
         if ((wow64Arch != null) && wow64Arch.endsWith("64"))
+            return true;
+
+        final String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+        if ((arch != null) && arch.endsWith("64"))
             return true;
 
         return false;

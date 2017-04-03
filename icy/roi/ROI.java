@@ -23,6 +23,7 @@ import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
+import icy.gui.inspector.RoisPanel;
 import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.plugin.abstract_.Plugin;
@@ -33,10 +34,7 @@ import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
-import icy.type.dimension.Dimension5D;
 import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle3D;
-import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ClassUtil;
 import icy.util.ColorUtil;
@@ -105,11 +103,22 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
     }
 
+    /**
+     * Group if for ROI (used to do group type operation)
+     * 
+     * @author Stephane
+     */
+    public static enum ROIGroupId
+    {
+        A, B
+    }
+
     public static final String ID_ROI = "roi";
 
     public static final String ID_CLASSNAME = "classname";
     public static final String ID_ID = "id";
     public static final String ID_NAME = "name";
+    public static final String ID_GROUPID = "groupid";
     public static final String ID_COLOR = "color";
     public static final String ID_STROKE = "stroke";
     public static final String ID_OPACITY = "opacity";
@@ -131,6 +140,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final Color DEFAULT_NORMAL_COLOR = DEFAULT_COLOR;
 
     public static final String PROPERTY_NAME = ID_NAME;
+    public static final String PROPERTY_GROUPID = ID_GROUPID;
     public static final String PROPERTY_ICON = "icon";
     public static final String PROPERTY_CREATING = "creating";
     public static final String PROPERTY_READONLY = ID_READONLY;
@@ -519,27 +529,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Returns the effective number of dimension needed for the specified bounds.
-     */
-    protected static int getEffectiveDimension(Rectangle5D bounds)
-    {
-        int result = 5;
-
-        if (bounds.isInfiniteC() || (bounds.getSizeC() <= 1d))
-        {
-            result--;
-            if (bounds.isInfiniteT() || (bounds.getSizeT() <= 1d))
-            {
-                result--;
-                if (bounds.isInfiniteZ() || (bounds.getSizeZ() <= 1d))
-                    result--;
-            }
-        }
-
-        return result;
-    }
-
-    /**
      * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
@@ -632,7 +621,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Abstract basic class for ROI overlay
      */
-    public abstract class ROIPainter extends Overlay implements XMLPersistent
+    public abstract class ROIPainter extends Overlay
     {
         /**
          * Overlay properties
@@ -1155,8 +1144,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 // and process ROI stuff now
                 if (isActiveFor(canvas))
                 {
+                    final int clickCount = e.getClickCount();
+
                     // single click
-                    if (e.getClickCount() == 1)
+                    if (clickCount == 1)
                     {
                         // right click action
                         if (EventUtil.isRightMouseButton(e))
@@ -1164,6 +1155,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                             // unselect (don't consume event)
                             if (isSelected())
                                 ROI.this.setSelected(false);
+                        }
+                    }
+                    // double click
+                    else if (clickCount == 2)
+                    {
+                        // focused ?
+                        if (isFocused())
+                        {
+                            // show in ROI panel
+                            final RoisPanel roiPanel = Icy.getMainInterface().getRoisPanel();
+
+                            if (roiPanel != null)
+                            {
+                                roiPanel.scrollTo(ROI.this);
+                                // consume event
+                                e.consume();
+                            }
                         }
                     }
                 }
@@ -1243,6 +1251,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     protected int id;
     protected String name;
+    protected ROIGroupId groupid;
     protected boolean creating;
     protected boolean focused;
     protected boolean selected;
@@ -1278,6 +1287,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         id = generateId();
         painter = createPainter();
         name = "";
+        groupid = null;
         readOnly = false;
         creating = false;
         focused = false;
@@ -1293,8 +1303,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         listeners = new ArrayList<ROIListener>();
         updater = new UpdateEventHandler(this, false);
 
-        // default icon
+        // default icon & name
         icon = ResourceUtil.ICON_ROI;
+        name = getDefaultName();
     }
 
     protected abstract ROIPainter createPainter();
@@ -1442,7 +1453,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public ROIPainter getPainter()
     {
-        return painter;
+        return getOverlay();
     }
 
     /**
@@ -1565,6 +1576,43 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * @return the group id
+     */
+    public ROIGroupId getGroupId()
+    {
+        return groupid;
+    }
+
+    /**
+     * @param value
+     *        the group id to set
+     */
+    public void setGroupId(ROIGroupId value)
+    {
+        if (groupid != value)
+        {
+            groupid = value;
+            propertyChanged(PROPERTY_GROUPID);
+        }
+    }
+
+    /**
+     * @return the default name for this ROI class
+     */
+    public String getDefaultName()
+    {
+        return "ROI";
+    }
+
+    /**
+     * Returns <code>true</code> if the ROI has its default name
+     */
+    public boolean isDefaultName()
+    {
+        return getName().equals(getDefaultName());
+    }
+
+    /**
      * @return the name
      */
     public String getName()
@@ -1670,6 +1718,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * Returns true if the ROI has a (control) point which is currently focused/selected
      */
     public abstract boolean hasSelectedPoint();
+
+    /**
+     * Remove focus/selected state on all (control) points.<br>
+     * Override this method depending implementation
+     */
+    public void unselectAllPoints()
+    {
+        // do nothing by default
+    };
 
     /**
      * @return the focused
@@ -2097,7 +2154,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 minC = (int) containedBounds.getMinC();
                 maxC = (int) containedBounds.getMaxC();
             }
-            
+
             final Rectangle containedBounds2D = (Rectangle) containedBounds.toRectangle2D();
 
             // slow method using the boolean mask
@@ -2112,8 +2169,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                         // take content first
                         mask = new BooleanMask2D(containedBounds2D, getBooleanMask2D(containedBounds2D, z, t, c, false));
-                        roiMask = new BooleanMask2D(containedBounds2D,
-                                roi.getBooleanMask2D(containedBounds2D, z, t, c, false));
+                        roiMask = new BooleanMask2D(containedBounds2D, roi.getBooleanMask2D(containedBounds2D, z, t, c,
+                                false));
 
                         // test first only on content
                         if (!mask.contains(roiMask))
@@ -2121,7 +2178,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                         // take content and edge
                         mask = new BooleanMask2D(containedBounds2D, getBooleanMask2D(containedBounds2D, z, t, c, true));
-                        roiMask = new BooleanMask2D(containedBounds2D, roi.getBooleanMask2D(containedBounds2D, z, t, c, true));
+                        roiMask = new BooleanMask2D(containedBounds2D, roi.getBooleanMask2D(containedBounds2D, z, t, c,
+                                true));
 
                         // then test on content and edge
                         if (!mask.contains(roiMask))
@@ -2283,7 +2341,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
     {
-        final boolean[] result = new boolean[width * height];
+        final boolean[] result = new boolean[Math.max(0, width) * Math.max(0, height)];
 
         // simple and basic implementation, override it to have better performance
         int offset = 0;
@@ -2359,156 +2417,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Compute the resulting bounds for <i>subtraction</i> operation with the specified ROI.<br>
-     * It returns <code>null</code> or throw an exception if the <i>subtraction</i> operation cannot
-     * be
-     * done (incompatible dimension).
-     */
-    protected Rectangle5D getSubtractionBounds(ROI roi, boolean throwException) throws UnsupportedOperationException
-    {
-        final Rectangle5D bounds1 = getBounds5D();
-
-        if (roi == null)
-            return bounds1;
-
-        final Rectangle5D bounds2 = roi.getBounds5D();
-
-        // init infinite dim infos
-        final boolean ic1 = bounds1.isInfiniteC();
-        final boolean ic2 = bounds2.isInfiniteC();
-        final boolean it1 = bounds1.isInfiniteT();
-        final boolean it2 = bounds2.isInfiniteT();
-        final boolean iz1 = bounds1.isInfiniteZ();
-        final boolean iz2 = bounds2.isInfiniteZ();
-
-        // cannot process subtraction when we have an finite dimension on second ROI
-        // while having a infinite one on the first ROI
-        if (ic1 && !ic2)
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process subtraction: ROI 1 has infinite C dimension while ROI 2 has a finite one");
-            return null;
-        }
-        if (it1 && !it2)
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process subtraction: ROI 1 has infinite T dimension while ROI 2 has a finite one");
-            return null;
-        }
-        if (iz1 && !iz2)
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process subtraction: ROI 1 has infinite Z dimension while ROI 2 has a finite one");
-            return null;
-        }
-
-        return bounds1;
-    }
-
-    /**
-     * Compute the resulting bounds for <i>union</i> operation with the specified ROI.<br>
-     * It returns <code>null</code> or throw an exception if the <i>union</i> operation cannot be
-     * done (incompatible dimension).
-     */
-    protected Rectangle5D getUnionBounds(ROI roi, boolean throwException) throws UnsupportedOperationException
-    {
-        final Rectangle5D bounds1 = getBounds5D();
-
-        if (roi == null)
-            return bounds1;
-
-        final Rectangle5D bounds2 = roi.getBounds5D();
-
-        // init infinite dim infos
-        final boolean ic1 = bounds1.isInfiniteC();
-        final boolean ic2 = bounds2.isInfiniteC();
-        final boolean it1 = bounds1.isInfiniteT();
-        final boolean it2 = bounds2.isInfiniteT();
-        final boolean iz1 = bounds1.isInfiniteZ();
-        final boolean iz2 = bounds2.isInfiniteZ();
-
-        // cannot process union when we have an infinite dimension with a finite one
-        if ((ic1 ^ ic2) || (it1 ^ it2) || (iz1 ^ iz2))
-        {
-            if (throwException)
-                throw new UnsupportedOperationException("Can't process union on ROI with different infinite dimension");
-            return null;
-        }
-
-        // do union
-        Rectangle5D.union(bounds1, bounds2, bounds1);
-
-        // init infinite dim infos on result
-        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
-        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
-        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
-
-        // cannot process union if C dimension is finite but T or Z is infinite
-        if (!ic && (it || iz))
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process union on ROI with a finite C dimension and infinite T or Z dimension");
-            return null;
-        }
-        // cannot process union if T dimension is finite but Z is infinite
-        if (!it && iz)
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process union on ROI with a finite T dimension and infinite Z dimension");
-            return null;
-        }
-
-        return bounds1;
-    }
-
-    /**
-     * Compute the resulting bounds for <i>intersection</i> operation with the specified ROI.<br>
-     * It returns <code>null</code> or throw an exception if the <i>intersection</i> operation
-     * cannot be done (incompatible dimension).
-     */
-    protected Rectangle5D getIntersectionBounds(ROI roi, boolean throwException) throws UnsupportedOperationException
-    {
-        final Rectangle5D bounds1 = getBounds5D();
-
-        if (roi == null)
-            return bounds1;
-
-        final Rectangle5D bounds2 = roi.getBounds5D();
-
-        // do intersection
-        Rectangle5D.intersect(bounds1, bounds2, bounds1);
-
-        // init infinite dim infos
-        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
-        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
-        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
-
-        // cannot process intersection if C dimension is finite but T or Z is infinite
-        if (!ic && (it || iz))
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process intersection on ROI with a finite C dimension and infinite T or Z dimension");
-            return null;
-        }
-        // cannot process intersection if T dimension is finite but Z is infinite
-        if (!it && iz)
-        {
-            if (throwException)
-                throw new UnsupportedOperationException(
-                        "Can't process intersection on ROI with a finite T dimension and infinite Z dimension");
-            return null;
-        }
-
-        return bounds1;
-    }
-
-    /**
      * @deprecated Override directly these methods:<br>
      *             {@link #getUnion(ROI)}<br>
      *             {@link #getIntersection(ROI)}<br>
@@ -2525,40 +2433,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         System.out.println("Deprecated method " + getClassName() + ".computeOperation(ROI, BooleanOperator) called !");
         return null;
-    }
-
-    protected static Dimension5D.Integer getOpDim(int dim, Rectangle5D.Integer bounds)
-    {
-        final Dimension5D.Integer result = new Dimension5D.Integer();
-
-        switch (dim)
-        {
-            case 2: // XY ROI with fixed ZTC
-                result.sizeZ = 1;
-                result.sizeT = 1;
-                result.sizeC = 1;
-                break;
-
-            case 3: // XYZ ROI with fixed TC
-                result.sizeZ = bounds.sizeZ;
-                result.sizeT = 1;
-                result.sizeC = 1;
-                break;
-
-            case 4: // XYZT ROI with fixed C
-                result.sizeZ = bounds.sizeZ;
-                result.sizeT = bounds.sizeT;
-                result.sizeC = 1;
-                break;
-
-            default: // XYZTC ROI
-                result.sizeZ = bounds.sizeZ;
-                result.sizeT = bounds.sizeT;
-                result.sizeC = bounds.sizeC;
-                break;
-        }
-
-        return result;
     }
 
     /**
@@ -2607,10 +2481,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * The resulting content of this <code>ROI</code> will include
      * the union of both ROI's contents.<br>
      * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
-     * If that is not
-     * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
-     * in a new created ROI.
+     * If that is not the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter
+     * is set to <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new
+     * created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2656,10 +2529,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * its current content and the content of the specified <code>ROI</code>.
      * The resulting ROI will include only contents that were contained in both ROI.<br>
      * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
-     * If that is not
-     * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
-     * in a new created ROI.
+     * If that is not the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter
+     * is set to <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new
+     * created ROI.
      * 
      * <pre>
      *     // Example:
@@ -2753,10 +2625,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Subtract the specified <code>ROI</code> content from current <code>ROI</code>.<br>
      * Note that this operation work only if the 2 ROIs are compatible for that type of operation.
-     * If that is not
-     * the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter is set to
-     * <code>false</code>, if the parameter is set to <code>true</code> the result may be returned
-     * in a new created ROI.
+     * If that is not the case a {@link UnsupportedOperationException} is thrown if <code>allowCreate</code> parameter
+     * is set to <code>false</code>, if the parameter is set to <code>true</code> the result may be returned in a new
+     * created ROI.
      * 
      * @param roi
      *        the <code>ROI</code> to subtract from the current <code>ROI</code>
@@ -2783,63 +2654,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         throw new UnsupportedOperationException(getClassName() + " does not support subtract(ROI) operation !");
     }
 
-    protected static ROI getOpResult(int dim, BooleanMask5D mask, Rectangle5D.Integer bounds)
-    {
-        final ROI result;
-
-        switch (dim)
-        {
-            case 2: // XY ROI with fixed ZTC
-                result = new ROI2DArea(mask.getMask2D(bounds.z, bounds.t, bounds.c));
-
-                // set ZTC position
-                result.beginUpdate();
-                try
-                {
-                    ((ROI2D) result).setZ(bounds.z);
-                    ((ROI2D) result).setT(bounds.t);
-                    ((ROI2D) result).setC(bounds.c);
-                }
-                finally
-                {
-                    result.endUpdate();
-                }
-                break;
-
-            case 3: // XYZ ROI with fixed TC
-                result = new ROI3DArea(mask.getMask3D(bounds.t, bounds.c));
-
-                // set TC position
-                result.beginUpdate();
-                try
-                {
-                    ((ROI3D) result).setT(bounds.t);
-                    ((ROI3D) result).setC(bounds.c);
-                }
-                finally
-                {
-                    result.endUpdate();
-                }
-                break;
-
-            case 4: // XYZT ROI with fixed C
-                result = new ROI4DArea(mask.getMask4D(bounds.c));
-                // set C position
-                ((ROI4D) result).setC(bounds.c);
-                break;
-
-            case 5: // XYZTC ROI
-                result = new ROI5DArea(mask);
-                break;
-
-            default:
-                throw new UnsupportedOperationException(
-                        "Can't process boolean operation on a ROI with unknown dimension.");
-        }
-
-        return result;
-    }
-
     /**
      * Compute the boolean operation with specified <code>ROI</code> and return result in a new <code>ROI</code>.
      */
@@ -2861,223 +2675,39 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Compute union with specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     * Compute union with specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
+     * This method actually call <code>ROIUtil.getUnion(ROI, ROI)</code> internally.
      */
     public ROI getUnion(ROI roi) throws UnsupportedOperationException
     {
-        // return copy of itself
-        if (roi == null)
-            return getCopy();
-
-        final Rectangle5D bounds5D = getUnionBounds(roi, true);
-        final int dim = getEffectiveDimension(bounds5D);
-        // we want integer bounds now
-        final Rectangle5D.Integer bounds = bounds5D.toInteger();
-        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
-        // get 3D and 4D bounds
-        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
-        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
-
-        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
-
-        for (int c = 0; c < roiSize.sizeC; c++)
-        {
-            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
-
-            for (int t = 0; t < roiSize.sizeT; t++)
-            {
-                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
-
-                for (int z = 0; z < roiSize.sizeZ; z++)
-                {
-                    mask3D[z] = BooleanMask2D.getUnion(
-                            roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
-                            getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
-                }
-
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
-            }
-
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
-        }
-
-        // build the 5D result ROI
-        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
-        // optimize bounds of the new created mask
-        mask.optimizeBounds();
-
-        // get result
-        final ROI result = getOpResult(dim, mask, bounds);
-        // set name
-        result.setName("Union");
-
-        return result;
+        return ROIUtil.getUnion(this, roi);
     }
 
     /**
-     * Compute intersection with specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     * Compute intersection with specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
+     * This method actually call <code>ROIUtil.getIntersection(ROI, ROI)</code> internally.
      */
     public ROI getIntersection(ROI roi) throws UnsupportedOperationException
     {
-        // empty ROI
-        if (roi == null)
-            return new ROI2DArea();
-
-        final Rectangle5D bounds5D = getIntersectionBounds(roi, true);
-        final int dim = getEffectiveDimension(bounds5D);
-        // we want integer bounds now
-        final Rectangle5D.Integer bounds = bounds5D.toInteger();
-        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
-        // get 2D, 3D and 4D bounds
-        final Rectangle bounds2D = (Rectangle) bounds.toRectangle2D();
-        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
-        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
-
-        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
-
-        for (int c = 0; c < roiSize.sizeC; c++)
-        {
-            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
-
-            for (int t = 0; t < roiSize.sizeT; t++)
-            {
-                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
-
-                for (int z = 0; z < roiSize.sizeZ; z++)
-                {
-                    final BooleanMask2D mask2D = new BooleanMask2D(bounds2D, getBooleanMask2D(bounds2D, bounds.z + z,
-                            bounds.t + t, bounds.c + c, true));
-                    final BooleanMask2D roiMask2D = new BooleanMask2D(bounds2D, roi.getBooleanMask2D(bounds2D, bounds.z
-                            + z, bounds.t + t, bounds.c + c, true));
-
-                    mask3D[z] = BooleanMask2D.getIntersection(mask2D, roiMask2D);
-                }
-
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
-            }
-
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
-        }
-
-        // build the 5D result ROI
-        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
-        // optimize bounds of the new created mask
-        mask.optimizeBounds();
-
-        // get result
-        final ROI result = getOpResult(dim, mask, bounds);
-        // set name
-        result.setName("Intersection");
-
-        return result;
+        return ROIUtil.getIntersection(this, roi);
     }
 
     /**
-     * Compute exclusive union with specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     * Compute exclusive union with specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
+     * This method actually call <code>ROIUtil.getExclusiveUnion(ROI, ROI)</code> internally.
      */
     public ROI getExclusiveUnion(ROI roi) throws UnsupportedOperationException
     {
-        // return copy of itself
-        if (roi == null)
-            return getCopy();
-
-        final Rectangle5D bounds5D = getUnionBounds(roi, true);
-        final int dim = getEffectiveDimension(bounds5D);
-        // we want integer bounds now
-        final Rectangle5D.Integer bounds = bounds5D.toInteger();
-        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
-        // get 3D and 4D bounds
-        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
-        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
-
-        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
-
-        for (int c = 0; c < roiSize.sizeC; c++)
-        {
-            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
-
-            for (int t = 0; t < roiSize.sizeT; t++)
-            {
-                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
-
-                for (int z = 0; z < roiSize.sizeZ; z++)
-                {
-                    mask3D[z] = BooleanMask2D.getExclusiveUnion(
-                            roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
-                            getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
-                }
-
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
-            }
-
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
-        }
-
-        // build the 5D result ROI
-        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
-        // optimize bounds of the new created mask
-        mask.optimizeBounds();
-
-        // get result
-        final ROI result = getOpResult(dim, mask, bounds);
-        // set name
-        result.setName("Exclusive union");
-
-        return result;
+        return ROIUtil.getExclusiveUnion(this, roi);
     }
 
     /**
-     * Subtract the specified <code>ROI</code> and return result in a new <code>ROI</code>.
+     * Subtract the specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
+     * This method actually call <code>ROIUtil.getSubtraction(ROI, ROI)</code> internally.
      */
     public ROI getSubtraction(ROI roi) throws UnsupportedOperationException
     {
-        // return copy of itself
-        if (roi == null)
-            return getCopy();
-
-        final Rectangle5D bounds5D = getSubtractionBounds(roi, true);
-        final int dim = getEffectiveDimension(bounds5D);
-        // we want integer bounds now
-        final Rectangle5D.Integer bounds = bounds5D.toInteger();
-        final Dimension5D.Integer roiSize = getOpDim(dim, bounds);
-        // get 3D and 4D bounds
-        final Rectangle3D.Integer bounds3D = (Rectangle3D.Integer) bounds.toRectangle3D();
-        final Rectangle4D.Integer bounds4D = (Rectangle4D.Integer) bounds.toRectangle4D();
-
-        final BooleanMask4D mask5D[] = new BooleanMask4D[roiSize.sizeC];
-
-        for (int c = 0; c < roiSize.sizeC; c++)
-        {
-            final BooleanMask3D mask4D[] = new BooleanMask3D[roiSize.sizeT];
-
-            for (int t = 0; t < roiSize.sizeT; t++)
-            {
-                final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
-
-                for (int z = 0; z < roiSize.sizeZ; z++)
-                {
-                    mask3D[z] = BooleanMask2D.getSubtraction(
-                            getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
-                            roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
-                }
-
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
-            }
-
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
-        }
-
-        // build the 5D result ROI
-        final BooleanMask5D mask = new BooleanMask5D(bounds, mask5D);
-        // optimize bounds of the new created mask
-        mask.optimizeBounds();
-
-        // get result
-        final ROI result = getOpResult(dim, mask, bounds);
-        // set name
-        result.setName("Substraction");
-
-        return result;
+        return ROIUtil.getSubtraction(this, roi);
     }
 
     /**
@@ -3131,7 +2761,21 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Only for ROI2D object, Use {@link #getNumberOfContourPoints()} instead.
+     * Computes and returns the length/perimeter of the ROI in um given the pixel size informations from the specified
+     * Sequence.<br>
+     * Generic implementation of length computation uses the number of contour point (approximation).
+     * This method should be overridden whenever possible to provide faster and accurate calculation.<br>
+     * Throws a UnsupportedOperationException if the operation is not supported for this ROI.
+     * 
+     * @see #getNumberOfContourPoints()
+     */
+    public double getLength(Sequence sequence) throws UnsupportedOperationException
+    {
+        return sequence.calculateSize(getNumberOfContourPoints(), getDimension(), 1);
+    }
+
+    /**
+     * @deprecated Use {@link #getLength(Sequence)} or {@link #getNumberOfContourPoints()} instead.
      */
     @Deprecated
     public double getPerimeter()
@@ -3348,17 +2992,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         result.beginUpdate();
         try
         {
-            final Point5D pos = result.getPosition5D();
+            if (result.canSetPosition())
+            {
+                final Point5D pos = result.getPosition5D();
 
-            // set Z, T, C position
-            if (z != -1)
-                pos.setZ(z);
-            if (t != -1)
-                pos.setT(t);
-            if (c != -1)
-                pos.setC(c);
+                // set Z, T, C position
+                if (z != -1)
+                    pos.setZ(z);
+                if (t != -1)
+                    pos.setT(t);
+                if (c != -1)
+                    pos.setC(c);
 
-            result.setPosition5D(pos);
+                result.setPosition5D(pos);
+            }
 
             // copy other properties
             result.setColor(getColor());

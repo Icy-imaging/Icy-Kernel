@@ -439,7 +439,7 @@ public class XMLUtil
 
         final DocumentType doctype = doc.getDoctype();
         final DOMSource domSource = new DOMSource(doc);
-        final StreamResult streamResult = new StreamResult(f);
+        final StreamResult streamResult = new StreamResult(f.getAbsolutePath());
 
         try
         {
@@ -750,6 +750,10 @@ public class XMLUtil
     @SuppressWarnings("null")
     public static Element getElement(Node node, String name)
     {
+        if (node == null)
+            return null;
+
+        final String filteredName = filterString(name);
         int tries = 3;
         RuntimeException exception = null;
 
@@ -766,7 +770,7 @@ public class XMLUtil
                     {
                         final Node n = nodeList.item(i);
 
-                        if ((n instanceof Element) && n.getNodeName().equals(name))
+                        if ((n instanceof Element) && n.getNodeName().equals(filteredName))
                             return (Element) n;
                     }
                 }
@@ -791,6 +795,7 @@ public class XMLUtil
     public static ArrayList<Element> getElements(Node node, String name)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
+        final String filteredName = filterString(name);
         int tries = 3;
         RuntimeException exception = null;
 
@@ -807,7 +812,7 @@ public class XMLUtil
                     {
                         final Node n = nodeList.item(i);
 
-                        if ((n instanceof Element) && n.getNodeName().equals(name))
+                        if ((n instanceof Element) && n.getNodeName().equals(filteredName))
                             result.add((Element) n);
                     }
                 }
@@ -858,6 +863,7 @@ public class XMLUtil
     public static ArrayList<Element> getGenericElements(Node node, String type)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
+        final String filteredType = filterString(type);
         int tries = 3;
         RuntimeException exception = null;
 
@@ -874,7 +880,7 @@ public class XMLUtil
                     {
                         final Node n = nodeList.item(i);
 
-                        if ((n instanceof Element) && n.getNodeName().equals(type))
+                        if ((n instanceof Element) && n.getNodeName().equals(filteredType))
                             result.add((Element) n);
                     }
                 }
@@ -900,6 +906,8 @@ public class XMLUtil
     public static ArrayList<Element> getGenericElements(Node node, String type, String name)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
+        final String filteredName = filterString(name);
+        final String filteredType = filterString(type);
         int tries = 3;
         RuntimeException exception = null;
 
@@ -916,11 +924,11 @@ public class XMLUtil
                     {
                         final Node n = nodeList.item(i);
 
-                        if ((n instanceof Element) && n.getNodeName().equals(type))
+                        if ((n instanceof Element) && n.getNodeName().equals(filteredType))
                         {
                             final Element element = (Element) n;
 
-                            if (element.getAttribute(ATTR_NAME_NAME).equals(name))
+                            if (element.getAttribute(ATTR_NAME_NAME).equals(filteredName))
                                 result.add(element);
                         }
                     }
@@ -964,6 +972,8 @@ public class XMLUtil
     @SuppressWarnings("null")
     public static Element getGenericElement(Node node, String type, String name)
     {
+        final String filteredName = filterString(name);
+        final String filteredType = filterString(type);
         int tries = 3;
         RuntimeException exception = null;
 
@@ -980,11 +990,11 @@ public class XMLUtil
                     {
                         final Node n = nodeList.item(i);
 
-                        if ((n instanceof Element) && n.getNodeName().equals(type))
+                        if ((n instanceof Element) && n.getNodeName().equals(filteredType))
                         {
                             final Element element = (Element) n;
 
-                            if (element.getAttribute(ATTR_NAME_NAME).equals(name))
+                            if (element.getAttribute(ATTR_NAME_NAME).equals(filteredName))
                                 return element;
                         }
                     }
@@ -1135,6 +1145,7 @@ public class XMLUtil
         if (element == null)
             return def;
 
+        final String filteredAttr = filterString(attribute);
         int tries = 3;
         RuntimeException exception = null;
 
@@ -1143,7 +1154,7 @@ public class XMLUtil
         {
             try
             {
-                final Attr attr = element.getAttributeNode(attribute);
+                final Attr attr = element.getAttributeNode(filteredAttr);
 
                 if (attr != null)
                     return attr.getValue();
@@ -1584,11 +1595,12 @@ public class XMLUtil
     public static Element addElement(Node node, String name)
     {
         final Element element;
+        final String filteredName = filterString(name);
 
         if (node instanceof Document)
-            element = ((Document) node).createElement(name);
+            element = ((Document) node).createElement(filteredName);
         else
-            element = node.getOwnerDocument().createElement(name);
+            element = node.getOwnerDocument().createElement(filteredName);
 
         node.appendChild(element);
 
@@ -1639,7 +1651,7 @@ public class XMLUtil
     public static void setGenericElementName(Element element, String name)
     {
         if (element != null)
-            element.setAttribute(ATTR_NAME_NAME, name);
+            element.setAttribute(ATTR_NAME_NAME, filterString(name));
     }
 
     /**
@@ -1648,7 +1660,7 @@ public class XMLUtil
     public static void setGenericElementValue(Element element, String value)
     {
         if (element != null)
-            element.setAttribute(ATTR_VALUE_NAME, value);
+            element.setAttribute(ATTR_VALUE_NAME, filterString(value));
     }
 
     /**
@@ -1782,6 +1794,9 @@ public class XMLUtil
      */
     public static String removeInvalidXMLCharacters(String text)
     {
+        if (text == null)
+            return "";
+
         final String xml10pattern = "[^" + "\u0009\r\n" + "\u0020-\uD7FF" + "\uE000-\uFFFD"
                 + "\ud800\udc00-\udbff\udfff" + "]";
         // final String xml11pattern = "[^" + "\u0001-\uD7FF" + "\uE000-\uFFFD" +

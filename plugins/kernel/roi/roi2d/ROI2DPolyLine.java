@@ -21,8 +21,9 @@ package plugins.kernel.roi.roi2d;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
-import icy.roi.Polyline2D;
 import icy.roi.ROI;
+import icy.type.geom.Polyline2D;
+import icy.type.point.Point2DUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -75,151 +76,7 @@ public class ROI2DPolyLine extends ROI2DShape
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
 
-    // public class ROI2DPolyLinePainter extends ROI2DShapePainter
-    // {
-    // @Override
-    // protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
-    // {
-    // if (canvas instanceof IcyCanvas2D)
-    // {
-    // final Graphics2D g2 = (Graphics2D) g.create();
-    // final Rectangle2D bounds = shape.getBounds2D();
-    // // trivial paint optimization
-    // final boolean shapeVisible = GraphicsUtil.isVisible(g2, bounds);
-    // final boolean small;
-    // final boolean tiny;
-    //
-    // // disable LOD when creating the ROI
-    // if (isCreating())
-    // {
-    // small = false;
-    // tiny = false;
-    // }
-    // else
-    // {
-    // final AffineTransform trans = g.getTransform();
-    // final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
-    // final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
-    // small = size < LOD_SMALL;
-    // tiny = size < LOD_TINY;
-    // }
-    //
-    // // simplified draw
-    // if (small)
-    // {
-    // // trivial paint optimization
-    // if (shapeVisible)
-    // {
-    // // draw shape (simplified version)
-    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-    // g2.setColor(getDisplayColor());
-    // g2.draw(shape);
-    //
-    // if (!tiny)
-    // {
-    // // draw simplified control points
-    // if (isSelected() && !isReadOnly())
-    // {
-    // final int ray = (int) canvas.canvasToImageDeltaX(2);
-    //
-    // for (Anchor2D pt : controlPoints)
-    // {
-    // if (pt.isVisible())
-    // {
-    // if (pt.isSelected())
-    // g2.setColor(pt.getSelectedColor());
-    // else
-    // g2.setColor(pt.getColor());
-    //
-    // g2.fillRect((int) pt.getPositionX() - ray, (int) pt.getPositionY() - ray,
-    // ray * 2, ray * 2);
-    // }
-    // }
-    // }
-    // }
-    // }
-    // }
-    // // normal draw
-    // else
-    // {
-    // if (shapeVisible)
-    // {
-    // if (isSelected())
-    // {
-    // // just draw plain object shape without border
-    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-    // g2.setColor(getDisplayColor());
-    // g2.draw(shape);
-    // }
-    // else
-    // {
-    // // draw border
-    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-    // g2.setColor(Color.black);
-    // g2.draw(shape);
-    // // draw shape
-    // g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-    // g2.setColor(getDisplayColor());
-    // g2.draw(shape);
-    // }
-    // }
-    //
-    // if (isSelected() && !isReadOnly())
-    // {
-    // // draw control point if selected
-    // for (Anchor2D pt : controlPoints)
-    // pt.paint(g2, sequence, canvas);
-    // }
-    // }
-    //
-    // g2.dispose();
-    // }
-    //
-    // if (canvas instanceof VtkCanvas)
-    // {
-    // // 3D canvas
-    // final VtkCanvas cnv = (VtkCanvas) canvas;
-    //
-    // // FIXME : need a better implementation
-    // final double[] s = cnv.getVolumeScale();
-    //
-    // // scaling changed ?
-    // if (!Arrays.equals(scaling, s))
-    // {
-    // // update scaling
-    // scaling = s;
-    // // need rebuild
-    // needRebuild = true;
-    // }
-    //
-    // // need to rebuild 3D data structures ?
-    // if (needRebuild)
-    // {
-    // // initialize VTK objects if not yet done
-    // if (actor == null)
-    // initVtkObjects();
-    //
-    // // request rebuild 3D objects
-    // canvas3d = cnv;
-    // ThreadUtil.runSingle(this);
-    // needRebuild = false;
-    // }
-    //
-    // // actor can be accessed in canvas3d for rendering so we need to synchronize access
-    // cnv.lock();
-    // try
-    // {
-    // // update visibility
-    // if (actor != null)
-    // ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
-    // }
-    // finally
-    // {
-    // cnv.unlock();
-    // }
-    // }
-    // }
-    // }
+    
 
     /**
      * @deprecated
@@ -237,19 +94,11 @@ public class ROI2DPolyLine extends ROI2DShape
     {
         super(new Polyline2D());
 
-        // add points to list
-        final Anchor2D anchor = createAnchor(pt);
-        // just add the new point at last position
-        addPoint(anchor);
-        // always select
-        anchor.setSelected(true);
+        final Anchor2D point = createAnchor(pt);
+        point.setSelected(true);
+        addPoint(point);
 
-        // getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
-
-        updateShape();
-
-        // set name and icon
-        setName("PolyLine2D");
+        // set icon (default name is defined by getDefaultName()) 
         setIcon(ResourceUtil.ICON_ROI_POLYLINE);
     }
 
@@ -269,6 +118,13 @@ public class ROI2DPolyLine extends ROI2DShape
         setPolygon(polygon);
     }
 
+    public ROI2DPolyLine(Polyline2D polyline)
+    {
+        this(new Point2D.Double());
+
+        setPolyline2D(polyline);
+    }
+
     public ROI2DPolyLine(List<Point2D> points)
     {
         this(new Point2D.Double());
@@ -279,6 +135,12 @@ public class ROI2DPolyLine extends ROI2DShape
     public ROI2DPolyLine()
     {
         this(new Point2D.Double());
+    }
+    
+    @Override
+    public String getDefaultName()
+    {
+        return "PolyLine2D";
     }
 
     @Override
@@ -331,14 +193,14 @@ public class ROI2DPolyLine extends ROI2DShape
         return (Polyline2D) shape;
     }
 
-    public void setPolyline2D(Polyline2D polygon2D)
+    public void setPolyline2D(Polyline2D polyline2D)
     {
         beginUpdate();
         try
         {
             removeAllPoint();
-            for (int i = 0; i < polygon2D.npoints; i++)
-                addNewPoint(new Point2D.Double(polygon2D.xpoints[i], polygon2D.ypoints[i]), false);
+            for (int i = 0; i < polyline2D.npoints; i++)
+                addNewPoint(new Point2D.Double(polyline2D.xpoints[i], polyline2D.ypoints[i]), false);
         }
         finally
         {
@@ -399,8 +261,8 @@ public class ROI2DPolyLine extends ROI2DShape
     @Override
     protected double getTotalDistance(List<Point2D> points, double factorX, double factorY)
     {
-        // by default the total length don't need last point connection
-        return super.getTotalDistance(points, factorX, factorY, false);
+        // for polyline the total length don't need last point connection
+        return Point2DUtil.getTotalDistance(points, factorX, factorY, false);
     }
 
     @Override
@@ -412,16 +274,23 @@ public class ROI2DPolyLine extends ROI2DShape
     @Override
     protected void updateShape()
     {
-        final int len = controlPoints.size();
-        final double ptsX[] = new double[len];
-        final double ptsY[] = new double[len];
+        final int len;
+        final double[] ptsX;
+        final double[] ptsY;
 
-        for (int i = 0; i < len; i++)
+        synchronized (controlPoints)
         {
-            final Anchor2D pt = controlPoints.get(i);
+            len = controlPoints.size();
+            ptsX = new double[len];
+            ptsY = new double[len];
 
-            ptsX[i] = pt.getX();
-            ptsY[i] = pt.getY();
+            for (int i = 0; i < len; i++)
+            {
+                final Anchor2D pt = controlPoints.get(i);
+
+                ptsX[i] = pt.getX();
+                ptsY[i] = pt.getY();
+            }
         }
 
         final Polyline2D polyline2d = getPolyline2D();
@@ -505,8 +374,11 @@ public class ROI2DPolyLine extends ROI2DShape
             return false;
 
         final Element dependances = XMLUtil.setElement(node, ID_POINTS);
-        for (Anchor2D pt : controlPoints)
-            pt.savePositionToXML(XMLUtil.addElement(dependances, ID_POINT));
+        synchronized (controlPoints)
+        {
+            for (Anchor2D pt : controlPoints)
+                pt.savePositionToXML(XMLUtil.addElement(dependances, ID_POINT));
+        }
 
         return true;
     }

@@ -394,7 +394,7 @@ public class SequenceOperationActions
 
     // XY plan operations
     public static IcyAbstractAction cropSequenceAction = new IcyAbstractAction("Fast crop", new IcyIcon(
-            ResourceUtil.ICON_CUT), "Fast crop image", "Crop an image from a ROI.")
+            ResourceUtil.ICON_CUT), "Fast crop image", "Crop an image from a ROI")
     {
         private static final long serialVersionUID = 2928113834852115366L;
 
@@ -414,7 +414,8 @@ public class SequenceOperationActions
 
             if (size == 0)
             {
-                MessageDialog.showDialog("There is no ROI in the current sequence.\nCrop operation need a ROI.",
+                MessageDialog.showDialog(
+                        "There is no ROI in the current sequence.\nYou need a ROI to define the region to crop.",
                         MessageDialog.INFORMATION_MESSAGE);
                 return false;
             }
@@ -425,13 +426,13 @@ public class SequenceOperationActions
 
                 if (size == 0)
                 {
-                    MessageDialog.showDialog("You need to select a ROI to do the crop operation.",
+                    MessageDialog.showDialog("You need to select a ROI to do this operation.",
                             MessageDialog.INFORMATION_MESSAGE);
                     return false;
                 }
                 else if (size > 1)
                 {
-                    MessageDialog.showDialog("You must have only one selected ROI to do the crop operation.",
+                    MessageDialog.showDialog("You must have only one selected ROI to do this operation.",
                             MessageDialog.INFORMATION_MESSAGE);
                     return false;
                 }
@@ -444,7 +445,6 @@ public class SequenceOperationActions
                 @Override
                 public void run()
                 {
-
                     // create output sequence
                     final Sequence out = SequenceUtil.getSubSequence(seq, roi);
 
@@ -1000,8 +1000,8 @@ public class SequenceOperationActions
     };
 
     public static IcyAbstractAction fillSequenceAction = new IcyAbstractAction("Fill", new IcyIcon(
-            ResourceUtil.ICON_BRUSH), "Fill ROI content",
-            "Fill the selected ROI content with specified value on whole sequence", true, "Filling content")
+            ResourceUtil.ICON_BRUSH), "Fill ROI content", "Fill content of the selected ROI with specified value",
+            true, "Fill ROI content")
     {
         /**
          * 
@@ -1022,7 +1022,7 @@ public class SequenceOperationActions
                     final double value = mainFrame.getMainRibbon().getSequenceOperationTask().getFillValue();
 
                     for (ROI roi : sequence.getSelectedROIs())
-                        DataIteratorUtil.set(new SequenceDataIterator(sequence, roi), value);
+                        DataIteratorUtil.set(new SequenceDataIterator(sequence, roi, true), value);
 
                     sequence.dataChanged();
 
@@ -1109,7 +1109,12 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (super.isEnabled() && (undoManager != null))
+                return undoManager.canUndo();
+
+            return false;
         }
     };
 
@@ -1130,7 +1135,12 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (super.isEnabled() && (undoManager != null))
+                return undoManager.canRedo();
+
+            return false;
         }
     };
 
@@ -1159,7 +1169,12 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (super.isEnabled() && (undoManager != null))
+                return undoManager.canUndo() || undoManager.canRedo();
+
+            return false;
         }
     };
 
@@ -1180,6 +1195,7 @@ public class SequenceOperationActions
             if (undoManager != null)
             {
                 undoManager.discardOldEdits(1);
+                undoManager.discardFutureEdits();
                 return true;
             }
 
@@ -1189,7 +1205,12 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (super.isEnabled() && (undoManager != null))
+                return undoManager.canUndo();
+
+            return false;
         }
     };
 

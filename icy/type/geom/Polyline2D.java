@@ -1,7 +1,6 @@
-package icy.roi;
+package icy.type.geom;
 
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
@@ -27,14 +26,17 @@ import java.awt.geom.Rectangle2D;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * Modified by Stephane Dallongeville
  */
+
 /**
- * This class has the same behavior than {@link Polygon}, except that
+ * This class has the same behavior than {@link Polygon2D}, except that
  * the figure is not closed.
  */
 public class Polyline2D implements Shape, Cloneable
 {
-    private static final double ASSUME_ZERO = 0.00001f;
+    private static final double ASSUME_ZERO = 0.00001d;
 
     /**
      * The total number of points. The value of <code>npoints</code> represents the number of points in this
@@ -49,7 +51,7 @@ public class Polyline2D implements Shape, Cloneable
     public double[] xpoints;
 
     /**
-     * The array of <i>x</i> coordinates. The value of {@link #npoints} is equal to the
+     * The array of <i>y</i> coordinates. The value of {@link #npoints} is equal to the
      * number of points in this <code>Polyline2D</code>.
      */
     public double[] ypoints;
@@ -61,7 +63,7 @@ public class Polyline2D implements Shape, Cloneable
      */
     protected Rectangle2D bounds;
 
-    private Path2D.Double path;
+    protected Path2D.Double path;
 
     /**
      * Creates an empty Polyline2D.
@@ -70,11 +72,7 @@ public class Polyline2D implements Shape, Cloneable
     {
         super();
 
-        npoints = 0;
-        xpoints = new double[0];
-        ypoints = new double[0];
-        bounds = new Rectangle2D.Double();
-        path = null;
+        reset();
     }
 
     /**
@@ -103,8 +101,8 @@ public class Polyline2D implements Shape, Cloneable
             throw new IndexOutOfBoundsException("npoints > xpoints.length || npoints > ypoints.length");
 
         this.npoints = npoints;
-        this.xpoints = new double[npoints + 1]; // make space for one more to close the polyline
-        this.ypoints = new double[npoints + 1]; // make space for one more to close the polyline
+        this.xpoints = new double[npoints];
+        this.ypoints = new double[npoints];
 
         System.arraycopy(xpoints, 0, this.xpoints, 0, npoints);
         System.arraycopy(ypoints, 0, this.ypoints, 0, npoints);
@@ -212,7 +210,7 @@ public class Polyline2D implements Shape, Cloneable
         bounds = path.getBounds2D();
     }
 
-    private void updatePath(double x, double y)
+    protected void updatePath(double x, double y)
     {
         if (path == null)
         {
@@ -266,11 +264,11 @@ public class Polyline2D implements Shape, Cloneable
         {
             double[] tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(xpoints, 0, tmp, 0, npoints);
             xpoints = tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(ypoints, 0, tmp, 0, npoints);
             ypoints = tmp;
         }
@@ -293,7 +291,7 @@ public class Polyline2D implements Shape, Cloneable
     {
         return (Rectangle2D) bounds.clone();
     }
-    
+
     /**
      * Gets the bounding box of this <code>Polyline2D</code>.
      * The bounding box is the smallest {@link Rectangle} whose
@@ -341,8 +339,6 @@ public class Polyline2D implements Shape, Cloneable
     {
         return false;
     }
-
-    
 
     /**
      * Tests if a specified {@link Point2D} is inside the boundary of this <code>Polyline2D</code>.

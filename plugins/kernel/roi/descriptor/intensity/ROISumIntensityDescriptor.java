@@ -16,7 +16,7 @@ import icy.sequence.SequenceEvent.SequenceEventSourceType;
  */
 public class ROISumIntensityDescriptor extends ROIDescriptor
 {
-    public static final String ID = "SumIntensity";
+    public static final String ID = "Sum intensity";
 
     public ROISumIntensityDescriptor()
     {

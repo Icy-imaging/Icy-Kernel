@@ -18,6 +18,17 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
@@ -25,25 +36,16 @@ import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
+import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
-import icy.util.EventUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Map.Entry;
-
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
@@ -117,7 +119,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             }
             if (vtkInfo != null)
             {
-                vtkInfo.Remove(VtkCanvas.outlineVisibilityKey);
+                vtkInfo.Remove(VtkCanvas.visibilityKey);
                 vtkInfo.Delete();
             }
             if (outlineMapper != null)
@@ -134,6 +136,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         {
             outline = VtkUtil.getOutline(0d, 1d, 0d, 1d, 0d, 1d);
             outlineMapper = new vtkPolyDataMapper();
+            outlineMapper.SetInputData(outline);
             outlineActor = new vtkActor();
             outlineActor.SetMapper(outlineMapper);
             // disable picking on the outline
@@ -142,7 +145,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             outlineActor.GetProperty().SetRepresentationToWireframe();
             // use vtkInformations to store outline visibility state (hacky)
             vtkInfo = new vtkInformation();
-            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
+            vtkInfo.Set(VtkCanvas.visibilityKey, 0);
             // VtkCanvas use this to restore correctly outline visibility flag
             outlineActor.SetPropertyKeys(vtkInfo);
 
@@ -180,6 +183,17 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             if (seq == null)
                 return;
 
+            // get previous polydata object
+            final vtkPolyData previousPolyData = polyData;
+
+            // get VTK binary image from ROI mask
+            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI3DArea.this, seq.getSizeZ(),
+                    canvas.getPositionT());
+            // adjust spacing
+            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
+            // get VTK polygon data representing the surface of the binary image
+            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d);
+
             // get bounds
             final Rectangle3D bounds = getBounds3D();
             // apply scaling on bounds
@@ -198,26 +212,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 bounds.setSizeZ(bounds.getSizeZ() * scaling[2]);
             }
 
-            // get previous polydata object
-            final vtkPolyData previousPolyData = polyData;
-
-            // update outline
-            VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(), bounds.getMaxY(),
-                    bounds.getMinZ(), bounds.getMaxZ(), canvas);
-            // get VTK binary image from ROI mask
-            final vtkImageData imageData = VtkUtil.getBinaryImageData(ROI3DArea.this, seq.getSizeZ(),
-                    canvas.getPositionT());
-            // adjust spacing
-            imageData.SetSpacing(scaling[0], scaling[1], scaling[2]);
-            // get VTK polygon data representing the surface of the binary image
-            polyData = VtkUtil.getSurfaceFromImage(imageData, 0.5d, false, false, 3);
-
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             vtkPanel.lock();
             try
             {
-                // update outline polygon data
-                outlineMapper.SetInputData(outline);
+                // update outline data
+                VtkUtil.setOutlineBounds(outline, bounds.getMinX(), bounds.getMaxX(), bounds.getMinY(),
+                        bounds.getMaxY(), bounds.getMinZ(), bounds.getMaxZ(), canvas);
                 outlineMapper.Update();
                 // update surface polygon data
                 polyMapper.SetInputData(polyData);
@@ -250,72 +251,51 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 
         protected void updateVtkDisplayProperties()
         {
-            if (surfaceActor != null)
+            if (surfaceActor == null)
+                return;
+
+            final VtkCanvas cnv = canvas3d.get();
+            final Color col = getDisplayColor();
+            final double r = col.getRed() / 255d;
+            final double g = col.getGreen() / 255d;
+            final double b = col.getBlue() / 255d;
+            // final double strk = getStroke();
+            // final float opacity = getOpacity();
+
+            final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+            // we need to lock canvas as actor can be accessed during rendering
+            if (vtkPanel != null)
+                vtkPanel.lock();
+            try
             {
-                final VtkCanvas cnv = canvas3d.get();
-                final Color col = getDisplayColor();
-                final double r = col.getRed() / 255d;
-                final double g = col.getGreen() / 255d;
-                final double b = col.getBlue() / 255d;
-                // final double strk = getStroke();
-                // final float opacity = getOpacity();
-
-                final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
-
-                // we need to lock canvas as actor can be accessed during rendering
-                if (vtkPanel != null)
+                // set actors color
+                outlineActor.GetProperty().SetColor(r, g, b);
+                if (isSelected())
                 {
-                    vtkPanel.lock();
-                    try
-                    {
-                        // set actors color
-                        outlineActor.GetProperty().SetColor(r, g, b);
-                        if (isSelected())
-                        {
-                            outlineActor.GetProperty().SetRepresentationToWireframe();
-                            outlineActor.SetVisibility(1);
-                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
-                        }
-                        else
-                        {
-                            outlineActor.GetProperty().SetRepresentationToPoints();
-                            outlineActor.SetVisibility(0);
-                            vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
-                        }
-                        surfaceActor.GetProperty().SetColor(r, g, b);
-                        // opacity here is about ROI content, global opacity is handled by Layer
-                        // surfaceActor.GetProperty().SetOpacity(opacity);
-                        setVtkObjectsColor(col);
-                    }
-                    finally
-                    {
-                        vtkPanel.unlock();
-                    }
+                    outlineActor.GetProperty().SetRepresentationToWireframe();
+                    outlineActor.SetVisibility(1);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 1);
                 }
                 else
                 {
-                    outlineActor.GetProperty().SetColor(r, g, b);
-                    if (isSelected())
-                    {
-                        outlineActor.GetProperty().SetRepresentationToWireframe();
-                        outlineActor.SetVisibility(1);
-                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 1);
-                    }
-                    else
-                    {
-                        outlineActor.GetProperty().SetRepresentationToPoints();
-                        outlineActor.SetVisibility(0);
-                        vtkInfo.Set(VtkCanvas.outlineVisibilityKey, 0);
-                    }
-                    surfaceActor.GetProperty().SetColor(r, g, b);
-                    // opacity here is about ROI content, global opacity is handled by Layer
-                    // surfaceActor.GetProperty().SetOpacity(opacity);
-                    setVtkObjectsColor(col);
+                    outlineActor.GetProperty().SetRepresentationToPoints();
+                    outlineActor.SetVisibility(0);
+                    vtkInfo.Set(VtkCanvas.visibilityKey, 0);
                 }
-
-                // need to repaint
-                painterChanged();
+                surfaceActor.GetProperty().SetColor(r, g, b);
+                // opacity here is about ROI content, global opacity is handled by Layer
+                // surfaceActor.GetProperty().SetOpacity(opacity);
+                setVtkObjectsColor(col);
             }
+            finally
+            {
+                if (vtkPanel != null)
+                    vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -327,6 +307,18 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         }
 
         @Override
+        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // provide backward compatibility
+            if (imagePoint != null)
+                mouseClick(e, imagePoint.toPoint2D(), canvas);
+            else
+                mouseClick(e, (Point2D) null, canvas);
+
+            // cancel the default action of ROIPainter implementation which unselecting ROI on right click
+        }
+
+        @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (isActiveFor(canvas))
@@ -335,6 +327,9 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 {
                     // 3D canvas
                     final VtkCanvas cnv = (VtkCanvas) canvas;
+                    // update reference if needed
+                    if (canvas3d.get() != cnv)
+                        canvas3d = new WeakReference<VtkCanvas>(cnv);
 
                     // FIXME : need a better implementation
                     final double[] s = cnv.getVolumeScale();
@@ -356,7 +351,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                             initVtkObjects();
 
                         // request rebuild 3D objects
-                        canvas3d = new WeakReference<VtkCanvas>(cnv);
                         ThreadUtil.runSingle(this);
                         needRebuild = false;
                     }
@@ -372,11 +366,9 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             // specific VTK canvas processing
             if (canvas instanceof VtkCanvas)
             {
-                final VtkCanvas vtkCanvas = (VtkCanvas) canvas;
-                // picking is enabled on mouse move event and mouse is over the ROI actor ? -->
-                // focus the ROI
-                final boolean focused = (surfaceActor != null) && vtkCanvas.getPickOnMouseMove()
-                        && (surfaceActor == vtkCanvas.getPickedObject());
+                // mouse is over the ROI actor ? --> focus the ROI
+                final boolean focused = (surfaceActor != null)
+                        && (surfaceActor == ((VtkCanvas) canvas).getPickedObject());
 
                 setFocused(focused);
 
@@ -384,55 +376,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             }
 
             return super.updateFocus(e, imagePoint, canvas);
-        }
-
-        @Override
-        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
-        {
-            boolean hasFocus;
-
-            // mouse cursor is over the actor ? --> focus the ROI
-            if (canvas instanceof VtkCanvas)
-                hasFocus = (surfaceActor != null) && (surfaceActor == ((VtkCanvas) canvas).getPickedObject());
-            else
-                hasFocus = isFocused();
-
-            // nothing to do if the ROI does not have focus
-            if (!hasFocus)
-                return false;
-
-            // union selection
-            if (EventUtil.isShiftDown(e))
-            {
-                // not already selected --> add ROI to selection
-                if (!isSelected())
-                {
-                    setSelected(true);
-                    return true;
-                }
-            }
-            else if (EventUtil.isControlDown(e))
-            // switch selection
-            {
-                // inverse state
-                setSelected(!isSelected());
-                return true;
-            }
-            else
-            // exclusive selection
-            {
-                // not selected --> exclusive ROI selection
-                if (!isSelected())
-                {
-                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
-                    if (!canvas.getSequence().setSelectedROI(ROI3DArea.this))
-                        ROI3DArea.this.setSelected(true);
-
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         @Override
@@ -455,8 +398,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     public ROI3DArea()
     {
         super(ROI2DArea.class);
-
-        setName("3D area");
     }
 
     public ROI3DArea(Point3D pt)
@@ -491,6 +432,36 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         // copy the source 3D area ROI
         for (Entry<Integer, ROI2DArea> entry : area.slices.entrySet())
             slices.put(entry.getKey(), new ROI2DArea(entry.getValue()));
+
+        roiChanged(true);
+    }
+
+    /**
+     * Create a 3D Area ROI type from the specified {@link BooleanMask3D}.
+     */
+    public ROI3DArea(BooleanMask2D mask2d, int zMin, int zMax)
+    {
+        this();
+
+        if (zMax < zMin)
+            throw new IllegalArgumentException("ROI3DArea: cannot create the ROI (zMax < zMin).");
+
+        beginUpdate();
+        try
+        {
+            for (int z = zMin; z <= zMax; z++)
+                setSlice(z, new ROI2DArea(mask2d));
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "Area3D";
     }
 
     @Override
@@ -524,7 +495,10 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      */
     public void setPoint(int x, int y, int z, boolean value)
     {
-        getSlice(z, true).setPoint(x, y, value);
+        final ROI2DArea slice = getSlice(z, value);
+
+        if (slice != null)
+            slice.setPoint(x, y, value);
     }
 
     /**
@@ -542,20 +516,323 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      */
     public void removeBrush(Point2D pos, int z)
     {
-        getSlice(z, true).removeBrush(pos);
+        final ROI2DArea slice = getSlice(z, false);
+
+        if (slice != null)
+            slice.removeBrush(pos);
     }
 
     /**
-     * Sets the ROI slice at given Z position to this 3D ROI
+     * Add the specified {@link BooleanMask3D} content to this ROI3DArea
+     */
+    public void add(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                add(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Add the specified BooleanMask2D with the existing slice at given Z position.<br>
+     * If there is no slice at this Z position then the method is equivalent to {@link #setSlice(int, ROI2DArea)} with
+     * <code>new ROI2DArea(maskSlice)</code>
+     * 
+     * @param z
+     *        the position where the slice must be added
+     * @param maskSlice
+     *        the 2D boolean mask to merge
+     */
+    public void add(int z, BooleanMask2D maskSlice)
+    {
+        if (maskSlice == null)
+            return;
+
+        final ROI2DArea currentSlice = getSlice(z);
+
+        if (currentSlice != null)
+            // merge slices
+            currentSlice.add(maskSlice);
+        else
+            // add new slice
+            setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    /**
+     * Exclusively add the specified {@link BooleanMask3D} content to this ROI3DArea
+     */
+    public void exclusiveAdd(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                exclusiveAdd(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Exclusively add the specified BooleanMask2D with the existing slice at given Z position.<br>
+     * If there is no slice at this Z position then the method is equivalent to {@link #setSlice(int, ROI2DArea)} with
+     * <code>new ROI2DArea(maskSlice)</code>
+     * 
+     * @param z
+     *        the position where the slice must be exclusively added
+     * @param maskSlice
+     *        the 2D boolean mask to merge
+     */
+    public void exclusiveAdd(int z, BooleanMask2D maskSlice)
+    {
+        if (maskSlice == null)
+            return;
+
+        final ROI2DArea currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // process exclusive add
+            currentSlice.exclusiveAdd(maskSlice);
+            // remove it if empty
+            if (currentSlice.isEmpty())
+                removeSlice(z);
+        }
+        // add new slice
+        else
+            setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    /**
+     * Intersect the specified {@link BooleanMask3D} content with this ROI3DArea
+     */
+    public void intersect(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            final Set<Integer> keys = mask.mask.keySet();
+            final Set<Integer> toRemove = new HashSet<Integer>();
+
+            // remove slices which are not contained
+            for (Integer key : slices.keySet())
+                if (!keys.contains(key))
+                    toRemove.add(key);
+
+            // do remove first
+            for (Integer key : toRemove)
+                removeSlice(key.intValue());
+
+            // then process intersection
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                intersect(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Intersect the specified BooleanMask2D with the existing slice at given Z position.
      * 
      * @param z
      *        the position where the slice must be set
-     * @param roiSlice
-     *        the 2D ROI to set
-     * @param merge
-     *        <code>true</code> if the given slice should be merged with the existing slice, or <code>false</code> to
-     *        replace the existing slice.
+     * @param maskSlice
+     *        the 2D boolean mask to merge
      */
+    public void intersect(int z, BooleanMask2D maskSlice)
+    {
+        // better to throw an exception here than removing slice
+        if (maskSlice == null)
+            throw new IllegalArgumentException("Cannot intersect an empty slice in a 3D ROI");
+
+        final ROI2DArea currentSlice = getSlice(z);
+
+        if (currentSlice != null)
+        {
+            // build ROI from mask
+            final ROI2DArea roi = new ROI2DArea(maskSlice);
+
+            // set same position as slice
+            roi.setT(currentSlice.getT());
+            roi.setZ(currentSlice.getZ());
+            roi.setC(currentSlice.getC());
+            // compute intersection
+            currentSlice.intersect(roi, false);
+
+            // remove it if empty
+            if (currentSlice.isEmpty())
+                removeSlice(z);
+        }
+    }
+
+    /**
+     * Subtract the specified {@link BooleanMask3D} from this ROI3DArea
+     */
+    public void subtract(BooleanMask3D mask)
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, BooleanMask2D> entry : mask.mask.entrySet())
+                subtract(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Subtract the specified BooleanMask2D from the existing slice at given Z position.<br>
+     * 
+     * @param z
+     *        the position where the slice must be subtracted
+     * @param maskSlice
+     *        the 2D boolean mask to subtract
+     */
+    public void subtract(int z, BooleanMask2D maskSlice)
+    {
+        if (maskSlice == null)
+            return;
+
+        final ROI2DArea currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // process exclusive add
+            currentSlice.subtract(maskSlice);
+            // remove it if empty
+            if (currentSlice.isEmpty())
+                removeSlice(z);
+        }
+    }
+
+    @Override
+    public ROI add(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    add((ROI3DArea) roi3d);
+                else
+                    add(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI exclusiveAdd(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    exclusiveAdd((ROI3DArea) roi3d);
+                else
+                    exclusiveAdd(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.exclusiveAdd(roi, allowCreate);
+    }
+
+    @Override
+    public ROI intersect(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    intersect((ROI3DArea) roi3d);
+                else
+                    intersect(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.intersect(roi, allowCreate);
+    }
+
+    @Override
+    public ROI subtract(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (roi3d instanceof ROI3DArea)
+                    subtract((ROI3DArea) roi3d);
+                else
+                    subtract(roi3d.getBooleanMask(true));
+
+                return this;
+            }
+        }
+
+        return super.subtract(roi, allowCreate);
+    }
+
+    /**
+     * Sets the BooleanMask2D slice at given Z position to this 3D ROI
+     * 
+     * @param z
+     *        the position where the slice must be set
+     * @param maskSlice
+     *        the BooleanMask2D to set
+     */
+    public void setSlice(int z, BooleanMask2D maskSlice)
+    {
+        // empty mask --> just remove previous
+        if (maskSlice == null)
+        {
+            removeSlice(z);
+            return;
+        }
+
+        setSlice(z, new ROI2DArea(maskSlice));
+    }
+
+    /**
+     * @deprecated Use one of these methods instead :<br>
+     *             {@link #setSlice(int, ROI2DArea)}, {@link #setSlice(int, BooleanMask2D)},
+     *             {@link #add(int, ROI2DArea)} or {@link #add(BooleanMask3D)}
+     */
+    @Deprecated
     public void setSlice(int z, ROI2D roiSlice, boolean merge)
     {
         if (roiSlice == null)
@@ -582,9 +859,39 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         else if (newSlice instanceof ROI2D)
             setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
         else
-            throw new IllegalArgumentException("Can't add the result of the merge operation on 2D slice " + z + ": "
-                    + newSlice.getClassName());
+            throw new IllegalArgumentException(
+                    "Can't add the result of the merge operation on 2D slice " + z + ": " + newSlice.getClassName());
     }
+
+    // /**
+    // * Merge the specified ROI with the existing slice at given Z position.<br>
+    // * If there is no slice at this Z position then the method is equivalent to {@link #setSlice(int, ROI2DArea)}
+    // *
+    // * @param z
+    // * the position where the slice must be set
+    // * @param roiSlice
+    // * the 2D ROI to merge
+    // */
+    // public void addROI2DSlice(int z, ROI2D roiSlice)
+    // {
+    // if (roiSlice == null)
+    // return;
+    //
+    // final ROI2DArea currentSlice = getSlice(z);
+    //
+    // // merge both slice
+    // if (currentSlice != null)
+    // {
+    // // we need to modify the Z, T and C position so we do the merge correctly
+    // roiSlice.setZ(z);
+    // roiSlice.setT(getT());
+    // roiSlice.setC(getC());
+    // // do ROI union
+    // currentSlice.add(roiSlice, true);
+    // }
+    // else
+    // setSlice(z, new ROI2DArea(roiSlice.getBooleanMask(true)));
+    // }
 
     /**
      * Returns true if the ROI is empty (the mask does not contains any point).
@@ -633,6 +940,17 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         {
             endUpdate();
         }
+    }
+
+    @Override
+    public boolean isOverEdge(IcyCanvas canvas, double x, double y, double z)
+    {
+        final ROI2DArea slice = getSlice((int) z);
+
+        if (slice != null)
+            return slice.isOverEdge(canvas, x, y);
+
+        return false;
     }
 
     /**
@@ -695,8 +1013,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 
             for (int z = 0; z < rect.sizeZ; z++)
                 setSlice(z + rect.z, new ROI2DArea(mask[z]));
-
-            optimizeBounds();
         }
         finally
         {
@@ -706,7 +1022,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 
     /**
      * Optimize the bounds size to the minimum surface which still include all mask.<br>
-     * You should call it after consecutive remove operations.
+     * You should call it after consecutive remove operations if you directly addressed mask data.
      */
     public void optimizeBounds()
     {
@@ -719,12 +1035,15 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             {
                 final ROI2DArea roi = getSlice(z);
 
-                if (roi.isEmpty())
-                    removeSlice(z);
-                else
+                if (roi != null)
                 {
-                    if (roi.optimizeBounds())
-                        roi.roiChanged(true);
+                    if (roi.isEmpty())
+                        removeSlice(z);
+                    else
+                    {
+                        if (roi.optimizeBounds())
+                            roi.roiChanged(true);
+                    }
                 }
             }
         }

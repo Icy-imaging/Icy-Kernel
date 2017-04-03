@@ -12,7 +12,7 @@ import icy.type.point.Point5D;
  */
 public class ROIPositionTDescriptor extends ROIDescriptor
 {
-    public static final String ID = "PositionT";
+    public static final String ID = "Position T";
 
     public ROIPositionTDescriptor()
     {

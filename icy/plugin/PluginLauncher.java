@@ -124,7 +124,44 @@ public class PluginLauncher
 
     /**
      * Creates a new instance of the specified plugin and returns it.<br>
-     * The plugin is automatically registered t list of active plugins.
+     * 
+     * @param plugin
+     *        descriptor of the plugin we want to create an instance for
+     * @param register
+     *        if we want to register the plugin in the active plugin list
+     * @see #startSafe(PluginDescriptor)
+     */
+    public static Plugin create(final PluginDescriptor plugin, boolean register) throws Exception
+    {
+        final Class<? extends Plugin> clazz = plugin.getPluginClass();
+        final Plugin result;
+
+        // use the special PluginNoEDTConstructor interface or headless mode ?
+        if (ClassUtil.isSubClass(clazz, PluginNoEDTConstructor.class) || Icy.getMainInterface().isHeadLess())
+            result = clazz.newInstance();
+        else
+        {
+            // create the plugin instance on the EDT
+            result = ThreadUtil.invokeNow(new Callable<Plugin>()
+            {
+                @Override
+                public Plugin call() throws Exception
+                {
+                    return clazz.newInstance();
+                }
+            });
+        }
+
+        // register plugin
+        if (register)
+            Icy.getMainInterface().registerPlugin(result);
+
+        return result;
+    }
+
+    /**
+     * Creates a new instance of the specified plugin and returns it.<br>
+     * The plugin is automatically registered to the list of active plugins.
      * 
      * @param plugin
      *        descriptor of the plugin we want to create an instance for
@@ -132,26 +169,7 @@ public class PluginLauncher
      */
     public static Plugin create(final PluginDescriptor plugin) throws Exception
     {
-        final Class<? extends Plugin> clazz = plugin.getPluginClass();
-
-        // use the special PluginNoEDTConstructor interface or headless mode ?
-        if (ClassUtil.isSubClass(clazz, PluginNoEDTConstructor.class) || Icy.getMainInterface().isHeadLess())
-            return clazz.newInstance();
-
-        // create the plugin instance on the EDT
-        final Plugin result = ThreadUtil.invokeNow(new Callable<Plugin>()
-        {
-            @Override
-            public Plugin call() throws Exception
-            {
-                return clazz.newInstance();
-            }
-        });
-
-        // register plugin
-        Icy.getMainInterface().registerPlugin(result);
-
-        return result;
+        return create(plugin, true);
     }
 
     /**

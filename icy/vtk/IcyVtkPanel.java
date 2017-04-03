@@ -348,7 +348,7 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
     }
 
     /**
-     * Zoom current view by specified factor (negative value means unzoom)
+     * Zoom current view by specified factor (value < 1d means unzoom while value > 1d mean zoom)
      */
     public void zoomView(vtkCamera c, vtkRenderer r, double factor)
     {
@@ -638,6 +638,9 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         if (ren.VisibleActorCount() == 0)
             return;
 
+        // consume event
+        e.consume();
+
         // want fast update
         setCoarseRendering();
         // abort current rendering
@@ -659,12 +662,12 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         if (EventUtil.isRightMouseButton(e) || (EventUtil.isLeftMouseButton(e) && EventUtil.isShiftDown(e)))
             // translation mode
             translateView(-deltaX * 2, deltaY * 2);
-        else if (EventUtil.isLeftMouseButton(e))
-            // rotation mode
-            rotateView(deltaX, -deltaY);
-        else
+        else if (EventUtil.isMiddleMouseButton(e))
             // zoom mode
             zoomView(Math.pow(1.02, -deltaY));
+        else
+            // rotation mode
+            rotateView(deltaX, -deltaY);
 
         // save mouse position
         lastX = x;
@@ -688,6 +691,9 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
             return;
         if (ren.VisibleActorCount() == 0)
             return;
+
+        // consume event
+        e.consume();
 
         // want fast update
         setCoarseRendering();
@@ -735,10 +741,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
             case 'r': // reset camera
                 resetCamera();
                 repaint();
-                break;
-
-            case 'u': // picking
-                pickActor(lastX, lastY);
+                // consume event
+                e.consume();
                 break;
 
             case 'w': // wireframe mode
@@ -758,6 +762,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
                     unlock();
                 }
                 repaint();
+                // consume event
+                e.consume();
                 break;
 
             case 's':
@@ -777,6 +783,8 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
                     unlock();
                 }
                 repaint();
+                // consume event
+                e.consume();
                 break;
         }
     }
@@ -787,5 +795,4 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
         if (e.isConsumed())
             return;
     }
-
 }

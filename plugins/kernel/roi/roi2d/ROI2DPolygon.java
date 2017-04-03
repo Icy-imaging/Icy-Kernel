@@ -21,7 +21,7 @@ package plugins.kernel.roi.roi2d;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
-import icy.roi.Polygon2D;
+import icy.type.geom.Polygon2D;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -85,19 +85,11 @@ public class ROI2DPolygon extends ROI2DShape
     {
         super(new Polygon2D());
 
-        // add points to list
-        final Anchor2D anchor = createAnchor(pt);
-        // just add the new point at last position
-        addPoint(anchor);
-        // always select
-        anchor.setSelected(true);
+        final Anchor2D point = createAnchor(pt);
+        point.setSelected(true);
+        addPoint(point);
 
-        // getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
-
-        updateShape();
-
-        // set name and icon
-        setName("Polygon2D");
+        // set icon (default name is defined by getDefaultName())
         setIcon(ResourceUtil.ICON_ROI_POLYGON);
     }
 
@@ -115,18 +107,38 @@ public class ROI2DPolygon extends ROI2DShape
         this(new Point2D.Double());
 
         setPoints(points);
+        unselectAllPoints();
     }
 
+    /**
+     * @deprecated Better to use {@link #ROI2DPolygon(Polygon2D)} instead to have double point precision
+     */
+    @Deprecated
     public ROI2DPolygon(Polygon polygon)
     {
         this(new Point2D.Double());
 
         setPolygon(polygon);
+        unselectAllPoints();
+    }
+
+    public ROI2DPolygon(Polygon2D polygon)
+    {
+        this(new Point2D.Double());
+
+        setPolygon2D(polygon);
+        unselectAllPoints();
     }
 
     public ROI2DPolygon()
     {
         this(new Point2D.Double());
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "Polygon2D";
     }
 
     @Override
@@ -211,16 +223,23 @@ public class ROI2DPolygon extends ROI2DShape
     @Override
     protected void updateShape()
     {
-        final int len = controlPoints.size();
-        final double ptsX[] = new double[len];
-        final double ptsY[] = new double[len];
+        final int len;
+        final double[] ptsX;
+        final double[] ptsY;
 
-        for (int i = 0; i < len; i++)
+        synchronized (controlPoints)
         {
-            final Anchor2D pt = controlPoints.get(i);
+            len = controlPoints.size();
+            ptsX = new double[len];
+            ptsY = new double[len];
 
-            ptsX[i] = pt.getX();
-            ptsY[i] = pt.getY();
+            for (int i = 0; i < len; i++)
+            {
+                final Anchor2D pt = controlPoints.get(i);
+
+                ptsX[i] = pt.getX();
+                ptsY[i] = pt.getY();
+            }
         }
 
         final Polygon2D polygon2d = getPolygon2D();
@@ -275,9 +294,11 @@ public class ROI2DPolygon extends ROI2DShape
             return false;
 
         final Element nodePoints = XMLUtil.setElement(node, ID_POINTS);
-        for (Anchor2D pt : controlPoints)
-            pt.savePositionToXML(XMLUtil.addElement(nodePoints, ID_POINT));
-
+        synchronized (controlPoints)
+        {
+            for (Anchor2D pt : controlPoints)
+                pt.savePositionToXML(XMLUtil.addElement(nodePoints, ID_POINT));
+        }
         return true;
     }
 }

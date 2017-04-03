@@ -22,6 +22,8 @@ import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
+import icy.image.colormap.IcyColorMap;
+import icy.image.colormap.LinearColorMap;
 import icy.image.lut.LUT;
 import icy.math.Scaler;
 import icy.painter.Overlay;
@@ -33,7 +35,10 @@ import icy.type.rectangle.Rectangle5D;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -153,7 +158,7 @@ public class SequenceUtil
         }
 
         public static IcyBufferedImage getImage(Sequence[] sequences, int[] channels, int sizeX, int sizeY, int t,
-                int z, boolean fillEmpty, boolean rescale)
+                int z, boolean fillEmpty, boolean rescale) throws IllegalArgumentException
         {
             if (sequences.length == 0)
                 return null;
@@ -258,27 +263,23 @@ public class SequenceUtil
         public static IcyBufferedImage getImage(Sequence[] sequences, int sizeX, int sizeY, int sizeC, int t, int z,
                 boolean interlaced, boolean fillEmpty, boolean rescale)
         {
-            final IcyBufferedImage origin = getImageInternal(sequences, t, z, interlaced, fillEmpty);
-            IcyBufferedImage img = origin;
+            IcyBufferedImage result = getImageInternal(sequences, t, z, interlaced, fillEmpty);
 
-            if (img != null)
+            if (result != null)
             {
                 // resize X and Y dimension if needed
-                if ((img.getSizeX() != sizeX) || (img.getSizeY() != sizeY))
-                    img = IcyBufferedImageUtil.scale(img, sizeX, sizeY, rescale, SwingConstants.CENTER,
+                if ((result.getSizeX() != sizeX) || (result.getSizeY() != sizeY))
+                    result = IcyBufferedImageUtil.scale(result, sizeX, sizeY, rescale, SwingConstants.CENTER,
                             SwingConstants.CENTER, FilterType.BILINEAR);
 
-                final int imgSizeC = img.getSizeC();
+                final int imgSizeC = result.getSizeC();
 
                 // resize C dimension if needed
                 if (imgSizeC < sizeC)
-                    return IcyBufferedImageUtil.addChannels(img, imgSizeC, sizeC - imgSizeC);
-
-                if (img == origin)
-                    return img;
+                    return IcyBufferedImageUtil.addChannels(result, imgSizeC, sizeC - imgSizeC);
             }
 
-            return img;
+            return result;
         }
     }
 
@@ -358,27 +359,23 @@ public class SequenceUtil
         public static IcyBufferedImage getImage(Sequence[] sequences, int sizeX, int sizeY, int sizeC, int t, int z,
                 boolean interlaced, boolean fillEmpty, boolean rescale)
         {
-            final IcyBufferedImage origin = getImageInternal(sequences, t, z, interlaced, fillEmpty);
-            IcyBufferedImage img = origin;
+            IcyBufferedImage result = getImageInternal(sequences, t, z, interlaced, fillEmpty);
 
-            if (img != null)
+            if (result != null)
             {
                 // resize X and Y dimension if needed
-                if ((img.getSizeX() != sizeX) || (img.getSizeY() != sizeY))
-                    img = IcyBufferedImageUtil.scale(img, sizeX, sizeY, rescale, SwingConstants.CENTER,
+                if ((result.getSizeX() != sizeX) || (result.getSizeY() != sizeY))
+                    result = IcyBufferedImageUtil.scale(result, sizeX, sizeY, rescale, SwingConstants.CENTER,
                             SwingConstants.CENTER, FilterType.BILINEAR);
 
-                final int imgSizeC = img.getSizeC();
+                final int imgSizeC = result.getSizeC();
 
                 // resize C dimension if needed
                 if (imgSizeC < sizeC)
-                    return IcyBufferedImageUtil.addChannels(img, imgSizeC, sizeC - imgSizeC);
-
-                if (img == origin)
-                    return img;
+                    return IcyBufferedImageUtil.addChannels(result, imgSizeC, sizeC - imgSizeC);
             }
 
-            return img;
+            return result;
         }
     }
 
@@ -684,6 +681,9 @@ public class SequenceUtil
         {
             sequence.endUpdate();
         }
+
+        // to avoid memory leak as images now contained in sequence will retain 'save' sequence forever
+        save.removeAllImages();
     }
 
     /**
@@ -957,6 +957,9 @@ public class SequenceUtil
         {
             sequence.endUpdate();
         }
+
+        // to avoid memory leak as images now contained in sequence will retain 'save' sequence forever
+        save.removeAllImages();
     }
 
     /**
@@ -1048,6 +1051,9 @@ public class SequenceUtil
             // and colormaps
             for (int c = 0; c < tmp.getSizeC(); c++)
                 source.setDefaultColormap(c, tmp.getDefaultColorMap(c), false);
+
+            // to avoid memory leak as images now contained in source will retain this sequence forever
+            tmp.removeAllImages();
         }
         finally
         {
@@ -1105,9 +1111,11 @@ public class SequenceUtil
      *        Images are scaled to all fit in the same XY dimension.
      * @param pl
      *        ProgressListener to indicate processing progress.
+     * @throws IllegalArgumentException
+     *         if sequences contains incompatible sequence for merge operation.
      */
     public static Sequence concatC(Sequence[] sequences, int[] channels, boolean fillEmpty, boolean rescale,
-            ProgressListener pl)
+            ProgressListener pl) throws IllegalArgumentException
     {
         final int sizeX = getMaxDim(sequences, DimensionId.X);
         final int sizeY = getMaxDim(sequences, DimensionId.Y);
@@ -1141,10 +1149,15 @@ public class SequenceUtil
             for (int sc = 0; sc < seq.getSizeC(); sc++, c++)
             {
                 final String channelName = seq.getChannelName(sc);
+                final IcyColorMap channelColor = seq.getColorMap(sc);
 
                 // not default channel name --> we keep it
                 if (!StringUtil.equals(seq.getDefaultChannelName(sc), channelName))
                     result.setChannelName(c, channelName);
+
+                // not default white color map --> we keep it
+                if (!channelColor.equals(LinearColorMap.white_))
+                    result.setColormap(c, channelColor, true);
             }
         }
 
@@ -1402,6 +1415,9 @@ public class SequenceUtil
             for (int t = 0; t < newSizeT; t++)
                 for (int z = 0; z < newSizeZ; z++)
                     sequence.setImage(t, z, AdjustZTHelper.getImage(tmp, t, z, newSizeZ, newSizeT, reverseOrder));
+
+            // to avoid memory leak as images now contained in sequence will 'tmp' sequence forever
+            tmp.removeAllImages();
         }
         finally
         {
@@ -1553,7 +1569,11 @@ public class SequenceUtil
      */
     public static Sequence extractSlice(Sequence source, int z)
     {
-        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final OMEXMLMetadataImpl metadata = OMEUtil.createOMEMetadata(source.getMetadata());
+        final Sequence outSequence = new Sequence(metadata);
+
+        // keep only metadata for specified slice
+        MetaDataUtil.keepPlanes(metadata, 0, -1, z, -1);
 
         outSequence.beginUpdate();
         try
@@ -1582,7 +1602,11 @@ public class SequenceUtil
      */
     public static Sequence extractFrame(Sequence source, int t)
     {
-        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final OMEXMLMetadataImpl metadata = OMEUtil.createOMEMetadata(source.getMetadata());
+        final Sequence outSequence = new Sequence(metadata);
+
+        // keep only metadata for specified frame
+        MetaDataUtil.keepPlanes(metadata, 0, t, -1, -1);
 
         outSequence.beginUpdate();
         try
@@ -1745,6 +1769,14 @@ public class SequenceUtil
                 }
             }
 
+            // preserve channel informations
+            for (int c = 0; c < source.getSizeC(); c++)
+            {
+                output.setChannelName(c, source.getChannelName(c));
+                output.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+                output.setColormap(c, source.getColorMap(c));
+            }
+
             output.setName(source.getName() + " (" + output.getDataType_() + ")");
         }
         finally
@@ -1786,6 +1818,14 @@ public class SequenceUtil
         finally
         {
             result.endUpdate();
+        }
+
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            result.setChannelName(c, source.getChannelName(c));
+            result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            result.setColormap(c, source.getColorMap(c));
         }
 
         result.setName(source.getName() + " (rotated)");
@@ -1863,7 +1903,16 @@ public class SequenceUtil
             result.endUpdate();
         }
 
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            result.setChannelName(c, source.getChannelName(c));
+            result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            result.setColormap(c, source.getColorMap(c));
+        }
+
         result.setName(source.getName() + " (resized)");
+        
         // content was resized ?
         if (resizeContent)
         {
@@ -1934,6 +1983,8 @@ public class SequenceUtil
         final int endZ;
         final int startT;
         final int endT;
+        final int startC;
+        final int endC;
 
         if (region.isInfiniteZ())
         {
@@ -1955,6 +2006,16 @@ public class SequenceUtil
             startT = Math.max(0, region.t);
             endT = Math.min(source.getSizeT(), region.t + region.sizeT);
         }
+        if (region.isInfiniteC())
+        {
+            startC = 0;
+            endC = source.getSizeC();
+        }
+        else
+        {
+            startC = Math.max(0, region.c);
+            endC = Math.min(source.getSizeC(), region.c + region.sizeC);
+        }
 
         result.beginUpdate();
         try
@@ -1963,13 +2024,12 @@ public class SequenceUtil
             {
                 for (int z = startZ; z < endZ; z++)
                 {
-                    final IcyBufferedImage img = source.getImage(t, z);
+                    IcyBufferedImage img = source.getImage(t, z);
 
                     if (img != null)
-                        result.setImage(t - startT, z - startZ,
-                                IcyBufferedImageUtil.getSubImage(img, region2d, region.c, region.sizeC));
-                    else
-                        result.setImage(t - startT, z - startZ, null);
+                        img = IcyBufferedImageUtil.getSubImage(img, region2d, startC, (endC - startC) + 1);
+
+                    result.setImage(t - startT, z - startZ, img);
                 }
             }
         }
@@ -1978,7 +2038,20 @@ public class SequenceUtil
             result.endUpdate();
         }
 
+        // preserve channel informations
+        for (int c = startC; c < endC; c++)
+        {
+            result.setChannelName(c - startC, source.getChannelName(c));
+            result.setDefaultColormap(c - startC, source.getDefaultColorMap(c), true);
+            result.setColormap(c - startC, source.getColorMap(c));
+        }
+
         result.setName(source.getName() + " (crop)");
+
+        // adjust position X, Y, Z
+        result.setPositionX(source.getPositionX() + (region2d.x * source.getPixelSizeX()));
+        result.setPositionY(source.getPositionY() + (region2d.y * source.getPixelSizeY()));
+        result.setPositionZ(source.getPositionZ() + (startZ * source.getPixelSizeZ()));
 
         return result;
     }
@@ -2074,9 +2147,11 @@ public class SequenceUtil
      * @param source
      *        the source sequence to copy
      * @param copyROI
-     *        Copy the ROI from source sequence
+     *        Copy the ROI from source sequence.<br>
+     *        Warning: by doing that the ROI will retain the result sequence as long the source sequence is alive.
      * @param copyOverlay
-     *        Copy the Overlay from source sequence
+     *        Copy the Overlay from source sequence.<br>
+     *        Warning: by doing that the Overlay will retain the result sequence as long the source sequence is alive.
      * @param nameSuffix
      *        add the suffix <i>" (copy)"</i> to the new Sequence name to distinguish it
      */
@@ -2098,6 +2173,15 @@ public class SequenceUtil
                 for (Overlay overlay : source.getOverlays())
                     result.addOverlay(overlay);
             }
+            
+            // preserve channel informations
+            for (int c = 0; c < source.getSizeC(); c++)
+            {
+                result.setChannelName(c, source.getChannelName(c));
+                result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+                result.setColormap(c, source.getColorMap(c));
+            }
+            
             if (nameSuffix)
                 result.setName(source.getName() + " (copy)");
         }
@@ -2198,6 +2282,84 @@ public class SequenceUtil
         {
             result.endUpdate();
         }
+
+        return result;
+    }
+
+    /**
+     * Convert the given Point2D coordinate from an input resolution and a wanted output resolution level (0/1/2/3/...)
+     * 
+     * @see Sequence#getOriginResolution()
+     */
+    public static Point2D convertPoint(Point2D pt, int inputResolution, int outputResolution)
+    {
+        if (pt == null)
+            return null;
+
+        final double factor = Math.pow(2, inputResolution - outputResolution);
+
+        return new Point2D.Double(pt.getX() * factor, pt.getY() * factor);
+    }
+
+    /**
+     * Convert the given Rectangle2D from an input resolution and a wanted output resolution level (0/1/2/3/...)
+     * 
+     * @see Sequence#getOriginResolution()
+     */
+    public static Rectangle2D convertRectangle(Rectangle2D rect, int inputResolution, int outputResolution)
+    {
+        if (rect == null)
+            return null;
+
+        final double factor = Math.pow(2, inputResolution - outputResolution);
+
+        return new Rectangle2D.Double(rect.getX() * factor, rect.getY() * factor, rect.getWidth() * factor,
+                rect.getHeight() * factor);
+    }
+
+    /**
+     * Convert the given Point coordinate from the source Sequence into the original image coordinate (pixel)<br>
+     * This method use the {@link Sequence#getOriginResolution()} and {@link Sequence#getOriginXYRegion()} informations
+     * to compute the original image position.
+     * 
+     * @see Sequence#getOriginResolution()
+     * @see Sequence#getOriginXYRegion()
+     */
+    public static Point getOriginPoint(Point pt, Sequence source)
+    {
+        if (pt == null)
+            return null;
+
+        final Point2D adjPt = convertPoint(pt, source.getOriginResolution(), 0);
+        final Point result = new Point((int) adjPt.getX(), (int) adjPt.getY());
+
+        final Rectangle region = source.getOriginXYRegion();
+        if (region != null)
+            result.setLocation(result.x + region.x, result.y + region.y);
+
+        return result;
+    }
+
+    /**
+     * Convert the given Rectangle region from the source Sequence into the original image region coordinates (pixel)<br>
+     * This method use the {@link Sequence#getOriginResolution()} and {@link Sequence#getOriginXYRegion()} informations
+     * to compute the original image region coordinates.
+     * 
+     * @see Sequence#getOriginResolution()
+     * @see Sequence#getOriginXYRegion()
+     */
+    public static Rectangle getOriginRectangle(Rectangle rect, Sequence source)
+    {
+        if (rect == null)
+            return null;
+
+        final Rectangle2D adjRect = convertRectangle(rect, source.getOriginResolution(), 0);
+        final Rectangle result = new Rectangle((int) adjRect.getX(), (int) adjRect.getY(), (int) adjRect.getWidth(),
+                (int) adjRect.getHeight());
+
+        final Rectangle region = source.getOriginXYRegion();
+        if (region != null)
+            result.setLocation(result.x + region.x, result.y + region.y);
 
         return result;
     }

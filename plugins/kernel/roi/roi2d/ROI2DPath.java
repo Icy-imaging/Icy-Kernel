@@ -20,12 +20,12 @@ package plugins.kernel.roi.roi2d;
 
 import icy.painter.Anchor2D;
 import icy.painter.PathAnchor2D;
+import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.type.point.Point5D;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
-import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
@@ -82,8 +82,8 @@ public class ROI2DPath extends ROI2DShape
         else
             this.openPath = openPath;
 
-        // set name
-        setName("Path2D");
+        // set icon (default name is defined by getDefaultName())
+        setIcon(ResourceUtil.ICON_ROI_POLYLINE);
     }
 
     /**
@@ -131,6 +131,12 @@ public class ROI2DPath extends ROI2DShape
     }
 
     @Override
+    public String getDefaultName()
+    {
+        return "Path2D";
+    }
+
+    @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
         return new PathAnchor2D(pos.getX(), pos.getY(), getColor(), getFocusedColor());
@@ -138,25 +144,19 @@ public class ROI2DPath extends ROI2DShape
 
     protected void rebuildControlPointsFromPath()
     {
-        final Color color = getColor();
-        final Color focusedColor = getFocusedColor();
-
-        // remove listeners
-        for (Anchor2D pt : controlPoints)
+        beginUpdate();
+        try
         {
-            pt.removeOverlayListener(anchor2DOverlayListener);
-            pt.removePositionListener(anchor2DPositionListener);
+            // remove all point
+            removeAllPoint();
+
+            // add path points to the control point list
+            for (Anchor2D pt : ShapeUtil.getAnchorsFromShape(getPath(), getColor(), getFocusedColor()))
+                addPoint(pt);
         }
-
-        controlPoints.clear();
-        // add path points to the control point list
-        controlPoints.addAll(ShapeUtil.getAnchorsFromShape(getPath(), color, focusedColor));
-
-        // add listeners
-        for (Anchor2D pt : controlPoints)
+        finally
         {
-            pt.addOverlayListener(anchor2DOverlayListener);
-            pt.addPositionListener(anchor2DPositionListener);
+            endUpdate();
         }
     }
 
@@ -461,7 +461,7 @@ public class ROI2DPath extends ROI2DShape
             {
                 for (Node n : nodesPoint)
                 {
-                    final PathAnchor2D pt = new PathAnchor2D();
+                    final PathAnchor2D pt = (PathAnchor2D) createAnchor(new Point2D.Double());
                     pt.loadPositionFromXML(n);
                     addPoint(pt);
                 }

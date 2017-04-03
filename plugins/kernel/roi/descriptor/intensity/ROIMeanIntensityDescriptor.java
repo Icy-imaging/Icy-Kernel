@@ -16,7 +16,7 @@ import icy.sequence.SequenceEvent.SequenceEventSourceType;
  */
 public class ROIMeanIntensityDescriptor extends ROIDescriptor
 {
-    public static final String ID = "MeanIntensity";
+    public static final String ID = "Mean intensity";
 
     public ROIMeanIntensityDescriptor()
     {

@@ -19,17 +19,27 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
-import icy.common.CollapsibleEvent;
-import icy.roi.ROIEvent.ROIEventType;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
+import icy.gui.util.FontUtil;
+import icy.preferences.GeneralPreferences;
+import icy.roi.edit.PositionROIEdit;
 import icy.sequence.Sequence;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
-import icy.util.StringUtil;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.XMLUtil;
 
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +79,258 @@ public abstract class ROI3D extends ROI
         return result;
     }
 
+    public abstract class ROI3DPainter extends ROIPainter
+    {
+        protected Point3D startDragMousePosition;
+        protected Point3D startDragROIPosition;
+
+        public ROI3DPainter()
+        {
+            super();
+
+            startDragMousePosition = null;
+            startDragROIPosition = null;
+        }
+
+        @Override
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            if (imagePoint == null)
+                return false;
+
+            // test on canvas has already be done, don't do it again
+            final boolean focused = isOverEdge(canvas, imagePoint.getX(), imagePoint.getY(), imagePoint.getZ());
+
+            setFocused(focused);
+
+            return focused;
+        }
+
+        @Override
+        protected boolean updateDrag(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
+        {
+            // not dragging --> exit
+            if (startDragMousePosition == null)
+                return false;
+            if (imagePoint == null)
+                return false;
+            if (!canSetPosition())
+                return false;
+
+            double dx = imagePoint.getX() - startDragMousePosition.getX();
+            double dy = imagePoint.getY() - startDragMousePosition.getY();
+            double dz = imagePoint.getZ() - startDragMousePosition.getZ();
+
+            // shift action --> limit to one direction
+            if (EventUtil.isShiftDown(e))
+            {
+                // X or Z drag
+                if (Math.abs(dx) > Math.abs(dy))
+                {
+                    dy = 0d;
+
+                    // Z drag
+                    if (Math.abs(dz) > Math.abs(dx))
+                        dx = 0d;
+                    else
+                        dz = 0d;
+                }
+                // Y or Z drag
+                else
+                {
+                    dx = 0d;
+
+                    // Z drag
+                    if (Math.abs(dz) > Math.abs(dy))
+                        dy = 0d;
+                    else
+                        dz = 0d;
+                }
+            }
+
+            // needed for undo operation
+            final Sequence sequence;
+            final Point5D savePosition;
+
+            // get canvas which modify the ROI --> get the sequence
+            if (canvas != null)
+                sequence = canvas.getSequence();
+            else
+                sequence = null;
+
+            if (sequence != null)
+                savePosition = getPosition5D();
+            else
+                savePosition = null;
+
+            // set new position
+            setPosition3D(new Point3D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy,
+                    startDragROIPosition.getZ() + dz));
+
+            // allow undo as the ROI position has been modified from canvas
+            if ((sequence != null) && (savePosition != null))
+                // add position change to undo manager
+                sequence.addUndoableEdit(new PositionROIEdit(ROI3D.this, savePosition));
+
+            return true;
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            super.mousePressed(e, imagePoint, canvas);
+
+            // ROI editable ? (don't check for consumption as selection can consume event)
+            if (!isReadOnly())
+            {
+                // check we can do the action
+                if (imagePoint != null)
+                {
+                    if (isActiveFor(canvas))
+                    {
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
+                        {
+                            ROI3D.this.beginUpdate();
+                            try
+                            {
+                                // roi focused ?
+                                if (isFocused())
+                                {
+                                    startDragMousePosition = imagePoint.toPoint3D();
+                                    startDragROIPosition = getPosition3D();
+                                }
+                            }
+                            finally
+                            {
+                                ROI3D.this.endUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // do parent stuff
+            super.mouseReleased(e, imagePoint, canvas);
+
+            startDragMousePosition = null;
+        }
+
+        @Override
+        public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+        {
+            // do parent stuff
+            super.mouseDrag(e, imagePoint, canvas);
+
+            // not yet consumed and ROI editable...
+            if (!e.isConsumed() && !isReadOnly())
+            {
+                // check we can do the action
+                if (imagePoint != null)
+                {
+                    if (isActiveFor(canvas))
+                    {
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
+                        {
+                            ROI3D.this.beginUpdate();
+                            try
+                            {
+                                // roi focused ?
+                                if (isFocused())
+                                {
+                                    // store drag start position if not yet done
+                                    if (startDragMousePosition == null)
+                                    {
+                                        startDragMousePosition = imagePoint.toPoint3D();
+                                        startDragROIPosition = getPosition3D();
+                                    }
+
+                                    updateDrag(e, imagePoint, canvas);
+
+                                    // consume event
+                                    e.consume();
+                                }
+                            }
+                            finally
+                            {
+                                ROI3D.this.endUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (isActiveFor(canvas))
+            {
+                drawROI(g, sequence, canvas);
+                // display name ?
+                if (getShowName())
+                    drawName(g, sequence, canvas);
+            }
+        }
+
+        /**
+         * Draw the ROI
+         */
+        public abstract void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas);
+
+        /**
+         * Draw the ROI name
+         */
+        public void drawName(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (canvas instanceof IcyCanvas2D)
+            {
+                // not supported
+                if (g == null)
+                    return;
+
+                final Rectangle3D bounds3d = getBounds3D();
+                final int posZ = canvas.getPositionZ();
+
+                // ROI is not visible on this Z position --> nothing to draw
+                if ((posZ != -1) && (bounds3d.getMinZ() > posZ) || (bounds3d.getMaxZ() < posZ))
+                    return;
+
+                final Graphics2D g2 = (Graphics2D) g.create();
+                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+                final Rectangle2D bounds = bounds3d.toRectangle2D();
+                final Point pos = cnv2d.imageToCanvas(bounds.getCenterX(), bounds.getMinY());
+                final double coef = Math.log(canvas.getScaleX() + 1);
+                final double fontSize = (GeneralPreferences.getGuiFontSize() - 4) + (int) (coef * 10d);
+
+                // go to absolute coordinates
+                g2.transform(cnv2d.getInverseTransform());
+                // set text anti alias
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                // set font
+                g2.setFont(FontUtil.setSize(g2.getFont(), (int) fontSize));
+                // set color
+                g2.setColor(getColor());
+
+                // draw ROI name
+                GraphicsUtil.drawHCenteredString(g2, getName(), pos.x, pos.y - (int) (2 * fontSize), true);
+
+                g2.dispose();
+            }
+
+            if (canvas instanceof IcyCanvas3D)
+            {
+                // not yet supported
+
+            }
+        }
+    }
+
     public static final String ID_T = "t";
     public static final String ID_C = "c";
 
@@ -88,6 +350,12 @@ public abstract class ROI3D extends ROI
         // by default we consider no specific T and C attachment
         t = -1;
         c = -1;
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "ROI3D";
     }
 
     @Override
@@ -609,7 +877,7 @@ public abstract class ROI3D extends ROI
     {
         // not on the correct T, C position --> return empty mask
         if (!isActiveFor(t, c))
-            return new boolean[width * height];
+            return new boolean[Math.max(0, width) * Math.max(0, height)];
 
         return getBooleanMask2D(x, y, width, height, z, inclusive);
     }
@@ -637,7 +905,7 @@ public abstract class ROI3D extends ROI
      */
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, boolean inclusive)
     {
-        final boolean[] result = new boolean[width * height];
+        final boolean[] result = new boolean[Math.max(0, width) * Math.max(0, height)];
 
         // simple and basic implementation, override it to have better performance
         int offset = 0;
@@ -816,6 +1084,13 @@ public abstract class ROI3D extends ROI
         return computeSurfaceArea(sequence);
     }
 
+    @Override
+    public double getLength(Sequence sequence) throws UnsupportedOperationException
+    {
+        // not supported on ROI3D by default
+        throw new UnsupportedOperationException("getLength() not supported for " + getClassName() + ".");
+    }
+
     /**
      * Return surface area of the 3D ROI in pixels.<br>
      * This is basically the number of pixel representing ROI edges.<br>
@@ -923,20 +1198,62 @@ public abstract class ROI3D extends ROI
         return ((getT() == -1) || (t == -1) || (getT() == t)) && ((getC() == -1) || (c == -1) || (getC() == c));
     }
 
-//    @Override
-//    public void onChanged(CollapsibleEvent object)
-//    {
-//        super.onChanged(object);
-//
-//        final ROIEvent event = (ROIEvent) object;
-//
-//        if (event.getType() == ROIEventType.ROI_CHANGED)
-//        {
-//            // need to recompute surface area
-//            if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
-//                surfaceAreaInvalid = true;
-//        }
-//    }
+    // @Override
+    // public void onChanged(CollapsibleEvent object)
+    // {
+    // super.onChanged(object);
+    //
+    // final ROIEvent event = (ROIEvent) object;
+    //
+    // if (event.getType() == ROIEventType.ROI_CHANGED)
+    // {
+    // // need to recompute surface area
+    // if (StringUtil.equals(event.getPropertyName(), ROI_CHANGED_ALL))
+    // surfaceAreaInvalid = true;
+    // }
+    // }
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(Point3D)} to test for content overlap instead.
+     */
+    public boolean isOverEdge(IcyCanvas canvas, Point3D p)
+    {
+        return isOverEdge(canvas, p.getX(), p.getY(), p.getZ());
+    }
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(double, double, double)} to test for content overlap instead.</br>
+     * We provide a default implementation to not break compatibility.
+     */
+    public boolean isOverEdge(IcyCanvas canvas, double x, double y, double z)
+    {
+        // override it in children classes
+        return false;
+    }
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(Point5D)} to test for content overlap instead.
+     */
+    public boolean isOverEdge(IcyCanvas canvas, Point5D p)
+    {
+        return isOverEdge(canvas, p.getX(), p.getY(), p.getZ(), p.getT(), p.getC());
+    }
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(double, double, double, double, double)} to test for content overlap
+     * instead.
+     */
+    public boolean isOverEdge(IcyCanvas canvas, double x, double y, double z, double t, double c)
+    {
+        if (isActiveFor((int) t, (int) c))
+            return isOverEdge(canvas, x, y, z);
+
+        return false;
+    }
 
     @Override
     public boolean loadFromXML(Node node)

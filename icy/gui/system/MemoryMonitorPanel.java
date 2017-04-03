@@ -60,10 +60,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
      * 0 est la valeur la plus ancienne.
      */
     private final double[][] valeur;
-    private final double[] max;
     private final String[] infos;
     private final Timer updateTimer;
-    private final double maxMemory;
 
     private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
     private final Color cpuTextColor = ColorUtil.mix(cpuColor, Color.white);
@@ -84,7 +82,6 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         super();
 
         updateTimer = new Timer("Memory / CPU monitor");
-        maxMemory = SystemUtil.getJavaMaxMemory();
 
         // init tables
         valeur = new double[NBVAL][2];
@@ -93,9 +90,6 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             valeur[i][0] = 0;
             valeur[i][1] = 0;
         }
-        max = new double[2];
-        setMax(0, maxMemory);
-        setMax(1, 100);
         infos = new String[2];
         for (int i = 0; i < 2; i++)
             infos[i] = "";
@@ -146,40 +140,34 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             g2.setStroke(memStroke);
             g2.setColor(memColor);
 
-            max = this.max[0];
-            if (max != 0)
+            max = SystemUtil.getJavaMaxMemory();
+            ymul = (h - 8) / max;
+            x = 6;
+            for (int i = 0; i < NBVAL - 1; i++)
             {
-                ymul = (h - 8) / max;
-                x = 6;
-                for (int i = 0; i < NBVAL - 1; i++)
-                {
-                    final double v1 = Math.min(valeur[i][0], max);
-                    final double v2 = Math.min(valeur[i + 1][0], max);
-                    final int y1 = h - (int) (v1 * ymul);
-                    final int y2 = h - (int) (v2 * ymul);
-                    g2.drawLine((int) x, y1 - 4, (int) (x + step), y2 - 4);
-                    x += step;
-                }
+                final double v1 = Math.min(valeur[i][0], max);
+                final double v2 = Math.min(valeur[i + 1][0], max);
+                final int y1 = h - (int) (v1 * ymul);
+                final int y2 = h - (int) (v2 * ymul);
+                g2.drawLine((int) x, y1 - 4, (int) (x + step), y2 - 4);
+                x += step;
             }
 
             // draw CPU load
             g2.setStroke(cpuStroke);
             g2.setColor(cpuColor);
 
-            max = this.max[1];
-            if (max != 0)
+            max = 100d;
+            ymul = (h - 8) / max;
+            x = 6;
+            for (int i = 0; i < NBVAL - 1; i++)
             {
-                ymul = (h - 8) / max;
-                x = 6;
-                for (int i = 0; i < NBVAL - 1; i++)
-                {
-                    final double v1 = Math.min(valeur[i][1], max);
-                    final double v2 = Math.min(valeur[i + 1][1], max);
-                    final int y1 = h - (int) (v1 * ymul);
-                    final int y2 = h - (int) (v2 * ymul);
-                    g2.drawLine((int) x, y1 - 4, (int) (x + step), y2 - 4);
-                    x += step;
-                }
+                final double v1 = Math.min(valeur[i][1], max);
+                final double v2 = Math.min(valeur[i + 1][1], max);
+                final int y1 = h - (int) (v1 * ymul);
+                final int y2 = h - (int) (v2 * ymul);
+                g2.drawLine((int) x, y1 - 4, (int) (x + step), y2 - 4);
+                x += step;
             }
         }
 
@@ -230,8 +218,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
     void updateMemoryMessageBar()
     {
-        final double totalMemory = SystemUtil.getJavaTotalMemory();
-        final double usedMemory = totalMemory - SystemUtil.getJavaFreeMemory();
+        final double usedMemory = SystemUtil.getJavaUsedMemory();
         final int cpuLoad = SystemUtil.getCpuLoad();
 
         // save used memory
@@ -239,8 +226,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         // save CPU load
         newValue(1, cpuLoad);
 
-        setInfo(0, "Memory: " + UnitUtil.getBytesString(usedMemory) + "  (Max: " + UnitUtil.getBytesString(maxMemory)
-                + ")");
+        setInfo(0,
+                "Memory: " + UnitUtil.getBytesString(usedMemory) + "  (Max: "
+                        + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + ")");
         setInfo(1, "CPU: " + cpuLoad + "%");
 
         repaint();
@@ -262,23 +250,16 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         infos[infonb] = info;
     }
 
-    public void setMax(int curve, double max)
-    {
-        this.max[curve] = max;
-    }
-
     @Override
     public void mouseClicked(MouseEvent event)
     {
         final MouseEvent e = event;
 
-        
         ThreadUtil.bgRun(new Runnable()
         {
             @Override
             public void run()
             {
-                final double totalMemory = SystemUtil.getJavaTotalMemory();
                 final double freeBefore = SystemUtil.getJavaFreeMemory();
 
                 // force garbage collector
@@ -286,15 +267,14 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
                 final double freeAfter = SystemUtil.getJavaFreeMemory();
                 final double released = freeAfter - freeBefore;
-                final double usedMemory = totalMemory - freeAfter;
-                final double maxFree = SystemUtil.getJavaMaxMemory() - usedMemory;
+                final double usedMemory = SystemUtil.getJavaUsedMemory();
 
-                System.out.println("Free / used memory: " + UnitUtil.getBytesString((maxFree > 0) ? maxFree : 0)
+                System.out.println("Max / Used memory: " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory())
                         + " / " + UnitUtil.getBytesString((usedMemory > 0) ? usedMemory : 0) + " (released by GC: "
                         + UnitUtil.getBytesString((released > 0) ? released : 0) + ")");
             }
         });
-        
+
         // double click --> force VTK garbage collection (need to be done in EDT or it crashes on OSX)
         if (e.getClickCount() > 1)
         {

@@ -18,41 +18,6 @@
  */
 package icy.canvas;
 
-import icy.canvas.CanvasLayerEvent.LayersEventType;
-import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.menu.ToolRibbonTask;
-import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
-import icy.gui.util.GuiUtil;
-import icy.gui.viewer.Viewer;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
-import icy.image.ImageUtil;
-import icy.main.Icy;
-import icy.math.Interpolator;
-import icy.math.MathUtil;
-import icy.math.MultiSmoothMover;
-import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
-import icy.math.SmoothMover;
-import icy.math.SmoothMover.SmoothMoveType;
-import icy.math.SmoothMover.SmoothMoverAdapter;
-import icy.painter.ImageOverlay;
-import icy.painter.Overlay;
-import icy.preferences.CanvasPreferences;
-import icy.preferences.XMLPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.roi.ROI;
-import icy.sequence.DimensionId;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.system.thread.SingleProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.StringUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -92,6 +57,44 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import icy.canvas.CanvasLayerEvent.LayersEventType;
+import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.menu.ToolRibbonTask;
+import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
+import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.image.ImageUtil;
+import icy.main.Icy;
+import icy.math.Interpolator;
+import icy.math.MathUtil;
+import icy.math.MultiSmoothMover;
+import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
+import icy.math.SmoothMover;
+import icy.math.SmoothMover.SmoothMoveType;
+import icy.math.SmoothMover.SmoothMoverAdapter;
+import icy.painter.ImageOverlay;
+import icy.painter.Overlay;
+import icy.preferences.CanvasPreferences;
+import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.roi.ROI;
+import icy.sequence.DimensionId;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle2DUtil;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.StringUtil;
+import plugins.kernel.roi.tool.plugin.ROILineCutterPlugin;
+
 /**
  * New Canvas 2D : default ICY 2D viewer.<br>
  * Support translation / scale and rotation transformation.<br>
@@ -111,9 +114,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     static final Image ICON_CENTER_IMAGE = ResourceUtil.ICON_CENTER_IMAGE;
     static final Image ICON_FIT_IMAGE = ResourceUtil.ICON_FIT_IMAGE;
     static final Image ICON_FIT_CANVAS = ResourceUtil.ICON_FIT_CANVAS;
-    // static final Image ICON_CENTER_IMAGE = ImageUtil.scale(ResourceUtil.ICON_CENTER_IMAGE, ICON_SIZE, ICON_SIZE);
-    // static final Image ICON_FIT_IMAGE = ImageUtil.scale(ResourceUtil.ICON_FIT_IMAGE, ICON_SIZE, ICON_SIZE);
-    // static final Image ICON_FIT_CANVAS = ImageUtil.scale(ResourceUtil.ICON_FIT_CANVAS, ICON_SIZE, ICON_SIZE);
+    // static final Image ICON_CENTER_IMAGE = ImageUtil.scale(ResourceUtil.ICON_CENTER_IMAGE,
+    // ICON_SIZE, ICON_SIZE);
+    // static final Image ICON_FIT_IMAGE = ImageUtil.scale(ResourceUtil.ICON_FIT_IMAGE, ICON_SIZE,
+    // ICON_SIZE);
+    // static final Image ICON_FIT_CANVAS = ImageUtil.scale(ResourceUtil.ICON_FIT_CANVAS, ICON_SIZE,
+    // ICON_SIZE);
 
     static final Image ICON_TARGET = ImageUtil.scale(ResourceUtil.ICON_TARGET, ICON_SIZE, ICON_SIZE);
     static final Image ICON_TARGET_BLACK = ImageUtil.getColorImageFromAlphaImage(ICON_TARGET, Color.black);
@@ -588,8 +594,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         }
     }
 
-    public class CanvasView extends JPanel implements ActionListener, MouseWheelListener, MouseListener,
-            MouseMotionListener
+    public class CanvasView extends JPanel
+            implements ActionListener, MouseWheelListener, MouseListener, MouseMotionListener
     {
         /**
          * 
@@ -971,8 +977,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             if (roi != null)
                             {
                                 roi.setCreating(true);
-                                // attach to sequence
-                                seq.addROI(roi, true);
+
+                                // attach to sequence (hacky method to avoid undoing ROI cutting)
+                                seq.addROI(roi, !roiClassName.equals(ROILineCutterPlugin.class.getName()));
                                 // then do exclusive selection
                                 seq.setSelectedROI(roi);
                             }
@@ -1539,7 +1546,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             g.drawString(text, x + 4, y + 2 + h);
         }
 
-        void updateCursor()
+        /**
+         * Update mouse cursor
+         */
+        protected void updateCursor()
         {
             // final Cursor cursor = getCursor();
             //
@@ -2225,6 +2235,60 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         setMousePos(getCanvasSizeX() >> 1, getCanvasSizeY() >> 1);
     }
 
+    @Override
+    public void centerOn(Rectangle region)
+    {
+        final Rectangle2D imageRectMax = Rectangle2DUtil
+                .getScaledRectangle(new Rectangle(getImageSizeX(), getImageSizeY()), 1.5d, true);
+
+        Rectangle2D adjusted = Rectangle2DUtil.getScaledRectangle(region, 2d, true);
+
+        // get undersize
+        double wu = Math.max(0, 100d - adjusted.getWidth());
+        double hu = Math.max(0, 100d - adjusted.getHeight());
+
+        // enlarge a bit to have at least a 100x100 rectangle
+        if ((wu > 0) || (hu > 0))
+            ShapeUtil.enlarge(adjusted, wu, hu, true);
+
+        // get overflow on original image size
+        double wo = Math.max(0, adjusted.getWidth() - imageRectMax.getWidth());
+        double ho = Math.max(0, adjusted.getHeight() - imageRectMax.getHeight());
+
+        // reduce a bit to clip on max image size
+        if ((wo > 0) || (ho > 0))
+            ShapeUtil.enlarge(adjusted, -wo, -ho, true);
+
+        final Rectangle viewRect = new Rectangle(getViewComponent().getSize());
+
+        // calculate new scale factors
+        final double scaleX = viewRect.width / adjusted.getWidth();
+        final double scaleY = viewRect.height / adjusted.getHeight();
+
+        // get point on canvas
+        final int offX;
+        final int offY;
+        final double newScale;
+
+        if (scaleX < scaleY)
+        {
+            newScale = scaleX;
+            // use scale X, adapt offset Y
+            offX = (int) (adjusted.getX() * newScale);
+            offY = (int) ((adjusted.getY() * newScale) - ((viewRect.height - (adjusted.getHeight() * newScale)) / 2d));
+        }
+        else
+        {
+            newScale = scaleY;
+            // use scale Y, adapt offset X
+            offX = (int) ((adjusted.getX() * newScale) - ((viewRect.width - (adjusted.getWidth() * newScale)) / 2d));
+            offY = (int) (adjusted.getY() * newScale);
+        }
+
+        // apply new position and scaling
+        setTransform(-offX, -offY, newScale, newScale, smoothTransform.getDestValue(ROT), true);
+    }
+
     /**
      * Set transform
      */
@@ -2297,7 +2361,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final double newScaleY = Math.max(0.01d, Math.min(100d, y));
 
         // get new mouse position on canvas pixel
-        final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY, rot);
+        final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY,
+                rot);
         // new image size
         final int newImgSizeX = (int) Math.ceil(getImageSizeX() * newScaleX);
         final int newImgSizeY = (int) Math.ceil(getImageSizeY() * newScaleY);
@@ -2421,6 +2486,22 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     public void setBackgroundColor(Color color)
     {
         getCanvasSettingPanel().setBackgroundColor(color);
+    }
+
+    /**
+     * @return the automatic 'fit to canvas' state
+     */
+    public boolean getFitToCanvas()
+    {
+        return zoomFitCanvasButton.isSelected();
+    }
+
+    /**
+     * Sets the automatic 'fit to canvas' state
+     */
+    public void setFitToCanvas(boolean value)
+    {
+        zoomFitCanvasButton.setSelected(value);
     }
 
     @Override
@@ -2636,22 +2717,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(0, getCanvasSizeY() / 4);
+                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
                         canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
                         e.consume();
                     }
                     break;
                 case KeyEvent.VK_NUMPAD4:
-                    if (!canvasView.moving)
-                    {
-                        final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(-getCanvasSizeX() / 4, 0);
-                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
-                        e.consume();
-                    }
-                    break;
-
-                case KeyEvent.VK_NUMPAD6:
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
@@ -2661,11 +2732,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     }
                     break;
 
+                case KeyEvent.VK_NUMPAD6:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(-getCanvasSizeX() / 4, 0);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+
                 case KeyEvent.VK_NUMPAD8:
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
+                        final Point delta = new Point(0, getCanvasSizeY() / 4);
                         canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
                         e.consume();
                     }
@@ -2704,7 +2785,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final IcyBufferedImage img = Canvas2D.this.getImage(t, z, c);
 
         if (img != null)
-            return IcyBufferedImageUtil.getARGBImage(img, getLut(), out);
+            return IcyBufferedImageUtil.toBufferedImage(img, out, getLut());
 
         return null;
     }

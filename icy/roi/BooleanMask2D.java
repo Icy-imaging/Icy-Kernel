@@ -20,11 +20,14 @@ package icy.roi;
 
 import icy.type.TypeUtil;
 import icy.type.collection.array.DynamicArray;
+import icy.type.point.Point2DUtil;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -116,15 +119,113 @@ public class BooleanMask2D implements Cloneable
         }
     }
 
+    // find first non visited contour point
+    private static int findStartPoint(int startOffset, boolean mask[], boolean visitedMask[])
+    {
+        for (int i = startOffset; i < mask.length; i++)
+            if (mask[i] && !visitedMask[i])
+                return i;
+
+        return -1;
+    }
+
+    private static List<Point> insertPoints(List<Point> result, List<Point> source)
+    {
+        if (result.isEmpty())
+        {
+            result.addAll(source);
+            return result;
+        }
+        // nothing to insert
+        if (source.isEmpty())
+            return result;
+
+        final Point firstPointSource = source.get(0);
+        final Point lastPointSource = source.get(source.size() - 1);
+        final int len = result.size();
+
+        for (int i = 0; i < len; i++)
+        {
+            final Point p = result.get(i);
+
+            if (Point2DUtil.areConnected(p, firstPointSource))
+            {
+                final List<Point> newResult = new ArrayList<Point>(result.subList(0, i + 1));
+                newResult.addAll(source);
+                if ((i + 1) < len)
+                    newResult.addAll(new ArrayList<Point>(result.subList(i + 1, len)));
+                return newResult;
+            }
+            if (Point2DUtil.areConnected(p, lastPointSource))
+            {
+                final List<Point> newResult = new ArrayList<Point>(result.subList(0, i + 1));
+                Collections.reverse(source);
+                newResult.addAll(source);
+                if ((i + 1) < len)
+                    newResult.addAll(new ArrayList<Point>(result.subList(i + 1, len)));
+                return newResult;
+            }
+        }
+
+        return null;
+    }
+
+    private static List<Point> connect(List<Point> result, List<Point> source)
+    {
+        if (result.isEmpty())
+        {
+            result.addAll(source);
+            return result;
+        }
+        // nothing to connect
+        if (source.isEmpty())
+            return result;
+
+        final Point2D firstPointResult = result.get(0);
+        final Point2D lastPointResult = result.get(result.size() - 1);
+        final Point2D firstPointSource = source.get(0);
+        final Point2D lastPointSource = source.get(source.size() - 1);
+
+        // res-tail - src-head connection --> res = res + src
+        if (Point2DUtil.areConnected(firstPointSource, lastPointResult))
+        {
+            result.addAll(source);
+            return result;
+        }
+        // res-head - src-head connection --> res = reverse(src) + res
+        if (Point2DUtil.areConnected(firstPointSource, firstPointResult))
+        {
+            Collections.reverse(source);
+            source.addAll(result);
+            return source;
+        }
+        // res-head - src-tail connection --> res = src + res
+        if (Point2DUtil.areConnected(lastPointSource, firstPointResult))
+        {
+            source.addAll(result);
+            return source;
+        }
+        // res-tail - src-tail connection --> res = res + reverse(src)
+        if (Point2DUtil.areConnected(lastPointSource, lastPointResult))
+        {
+            Collections.reverse(source);
+            result.addAll(source);
+            return result;
+        }
+
+        // can't connect
+        return null;
+    }
+
     /**
      * Return a list of Point representing the contour points of the mask.<br>
      * Points are returned in ascending XY order:
      * 
      * <pre>
-     *  123 
-     *  4 5
-     *  6 7
-     *   89
+     *  1234 
+     *  5  6
+     *  7 8
+     *   9
      * </pre>
      */
     public static List<Point> getContourPoints(Rectangle bounds, boolean mask[])
@@ -149,12 +250,13 @@ public class BooleanMask2D implements Cloneable
 
         int offset = 0;
 
-        // special case
+        // special case of single pixel mask
         if ((w == 1) && (h == 1))
         {
             if (mask[0])
                 points.add(new Point(minx, miny));
         }
+        // special case of single pixel width mask
         else if (w == 1)
         {
             // first pixel of row
@@ -188,7 +290,7 @@ public class BooleanMask2D implements Cloneable
             if (current && !(top && bottom))
                 points.add(new Point(minx, maxy));
         }
-        // special case
+        // special case of single pixel height mask
         else if (h == 1)
         {
             // first pixel of line
@@ -222,6 +324,7 @@ public class BooleanMask2D implements Cloneable
             if (current && !(left && right))
                 points.add(new Point(maxx, miny));
         }
+        // normal case
         else
         {
             // first pixel of first line
@@ -1399,7 +1502,368 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Return an array of {@link Point} containing the contour points of the mask.<br>
+     * Returns a list of Point representing the contour points of the mask in connected order.<br>
+     * Note that you should use this method carefully at it does not make any sense to use this method for mask
+     * containing disconnected objects.<br>
+     * Also it may returns incorrect result if the contour is not consistent (several connected contour possible).
+     * 
+     * @see #getContourPoints()
+     */
+    public List<Point> getConnectedContourPoints()
+    {
+        final int[] intArrayPoints = getContourPointsAsIntArray();
+        final List<List<Point>> allPoints = new ArrayList<List<Point>>();
+
+        // empty contour
+        if (intArrayPoints.length == 0)
+            return new ArrayList<Point>(0);
+
+        final boolean[] contourMask;
+        final Rectangle contourBounds;
+
+        synchronized (this)
+        {
+            contourMask = new boolean[mask.length];
+            contourBounds = bounds;
+        }
+
+        final int minx = contourBounds.x;
+        final int miny = contourBounds.y;
+        final int w = contourBounds.width;
+
+        // build contour mask
+        for (int i = 0; i < intArrayPoints.length; i += 2)
+            contourMask[(intArrayPoints[i + 0] - minx) + ((intArrayPoints[i + 1] - miny) * w)] = true;
+
+        final int maxx = minx + (w - 1);
+        final int maxy = miny + (contourBounds.height - 1);
+        // create visited pixel mask
+        final boolean[] visitedMask = new boolean[contourMask.length];
+
+        // first start point
+        int startOffset = findStartPoint(0, contourMask, visitedMask);
+
+        while (startOffset != -1)
+        {
+            final List<Point> points = new ArrayList<Point>(intArrayPoints.length / 2);
+
+            int offset = startOffset;
+            int x = (offset % w) + minx;
+            int y = (offset / w) + miny;
+
+            // add first point
+            visitedMask[offset] = true;
+            points.add(new Point(x, y));
+
+            // scanning order
+            // 567
+            // 4x0
+            // 321
+            int scan = 0;
+            int remain = 8;
+
+            // scan connected pixels (8 points)
+            while (remain-- > 0)
+            {
+                int tmpOff;
+
+                switch (scan & 7)
+                {
+                    case 0:
+                        // not last X
+                        if (x < maxx)
+                        {
+                            tmpOff = offset + 1;
+
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                x++;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 7 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 1:
+                        // not last X and not last Y
+                        if ((x < maxx) && (y < maxy))
+                        {
+                            tmpOff = offset + w + 1;
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                x++;
+                                y++;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 7 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 2:
+                        // not last Y
+                        if (y < maxy)
+                        {
+                            tmpOff = offset + w;
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                y++;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 1 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 3:
+                        // not first X and not last Y
+                        if ((x > minx) && (y < maxy))
+                        {
+                            tmpOff = (offset + w) - 1;
+
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                x--;
+                                y++;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 1 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 4:
+                        // not first X
+                        if (x > minx)
+                        {
+                            tmpOff = offset - 1;
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                x--;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 3 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 5:
+                        // not first X and not first Y
+                        if ((x > minx) && (y > miny))
+                        {
+                            tmpOff = offset - (w + 1);
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                x--;
+                                y--;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 3 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 6:
+                        // not first Y
+                        if (y > miny)
+                        {
+                            tmpOff = offset - w;
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                y--;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 5 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+
+                    case 7:
+                        // not last X and not first Y
+                        if ((x < maxx) && (y > miny))
+                        {
+                            tmpOff = (offset - w) + 1;
+                            // contour ?
+                            if (contourMask[tmpOff])
+                            {
+                                // contour already visited --> done
+                                if (visitedMask[tmpOff])
+                                {
+                                    remain = 0;
+                                    break;
+                                }
+
+                                // set new position
+                                x++;
+                                y--;
+                                offset = tmpOff;
+                                // mark as visited
+                                visitedMask[offset] = true;
+                                // and add point
+                                points.add(new Point(x, y));
+                                // change next scan pos
+                                scan = 5 - 1;
+                                remain = 8;
+                            }
+                        }
+                        break;
+                }
+
+                scan = (scan + 1) & 7;
+            }
+
+            allPoints.add(points);
+            // get next start point
+            startOffset = findStartPoint(startOffset, contourMask, visitedMask);
+        }
+
+        List<Point> result = new ArrayList<Point>(allPoints.get(0));
+        allPoints.remove(0);
+
+        // connect all found paths
+        int i = 0;
+        while (i < allPoints.size())
+        {
+            final List<Point> newResult = connect(result, allPoints.get(i));
+
+            if (newResult != null)
+            {
+                result = newResult;
+                allPoints.remove(i);
+                i = 0;
+            }
+            else
+                i++;
+        }
+
+        // try to insert remaining paths
+        i = 0;
+        while (i < allPoints.size())
+        {
+            final List<Point> newResult = insertPoints(result, allPoints.get(i));
+
+            if (newResult != null)
+            {
+                result = newResult;
+                allPoints.remove(i);
+                i = 0;
+            }
+            else
+                i++;
+        }
+
+        // debug
+        // for(Point pt:result)
+        // System.out.println(pt);
+
+        // some parts can't be connected --> display warning
+        // if (!allPoints.isEmpty())
+        // System.out.println("Warning: can't connect some points...");
+
+        return result;
+    }
+
+    /**
+     * Returns an array of {@link Point} containing the contour points of the mask.<br>
      * Points are returned in ascending XY order:
      * 
      * <pre>
@@ -1417,7 +1881,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Return an array of integer containing the contour points of the mask.<br>
+     * Returns an array of integer containing the contour points of the mask.<br>
      * <code>result.length</code> = number of point * 2<br>
      * <code>result[(pt * 2) + 0]</code> = X coordinate for point <i>pt</i>.<br>
      * <code>result[(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
@@ -1429,11 +1893,22 @@ public class BooleanMask2D implements Cloneable
      *  6 7
      *   89
      * </pre>
+     * 
+     * @see #getConnectedContourPoints()
      */
     public int[] getContourPointsAsIntArray()
     {
         if (isEmpty())
             return new int[0];
+
+        final boolean[] mask;
+        final Rectangle bounds;
+
+        synchronized (this)
+        {
+            mask = this.mask;
+            bounds = this.bounds;
+        }
 
         final int[] points = new int[mask.length * 2];
         final int h = bounds.height;
@@ -2050,8 +2525,11 @@ public class BooleanMask2D implements Cloneable
             final BooleanMask2D result = getUnion(boundsToAdd, maskToAdd);
 
             // update bounds and mask
-            this.bounds = result.bounds;
-            this.mask = result.mask;
+            synchronized (this)
+            {
+                this.bounds = result.bounds;
+                this.mask = result.mask;
+            }
         }
     }
 
@@ -2097,8 +2575,11 @@ public class BooleanMask2D implements Cloneable
         // faster to always create a new mask
         final BooleanMask2D result = getIntersection(boundsToIntersect, maskToIntersect);
 
-        this.bounds = result.bounds;
-        this.mask = result.mask;
+        synchronized (this)
+        {
+            this.bounds = result.bounds;
+            this.mask = result.mask;
+        }
     }
 
     /**
@@ -2167,8 +2648,11 @@ public class BooleanMask2D implements Cloneable
             final BooleanMask2D result = getExclusiveUnion(boundsToXAdd, maskToXAdd);
 
             // update bounds and mask
-            this.bounds = result.bounds;
-            this.mask = result.mask;
+            synchronized (this)
+            {
+                this.bounds = result.bounds;
+                this.mask = result.mask;
+            }
         }
     }
 
@@ -2344,7 +2828,7 @@ public class BooleanMask2D implements Cloneable
             oldBounds.translate(-bounds.x, -bounds.y);
             newBounds.translate(-bounds.x, -bounds.y);
 
-            final boolean[] newMask = new boolean[newBounds.width * newBounds.height];
+            final boolean[] newMask = new boolean[Math.max(0, newBounds.width) * Math.max(0, newBounds.height)];
             final Rectangle intersect = newBounds.intersection(oldBounds);
 
             if (!intersect.isEmpty())
@@ -2373,10 +2857,12 @@ public class BooleanMask2D implements Cloneable
                 }
             }
 
-            // set new image and maskData
-            mask = newMask;
-            // set new bounds
-            bounds = value;
+            // update mask and bounds
+            synchronized (this)
+            {
+                mask = newMask;
+                bounds = value;
+            }
         }
     }
 

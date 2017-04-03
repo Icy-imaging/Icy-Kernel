@@ -57,10 +57,10 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
                 {
                     doSearch(words, consumer);
                 }
-                catch (Exception e)
+                catch (Throwable t)
                 {
                     // just display the exception and continue
-                    IcyExceptionHandler.showErrorMessage(e, true, true);
+                    IcyExceptionHandler.showErrorMessage(t, true, true);
                 }
             }
             else

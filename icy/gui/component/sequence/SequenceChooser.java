@@ -27,6 +27,7 @@ import icy.util.StringUtil;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,13 +65,13 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
         /**
          * cached items list
          */
-        final List<Sequence> cachedList;
+        final List<WeakReference<Sequence>> cachedList;
 
         public SequenceComboModel()
         {
             super();
 
-            cachedList = new ArrayList<Sequence>();
+            cachedList = new ArrayList<WeakReference<Sequence>>();
             updateList();
         }
 
@@ -85,23 +86,18 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
 
             // add null entry at first position
             if (nullEntryName != null)
-                cachedList.add(null);
+                cachedList.add(new WeakReference<Sequence>(null));
 
             final List<Sequence> sequences = Icy.getMainInterface().getSequences();
 
             // add active sequence entry at second position
             if ((sequences.size() > 0) && (activeSequence != null))
-                cachedList.add(activeSequence);
+                cachedList.add(new WeakReference<Sequence>(activeSequence));
 
-            // apply filter if any
-            if (filter != null)
-            {
-                for (Sequence seq : sequences)
-                    if (filter.accept(seq))
-                        cachedList.add(seq);
-            }
-            else
-                cachedList.addAll(sequences);
+            // add others sequence
+            for (Sequence seq : sequences)
+                if ((filter == null) || filter.accept(seq))
+                    cachedList.add(new WeakReference<Sequence>(seq));
 
             final int newSize = cachedList.size();
 
@@ -122,7 +118,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
         @Override
         public Object getElementAt(int index)
         {
-            return cachedList.get(index);
+            return cachedList.get(index).get();
         }
 
         @Override
@@ -150,7 +146,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
     /**
      * internals
      */
-    protected Sequence previousSelectedSequence;
+    protected WeakReference<Sequence> previousSelectedSequence;
     protected final SequenceComboModel model;
     protected final Sequence activeSequence;
 
@@ -163,8 +159,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
      * @param nullEntryName
      *        If this parameter is not <code>null</code> the combobox will display an extra entry
      *        with the given string to define <code>null</code> sequence selection so when this
-     *        entry will be selected the {@link #getSelectedSequence()} will return
-     *        <code>null</code>.
+     *        entry will be selected the {@link #getSelectedSequence()} will return <code>null</code>.
      * @param nameMaxLength
      *        Maximum authorized length for the sequence name display in the combobox (extra
      *        characters are truncated).<br>
@@ -210,7 +205,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
         // default
         listeners = new ArrayList<SequenceChooserListener>();
         setActionCommand(SEQUENCE_SELECT_CMD);
-        previousSelectedSequence = null;
+        previousSelectedSequence = new WeakReference<Sequence>(null);
         setSelectedItem(null);
 
         // fix height
@@ -256,8 +251,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
      * @param nullEntryName
      *        If this parameter is not <code>null</code> the combobox will display an extra entry
      *        with the given string to define <code>null</code> sequence selection so when this
-     *        entry will be selected the {@link #getSelectedSequence()} will return
-     *        <code>null</code>.
+     *        entry will be selected the {@link #getSelectedSequence()} will return <code>null</code>.
      */
     public SequenceChooser(boolean activeSequenceEntry, String nullEntryName)
     {
@@ -394,9 +388,9 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
     {
         final Sequence selected = getSelectedSequence();
 
-        if (previousSelectedSequence != selected)
+        if (previousSelectedSequence.get() != selected)
         {
-            previousSelectedSequence = selected;
+            previousSelectedSequence = new WeakReference<Sequence>(selected);
             // sequence changed
             sequenceChanged(selected);
         }

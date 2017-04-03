@@ -79,17 +79,28 @@ public class PluginUpdateFrame extends ActionFrame
             {
                 if (pluginList.getSelectedValue() != null)
                 {
-                    final PluginDescriptor plugin = (PluginDescriptor) pluginList.getSelectedValue();
+                    // plugin.loadChangeLog() can take lot of time, better to do that in background...
+                    ThreadUtil.bgRun(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            final PluginDescriptor plugin = (PluginDescriptor) pluginList.getSelectedValue();
 
-                    plugin.loadChangeLog();
-                    final String changeLog = plugin.getChangeLog();
+                            if (plugin != null)
+                            {
+                                plugin.loadChangeLog();
+                                final String changeLog = plugin.getChangeLog();
 
-                    if (StringUtil.isEmpty(changeLog))
-                        changeLogArea.setText("no change log");
-                    else
-                        changeLogArea.setText(changeLog);
-                    changeLogArea.setCaretPosition(0);
-                    changeLogTitleLabel.setText(plugin.getName() + " change log");
+                                if (StringUtil.isEmpty(changeLog))
+                                    changeLogArea.setText("no change log");
+                                else
+                                    changeLogArea.setText(changeLog);
+                                changeLogArea.setCaretPosition(0);
+                                changeLogTitleLabel.setText(plugin.getName() + " change log");
+                            }
+                        }
+                    });
                 }
             }
         });

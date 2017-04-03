@@ -16,7 +16,7 @@ import icy.sequence.SequenceEvent.SequenceEventSourceType;
  */
 public class ROIMaxIntensityDescriptor extends ROIDescriptor
 {
-    public static final String ID = "MaxIntensity";
+    public static final String ID = "Max intensity";
 
     public ROIMaxIntensityDescriptor()
     {

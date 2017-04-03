@@ -24,6 +24,7 @@ import icy.painter.OverlayListener;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
+import icy.roi.ROI2D.ROI2DPainter;
 import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.roi.ROIListener;
@@ -41,9 +42,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
@@ -51,7 +54,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Abstract class defining a generic 3D ROI as a stack of individual 2D ROI slices.
+ * Base class defining a generic 3D ROI as a stack of individual 2D ROI slices.
  * 
  * @author Alexandre Dufour
  * @author Stephane Dallongeville
@@ -60,24 +63,34 @@ import org.w3c.dom.Node;
  */
 public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, OverlayListener, Iterable<R>
 {
+    /**
+     * @deprecated this property does not exist anymore
+     */
+    @Deprecated
     public static final String PROPERTY_USECHILDCOLOR = "useChildColor";
 
     protected final TreeMap<Integer, R> slices = new TreeMap<Integer, R>();
 
-    protected final Class<R> roiClass;
+    protected final Class<? extends R> roiClass;
     protected Semaphore modifyingSlice;
     protected double translateZ;
 
     /**
      * Creates a new 3D ROI based on the given 2D ROI type.
      */
-    public ROI3DStack(Class<R> roiClass)
+    public ROI3DStack(Class<? extends R> roiClass)
     {
         super();
 
         this.roiClass = roiClass;
         modifyingSlice = new Semaphore(1);
         translateZ = 0d;
+    }
+
+    @Override
+    public String getDefaultName()
+    {
+        return "ROI2D stack";
     }
 
     @Override
@@ -236,6 +249,31 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     @Override
+    public void setName(String value)
+    {
+        beginUpdate();
+        try
+        {
+            super.setName(value);
+
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setName(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    @Override
     public void setT(int value)
     {
         beginUpdate();
@@ -334,22 +372,30 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     /**
-     * Sets the slice for the given Z position.
+     * Sets the ROI slice for the given Z position.
      */
     public void setSlice(int z, R roi2d)
     {
-        if (roi2d == null)
-            throw new IllegalArgumentException("Cannot set an empty slice in a 3D ROI");
+        // nothing to do
+        if (getSlice(z) == roi2d)
+            return;
 
-        // set Z, T and C position
-        roi2d.setZ(z);
-        roi2d.setT(getT());
-        roi2d.setC(getC());
-        // listen events from this ROI and its overlay
-        roi2d.addListener(this);
-        roi2d.getOverlay().addOverlayListener(this);
+        // remove previous
+        removeSlice(z);
 
-        slices.put(Integer.valueOf(z), roi2d);
+        if (roi2d != null)
+        {
+            // set Z, T and C position
+            roi2d.setZ(z);
+            roi2d.setT(getT());
+            roi2d.setC(getC());
+            // listen events from this ROI and its overlay
+            roi2d.addListener(this);
+            roi2d.getOverlay().addOverlayListener(this);
+
+            // set new slice
+            slices.put(Integer.valueOf(z), roi2d);
+        }
 
         // notify ROI changed
         roiChanged(true);
@@ -368,10 +414,10 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         {
             result.removeListener(this);
             result.getOverlay().removeOverlayListener(this);
-        }
 
-        // notify ROI changed
-        roiChanged(true);
+            // notify ROI changed
+            roiChanged(true);
+        }
 
         return result;
     }
@@ -393,6 +439,422 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
 
         slices.clear();
         roiChanged(true);
+    }
+
+    /**
+     * Add the specified {@link ROI3DStack} content to this ROI3DStack
+     */
+    public void add(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                add(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Exclusively add the specified {@link ROI3DStack} content to this ROI3DStack
+     */
+    public void exclusiveAdd(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                exclusiveAdd(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Process intersection of the specified {@link ROI3DStack} with this ROI3DStack.
+     */
+    public void intersect(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            final Set<Integer> keys = roi.slices.keySet();
+            final Set<Integer> toRemove = new HashSet<Integer>();
+
+            // remove slices which are not contained
+            for (Integer key : slices.keySet())
+                if (!keys.contains(key))
+                    toRemove.add(key);
+
+            // do remove first
+            for (Integer key : toRemove)
+                removeSlice(key.intValue());
+
+            // then process intersection
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                intersect(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Remove the specified {@link ROI3DStack} from this ROI3DStack
+     */
+    public void subtract(ROI3DStack<R> roi) throws UnsupportedOperationException
+    {
+        beginUpdate();
+        try
+        {
+            for (Entry<Integer, R> entry : roi.slices.entrySet())
+                subtract(entry.getKey().intValue(), entry.getValue());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    @Override
+    public ROI add(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    add((ROI3DStack) roi3d);
+                    return this;
+                }
+            }
+        }
+        else if (roiClass.isInstance(roi))
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            // only if on same position
+            if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+            {
+                try
+                {
+                    add(roi2d.getZ(), (R) roi2d);
+                    return this;
+                }
+                catch (UnsupportedOperationException e)
+                {
+                    // not supported, try generic method instead
+                    return super.add(roi, allowCreate);
+                }
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI intersect(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    intersect((ROI3DStack) roi3d);
+                    return this;
+                }
+            }
+            else if (roiClass.isInstance(roi))
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+
+                // only if on same position
+                if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+                {
+                    try
+                    {
+                        intersect(roi2d.getZ(), (R) roi2d);
+                        return this;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        // not supported, try generic method instead
+                        return super.intersect(roi, allowCreate);
+                    }
+                }
+            }
+        }
+
+        return super.intersect(roi, allowCreate);
+    }
+
+    @Override
+    public ROI exclusiveAdd(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    exclusiveAdd((ROI3DStack) roi3d);
+                    return this;
+                }
+            }
+            else if (roiClass.isInstance(roi))
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+
+                // only if on same position
+                if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+                {
+                    try
+                    {
+                        exclusiveAdd(roi2d.getZ(), (R) roi2d);
+                        return this;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        // not supported, try generic method instead
+                        return super.add(roi, allowCreate);
+                    }
+                }
+            }
+        }
+
+        return super.add(roi, allowCreate);
+    }
+
+    @Override
+    public ROI subtract(ROI roi, boolean allowCreate) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            // only if on same position
+            if ((getT() == roi3d.getT()) && (getC() == roi3d.getC()))
+            {
+                if (this.getClass().isInstance(roi3d))
+                {
+                    subtract((ROI3DStack<R>) roi3d);
+                    return this;
+                }
+            }
+            else if (roiClass.isInstance(roi))
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+
+                // only if on same position
+                if ((roi2d.getZ() != -1) && (getT() == roi2d.getT()) && (getC() == roi2d.getC()))
+                {
+                    try
+                    {
+                        subtract(roi2d.getZ(), (R) roi2d);
+                        return this;
+                    }
+                    catch (UnsupportedOperationException e)
+                    {
+                        // not supported, try generic method instead
+                        return super.subtract(roi, allowCreate);
+                    }
+                }
+            }
+        }
+
+        return super.subtract(roi, allowCreate);
+    }
+
+    /**
+     * Adds content of specified <code>ROI</code> slice into the <code>ROI</code> slice at given Z position.
+     * The resulting content of this <code>ROI</code> will include the union of both ROI's contents.<br>
+     * If no slice was present at the specified Z position then the method is equivalent to
+     * {@link #setSlice(int, ROI2D)}
+     * 
+     * @param z
+     *        the position where the slice must be merged
+     * @param roiSlice
+     *        the 2D ROI to merge
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be added to this ROI
+     */
+    public void add(int z, R roiSlice)
+    {
+        if (roiSlice == null)
+            return;
+
+        final R currentSlice = getSlice(z);
+        final ROI newSlice;
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI union
+            newSlice = currentSlice.add(roiSlice, true);
+
+            // check the resulting ROI is the same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+        }
+        else
+            // get a copy
+            newSlice = roiSlice.getCopy();
+
+        // set slice
+        setSlice(z, (R) newSlice);
+    }
+
+    /**
+     * Sets the content of the <code>ROI</code> slice at given Z position to be the union of its current content and the
+     * content of the specified <code>ROI</code>, minus their intersection.
+     * The resulting <code>ROI</code> will include only content that were contained in either this <code>ROI</code> or
+     * in the specified <code>ROI</code>, but not in both.<br>
+     * If no slice was present at the specified Z position then the method is equivalent to
+     * {@link #setSlice(int, ROI2D)}
+     * 
+     * @param z
+     *        the position where the slice must be merged
+     * @param roiSlice
+     *        the 2D ROI to merge
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be exclusively added to this ROI
+     */
+    public void exclusiveAdd(int z, R roiSlice)
+    {
+        if (roiSlice == null)
+            return;
+
+        final R currentSlice = getSlice(z);
+        final ROI newSlice;
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI exclusive union
+            newSlice = currentSlice.exclusiveAdd(roiSlice, true);
+
+            // check the resulting ROI is same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+        }
+        else
+            // get a copy
+            newSlice = roiSlice.getCopy();
+
+        if (newSlice.isEmpty())
+            removeSlice(z);
+        else
+            setSlice(z, (R) newSlice);
+    }
+
+    /**
+     * Sets the content of the <code>ROI</code> slice at given Z position to the intersection of
+     * its current content and the content of the specified <code>ROI</code>.
+     * The resulting ROI will include only contents that were contained in both ROI.<br>
+     * If no slice was present at the specified Z position then the method does nothing.
+     * 
+     * @param z
+     *        the position where the slice must be merged
+     * @param roiSlice
+     *        the 2D ROI to merge
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be intersected with this ROI
+     */
+    public void intersect(int z, R roiSlice)
+    {
+        // better to throw an exception here than removing slice
+        if (roiSlice == null)
+            throw new IllegalArgumentException("Cannot intersect an empty slice in a 3D ROI");
+
+        final R currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI intersection
+            final ROI newSlice = currentSlice.intersect(roiSlice, true);
+
+            // check the resulting ROI is same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+
+            if (newSlice.isEmpty())
+                removeSlice(z);
+            else
+                setSlice(z, (R) newSlice);
+        }
+    }
+
+    /**
+     * Subtract the specified <code>ROI</code> content from the <code>ROI</code> slice at given Z position.<br>
+     * If no slice was present at the specified Z position then the method does nothing.
+     * 
+     * @param z
+     *        the position where the subtraction should be done
+     * @param roiSlice
+     *        the 2D ROI to subtract from Z slice
+     * @throws UnsupportedOperationException
+     *         if the given ROI slice cannot be subtracted from this ROI
+     */
+    public void subtract(int z, R roiSlice) throws UnsupportedOperationException
+    {
+        if (roiSlice == null)
+            return;
+
+        final R currentSlice = getSlice(z);
+
+        // merge both slice
+        if (currentSlice != null)
+        {
+            // we need to modify the Z, T and C position so we do the merge correctly
+            roiSlice.setZ(z);
+            roiSlice.setT(getT());
+            roiSlice.setC(getC());
+            // do ROI subtraction
+            final ROI newSlice = currentSlice.subtract(roiSlice, true);
+
+            // check the resulting ROI is same type
+            if (!newSlice.getClass().isInstance(currentSlice))
+                throw new UnsupportedOperationException("Can't add the result of the merge operation on 2D slice " + z
+                        + ": " + newSlice.getClassName());
+
+            if (newSlice.isEmpty())
+                removeSlice(z);
+            else
+                setSlice(z, (R) newSlice);
+        }
     }
 
     /**
@@ -550,6 +1012,29 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         return false;
     }
 
+    @Override
+    public void unselectAllPoints()
+    {
+        beginUpdate();
+        try
+        {
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.unselectAllPoints();
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
     // default approximated implementation for ROI3DStack
     @Override
     public double computeSurfaceArea(Sequence sequence) throws UnsupportedOperationException
@@ -567,7 +1052,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             result += slices.lastEntry().getValue().getNumberOfPoints() * psx * psy;
 
             for (R slice : slices.values())
-                result += slice.getPerimeter(sequence) * psz;
+                result += slice.getLength(sequence) * psz;
         }
 
         return result;
@@ -641,12 +1126,12 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             final R roi = entry.getValue();
             final int newZ = roi.getZ() + z;
 
-            // only positive value accepted
-            if (newZ >= 0)
-            {
+//            // only positive value accepted
+//            if (newZ >= 0)
+//            {
                 roi.setZ(newZ);
                 slices.put(Integer.valueOf(newZ), roi);
-            }
+//            }
         }
 
         // notify ROI changed
@@ -781,31 +1266,13 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         return true;
     }
 
-    public class ROI3DStackPainter extends ROIPainter
+    public class ROI3DStackPainter extends ROI3DPainter
     {
-        protected boolean useChildColor;
-
-        public ROI3DStackPainter()
-        {
-            super();
-
-            useChildColor = false;
-        }
-
-        // protected R getSliceForCanvas(IcyCanvas canvas)
-        // {
-        // final int z = canvas.getPositionZ();
-        //
-        // if (z >= 0)
-        // return getSlice(z);
-        //
-        // return null;
-        // }
-
         protected ROIPainter getSliceOverlayForCanvas(IcyCanvas canvas)
         {
             final int z = canvas.getPositionZ();
 
+            // canvas position of -1 mean 3D canvas (all Z visible)
             if (z >= 0)
                 return getSliceOverlay(z);
 
@@ -826,29 +1293,21 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         }
 
         /**
-         * Returns <code>true</code> if the ROI directly uses the 2D slice color draw property and <code>false</code> if
-         * it uses the global 3D ROI color draw property.
+         * @deprecated this property does not exist anymore (always return <code>false</code>)
          */
+        @Deprecated
         public boolean getUseChildColor()
         {
-            return useChildColor;
+            return false;
         }
 
         /**
-         * Set to <code>true</code> if you want to directly use the 2D slice color draw property and <code>false</code>
-         * to keep the global 3D ROI color draw property.
-         * 
-         * @see #setColor(int, Color)
+         * @deprecated this property does not exist anymore
          */
+        @Deprecated
         public void setUseChildColor(boolean value)
         {
-            if (useChildColor != value)
-            {
-                useChildColor = value;
-                propertyChanged(PROPERTY_USECHILDCOLOR);
-                // need to redraw it
-                painterChanged();
-            }
+            //
         }
 
         /**
@@ -980,7 +1439,8 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -988,16 +1448,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.paint(g, sequence, canvas);
             }
+            // use default parent implementation
+            else
+                super.paint(g, sequence, canvas);
         }
 
         @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.keyPressed(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1005,16 +1465,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.keyPressed(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.keyPressed(e, imagePoint, canvas);
         }
 
         @Override
         public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.keyReleased(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1022,16 +1482,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.keyReleased(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.keyReleased(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseEntered(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseEntered(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1039,16 +1499,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseEntered(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseEntered(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseExited(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseExited(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1056,16 +1516,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseExited(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseExited(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseMove(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1073,16 +1533,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseMove(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseMove(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseDrag(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1090,16 +1550,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseDrag(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseDrag(e, imagePoint, canvas);
         }
 
         @Override
         public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mousePressed(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1107,16 +1567,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mousePressed(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mousePressed(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseReleased(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1124,16 +1584,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseReleased(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseReleased(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseClick(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1141,16 +1601,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseClick(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseClick(e, imagePoint, canvas);
         }
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to parent first
-            super.mouseWheelMoved(e, imagePoint, canvas);
-
-            // then send it to active slice
-            if (isActiveFor(canvas))
+            // 2D canvas --> use slice implementation
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
             {
                 // forward event to current slice
                 final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
@@ -1158,6 +1618,25 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 if (sliceOverlay != null)
                     sliceOverlay.mouseWheelMoved(e, imagePoint, canvas);
             }
+            // use default parent implementation
+            else
+                super.mouseWheelMoved(e, imagePoint, canvas);
+        }
+
+        @Override
+        public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            // 2D canvas --> use slice implementation if possible
+            if ((canvas.getPositionZ() >= 0) && isActiveFor(canvas))
+            {
+                // forward event to current slice
+                final ROIPainter sliceOverlay = getSliceOverlayForCanvas(canvas);
+
+                if (sliceOverlay instanceof ROI2DPainter)
+                    ((ROI2DPainter) sliceOverlay).drawROI(g, sequence, canvas);
+            }
+
+            // nothing to do...
         }
     }
 }

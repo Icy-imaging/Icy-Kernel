@@ -13,10 +13,10 @@ import icy.sequence.SequenceEvent;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import plugins.kernel.roi.descriptor.measure.ROIBasicMeasureDescriptorsPlugin;
 
@@ -67,6 +67,24 @@ public abstract class ROIDescriptor
     }
 
     /**
+     * Returns the descriptor identified by the given id from the given list of {@link ROIDescriptor}.<br>
+     * It can return <code>null</code> if the descriptor is not found in the given list.
+     * 
+     * @param id
+     *        the id of the descriptor ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for instance) @see
+     *        #getDescriptors()
+     * @see #computeDescriptor(String, ROI, Sequence)
+     */
+    public static ROIDescriptor getDescriptor(Collection<ROIDescriptor> descriptors, String id)
+    {
+        for (ROIDescriptor roiDescriptor : descriptors)
+            if (StringUtil.equals(roiDescriptor.getId(), id))
+                return roiDescriptor;
+
+        return null;
+    }
+
+    /**
      * Computes the specified descriptor from the input {@link ROIDescriptor} set on given ROI
      * and returns the result (or <code>null</code> if the descriptor is not found).
      * 
@@ -86,12 +104,13 @@ public abstract class ROIDescriptor
      *         <code>null</code> while the calculation requires it, or if
      *         the specified Z, T or C position are not supported by the descriptor
      */
-    public static Object computeDescriptor(Set<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
+    public static Object computeDescriptor(Collection<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
             Sequence sequence)
     {
-        for (ROIDescriptor roiDescriptor : roiDescriptors)
-            if (StringUtil.equals(roiDescriptor.getId(), descriptorId))
-                return roiDescriptor.compute(roi, sequence);
+        final ROIDescriptor roiDescriptor = getDescriptor(roiDescriptors, descriptorId);
+
+        if (roiDescriptor != null)
+            return roiDescriptor.compute(roi, sequence);
 
         return null;
     }
@@ -262,5 +281,12 @@ public abstract class ROIDescriptor
     public int hashCode()
     {
         return getId().hashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+        // default implementation
+        return getName();
     }
 }

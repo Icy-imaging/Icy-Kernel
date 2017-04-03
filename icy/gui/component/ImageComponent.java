@@ -19,10 +19,12 @@
 package icy.gui.component;
 
 import icy.image.ImageUtil;
+import icy.resource.ResourceUtil;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 
@@ -37,32 +39,25 @@ public class ImageComponent extends JPanel
     private static final long serialVersionUID = 1448746815524070306L;
 
     private Image image;
+    private BufferedImage cachedImage;
+    protected boolean forceUpdateCache;
 
     /**
-     * @param image
+     * @deprecated Use {@link #ImageComponent(Image)} instead
      */
+    @Deprecated
     public ImageComponent(Image image, Dimension d)
     {
-        super(true);
+        this(image);
+    }
 
-        this.image = image;
-
-        final Dimension dim;
-
-        if (d != null)
-            dim = d;
-        else if (image != null)
-        {
-            // be sure image data are ready
-            ImageUtil.waitImageReady(image);
-            dim = new Dimension(image.getWidth(null), image.getHeight(null));
-        }
-        else
-            dim = new Dimension(320, 200);
-
-        setPreferredSize(dim);
-
-        setVisible(true);
+    /**
+     * @deprecated Use {@link #ImageComponent(Image)} instead
+     */
+    @Deprecated
+    public ImageComponent(Image image, int width, int height)
+    {
+        this(image);
     }
 
     /**
@@ -70,15 +65,23 @@ public class ImageComponent extends JPanel
      */
     public ImageComponent(Image image)
     {
-        this(image, null);
+        super(true);
+
+        this.image = image;
+
+        if (image != null)
+        {
+            // be sure image data are ready
+            ImageUtil.waitImageReady(image);
+            setPreferredSize(new Dimension(image.getWidth(null), image.getHeight(null)));
+        }
+
+        forceUpdateCache = true;
     }
 
-    /**
-     * @param image
-     */
-    public ImageComponent(Image image, int width, int height)
+    public ImageComponent()
     {
-        this(image, new Dimension(width, height));
+        this(null);
     }
 
     /**
@@ -98,7 +101,54 @@ public class ImageComponent extends JPanel
         if (this.image != image)
         {
             this.image = image;
+            forceUpdateCache = true;
             repaint();
+        }
+    }
+
+    protected void updateCache()
+    {
+        cachedImage = null;
+
+        if (image == null)
+            return;
+
+        // be sure image data are ready
+        ImageUtil.waitImageReady(image);
+
+        float ix = image.getWidth(null);
+        float iy = image.getHeight(null);
+
+        // something wrong here --> use 'fault' image
+        if ((ix <= 0f) || (iy <= 0f))
+        {
+            image = ResourceUtil.ICON_DELETE;
+            ix = image.getWidth(null);
+            iy = image.getHeight(null);
+        }
+
+        // we want a minimal appearance of 100,100
+        final float w = Math.max(getWidth(), 100);
+        final float h = Math.max(getHeight(), 100);
+
+        if ((w > 0f) && (h > 0f))
+        {
+            final float sx = w / ix;
+            final float sy = h / iy;
+            final float s = Math.min(sx, sy);
+            final int nix = (int) (ix * s);
+            final int niy = (int) (iy * s);
+
+            if ((nix > 0) && (niy > 0))
+            {
+                // need to rebuild cached image ?
+                if (forceUpdateCache || (cachedImage == null) || (nix != cachedImage.getWidth())
+                        || (niy != cachedImage.getHeight()))
+                {
+                    cachedImage = ImageUtil.scaleQuality(image, nix, niy);
+                    forceUpdateCache = false;
+                }
+            }
         }
     }
 
@@ -107,6 +157,10 @@ public class ImageComponent extends JPanel
     {
         super.paintComponent(g);
 
-        g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+        updateCache();
+
+        if (cachedImage != null)
+            g.drawImage(cachedImage, (getWidth() - cachedImage.getWidth()) / 2,
+                    (getHeight() - cachedImage.getHeight()) / 2, null);
     }
 }

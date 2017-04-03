@@ -1,20 +1,22 @@
 /**
  * 
  */
-package icy.roi;
+package icy.type.geom;
 
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
- * 
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -29,6 +31,8 @@ import java.awt.geom.Rectangle2D;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * Modified by Stephane Dallongeville
  */
 
 /**
@@ -36,6 +40,81 @@ import java.awt.geom.Rectangle2D;
  */
 public class Polygon2D implements Shape, Cloneable
 {
+    private static void addFarthestPoint(List<Point2D> result, List<Point2D> points, int start, int end,
+            double maxDeviation)
+    {
+        final Point2D p1 = points.get(start);
+        final Point2D p2 = points.get(end);
+        final double x1 = p1.getX();
+        final double y1 = p1.getY();
+        final double x2 = p2.getX();
+        final double y2 = p2.getY();
+        int farthest = -1;
+        // initialize with maximum allow deviation (squared)
+        double maxDist = maxDeviation * maxDeviation;
+
+        for (int i = start + 1; i < end; i++)
+        {
+            final Point2D p = points.get(i);
+            final double dist = Line2D.ptSegDistSq(x1, y1, x2, y2, p.getX(), p.getY());
+
+            if (dist > maxDist)
+            {
+                farthest = i;
+                maxDist = dist;
+            }
+        }
+
+        // found a point to add ?
+        if (farthest != -1)
+        {
+            // search before point
+            addFarthestPoint(result, points, start, farthest, maxDeviation);
+            // add point
+            result.add(points.get(farthest));
+            // search after point
+            addFarthestPoint(result, points, farthest, end, maxDeviation);
+        }
+    }
+
+    /**
+     * Returns a polygon2D corresponding to the polygon estimation of the given (closed) contour points with the
+     * specified <code>max deviation</code>.
+     * 
+     * @param points
+     *        the list of points representing the input closed contour to transform to polygon.
+     * @param maxDeviation
+     *        maximum allowed deviation/distance of resulting polygon from the input contour (in pixel).
+     * @return the polygon estimation from input contour
+     */
+    public static Polygon2D getPolygon2D(List<Point2D> points, double maxDeviation)
+    {
+        // just return
+        if (points.size() < 3)
+            return new Polygon2D(points);
+
+        final List<Point2D> result = new ArrayList<Point2D>(points.size() / 4);
+
+        int ind = points.size() / 2;
+
+        // close the contour
+        points.add(points.get(0));
+
+        // add first point
+        result.add(points.get(0));
+        // add points between first and medium
+        addFarthestPoint(result, points, 0, ind, maxDeviation);
+        // add medium point
+        result.add(points.get(ind));
+        // add points between medium and end
+        addFarthestPoint(result, points, ind, points.size() - 1, maxDeviation);
+
+        // restore original contour
+        points.remove(points.size() - 1);
+
+        return new Polygon2D(result);
+    }
+
     /**
      * The total number of points. The value of <code>npoints</code> represents the number of valid points in this
      * <code>Polygon</code>.
@@ -49,7 +128,7 @@ public class Polygon2D implements Shape, Cloneable
     public double[] xpoints;
 
     /**
-     * The array of <i>x</i> coordinates. The value of {@link #npoints} is equal to the
+     * The array of <i>y</i> coordinates. The value of {@link #npoints} is equal to the
      * number of points in this <code>Polygon2D</code>.
      */
     public double[] ypoints;
@@ -61,8 +140,8 @@ public class Polygon2D implements Shape, Cloneable
      */
     protected Rectangle2D bounds;
 
-    private Path2D.Double path;
-    private Path2D.Double closedPath;
+    protected Path2D.Double path;
+    protected Path2D.Double closedPath;
 
     /**
      * Creates an empty Polygon2D.
@@ -71,11 +150,7 @@ public class Polygon2D implements Shape, Cloneable
     {
         super();
 
-        npoints = 0;
-        xpoints = new double[0];
-        ypoints = new double[0];
-        bounds = new Rectangle2D.Double();
-        path = null;
+        reset();
     }
 
     /**
@@ -212,6 +287,27 @@ public class Polygon2D implements Shape, Cloneable
         calculatePath();
     }
 
+    public Polygon2D(List<Point2D> points)
+    {
+        super();
+
+        final int len = points.size();
+
+        this.npoints = len;
+        this.xpoints = new double[len];
+        this.ypoints = new double[len];
+
+        for (int i = 0; i < len; i++)
+        {
+            final Point2D pt = points.get(i);
+
+            this.xpoints[i] = pt.getX();
+            this.ypoints[i] = pt.getY();
+        }
+
+        calculatePath();
+    }
+
     /**
      * Resets this <code>Polygon</code> object to an empty polygon.
      */
@@ -248,7 +344,7 @@ public class Polygon2D implements Shape, Cloneable
         closedPath = null;
     }
 
-    private void updatePath(double x, double y)
+    protected void updatePath(double x, double y)
     {
         if (path == null)
         {
@@ -325,11 +421,11 @@ public class Polygon2D implements Shape, Cloneable
         {
             double[] tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(xpoints, 0, tmp, 0, npoints);
             xpoints = tmp;
 
-            tmp = new double[npoints * 2];
+            tmp = new double[(npoints * 2) + 1];
             System.arraycopy(ypoints, 0, tmp, 0, npoints);
             ypoints = tmp;
         }
@@ -409,7 +505,7 @@ public class Polygon2D implements Shape, Cloneable
         return updateComputingPath().contains(x, y);
     }
 
-    private Path2D.Double updateComputingPath()
+    protected Path2D.Double updateComputingPath()
     {
         Path2D.Double result = closedPath;
 

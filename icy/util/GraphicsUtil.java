@@ -63,7 +63,7 @@ public class GraphicsUtil
         mixAlpha(g, 0, factor);
     }
 
-    public static void mixAlpha(Graphics2D g, int rule, float factor)
+    public static float mixAlpha(Graphics2D g, int rule, float factor)
     {
         final Composite composite = g.getComposite();
 
@@ -76,7 +76,13 @@ public class GraphicsUtil
                 g.setComposite(AlphaComposite.getInstance(alphaComposite.getRule(), alpha));
             else
                 g.setComposite(AlphaComposite.getInstance(rule, alpha));
+
+            return alpha;
         }
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, factor));
+
+        return factor;
     }
 
     /**

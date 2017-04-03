@@ -80,7 +80,7 @@ public class ROIIntensityDescriptorsPlugin extends Plugin implements PluginROIDe
         double sum = 0;
         double sum2 = 0;
 
-        // TODO: we were using interior pixels only, now we also use edge pixels so we can have intensities info
+        // FIXME: we were using interior pixels only, now we also use edge pixels so we can have intensities info
         // for intersection only ROI --> see if that is a good idea...
         final SequenceDataIterator it = new SequenceDataIterator(sequence, roi, true);
 

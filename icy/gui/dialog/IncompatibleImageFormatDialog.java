@@ -30,8 +30,10 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
 /**
+ * @deprecated Not anymore used.
  * @author Stephane
  */
+@Deprecated
 public class IncompatibleImageFormatDialog extends ActionFrame
 {
     public IncompatibleImageFormatDialog()

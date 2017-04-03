@@ -18,18 +18,18 @@
  */
 package icy.image;
 
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.system.SystemUtil;
-import icy.system.thread.Processor;
-import icy.system.thread.ThreadUtil;
-
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.system.SystemUtil;
+import icy.system.thread.Processor;
+import icy.system.thread.ThreadUtil;
 
 /**
  * @author Stephane
@@ -128,7 +128,7 @@ class ARGBImageBuilder
         buffers = new ArrayList<int[][]>();
     }
 
-    private BufferedImage getImage(IcyBufferedImage in, BufferedImage out)
+    private static BufferedImage getImage(IcyBufferedImage in, BufferedImage out)
     {
         if ((out != null) && ImageUtil.sameSize(in, out))
             return out;
@@ -164,6 +164,21 @@ class ARGBImageBuilder
         }
     }
 
+    /**
+     * Convert the source {@link IcyBufferedImage} into the destination ARGB
+     * {@link BufferedImage}<br>
+     * If <code>out</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
+     * Note that output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB) and the image
+     * cannot be volatile accelerated.
+     * 
+     * @param image
+     *        source image
+     * @param lut
+     *        {@link LUT} is used for color calculation (internal lut is used if null).
+     * @param out
+     *        destination image. Note that we access image data so it can't be volatile anymore
+     *        which may result in slower drawing.
+     */
     public BufferedImage buildARGBImage(IcyBufferedImage image, LUT lut, BufferedImage out)
     {
         // planar size
@@ -203,6 +218,23 @@ class ARGBImageBuilder
         }
 
         return result;
+    }
+
+    /**
+     * Convert the source {@link IcyBufferedImage} into an ARGB BufferedImage.
+     * Note that output {@link BufferedImage} is not a volatile accelerated image (slower
+     * drawing).<br>
+     * Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)} instead if you
+     * want volatile accelerated image.
+     * 
+     * @param image
+     *        source image
+     * @param lut
+     *        {@link LUT} is used for color calculation (internal lut is used if null).
+     */
+    public BufferedImage buildARGBImage(IcyBufferedImage image, LUT lut)
+    {
+        return buildARGBImage(image, lut, null);
     }
 
     private Future<?> addBloc(IcyBufferedImage image, LUT lut, int dest[], int offset, int length)

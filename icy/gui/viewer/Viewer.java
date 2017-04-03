@@ -389,7 +389,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 {
                     case JOptionPane.YES_OPTION:
                         // save the image
-                        new SaverDialog(sequence, getPositionZ(), getPositionT());
+                        new SaverDialog(sequence);
 
                     case JOptionPane.NO_OPTION:
                         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

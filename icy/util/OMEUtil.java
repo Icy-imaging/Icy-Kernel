@@ -39,6 +39,7 @@ import ome.units.quantity.Time;
 import ome.xml.model.OME;
 import ome.xml.model.StructuredAnnotations;
 import ome.xml.model.XMLAnnotation;
+import ome.xml.model.primitives.NonNegativeInteger;
 import ome.xml.model.primitives.PositiveFloat;
 import ome.xml.model.primitives.PositiveInteger;
 
@@ -56,6 +57,18 @@ public class OMEUtil
      * Return defaultValue if specified object is null.
      */
     public static int getValue(PositiveInteger obj, int defaultValue)
+    {
+        if (obj == null)
+            return defaultValue;
+
+        return TypeUtil.getInt(obj.getValue(), defaultValue);
+    }
+
+    /**
+     * Safe integer evaluation from NonNegativeInteger object.<br>
+     * Return defaultValue if specified object is null.
+     */
+    public static int getValue(NonNegativeInteger obj, int defaultValue)
     {
         if (obj == null)
             return defaultValue;
@@ -192,9 +205,9 @@ public class OMEUtil
         final OMEXMLMetadataImpl result = createOMEMetadata();
 
         // TODO: remove that when annotations loading will be fixed in Bio-Formats
-        if (metadata instanceof OMEXMLMetadataImpl)
+        if (metadata instanceof OMEXMLMetadata)
         {
-            final OME root = (OME) ((OMEXMLMetadataImpl) metadata).getRoot();
+            final OME root = (OME) ((OMEXMLMetadata) metadata).getRoot();
             final StructuredAnnotations annotations = root.getStructuredAnnotations();
 
             // clean up annotation
@@ -264,7 +277,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses {@link MetaDataUtil#setMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)}
+     * @deprecated Uses {@link MetaDataUtil#setMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)}
      *             instead.
      */
     @Deprecated
@@ -314,23 +327,23 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean, boolean, boolean)} instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT, boolean separateChannel)
             throws ServiceException
     {
-        return MetaDataUtil.generateMetaData(sequence, useZ, useT, separateChannel);
+        return MetaDataUtil.generateMetaData(sequence, separateChannel);
     }
 
     /**
-     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, int, int, boolean)} instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT, boolean separateChannel)
             throws ServiceException
     {
-        return MetaDataUtil.generateMetaData(sequence, sizeZ, sizeT, separateChannel);
+        return MetaDataUtil.generateMetaData(sequence, separateChannel);
     }
 
     /**

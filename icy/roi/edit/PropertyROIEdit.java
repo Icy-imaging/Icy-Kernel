@@ -17,13 +17,20 @@ public class PropertyROIEdit extends AbstractROIEdit
     Object previousValue;
     Object currentValue;
 
-    public PropertyROIEdit(ROI roi, String propertyName, Object previousValue, Object currentValue)
+    public PropertyROIEdit(ROI roi, String propertyName, Object previousValue, Object currentValue, boolean mergeable)
     {
         super(roi, "ROI " + propertyName + " changed");
 
         this.propertyName = propertyName;
         this.previousValue = previousValue;
         this.currentValue = currentValue;
+
+        setMergeable(mergeable);
+    }
+
+    public PropertyROIEdit(ROI roi, String propertyName, Object previousValue, Object currentValue)
+    {
+        this(roi, propertyName, previousValue, currentValue, true);
     }
 
     @Override

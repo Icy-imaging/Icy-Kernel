@@ -249,7 +249,7 @@ public class SequenceDimensionMergePanel extends JPanel
 
         // interlace not available for channel merge operation
         interlaceCheckBox.setVisible(dim != DimensionId.C);
-        fillEmptyImageCheckBox.setVisible(false);
+        // fillEmptyImageCheckBox.setVisible(false);
 
         refreshButtonsState();
     }
@@ -257,16 +257,16 @@ public class SequenceDimensionMergePanel extends JPanel
     private void initialize()
     {
         GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.columnWidths = new int[] {24, 160, 160, 0, 0};
-        gridBagLayout.rowHeights = new int[] {0, 26, 0, 0, 0, 0, 0, 0, 174, 0};
-        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 1.0, 0.0, Double.MIN_VALUE};
-        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+        gridBagLayout.columnWidths = new int[] {24, 80, 140, 100, 0, 0};
+        gridBagLayout.rowHeights = new int[] {0, 26, 0, 0, 0, 0, 0, 174, 0};
+        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 1.0, 1.0, 0.0, Double.MIN_VALUE};
+        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
         setLayout(gridBagLayout);
 
         JLabel lblSelectSequenceTo = new JLabel("Add sequence to merge in the list :");
         GridBagConstraints gbc_lblSelectSequenceTo = new GridBagConstraints();
         gbc_lblSelectSequenceTo.fill = GridBagConstraints.BOTH;
-        gbc_lblSelectSequenceTo.gridwidth = 3;
+        gbc_lblSelectSequenceTo.gridwidth = 4;
         gbc_lblSelectSequenceTo.insets = new Insets(0, 0, 5, 5);
         gbc_lblSelectSequenceTo.gridx = 0;
         gbc_lblSelectSequenceTo.gridy = 0;
@@ -274,7 +274,7 @@ public class SequenceDimensionMergePanel extends JPanel
 
         sequenceChooser = new SequenceChooser();
         GridBagConstraints gbc_sequenceChooser = new GridBagConstraints();
-        gbc_sequenceChooser.gridwidth = 3;
+        gbc_sequenceChooser.gridwidth = 4;
         gbc_sequenceChooser.insets = new Insets(0, 0, 5, 5);
         gbc_sequenceChooser.fill = GridBagConstraints.BOTH;
         gbc_sequenceChooser.gridx = 0;
@@ -287,7 +287,7 @@ public class SequenceDimensionMergePanel extends JPanel
         GridBagConstraints gbc_addButton = new GridBagConstraints();
         gbc_addButton.fill = GridBagConstraints.BOTH;
         gbc_addButton.insets = new Insets(0, 0, 5, 0);
-        gbc_addButton.gridx = 3;
+        gbc_addButton.gridx = 4;
         gbc_addButton.gridy = 1;
         add(addButton, gbc_addButton);
 
@@ -304,8 +304,7 @@ public class SequenceDimensionMergePanel extends JPanel
 
         JScrollPane scrollPane = new JScrollPane();
         GridBagConstraints gbc_scrollPane = new GridBagConstraints();
-        gbc_scrollPane.anchor = GridBagConstraints.WEST;
-        gbc_scrollPane.gridwidth = 2;
+        gbc_scrollPane.gridwidth = 3;
         gbc_scrollPane.fill = GridBagConstraints.BOTH;
         gbc_scrollPane.gridheight = 4;
         gbc_scrollPane.insets = new Insets(0, 0, 5, 5);
@@ -323,7 +322,7 @@ public class SequenceDimensionMergePanel extends JPanel
         GridBagConstraints gbc_removeButton = new GridBagConstraints();
         gbc_removeButton.fill = GridBagConstraints.BOTH;
         gbc_removeButton.insets = new Insets(0, 0, 5, 0);
-        gbc_removeButton.gridx = 3;
+        gbc_removeButton.gridx = 4;
         gbc_removeButton.gridy = 2;
         add(removeButton, gbc_removeButton);
 
@@ -342,7 +341,7 @@ public class SequenceDimensionMergePanel extends JPanel
         GridBagConstraints gbc_upButton = new GridBagConstraints();
         gbc_upButton.fill = GridBagConstraints.BOTH;
         gbc_upButton.insets = new Insets(0, 0, 5, 0);
-        gbc_upButton.gridx = 3;
+        gbc_upButton.gridx = 4;
         gbc_upButton.gridy = 3;
         add(upButton, gbc_upButton);
 
@@ -352,50 +351,48 @@ public class SequenceDimensionMergePanel extends JPanel
         GridBagConstraints gbc_downButton = new GridBagConstraints();
         gbc_downButton.fill = GridBagConstraints.BOTH;
         gbc_downButton.insets = new Insets(0, 0, 5, 0);
-        gbc_downButton.gridx = 3;
+        gbc_downButton.gridx = 4;
         gbc_downButton.gridy = 4;
         add(downButton, gbc_downButton);
 
         fitCheckbox = new JCheckBox("Scale image");
         fitCheckbox.setToolTipText("Scale all image to the largest one");
         GridBagConstraints gbc_fitCheckbox = new GridBagConstraints();
-        gbc_fitCheckbox.fill = GridBagConstraints.HORIZONTAL;
+        gbc_fitCheckbox.anchor = GridBagConstraints.WEST;
         gbc_fitCheckbox.gridwidth = 2;
         gbc_fitCheckbox.insets = new Insets(0, 0, 5, 5);
         gbc_fitCheckbox.gridx = 0;
         gbc_fitCheckbox.gridy = 6;
         add(fitCheckbox, gbc_fitCheckbox);
 
-        interlaceCheckBox = new JCheckBox("Interlace image");
-        interlaceCheckBox.setToolTipText("Interlace sequence image");
-        GridBagConstraints gbc_interlaceCheckBox = new GridBagConstraints();
-        gbc_interlaceCheckBox.gridwidth = 2;
-        gbc_interlaceCheckBox.fill = GridBagConstraints.BOTH;
-        gbc_interlaceCheckBox.insets = new Insets(0, 0, 5, 0);
-        gbc_interlaceCheckBox.gridx = 2;
-        gbc_interlaceCheckBox.gridy = 6;
-        add(interlaceCheckBox, gbc_interlaceCheckBox);
-
         fillEmptyImageCheckBox = new JCheckBox("Fill empty image");
         fillEmptyImageCheckBox.setToolTipText("Replace empty image by the previous non empty one");
         GridBagConstraints gbc_noEmptyImageCheckBox = new GridBagConstraints();
-        gbc_noEmptyImageCheckBox.gridwidth = 2;
         gbc_noEmptyImageCheckBox.fill = GridBagConstraints.VERTICAL;
-        gbc_noEmptyImageCheckBox.anchor = GridBagConstraints.WEST;
         gbc_noEmptyImageCheckBox.insets = new Insets(0, 0, 5, 5);
-        gbc_noEmptyImageCheckBox.gridx = 0;
-        gbc_noEmptyImageCheckBox.gridy = 7;
+        gbc_noEmptyImageCheckBox.gridx = 2;
+        gbc_noEmptyImageCheckBox.gridy = 6;
         add(fillEmptyImageCheckBox, gbc_noEmptyImageCheckBox);
+
+        interlaceCheckBox = new JCheckBox("Interlace image");
+        interlaceCheckBox.setToolTipText("Interlace sequence image");
+        GridBagConstraints gbc_interlaceCheckBox = new GridBagConstraints();
+        gbc_interlaceCheckBox.anchor = GridBagConstraints.EAST;
+        gbc_interlaceCheckBox.gridwidth = 2;
+        gbc_interlaceCheckBox.fill = GridBagConstraints.VERTICAL;
+        gbc_interlaceCheckBox.insets = new Insets(0, 0, 5, 0);
+        gbc_interlaceCheckBox.gridx = 3;
+        gbc_interlaceCheckBox.gridy = 6;
+        add(interlaceCheckBox, gbc_interlaceCheckBox);
 
         sequencePreview = new SequencePreviewPanel();
         sequencePreview
                 .setBorder(new TitledBorder(null, "Preview", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         GridBagConstraints gbc_sequencePreview = new GridBagConstraints();
-        gbc_sequencePreview.gridwidth = 4;
-        gbc_sequencePreview.insets = new Insets(0, 0, 0, 5);
+        gbc_sequencePreview.gridwidth = 5;
         gbc_sequencePreview.fill = GridBagConstraints.BOTH;
         gbc_sequencePreview.gridx = 0;
-        gbc_sequencePreview.gridy = 8;
+        gbc_sequencePreview.gridy = 7;
         add(sequencePreview, gbc_sequencePreview);
     }
 
@@ -450,63 +447,65 @@ public class SequenceDimensionMergePanel extends JPanel
                 return false;
             }
 
+            // We can remove all these verification as the merge algorithm take care of that !
+            
             // then depending dimension merge check for dimension equality
-            switch (getDimensionId())
-            {
-                case C:
-                    if (seq.getSizeZ() != sequence.getSizeZ())
-                    {
-                        if (showMessage)
-                            MessageDialog.showDialog("You cannot merge channels from sequences with different Z size.");
-
-                        return false;
-                    }
-                    if (seq.getSizeT() != sequence.getSizeT())
-                    {
-                        if (showMessage)
-                            MessageDialog.showDialog("You cannot merge channels from sequences with different T size.");
-
-                        return false;
-                    }
-                    break;
-
-                case Z:
-                    if (seq.getSizeC() != sequence.getSizeC())
-                    {
-                        if (showMessage)
-                            MessageDialog
-                                    .showDialog("You cannot merge slices from sequences with different number of channel.");
-
-                        return false;
-                    }
-                    if (seq.getSizeT() != sequence.getSizeT())
-                    {
-                        if (showMessage)
-                            MessageDialog.showDialog("You cannot merge slices from sequences with different T size.");
-
-                        return false;
-                    }
-                    break;
-
-                case T:
-                    if (seq.getSizeC() != sequence.getSizeC())
-                    {
-                        if (showMessage)
-                            MessageDialog.showDialog(
-                                    "You cannot merge frames from sequences with different number of channel.",
-                                    MessageDialog.PLAIN_MESSAGE);
-
-                        return false;
-                    }
-                    if (seq.getSizeZ() != sequence.getSizeZ())
-                    {
-                        if (showMessage)
-                            MessageDialog.showDialog("You cannot merge frames from sequences with different Z size.");
-
-                        return false;
-                    }
-                    break;
-            }
+            // switch (getDimensionId())
+            // {
+            // case C:
+            // if (seq.getSizeZ() != sequence.getSizeZ())
+            // {
+            // if (showMessage)
+            // MessageDialog.showDialog("You cannot merge channels from sequences with different Z size.");
+            //
+            // return false;
+            // }
+            // if (seq.getSizeT() != sequence.getSizeT())
+            // {
+            // if (showMessage)
+            // MessageDialog.showDialog("You cannot merge channels from sequences with different T size.");
+            //
+            // return false;
+            // }
+            // break;
+            //
+            // case Z:
+            // if (seq.getSizeC() != sequence.getSizeC())
+            // {
+            // if (showMessage)
+            // MessageDialog
+            // .showDialog("You cannot merge slices from sequences with different number of channel.");
+            //
+            // return false;
+            // }
+            // if (seq.getSizeT() != sequence.getSizeT())
+            // {
+            // if (showMessage)
+            // MessageDialog.showDialog("You cannot merge slices from sequences with different T size.");
+            //
+            // return false;
+            // }
+            // break;
+            //
+            // case T:
+            // if (seq.getSizeC() != sequence.getSizeC())
+            // {
+            // if (showMessage)
+            // MessageDialog.showDialog(
+            // "You cannot merge frames from sequences with different number of channel.",
+            // MessageDialog.PLAIN_MESSAGE);
+            //
+            // return false;
+            // }
+            // if (seq.getSizeZ() != sequence.getSizeZ())
+            // {
+            // if (showMessage)
+            // MessageDialog.showDialog("You cannot merge frames from sequences with different Z size.");
+            //
+            // return false;
+            // }
+            // break;
+            // }
 
             // also consider the XY size
             if (!isFitImagesEnabled())
@@ -574,6 +573,16 @@ public class SequenceDimensionMergePanel extends JPanel
     public void setInterlaceVisible(boolean value)
     {
         interlaceCheckBox.setVisible(value);
+    }
+
+    public boolean isFillEmptyImageVisible()
+    {
+        return fillEmptyImageCheckBox.isVisible();
+    }
+
+    public void setFillEmptyImageVisible(boolean value)
+    {
+        fillEmptyImageCheckBox.setVisible(value);
     }
 
     protected void fireChangedEvent()

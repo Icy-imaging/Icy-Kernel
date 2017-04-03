@@ -80,25 +80,32 @@ import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
 
 /**
+ * <h3>Icy - copyright 2017 Institut Pasteur</h3> An open community platform for bio image analysis<br>
+ * <i>http://icy.bioimageanalysis.org</i><br>
  * <br>
- * ICY: Image Analysis Software <br>
- * Institut Pasteur <br>
- * Unite d analyse d images quantitative <br>
- * 25,28 Rue du Docteur Roux <br>
- * 75015 Paris - France
- * 
- * @author Fabrice de Chaumont, Stephane Dallongeville
+ * Icy has been created by the Bio Image Analysis team at Institut Pasteur<br>
+ * <i>https://research.pasteur.fr/fr/team/bioimage-analysis</i><br>
+ * <br>
+ * Icy is free and open source, it has been funded both by Institut Pasteur and the FBI consortium<br>
+ * <i>https://france-bioimaging.org</i><br>
+ * <br>
+ * Source code is always provided in the main application package (in the icy.jar archive file) but can be also browsed
+ * from the GitHub repository<br>
+ * <i>https://github.com/Icy-imaging/Icy-Kernel</i><br>
+ * <br>
+ *
+ * @author Stephane Dallongeville
+ * @author Fabrice de Chaumont
  */
-
 public class Icy
 {
     public static final String LIB_PATH = "lib";
     public static final int EXIT_FORCE_DELAY = 3000;
 
     /**
-     * ICY Version
+     * Icy Version
      */
-    public static Version version = new Version("1.8.6.0");
+    public static Version version = new Version("1.9.0.1");
 
     /**
      * Main interface
@@ -357,14 +364,6 @@ public class Icy
             // update last update check time
             GeneralPreferences.setLastUpdateCheckTime(currentTime);
         }
-        else
-        {
-
-            // forced udpate
-            // if (PluginPreferences.getAutomaticUpdate())
-            // PluginUpdater.checkUpdate(true);
-
-        }
 
         // update version info
         ApplicationPreferences.setVersion(Icy.version);
@@ -385,7 +384,8 @@ public class Icy
             Icy.getMainInterface().addSequence(Loader.loadSequence(FileUtil.getGenericPath(startupImage), 0, false));
 
         // wait while updates are occurring before starting command line plugin...
-        while (PluginInstaller.isProcessing() || WorkspaceInstaller.isProcessing())
+        while (PluginUpdater.isCheckingForUpdate() || PluginInstaller.isProcessing()
+                || WorkspaceInstaller.isProcessing())
             ThreadUtil.sleep(1);
 
         if (startupPluginName != null)
@@ -459,10 +459,24 @@ public class Icy
         {
             final String text = "You're using a 32 bits Java with a 64 bits OS, try to upgrade to 64 bits java for better performance !";
 
-            if (Icy.getMainInterface().isHeadLess())
-                System.out.println("Warning: " + text);
-            else
+            System.out.println("Warning: " + text);
+
+            if (!Icy.getMainInterface().isHeadLess())
                 new ToolTipFrame("<html>" + text + "</html>", 15, "badJavaArchTip");
+        }
+
+        // we are using java 6 on OSX --> warn the user
+        final double javaVersion = SystemUtil.getJavaVersionAsNumber();
+
+        if ((javaVersion > 0) && (javaVersion < 1.7d) && SystemUtil.isMac())
+        {
+            final String text = "It looks like you're using a old version of Java (1.6)<br>"
+                    + "It's recommended to use last JDK 8 for OSX for a better user experience.<br>See the <a href=\"http://icy.bioimageanalysis.org/faq#35\">FAQ</a> to get information about how to update java.";
+
+            System.out.println("Warning: " + text);
+
+            if (!Icy.getMainInterface().isHeadLess())
+                new ToolTipFrame("<html>" + text + "</html>", 15, "outdatedJavaOSX");
         }
 
         // detect bad memory setting
@@ -470,9 +484,9 @@ public class Icy
         {
             final String text = "Your maximum memory setting is low, you should increase it in Preferences.";
 
-            if (Icy.getMainInterface().isHeadLess())
-                System.out.println("Warning: " + text);
-            else
+            System.out.println("Warning: " + text);
+
+            if (!Icy.getMainInterface().isHeadLess())
                 new ToolTipFrame("<html>" + text + "</html>", 15, "lowMemoryTip");
         }
         else if (ApplicationPreferences.getMaxMemoryMB() < (ApplicationPreferences.getDefaultMemoryMB() / 2))
@@ -483,6 +497,15 @@ public class Icy
                         "<html><b>Tip:</b> you can increase your maximum memory in preferences setting.</html>", 15,
                         "maxMemoryTip");
             }
+        }
+
+        if (!Icy.getMainInterface().isHeadLess())
+        {
+            // welcome tip !
+            final ToolTipFrame tooltip = new ToolTipFrame("<html>Access the main menu by clicking on top left icon<br>"
+                    + "<img src=\"" + Icy.class.getResource("/res/image/help/main_menu.png").toString()
+                    + "\" /></html>", 30, "mainMenuTip");
+            tooltip.setSize(456, 240);
         }
     }
 
@@ -609,7 +632,9 @@ public class Icy
     }
 
     /**
-     * exit
+     * Exit Icy, returns <code>true</code> if the operation should success.<br>
+     * Note that the method is asynchronous so you still have a bit of time to execute some stuff before the application
+     * actually exit.
      */
     public static boolean exit(final boolean restart)
     {
@@ -871,7 +896,8 @@ public class Icy
 
     /**
      * Clear the plugin command line arguments.<br>
-     * This method should be called after the launching plugin actually 'consumed' the startup arguments.
+     * This method should be called after the launching plugin actually 'consumed' the startup
+     * arguments.
      */
     public static void clearCommandLinePluginArgs()
     {
@@ -1269,7 +1295,8 @@ public class Icy
 
             System.out.println("VTK " + vv + " library successfully loaded...");
 
-            // final vtkJavaGarbageCollector vtkJavaGarbageCollector = vtkObjectBase.JAVA_OBJECT_MANAGER
+            // final vtkJavaGarbageCollector vtkJavaGarbageCollector =
+            // vtkObjectBase.JAVA_OBJECT_MANAGER
             // .getAutoGarbageCollector();
             //
             // set auto garbage collection for VTK (every 20 seconds should be enough)

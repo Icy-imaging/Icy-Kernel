@@ -24,6 +24,7 @@ import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
+import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -34,7 +35,6 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.JComponent;
@@ -73,7 +73,7 @@ public abstract class IcyCanvas2D extends IcyCanvas
         transform = new AffineTransform();
         inverseTransform = new AffineTransform();
         transformChanged = false;
-        
+
         // adjust LUT alpha level for 2D view
         lut.setAlphaToOpaque();
     }
@@ -120,7 +120,7 @@ public abstract class IcyCanvas2D extends IcyCanvas
      */
     public Point2D.Double getMouseImagePos()
     {
-        return (Double) mouseImagePos.clone();
+        return (Point2D.Double) mouseImagePos.clone();
     }
 
     public void setMouseImagePos(double x, double y)
@@ -152,10 +152,30 @@ public abstract class IcyCanvas2D extends IcyCanvas
 
         if (result)
         {
-            // direct update of mouse image position
-            mouseImagePos = canvasToImage(mousePos);
+            if (mouseImagePos == null)
+                mouseImagePos = new Point2D.Double();
+
+            final Point2D newPos = canvasToImage(mousePos);
+            final double newX = newPos.getX();
+            final double newY = newPos.getY();
+            boolean changed = false;
+
+            // need to check against NaN is conversion is not supported
+            if (!Double.isNaN(newX) && (newX != mouseImagePos.x))
+            {
+                mouseImagePos.x = newX;
+                changed = true;
+            }
+            // need to check against NaN is conversion is not supported
+            if (!Double.isNaN(newY) && (newY != mouseImagePos.y))
+            {
+                mouseImagePos.y = newY;
+                changed = true;
+            }
+
             // notify change
-            mouseImagePositionChanged(DimensionId.NULL);
+            if (changed)
+                mouseImagePositionChanged(DimensionId.NULL);
         }
 
         return result;
@@ -522,12 +542,24 @@ public abstract class IcyCanvas2D extends IcyCanvas
     /**
      * Get 2D image visible rectangle (image coordinate).<br>
      * Prefer the {@link Graphics#getClipBounds()} method for paint operation as the image visible
-     * rectangle may return wrong information sometime (when using the
-     * {@link #getRenderedImage(int, int, int, boolean)} method for instance).
+     * rectangle may return wrong information sometime (when using the {@link #getRenderedImage(int, int, int, boolean)}
+     * method for instance).
      */
     public Rectangle2D getImageVisibleRect()
     {
         return canvasToImage(getCanvasVisibleRect());
+    }
+    
+    /**
+     * Adjust view position and possibly scaling factor to ensure the specified region become visible.<br>
+     * It's up to the Canvas implementation to decide how to make the region visible.
+     * 
+     * @param region
+     *        the region we want to see
+     */
+    public void centerOn(Rectangle region)
+    {
+        // override it in Canvas implementation
     }
 
     /**
@@ -686,8 +718,8 @@ public abstract class IcyCanvas2D extends IcyCanvas
     /**
      * Return the 2D {@link AffineTransform} object which convert from image coordinate to canvas
      * coordinate.<br>
-     * {@link Overlay} should directly use the transform information from the {@link Graphics2D}
-     * object provided in their {@link Overlay#paint(Graphics2D, Sequence, IcyCanvas)} method.
+     * {@link Overlay} should directly use the transform information from the {@link Graphics2D} object provided in
+     * their {@link Overlay#paint(Graphics2D, Sequence, IcyCanvas)} method.
      */
     public AffineTransform getTransform()
     {
@@ -697,8 +729,8 @@ public abstract class IcyCanvas2D extends IcyCanvas
     /**
      * Return the 2D {@link AffineTransform} object which convert from canvas coordinate to image
      * coordinate.<br>
-     * {@link Overlay} should directly use the transform information from the {@link Graphics2D}
-     * object provided in their {@link Overlay#paint(Graphics2D, Sequence, IcyCanvas)} method.
+     * {@link Overlay} should directly use the transform information from the {@link Graphics2D} object provided in
+     * their {@link Overlay#paint(Graphics2D, Sequence, IcyCanvas)} method.
      */
     public AffineTransform getInverseTransform()
     {

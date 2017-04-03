@@ -53,7 +53,10 @@ public abstract class RecentList
 
     public void clear()
     {
-        list.clear();
+        synchronized (list)
+        {
+            list.clear();
+        }
 
         // save to pref
         save();
@@ -63,14 +66,17 @@ public abstract class RecentList
 
     public void addEntry(Object entry)
     {
-        // remove entry if already present
-        list.remove(entry);
-        // add entry at top
-        list.add(0, entry);
+        synchronized (list)
+        {
+            // remove entry if already present
+            list.remove(entry);
+            // add entry at top
+            list.add(0, entry);
 
-        // remove last entries
-        while (list.size() > nbMaxEntry)
-            list.remove(list.size() - 1);
+            // remove last entries
+            while (list.size() > nbMaxEntry)
+                list.remove(list.size() - 1);
+        }
 
         // save to pref
         save();
@@ -95,13 +101,16 @@ public abstract class RecentList
 
     protected void load()
     {
-        list.clear();
-
-        for (int i = 0; i < nbMaxEntry; i++)
+        synchronized (list)
         {
-            final Object value = loadEntry(ID_ENTRY + i);
-            if (value != null)
-                list.add(value);
+            list.clear();
+
+            for (int i = 0; i < nbMaxEntry; i++)
+            {
+                final Object value = loadEntry(ID_ENTRY + i);
+                if (value != null)
+                    list.add(value);
+            }
         }
 
         changed();
@@ -111,18 +120,21 @@ public abstract class RecentList
 
     protected void save()
     {
-    	// clear all
-    	preferences.clear();
+        // clear all
+        preferences.clear();
         preferences.removeChildren();
         preferences.clean();
-    	
-    	// then save each entry
-        for (int i = 0; i < nbMaxEntry; i++)
+
+        synchronized (list)
         {
-            if (i < list.size())
-                saveEntry(ID_ENTRY + i, list.get(i));
-            else
-                saveEntry(ID_ENTRY + i, null);
+            // then save each entry
+            for (int i = 0; i < nbMaxEntry; i++)
+            {
+                if (i < list.size())
+                    saveEntry(ID_ENTRY + i, list.get(i));
+                else
+                    saveEntry(ID_ENTRY + i, null);
+            }
         }
     }
 

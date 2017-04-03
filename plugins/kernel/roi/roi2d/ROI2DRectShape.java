@@ -66,6 +66,8 @@ public abstract class ROI2DRectShape extends ROI2DShape
     protected final Anchor2D bottomLeft;
     protected final Anchor2D bottomRight;
 
+    protected boolean internalPositionSet;
+
     /**
      * 
      */
@@ -74,31 +76,19 @@ public abstract class ROI2DRectShape extends ROI2DShape
         super(shape);
 
         this.topLeft = createAnchor(topLeft);
-        this.topRight = createAnchor(bottomRight.getX(), topLeft.getY());
-        this.bottomLeft = createAnchor(topLeft.getX(), bottomRight.getY());
+        this.topRight = createAnchor(new Point2D.Double(bottomRight.getX(), topLeft.getY()));
+        this.bottomLeft = createAnchor(new Point2D.Double(topLeft.getX(), bottomRight.getY()));
         this.bottomRight = createAnchor(bottomRight);
-
-        // add to the control point list (important to add them in clockwise order)
-        controlPoints.add(this.topLeft);
-        controlPoints.add(this.topRight);
-        controlPoints.add(this.bottomRight);
-        controlPoints.add(this.bottomLeft);
-
-        this.topLeft.addOverlayListener(anchor2DOverlayListener);
-        this.topLeft.addPositionListener(anchor2DPositionListener);
-        this.topRight.addOverlayListener(anchor2DOverlayListener);
-        this.topRight.addPositionListener(anchor2DPositionListener);
-        this.bottomLeft.addOverlayListener(anchor2DOverlayListener);
-        this.bottomLeft.addPositionListener(anchor2DPositionListener);
-        this.bottomRight.addOverlayListener(anchor2DOverlayListener);
-        this.bottomRight.addPositionListener(anchor2DPositionListener);
-
         // select the bottom right point by default for interactive mode
         this.bottomRight.setSelected(true);
-        // getOverlay().setMousePos(new Point5D.Double(bottomRight.getX(), bottomRight.getY(), -1d,
-        // -1d, -1d));
 
-        updateShape();
+        internalPositionSet = false;
+
+        // order is important as we compute distance from connected points
+        addPoint(this.topLeft);
+        addPoint(this.topRight);
+        addPoint(this.bottomRight);
+        addPoint(this.bottomLeft);
     }
 
     @Override
@@ -167,26 +157,38 @@ public abstract class ROI2DRectShape extends ROI2DShape
     @Override
     public void controlPointPositionChanged(Anchor2D source)
     {
-        // adjust dependents anchors
-        if (source == topLeft)
+        // we are modifying internally the position --> exit
+        if (internalPositionSet)
+            return;
+
+        internalPositionSet = true;
+        try
         {
-            bottomLeft.setX(topLeft.getX());
-            topRight.setY(topLeft.getY());
+            // adjust dependents anchors
+            if (source == topLeft)
+            {
+                bottomLeft.setX(topLeft.getX());
+                topRight.setY(topLeft.getY());
+            }
+            else if (source == topRight)
+            {
+                bottomRight.setX(topRight.getX());
+                topLeft.setY(topRight.getY());
+            }
+            else if (source == bottomLeft)
+            {
+                topLeft.setX(bottomLeft.getX());
+                bottomRight.setY(bottomLeft.getY());
+            }
+            else if (source == bottomRight)
+            {
+                topRight.setX(bottomRight.getX());
+                bottomLeft.setY(bottomRight.getY());
+            }
         }
-        else if (source == topRight)
+        finally
         {
-            bottomRight.setX(topRight.getX());
-            topLeft.setY(topRight.getY());
-        }
-        else if (source == bottomLeft)
-        {
-            topLeft.setX(bottomLeft.getX());
-            bottomRight.setY(bottomLeft.getY());
-        }
-        else if (source == bottomRight)
-        {
-            topRight.setX(bottomRight.getX());
-            bottomLeft.setY(bottomRight.getY());
+            internalPositionSet = false;
         }
 
         super.controlPointPositionChanged(source);

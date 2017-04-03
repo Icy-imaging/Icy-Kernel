@@ -47,24 +47,28 @@ public interface ImageProvider
     public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the tile width for the specified serie of the image.<br>
+     * Returns the (optimal) tile width for the specified serie of the image.<br>
      * This method allow to know the best tile size to use when using the sub region image loading
-     * operations.
+     * operations.<br>
+     * This method should returns <code>0</code> if tile loading is not supported and <code>-1</code> if any tile size
+     * can be used.
      * 
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
-     * @return tile width
+     * @return optimal tile width
      */
     public int getTileWidth(int serie) throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the tile height for the specified serie of the image.<br>
+     * Returns the (optimal) tile height for the specified serie of the image.<br>
      * This method allow to know the best tile size to use when using the sub region image loading
-     * operations.
+     * operations.<br>
+     * This method should returns <code>0</code> if tile loading is not supported and <code>-1</code> if any tile size
+     * can be used.
      * 
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
-     * @return tile height
+     * @return optimal tile height
      */
     public int getTileHeight(int serie) throws UnsupportedFormatException, IOException;
 
@@ -86,8 +90,7 @@ public interface ImageProvider
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure).<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param rectangle
@@ -98,7 +101,7 @@ public interface ImageProvider
      * @param t
      *        T position of the image (frame) we want retrieve data from
      * @param c
-     *        C position of the image (channel) we want retrieve.
+     *        C position of the image (channel) we want retrieve (-1 is not accepted here).
      * @return native type array containing image pixel data.<br>
      */
     public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
@@ -111,8 +114,7 @@ public interface ImageProvider
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure).<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param rectangle
@@ -123,8 +125,7 @@ public interface ImageProvider
      * @param t
      *        T position of the image (frame) we want retrieve
      * @param c
-     *        C position of the image (channel) we want retrieve.<br>
-     *        -1 is a special value meaning we want all channels.
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
      * @return image
      */
     public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
@@ -137,8 +138,7 @@ public interface ImageProvider
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure).<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param rectangle
@@ -160,8 +160,7 @@ public interface ImageProvider
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure).<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param z
@@ -169,8 +168,7 @@ public interface ImageProvider
      * @param t
      *        T position of the image (frame) we want retrieve
      * @param c
-     *        C position of the image (channel) we want retrieve.<br>
-     *        -1 is a special value meaning we want all channel.
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
      * @return image
      */
     public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
@@ -183,8 +181,7 @@ public interface ImageProvider
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure).<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param z

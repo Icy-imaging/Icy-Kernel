@@ -84,6 +84,12 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         modifyingSlice = new Semaphore(1);
         translateT = 0d;
     }
+    
+    @Override
+    public String getDefaultName()
+    {
+        return "ROI3D stack";
+    }
 
     @Override
     protected ROIPainter createPainter()
@@ -620,6 +626,29 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     {
         // default
         return false;
+    }
+    
+    @Override
+    public void unselectAllPoints()
+    {
+        beginUpdate();
+        try
+        {
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.unselectAllPoints();
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     // default approximated implementation for ROI4DStack

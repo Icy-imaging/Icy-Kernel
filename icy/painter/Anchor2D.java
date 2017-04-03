@@ -18,18 +18,6 @@
  */
 package icy.painter;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.CollapsibleEvent;
-import icy.file.xml.XMLPersistent;
-import icy.painter.OverlayEvent.OverlayEventType;
-import icy.painter.PainterEvent.PainterEventType;
-import icy.sequence.Sequence;
-import icy.type.point.Point5D;
-import icy.util.EventUtil;
-import icy.util.ShapeUtil;
-import icy.util.XMLUtil;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -38,18 +26,39 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventListener;
 import java.util.List;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.PainterEvent.PainterEventType;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.util.EventUtil;
+import icy.util.ShapeUtil;
+import icy.util.XMLUtil;
+import icy.vtk.IcyVtkPanel;
 import plugins.kernel.canvas.VtkCanvas;
+import vtk.vtkActor;
+import vtk.vtkInformation;
+import vtk.vtkPolyDataMapper;
+import vtk.vtkProp;
+import vtk.vtkSphereSource;
 
 /**
+ * Anchor2D class, used for 2D point control.
+ * 
  * @author Stephane
  */
-public class Anchor2D extends Overlay implements XMLPersistent
+public class Anchor2D extends Overlay implements VtkPainter, Runnable
 {
     /**
      * Interface to listen Anchor2D position change
@@ -136,6 +145,11 @@ public class Anchor2D extends Overlay implements XMLPersistent
      */
     protected final Point2D.Double position;
     /**
+     * position Z (default = -1 = ALL)
+     */
+    protected int z;
+
+    /**
      * radius
      */
     protected int ray;
@@ -164,6 +178,18 @@ public class Anchor2D extends Overlay implements XMLPersistent
     protected Point2D startDragMousePosition;
     protected Point2D startDragPainterPosition;
 
+    // VTK 3D objects
+    vtkSphereSource vtkSource;
+    protected vtkPolyDataMapper polyMapper;
+    protected vtkActor actor;
+    protected vtkInformation vtkInfo;
+
+    // 3D internal
+    protected boolean needRebuild;
+    protected boolean needPropertiesUpdate;
+    protected double scaling[];
+    protected WeakReference<VtkCanvas> canvas3d;
+
     protected final List<Anchor2DListener> anchor2Dlisteners;
     protected final List<Anchor2DPositionListener> anchor2DPositionlisteners;
 
@@ -172,6 +198,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         super("Anchor", OverlayPriority.SHAPE_NORMAL);
 
         position = new Point2D.Double(x, y);
+        z = -1;
         this.ray = ray;
         this.color = color;
         this.selectedColor = selectedColor;
@@ -181,6 +208,19 @@ public class Anchor2D extends Overlay implements XMLPersistent
         ellipse = new Ellipse2D.Double();
         startDragMousePosition = null;
         startDragPainterPosition = null;
+
+        vtkSource = null;
+        polyMapper = null;
+        actor = null;
+        vtkInfo = null;
+
+        scaling = new double[3];
+        Arrays.fill(scaling, 1d);
+
+        needRebuild = true;
+        needPropertiesUpdate = false;
+
+        canvas3d = new WeakReference<VtkCanvas>(null);
 
         anchor2Dlisteners = new ArrayList<Anchor2DListener>();
         anchor2DPositionlisteners = new ArrayList<Anchor2DPositionListener>();
@@ -411,6 +451,28 @@ public class Anchor2D extends Overlay implements XMLPersistent
         sequence.addOverlay(this);
     }
 
+    @Override
+    protected void finalize() throws Throwable
+    {
+        super.finalize();
+
+        // release allocated VTK resources
+        if (vtkSource != null)
+            vtkSource.Delete();
+        if (actor != null)
+        {
+            actor.SetPropertyKeys(null);
+            actor.Delete();
+        }
+        if (vtkInfo != null)
+        {
+            vtkInfo.Remove(VtkCanvas.visibilityKey);
+            vtkInfo.Delete();
+        }
+        if (polyMapper != null)
+            polyMapper.Delete();
+    }
+
     /**
      * @return the x
      */
@@ -443,6 +505,14 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public void setY(double y)
     {
         setPosition(position.x, y);
+    }
+
+    /**
+     * Get anchor position (return the internal reference)
+     */
+    public Point2D getPositionInternal()
+    {
+        return position;
     }
 
     public Point2D getPosition()
@@ -482,6 +552,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             position.x = x;
             position.y = y;
 
+            needRebuild = true;
             positionChanged();
             painterChanged();
         }
@@ -490,6 +561,38 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public void translate(double dx, double dy)
     {
         setPosition(position.x + dx, position.y + dy);
+    }
+
+    /**
+     * @return Z position (-1 = ALL)
+     */
+    public int getZ()
+    {
+        return z;
+    }
+
+    /**
+     * Set Z position (-1 = ALL)
+     */
+    public void setZ(int value)
+    {
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (this.z != v)
+        {
+            this.z = v;
+
+            needRebuild = true;
+            painterChanged();
+            // FIXME: do this really need to send a position change event ?
+            positionChanged();
+        }
     }
 
     /**
@@ -509,6 +612,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (ray != value)
         {
             ray = value;
+            needRebuild = true;
             painterChanged();
         }
     }
@@ -530,6 +634,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (color != value)
         {
             color = value;
+            needPropertiesUpdate = true;
             painterChanged();
         }
     }
@@ -551,6 +656,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (selectedColor != value)
         {
             selectedColor = value;
+            needPropertiesUpdate = true;
             painterChanged();
         }
     }
@@ -577,6 +683,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             if (!value)
                 startDragMousePosition = null;
 
+            needPropertiesUpdate = true;
             painterChanged();
         }
     }
@@ -615,39 +722,260 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (visible != value)
         {
             visible = value;
+            needPropertiesUpdate = true;
             painterChanged();
         }
     }
 
-    public boolean isOver(IcyCanvas canvas, Point2D p)
+    protected void initVtkObjects()
     {
-        if (p == null)
-            return false;
+        // init 3D painters stuff
+        vtkSource = new vtkSphereSource();
+        vtkSource.SetRadius(getRay());
+        vtkSource.SetThetaResolution(12);
+        vtkSource.SetPhiResolution(12);
 
-        return isOver(canvas, p.getX(), p.getY());
+        polyMapper = new vtkPolyDataMapper();
+        polyMapper.SetInputConnection((vtkSource).GetOutputPort());
+
+        actor = new vtkActor();
+        actor.SetMapper(polyMapper);
+
+        // use vtkInformations to store outline visibility state (hacky)
+        vtkInfo = new vtkInformation();
+        vtkInfo.Set(VtkCanvas.visibilityKey, 0);
+        // VtkCanvas use this to restore correctly outline visibility flag
+        actor.SetPropertyKeys(vtkInfo);
+
+        // initialize color
+        final Color col = getColor();
+        actor.GetProperty().SetColor(col.getRed() / 255d, col.getGreen() / 255d, col.getBlue() / 255d);
     }
 
-    public boolean isOver(IcyCanvas canvas, double x, double y)
+    /**
+     * update 3D painter for 3D canvas (called only when VTK is loaded).
+     */
+    protected boolean rebuildVtkObjects()
     {
-        updateEllipse(canvas);
+        final VtkCanvas canvas = canvas3d.get();
+        // canvas was closed
+        if (canvas == null)
+            return false;
+
+        final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+        // canvas was closed
+        if (vtkPanel == null)
+            return false;
+
+        final Sequence seq = canvas.getSequence();
+        // nothing to update
+        if (seq == null)
+            return false;
+
+        final Point2D pos = getPosition();
+        double curZ = getZ();
+
+        // all slices ?
+        if (curZ == -1d)
+            // set object at middle of the volume
+            curZ = seq.getSizeZ() / 2d;
+
+        // actor can be accessed in canvas3d for rendering so we need to synchronize access
+        vtkPanel.lock();
+        try
+        {
+            // need to handle scaling on radius and position to keep a "round" sphere (else we obtain ellipsoid)
+            vtkSource.SetCenter(pos.getX() * scaling[0], pos.getY() * scaling[1], (curZ + 0.5d) * scaling[2]);
+            polyMapper.Update();
+
+            // actor.SetScale(scaling);
+        }
+        finally
+        {
+            vtkPanel.unlock();
+        }
+
+        // need to repaint
+        painterChanged();
+
+        return true;
+    }
+
+    protected void updateVtkDisplayProperties()
+    {
+        if (actor == null)
+            return;
+
+        final VtkCanvas cnv = canvas3d.get();
+        final Color col = isSelected() ? getSelectedColor() : getColor();
+        final double r = col.getRed() / 255d;
+        final double g = col.getGreen() / 255d;
+        final double b = col.getBlue() / 255d;
+        // final float opacity = getOpacity();
+
+        final IcyVtkPanel vtkPanel = (cnv != null) ? cnv.getVtkPanel() : null;
+
+        // we need to lock canvas as actor can be accessed during rendering
+        if (vtkPanel != null)
+            vtkPanel.lock();
+        try
+        {
+            actor.GetProperty().SetColor(r, g, b);
+            if (isVisible())
+            {
+                actor.SetVisibility(1);
+                vtkInfo.Set(VtkCanvas.visibilityKey, 1);
+            }
+            else
+            {
+                actor.SetVisibility(0);
+                vtkInfo.Set(VtkCanvas.visibilityKey, 0);
+            }
+        }
+        finally
+        {
+            if (vtkPanel != null)
+                vtkPanel.unlock();
+        }
+        // need to repaint
+        painterChanged();
+    }
+
+    protected void updateVtkRadius()
+    {
+        final VtkCanvas canvas = canvas3d.get();
+        // canvas was closed
+        if (canvas == null)
+            return;
+
+        final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
+        // canvas was closed
+        if (vtkPanel == null)
+            return;
+
+        if (vtkSource == null)
+            return;
+
+        // update sphere radius base on canvas scale X
+        final double radius = getAdjRay(canvas) * scaling[0];
+
+        if (vtkSource.GetRadius() != radius)
+        {
+            // actor can be accessed in canvas3d for rendering so we need to synchronize access
+            vtkPanel.lock();
+            try
+            {
+                vtkSource.SetRadius(radius);
+                vtkSource.Update();
+            }
+            finally
+            {
+                vtkPanel.unlock();
+            }
+
+            // need to repaint
+            painterChanged();
+        }
+    }
+
+    @Override
+    public vtkProp[] getProps()
+    {
+        // initialize VTK objects if not yet done
+        if (actor == null)
+            initVtkObjects();
+
+        return new vtkActor[] {actor};
+    }
+
+    /**
+     * Returns <code>true</code> if specified Point3D is over the anchor in the specified canvas
+     */
+    public boolean isOver(IcyCanvas canvas, Point2D imagePoint)
+    {
+        updateEllipseForCanvas(canvas);
+
+        // specific VTK canvas processing
+        if (canvas instanceof VtkCanvas)
+        {
+            // faster to use picked object
+            return (actor != null) && (actor == ((VtkCanvas) canvas).getPickedObject());
+        }
+
+        // at this point we need image position
+        if (imagePoint == null)
+            return false;
 
         // fast contains test to start with
-        if (ellipse.getBounds2D().contains(x, y))
-            return ellipse.contains(x, y);
+        if (ellipse.getBounds2D().contains(imagePoint))
+            return ellipse.contains(imagePoint);
 
         return false;
     }
 
-    protected double getAdjRay(IcyCanvas canvas)
+    public boolean isOver(IcyCanvas canvas, double x, double y)
     {
-        return Math.max(canvas.canvasToImageLogDeltaX(ray), canvas.canvasToImageLogDeltaY(ray));
+        return isOver(canvas, new Point2D.Double(x, y));
     }
 
-    private void updateEllipse(IcyCanvas canvas)
+    protected double getAdjRay(IcyCanvas canvas)
     {
-        final double adjRay = getAdjRay(canvas);
+        // assume X dimension is ok here
+        return canvas.canvasToImageLogDeltaX(ray);
+    }
 
-        ellipse.setFrame(position.x - adjRay, position.y - adjRay, adjRay * 2, adjRay * 2);
+    /**
+     * Update internal ellipse for specified Canvas
+     */
+    protected void updateEllipseForCanvas(IcyCanvas canvas)
+    {
+        // specific VTK canvas processing
+        if (canvas instanceof VtkCanvas)
+        {
+            // 3D canvas
+            final VtkCanvas cnv = (VtkCanvas) canvas;
+            // update reference if needed
+            if (canvas3d.get() != cnv)
+                canvas3d = new WeakReference<VtkCanvas>(cnv);
+
+            // FIXME : need a better implementation
+            final double[] s = cnv.getVolumeScale();
+
+            // scaling changed ?
+            if (!Arrays.equals(scaling, s))
+            {
+                // update scaling
+                scaling = s;
+                // need rebuild
+                needRebuild = true;
+            }
+
+            if (needRebuild)
+            {
+                // initialize VTK objects if not yet done
+                if (actor == null)
+                    initVtkObjects();
+
+                // request rebuild 3D objects
+                ThreadUtil.runSingle(this);
+                needRebuild = false;
+            }
+
+            if (needPropertiesUpdate)
+            {
+                updateVtkDisplayProperties();
+                needPropertiesUpdate = false;
+            }
+
+            // update sphere radius
+            updateVtkRadius();
+        }
+        else
+        {
+            final double adjRay = getAdjRay(canvas);
+
+            ellipse.setFrame(position.x - adjRay, position.y - adjRay, adjRay * 2, adjRay * 2);
+        }
     }
 
     protected boolean updateDrag(InputEvent e, double x, double y)
@@ -671,7 +999,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         }
 
         // set new position
-        setPosition(new Point2D.Double(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy));
+        setPosition(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy);
 
         return true;
     }
@@ -776,45 +1104,73 @@ public class Anchor2D extends Overlay implements XMLPersistent
         removeAnchorListener(listener);
     }
 
+    public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas, boolean simplified)
+    {
+        // this will update VTK objects if needed
+        updateEllipseForCanvas(canvas);
+
+        if (canvas instanceof IcyCanvas2D)
+        {
+            // nothing to do here when not visible
+            if (!isVisible())
+                return;
+
+            // get canvas Z position
+            final int cnvZ = canvas.getPositionZ();
+            final int z = getZ();
+
+            boolean sameZPos = ((z == -1) || (cnvZ == -1) || (z == cnvZ));
+
+            if (sameZPos)
+            {
+                // trivial paint optimization
+                if (ShapeUtil.isVisible(g, ellipse))
+                {
+                    final Graphics2D g2 = (Graphics2D) g.create();
+
+                    // draw content
+                    if (isSelected())
+                        g2.setColor(getSelectedColor());
+                    else
+                        g2.setColor(getColor());
+
+                    // simplified small drawing
+                    if (simplified)
+                    {
+                        final int ray = (int) canvas.canvasToImageDeltaX(2);
+                        g2.fillRect((int) getPositionX() - ray, (int) getPositionY() - ray, ray * 2, ray * 2);
+                    }
+                    // normal drawing
+                    else
+                    {
+                        // draw ellipse content
+                        g2.fill(ellipse);
+                        // draw black border
+                        g2.setStroke(new BasicStroke((float) (getAdjRay(canvas) / 8f)));
+                        g2.setColor(Color.black);
+                        g2.draw(ellipse);
+                    }
+
+                    g2.dispose();
+                }
+            }
+        }
+        else if (canvas instanceof VtkCanvas)
+        {
+            // nothing to do here
+        }
+    }
+
     @Override
     public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
     {
-        if (!isVisible())
-            return;
-
-        // VtkCanvas not handled here
-        if (canvas instanceof IcyCanvas2D)
-        {
-            updateEllipse(canvas);
-
-            // trivial paint optimization
-            final boolean shapeVisible = ShapeUtil.isVisible(g, ellipse);
-
-            if (shapeVisible)
-            {
-                final Graphics2D g2 = (Graphics2D) g.create();
-
-                // draw content
-                if (isSelected())
-                    g2.setColor(getSelectedColor());
-                else
-                    g2.setColor(getColor());
-
-                // draw ellipse content
-                g2.fill(ellipse);
-                // draw black border
-                g2.setStroke(new BasicStroke((float) (getAdjRay(canvas) / 8f)));
-                g2.setColor(Color.black);
-                g2.draw(ellipse);
-
-                g2.dispose();
-            }
-        }
+        paint(g, sequence, canvas, false);
     }
 
     /*
      * only for backward compatibility
      */
+    @Deprecated
     @Override
     public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -835,6 +1191,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     /*
      * only for backward compatibility
      */
+    @Deprecated
     @Override
     public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -855,6 +1212,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     /*
      * only for backward compatibility
      */
+    @Deprecated
     @Override
     public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -886,6 +1244,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     /*
      * only for backward compatibility
      */
+    @Deprecated
     @Override
     public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -895,6 +1254,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     /*
      * only for backward compatibility
      */
+    @Deprecated
     @Override
     public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -933,6 +1293,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     /*
      * only for backward compatibility
      */
+    @Deprecated
     @Override
     public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -1058,16 +1419,12 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // no image position --> exit
-        if (imagePoint == null)
-            return;
-
         // already consumed, no selection possible
         if (e.isConsumed())
             setSelected(false);
         else
         {
-            final boolean overlapped = isOver(canvas, imagePoint.x, imagePoint.y);
+            final boolean overlapped = isOver(canvas, (imagePoint != null) ? imagePoint.toPoint2D() : null);
 
             setSelected(overlapped);
 
@@ -1075,6 +1432,12 @@ public class Anchor2D extends Overlay implements XMLPersistent
             if (overlapped)
                 e.consume();
         }
+    }
+
+    @Override
+    public void run()
+    {
+        rebuildVtkObjects();
     }
 
     public boolean loadPositionFromXML(Node node)
@@ -1117,8 +1480,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         try
         {
             setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
-            setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR,
-                    DEFAULT_SELECTED_COLOR.getRGB())));
+            setSelectedColor(
+                    new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR, DEFAULT_SELECTED_COLOR.getRGB())));
             setX(XMLUtil.getElementDoubleValue(node, ID_POS_X, 0d));
             setY(XMLUtil.getElementDoubleValue(node, ID_POS_Y, 0d));
             setRay(XMLUtil.getElementIntValue(node, ID_RAY, DEFAULT_RAY));

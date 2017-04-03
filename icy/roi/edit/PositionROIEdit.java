@@ -20,12 +20,19 @@ public class PositionROIEdit extends AbstractROIEdit
     Point5D prevPos;
     Point5D currentPos;
 
-    public PositionROIEdit(ROI roi, Point5D prevPos)
+    public PositionROIEdit(ROI roi, Point5D prevPos, boolean mergeable)
     {
         super(roi, "ROI position changed");
 
         this.prevPos = prevPos;
         this.currentPos = roi.getPosition5D();
+
+        setMergeable(mergeable);
+    }
+
+    public PositionROIEdit(ROI roi, Point5D prevPos)
+    {
+        this(roi, prevPos, true);
     }
 
     @Override

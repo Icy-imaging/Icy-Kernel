@@ -36,8 +36,8 @@ public class Updater
     public static final String ICYKERNEL_NAME = "ICY Kernel";
     public static final String ICYUPDATER_NAME = "ICY Updater";
 
-    public static final String UPDATE_DIRECTORY = "update";
-    public static final String BACKUP_DIRECTORY = "backup";
+    public static final String UPDATE_DIRECTORY = FileUtil.getApplicationDirectory() + FileUtil.separator + "update";
+    public static final String BACKUP_DIRECTORY = FileUtil.getApplicationDirectory() + FileUtil.separator + "backup";
     public static final String UPDATE_BASE_NAME = "update";
     public static final String UPDATE_EXT_NAME = ".xml";
     public static final String UPDATE_NAME = UPDATE_BASE_NAME + UPDATE_EXT_NAME;
@@ -124,7 +124,8 @@ public class Updater
     public static ArrayList<ElementDescriptor> getLocalElements()
     {
         // get local elements from XML file
-        final ArrayList<ElementDescriptor> result = loadElementsFromXML(VERSION_NAME);
+        final ArrayList<ElementDescriptor> result = loadElementsFromXML(FileUtil.getApplicationDirectory()
+                + FileUtil.separator + VERSION_NAME);
 
         // validate elements
         validateElements(result);

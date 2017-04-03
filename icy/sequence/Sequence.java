@@ -18,9 +18,28 @@
  */
 package icy.sequence;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.swing.undo.UndoManager;
+
+import org.w3c.dom.Node;
+
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
+import icy.common.exception.TooLargeArrayException;
 import icy.common.listener.ChangeListener;
+import icy.file.FileUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageEvent;
@@ -69,25 +88,7 @@ import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.swing.undo.UndoManager;
-
 import loci.formats.ome.OMEXMLMetadataImpl;
-
-import org.w3c.dom.Node;
 
 /**
  * Image sequence object.<br>
@@ -142,6 +143,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     public static final String ID_NAME = "name";
 
+    public static final String ID_POSITION_X = "positionX";
+    public static final String ID_POSITION_Y = "positionY";
+    public static final String ID_POSITION_Z = "positionZ";
+
     public static final String ID_PIXEL_SIZE_X = "pixelSizeX";
     public static final String ID_PIXEL_SIZE_Y = "pixelSizeY";
     public static final String ID_PIXEL_SIZE_Z = "pixelSizeZ";
@@ -186,6 +191,38 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * image file --> single file attachment
      */
     protected String filename;
+
+    /**
+     * Resolution level from the original image<br>
+     * 0 --> full image resolution<br>
+     * 1 --> resolution / 2<br>
+     * 2 --> resolution / 4<br>
+     * 3 --> ...<br>
+     * Default value is 0
+     */
+    protected int originResolution;
+    /**
+     * Region (X,Y) from original image if this image is a crop of the original image.<br>
+     * Default value is <code>null</code> (no crop)
+     */
+    protected Rectangle originXYRegion;
+    /**
+     * Z range from original image if this image is a crop in Z of the original image.<br>
+     * Default value is -1, -1 if we have the whole Z range.
+     */
+    protected int originZRangeMin;
+    protected int originZRangeMax;
+    /**
+     * T range from original image if this image is a crop in T of the original image.<br>
+     * Default value is -1, -1 if we have the whole T range.
+     */
+    protected int originTRangeMin;
+    protected int originTRangeMax;
+    /**
+     * Channel position from original image if this image is a single channel extraction of the original image.<br>
+     * Default value is -1 which mean that all channels were preserved.
+     */
+    protected int originChannel;
 
     /**
      * Metadata
@@ -268,6 +305,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 MetaDataUtil.setName(metaData, 0, DEFAULT_NAME + StringUtil.toString(id, 3));
         }
         filename = null;
+
+        originResolution = 0;
+        originXYRegion = null;
+        originZRangeMin = -1;
+        originZRangeMax = -1;
+        originTRangeMin = -1;
+        originTRangeMax = -1;
+        originChannel = -1;
 
         // default pixel size and time interval
         if (MetaDataUtil.getPixelSizeX(metaData, 0, 1d) == 1d)
@@ -453,14 +498,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void copyMetaDataFrom(Sequence source, boolean copyName)
     {
-        final String name = getName();
-
         // copy all metadata from source
         metaData = OMEUtil.createOMEMetadata(source.getMetadata());
 
         // restore name if needed
-        if (!copyName)
-            setName(name);
+        if (copyName)
+            setName(source.getName());
 
         // notify metadata changed
         metaChanged(null);
@@ -478,7 +521,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         try
         {
-            undoManager.addEdit(new DefaultSequenceEdit(SequenceUtil.getCopy(this, true, true, false), this));
+            undoManager.addEdit(new DefaultSequenceEdit(SequenceUtil.getCopy(this, false, false, false), this));
             return true;
         }
         catch (Throwable t)
@@ -763,9 +806,260 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns the output base filename.<br>
+     * This function is supposed to be used internally only.
+     * 
+     * @param folderExt
+     *        If the filename of this sequence refer a folder then we extend it with 'folderExt' to build the base name.
+     * @see #getOutputExtension()
+     */
+    public String getOutputBaseName(String folderExt)
+    {
+        String result = getFilename();
+
+        if (StringUtil.isEmpty(result))
+            return "";
+
+        // remove some problematic character for XML file
+        result = FileUtil.cleanPath(result);
+
+        // filename reference a directory --> use "<directory>/<folderExt>"
+        if (FileUtil.isDirectory(result))
+            result += "/" + folderExt;
+        // otherwise remove extension
+        else
+            result = FileUtil.setExtension(result, "");
+
+        return result;
+    }
+
+    /**
+     * Returns the output filename extension (not the file extension, just extension from base name).<br>
+     * The extension is based on some internals informations as serie index and resolution level.<br>
+     * This function is supposed to be used internally only.
+     * 
+     * @see #getOutputBaseName(String)
+     */
+    public String getOutputExtension()
+    {
+        String result = "";
+
+        // retrieve the serie index
+        final int serieNum = getSerieIndex();
+
+        // multi serie image --> add a specific extension
+        if (serieNum != 0)
+            result += "_S" + serieNum;
+
+        // retrieve the resolution
+        final int resolution = getOriginResolution();
+
+        // sub resolution --> add a specific extension
+        if (resolution != 0)
+            result += "_R" + resolution;
+
+        // retrieve the XY region offset
+        final Rectangle xyRegion = getOriginXYRegion();
+
+        // not null --> add a specific extension
+        if (xyRegion != null)
+            result += "_XY(" + xyRegion.x + "," + xyRegion.y + "-" + xyRegion.width + "," + xyRegion.height + ")";
+
+        // retrieve the Z range
+        final int zMin = getOriginZRangeMin();
+        final int zMax = getOriginZRangeMax();
+
+        // sub Z range --> add a specific extension
+        if ((zMin != -1) || (zMax != -1))
+            result += "_Z(" + zMin + "-" + zMax + ")";
+
+        // retrieve the T range
+        final int tMin = getOriginTRangeMin();
+        final int tMax = getOriginTRangeMax();
+
+        // sub T range --> add a specific extension
+        if ((tMin != -1) || (tMax != -1))
+            result += "_T(" + tMin + "-" + tMax + ")";
+
+        // retrieve the original channel
+        final int channel = getOriginChannel();
+
+        // single channel extraction --> add a specific extension
+        if (channel != -1)
+            result += "_C" + channel;
+
+        return result;
+    }
+
+    /**
+     * Return the desired output filename for this Sequence (without file extension.<br>
+     * It uses the origin filename and add a specific extension depending some internals properties.
+     * 
+     * @param withExtension
+     *        Add the original file extension is set to <code>true</code>
+     * @see #getFilename()
+     * @see #getOutputBaseName(String)
+     * @see #getOutputExtension()
+     */
+    public String getOutputFilename(boolean withExtension)
+    {
+        String result = getFilename();
+
+        if (StringUtil.isEmpty(result))
+            return "";
+
+        final String ext = FileUtil.getFileExtension(result, true);
+
+        result = getOutputBaseName(FileUtil.getFileName(result, false)) + getOutputExtension();
+        if (withExtension)
+            result += ext;
+
+        return result;
+    }
+
+    /**
+     * Returns the resolution level from the origin image (defined by {@link #getFilename()}).<br>
+     * By default it returns 0 if this sequence corresponds to the full resolution of the original image.<br>
+     * A value of 1 mean original resolution / 2<br>
+     * 2 --> original resolution / 4<br>
+     * 3 --> original resolution / 8<br>
+     * ...
+     */
+    public int getOriginResolution()
+    {
+        return originResolution;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginResolution()
+     */
+    public void setOriginResolution(int value)
+    {
+        originResolution = value;
+    }
+
+    /**
+     * Returns the region (X,Y) from original image if this image is a crop of the original image.<br>
+     * Default value is <code>null</code> (full size).
+     */
+    public Rectangle getOriginXYRegion()
+    {
+        return originXYRegion;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginXYRegion()
+     */
+    public void setOriginXYRegion(Rectangle value)
+    {
+        // better to use a copy
+        originXYRegion = new Rectangle(value);
+    }
+
+    /**
+     * Returns the Z range minimum from original image if this image is a crop in Z of the original image.<br>
+     * Default value is -1 which mean we have the whole Z range.
+     */
+    public int getOriginZRangeMin()
+    {
+        return originZRangeMin;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginZRangeMin()
+     */
+    public void setOriginZRangeMin(int value)
+    {
+        originZRangeMin = value;
+    }
+
+    /**
+     * Returns the Z range maximum from original image if this image is a crop in Z of the original image.<br>
+     * Default value is -1 which mean we have the whole Z range.
+     */
+    public int getOriginZRangeMax()
+    {
+        return originZRangeMax;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginZRangeMax()
+     */
+    public void setOriginZRangeMax(int value)
+    {
+        originZRangeMax = value;
+    }
+
+    /**
+     * Returns the T range minimum from original image if this image is a crop in T of the original image.<br>
+     * Default value is -1 which mean we have the whole T range.
+     */
+    public int getOriginTRangeMin()
+    {
+        return originTRangeMin;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginTRangeMin()
+     */
+    public void setOriginTRangeMin(int value)
+    {
+        originTRangeMin = value;
+    }
+
+    /**
+     * Returns the T range maximum from original image if this image is a crop in T of the original image.<br>
+     * Default value is -1 which mean we have the whole T range.
+     */
+    public int getOriginTRangeMax()
+    {
+        return originTRangeMax;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginTRangeMax()
+     */
+    public void setOriginTRangeMax(int value)
+    {
+        originTRangeMax = value;
+    }
+
+    /**
+     * Returns the channel position from original image if this image is a single channel extraction of the original
+     * image.<br>
+     * Default value is -1 which mean that all channels were preserved.
+     */
+    public int getOriginChannel()
+    {
+        return originChannel;
+    }
+
+    /**
+     * Internal use only, you should not directly use this method.
+     * 
+     * @see #getOriginChannel()
+     */
+    public void setOriginChannel(int value)
+    {
+        originChannel = value;
+    }
+
+    /**
      * Returns serie index if the Sequence comes from a multi serie image.<br>
      * By default it returns 0 if the sequence comes from a single serie image or if this is the
-     * first serie iamge.
+     * first serie image.
      */
     public int getSerieIndex()
     {
@@ -801,6 +1095,84 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             this.metaData = metaData;
             // all meta data changed
             metaChanged(null);
+        }
+    }
+
+    /**
+     * Returns the X physical position / offset (in µm) of the image represented by this Sequence.<br>
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     */
+    public double getPositionX()
+    {
+        return MetaDataUtil.getPositionX(metaData, 0, 0, 0, 0, 0d);
+    }
+
+    /**
+     * Returns the Y physical position / offset (in µm) of the image represented by this Sequence.<br>
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     */
+    public double getPositionY()
+    {
+        return MetaDataUtil.getPositionY(metaData, 0, 0, 0, 0, 0d);
+    }
+
+    /**
+     * Returns the Z physical position / offset (in µm) of the image represented by this Sequence.<br>
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     */
+    public double getPositionZ()
+    {
+        return MetaDataUtil.getPositionZ(metaData, 0, 0, 0, 0, 0d);
+    }
+
+    /**
+     * Sets the X physical position / offset (in µm) of the image represented by this Sequence.<br>
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     */
+    public void setPositionX(double value)
+    {
+        if (getPositionX() != value)
+        {
+            MetaDataUtil.setPositionX(metaData, 0, 0, 0, 0, value);
+            metaChanged(ID_POSITION_X);
+        }
+    }
+
+    /**
+     * Sets the X physical position / offset (in µm) of the image represented by this Sequence.<br>
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     */
+    public void setPositionY(double value)
+    {
+        if (getPositionY() != value)
+        {
+            MetaDataUtil.setPositionY(metaData, 0, 0, 0, 0, value);
+            metaChanged(ID_POSITION_Y);
+        }
+    }
+
+    /**
+     * Sets the X physical position / offset (in µm) of the image represented by this Sequence.<br>
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     */
+    public void setPositionZ(double value)
+    {
+        if (getPositionZ() != value)
+        {
+            MetaDataUtil.setPositionZ(metaData, 0, 0, 0, 0, value);
+            metaChanged(ID_POSITION_Z);
         }
     }
 
@@ -1647,6 +2019,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return result;
+    }
+
+    /**
+     * Returns true if the sequence contains at least one selected ROI.
+     */
+    public boolean hasSelectedROI()
+    {
+        return getSelectedROI() != null;
     }
 
     /**
@@ -2594,8 +2974,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Set an image at the specified position.<br/>
-     * Note that the image duplicated/transformed internally before being attached to the Sequence
-     * object.
+     * Note that the image will be transformed in IcyBufferedImage internally if needed
      * 
      * @param t
      *        T position
@@ -2766,14 +3145,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     final int t = entry.getKey().intValue();
 
                     if (volImg == null)
+                    {
                         removeAllImages(t);
+                    }
                     else
                     {
                         // pack the list
                         volImg.pack();
-                        // empty ?
+                        // empty ? --> remove it
                         if (volImg.isEmpty())
-                            // remove it
                             removeAllImages(t);
                     }
                 }
@@ -3200,6 +3580,20 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Set the default colormap for the specified channel
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colormap to copy
+     * @see #getDefaultColorMap(int)
+     */
+    public void setDefaultColormap(int channel, IcyColorMap map)
+    {
+        setDefaultColormap(channel, map, map.isAlpha());
+    }
+
+    /**
      * Get the user colormap for the specified channel.<br>
      * User colormap is saved in the XML persistent data and reloaded when opening the Sequence.
      * 
@@ -3239,6 +3633,21 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         if (channel < lut.getNumChannel())
             lut.getLutChannel(channel).setColorMap(map, setAlpha);
+    }
+
+    /**
+     * Set the user colormap for the specified channel.<br>
+     * User colormap is saved in the XML persistent data and reloaded when opening the Sequence.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colormap to copy
+     * @see #getColorMap(int)
+     */
+    public void setColormap(int channel, IcyColorMap map)
+    {
+        setColormap(channel, map, map.isAlpha());
     }
 
     /**
@@ -3287,7 +3696,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Internal use only.
      */
-    private double[][] adjustBounds(double[][] curBounds, double[][] bounds)
+    private static double[][] adjustBounds(double[][] curBounds, double[][] bounds)
     {
         if (bounds == null)
             return curBounds;
@@ -3410,7 +3819,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * @deprecated Use {@link #updateChannelsBounds(boolean)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public void updateComponentsBounds(boolean forceRecalculation, boolean adjustByteToo)
     {
@@ -4524,9 +4932,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public byte[] getDataCopyXYCZTAsByte(byte[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -4552,9 +4963,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public short[] getDataCopyXYCZTAsShort(short[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -4580,9 +4994,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public int[] getDataCopyXYCZTAsInt(int[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -4608,9 +5025,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public float[] getDataCopyXYCZTAsFloat(float[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -4636,9 +5056,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getDataCopyXYCZTAsDouble(double[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -4664,9 +5087,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public byte[] getDataCopyXYCZAsByte(int t, byte[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -4692,9 +5118,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public short[] getDataCopyXYCZAsShort(int t, short[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -4720,9 +5149,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public int[] getDataCopyXYCZAsInt(int t, int[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -4748,9 +5180,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public float[] getDataCopyXYCZAsFloat(int t, float[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -4776,9 +5211,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getDataCopyXYCZAsDouble(int t, double[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5024,9 +5462,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public byte[] getDataCopyCXYZTAsByte(byte[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5052,9 +5493,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public short[] getDataCopyCXYZTAsShort(short[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5080,9 +5524,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public int[] getDataCopyCXYZTAsInt(int[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5108,9 +5555,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public float[] getDataCopyCXYZTAsFloat(float[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5136,9 +5586,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getDataCopyCXYZTAsDouble(double[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeC() * getSizeZ();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5164,9 +5617,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public byte[] getDataCopyCXYZAsByte(int t, byte[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5192,9 +5648,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public short[] getDataCopyCXYZAsShort(int t, short[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5220,9 +5679,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public int[] getDataCopyCXYZAsInt(int t, int[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5248,9 +5710,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public float[] getDataCopyCXYZAsFloat(int t, float[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5276,9 +5741,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getDataCopyCXYZAsDouble(int t, double[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY() * getSizeC();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeC();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5524,9 +5992,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public byte[] getDataCopyXYZTAsByte(int c, byte[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeZ();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5552,9 +6023,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public short[] getDataCopyXYZTAsShort(int c, short[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeZ();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5580,9 +6054,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public int[] getDataCopyXYZTAsInt(int c, int[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeZ();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5608,9 +6085,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public float[] getDataCopyXYZTAsFloat(int c, float[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeZ();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5636,9 +6116,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getDataCopyXYZTAsDouble(int c, double[] out, int off)
     {
-        final int sizeT = getSizeT();
-        final int len = getSizeX() * getSizeY() * getSizeZ();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeT);
+        final long sizeT = getSizeT();
+        final long len = (long) getSizeX() * (long) getSizeY() * (long) getSizeZ();
+        if ((len * sizeT) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeT));
         int offset = off;
 
         for (int t = 0; t < sizeT; t++)
@@ -5664,9 +6147,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public byte[] getDataCopyXYZAsByte(int t, int c, byte[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY();
-        final byte[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final byte[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5692,9 +6178,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public short[] getDataCopyXYZAsShort(int t, int c, short[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY();
-        final short[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final short[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5720,9 +6209,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public int[] getDataCopyXYZAsInt(int t, int c, int[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY();
-        final int[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final int[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5748,9 +6240,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public float[] getDataCopyXYZAsFloat(int t, int c, float[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY();
-        final float[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final float[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5776,9 +6271,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getDataCopyXYZAsDouble(int t, int c, double[] out, int off)
     {
-        final int sizeZ = getSizeZ();
-        final int len = getSizeX() * getSizeY();
-        final double[] result = Array1DUtil.allocIfNull(out, len * sizeZ);
+        final long sizeZ = getSizeZ();
+        final long len = (long) getSizeX() * (long) getSizeY();
+        if ((len * sizeZ) >= Integer.MAX_VALUE)
+            throw new TooLargeArrayException();
+
+        final double[] result = Array1DUtil.allocIfNull(out, (int) (len * sizeZ));
         int offset = off;
 
         for (int z = 0; z < sizeZ; z++)
@@ -5827,8 +6325,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Load XML persistent data from file.<br>
      * This method should only be called once when the sequence has just be loaded from file.<br>
-     * Note that it internally uses {@link #getFilename()} to define the XML filename so be sure it
-     * is correctly filled before calling this method.<br>
+     * Note that it uses {@link #getFilename()} to define the XML filename so be sure that it is correctly filled before
+     * calling this method.
      * 
      * @return <code>true</code> if XML data has been correctly loaded, <code>false</code> otherwise.
      */
@@ -6128,7 +6626,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     protected void componentBoundsChanged(IcyColorModel colorModel, int component)
     {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
+        updater.changed(
+                new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
     }
 
     // /**
@@ -6292,7 +6791,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         switch (event.getSourceType())
         {
-        // do here global process on sequence data change
+            // do here global process on sequence data change
             case SEQUENCE_DATA:
                 // automatic channel bounds update enabled
                 if (autoUpdateChannelBounds)

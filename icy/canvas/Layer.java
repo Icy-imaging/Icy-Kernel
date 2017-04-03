@@ -54,6 +54,7 @@ public class Layer implements OverlayListener, Comparable<Layer>
     /**
      * @deprecated Use {@link #PROPERTY_OPACITY} instead
      */
+    @Deprecated
     public final static String PROPERTY_ALPHA = "alpha";
     public final static String PROPERTY_OPACITY = "opacity";
     public final static String PROPERTY_VISIBLE = "visible";
@@ -344,6 +345,7 @@ public class Layer implements OverlayListener, Comparable<Layer>
     /**
      * @deprecated Use {@link #getOpacity()} instead
      */
+    @Deprecated
     public float getAlpha()
     {
         return getOpacity();
@@ -352,6 +354,7 @@ public class Layer implements OverlayListener, Comparable<Layer>
     /**
      * @deprecated Use {@link #setOpacity(float)} instead.
      */
+    @Deprecated
     public void setAlpha(float value)
     {
         setOpacity(value);
@@ -371,7 +374,14 @@ public class Layer implements OverlayListener, Comparable<Layer>
      */
     private void fireChangedEvent(String propertyName)
     {
-        for (LayerListener listener : listeners)
+        final List<LayerListener> list;
+
+        synchronized (listeners)
+        {
+            list = new ArrayList<Layer.LayerListener>(listeners);
+        }
+
+        for (LayerListener listener : list)
             listener.layerChanged(this, propertyName);
     }
 
@@ -382,7 +392,10 @@ public class Layer implements OverlayListener, Comparable<Layer>
      */
     public void addListener(LayerListener listener)
     {
-        listeners.add(listener);
+        synchronized (listeners)
+        {
+            listeners.add(listener);
+        }
     }
 
     /**
@@ -392,7 +405,10 @@ public class Layer implements OverlayListener, Comparable<Layer>
      */
     public void removeListener(LayerListener listener)
     {
-        listeners.remove(listener);
+        synchronized (listeners)
+        {
+            listeners.remove(listener);
+        }
     }
 
     @Override

@@ -213,7 +213,7 @@ public class TaskFrameManager implements Runnable
             }
 
             // remove frames from list
-            list = list.subList(ind + 1, list.size());
+            list = new ArrayList<TaskFrameInfo>(list.subList(ind + 1, list.size()));
         }
 
         // calculate and update all frames position

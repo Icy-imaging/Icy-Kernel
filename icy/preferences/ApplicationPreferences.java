@@ -180,7 +180,9 @@ public class ApplicationPreferences
     {
         // we want a big permgen space for the class loader
         return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImage -XX:MaxPermSize=128M");
+                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImage "
+                        + "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImageInternal "
+                        + "-XX:MaxPermSize=128M");
     }
 
     /**
@@ -192,7 +194,7 @@ public class ApplicationPreferences
 
         // we have different default extra VM parameters depending OS
         if (os.equals(SystemUtil.SYSTEM_WINDOWS))
-            return preferences.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_WINDOWS, "-Dsun.java2d.d3d=false");
+            return preferences.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_WINDOWS, "");
         if (os.equals(SystemUtil.SYSTEM_MAC_OS))
             return preferences.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_MAC_OS, "-Xdock:name=Icy");
         if (os.equals(SystemUtil.SYSTEM_UNIX))

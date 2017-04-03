@@ -12,7 +12,7 @@ import icy.type.point.Point5D;
  */
 public class ROIMassCenterXDescriptor extends ROIDescriptor
 {
-    public static final String ID = "MassCenterX";
+    public static final String ID = "Mass center X";
 
     public ROIMassCenterXDescriptor()
     {

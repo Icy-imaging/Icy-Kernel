@@ -73,7 +73,7 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonApplicationMenuEntrySecondary
  */
 public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoaderListener
 {
-    private static final int RECENTFILE_MAXLEN = 100;
+     static final int RECENTFILE_MAXLEN = 100;
 
     /**
      * Secondary panel management for "Open Recent File"
@@ -192,7 +192,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 importPanel.addButtonGroup("Sequence importer");
                 for (PluginDescriptor plugin : sequenceImporterPlugins)
                 {
-                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
+                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false, false);
 
                     button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
@@ -254,7 +254,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
 
                 for (PluginDescriptor plugin : importerPlugins)
                 {
-                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
+                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false, false);
 
                     button.setHorizontalAlignment(SwingConstants.LEFT);
                     button.addActionListener(new ActionListener()
@@ -334,10 +334,10 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
 
     final RecentFileList recentFileList;
 
-    private final RibbonApplicationMenuEntryPrimary amepNew;
-    private final RibbonApplicationMenuEntrySecondary amesNewGraySequence;
-    private final RibbonApplicationMenuEntrySecondary amesNewRGBSequence;
-    private final RibbonApplicationMenuEntrySecondary amesNewRGBASequence;
+    private final RibbonApplicationMenuEntryPrimary amepCreate;
+    private final RibbonApplicationMenuEntrySecondary amesCreateGraySequence;
+    private final RibbonApplicationMenuEntrySecondary amesCreateRGBSequence;
+    private final RibbonApplicationMenuEntrySecondary amesCreateRGBASequence;
     private final RibbonApplicationMenuEntryPrimary amepOpen;
     private final RibbonApplicationMenuEntryPrimary amepImport;
     private final RibbonApplicationMenuEntryPrimary amepSaveDefault;
@@ -360,14 +360,14 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
 
         recentFileList = new RecentFileList(IcyPreferences.applicationRoot().node("loader"));
 
-        // NEW FILE
-        amepNew = new IcyRibbonApplicationMenuEntryPrimary(FileActions.newSequenceAction);
+        // CREATE SEQUENCE
+        amepCreate = new IcyRibbonApplicationMenuEntryPrimary(FileActions.newSequenceAction);
 
-        amesNewGraySequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newGraySequenceAction);
-        amesNewRGBSequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newRGBSequenceAction);
-        amesNewRGBASequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newARGBSequenceAction);
+        amesCreateGraySequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newGraySequenceAction);
+        amesCreateRGBSequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newRGBSequenceAction);
+        amesCreateRGBASequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newARGBSequenceAction);
 
-        amepNew.addSecondaryMenuGroup("New image", amesNewGraySequence, amesNewRGBSequence, amesNewRGBASequence);
+        amepCreate.addSecondaryMenuGroup("New image", amesCreateGraySequence, amesCreateRGBSequence, amesCreateRGBASequence);
 
         // OPEN & IMPORT
         amepOpen = new IcyRibbonApplicationMenuEntryPrimary(FileActions.openSequenceAction);
@@ -385,7 +385,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         amepSaveMetaData = new IcyRibbonApplicationMenuEntrySecondary(FileActions.saveMetaDataAction);
 
         amepSaveDefault.addSecondaryMenuGroup("Save", amepSave, amepSaveAs, amepSaveMetaData);
-
+        
         // final RibbonApplicationMenuEntryPrimary amepExport = new
         // RibbonApplicationMenuEntryPrimary(
         // new ICYResizableIcon.Icy("doc_export.png"), "Export", new ActionListener()
@@ -416,7 +416,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
 
         // build menu
 
-        addMenuEntry(amepNew);
+        addMenuEntry(amepCreate);
         addMenuEntry(amepOpen);
         addMenuEntry(amepSaveDefault);
 
