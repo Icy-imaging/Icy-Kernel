@@ -18,6 +18,30 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -45,31 +69,6 @@ import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
-
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkCellArray;
@@ -205,22 +204,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         /**
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             // get bounds
             final double xs = scaling[0];
@@ -355,13 +354,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             }
 
             // update color and others properties
-            return updateVtkDisplayProperties();
+            updateVtkDisplayProperties();
         }
 
-        protected boolean updateVtkDisplayProperties()
+        protected void updateVtkDisplayProperties()
         {
             if (actor == null)
-                return false;
+                return;
 
             final VtkCanvas cnv = canvas3d.get();
             final vtkProperty vtkProperty = actor.GetProperty();
@@ -407,8 +406,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -570,7 +567,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                                             // add undo operation
                                             if (sequence != null)
-                                                sequence.addUndoableEdit(new Point2DAddedROIEdit(ROI2DShape.this, point));
+                                                sequence.addUndoableEdit(
+                                                        new Point2DAddedROIEdit(ROI2DShape.this, point));
                                         }
                                     }
                                 }
@@ -687,7 +685,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                                 // position changed and undo supported --> add undo operation
                                 if ((sequence != null) && (savedPosition != null)
                                         && !savedPosition.equals(pt.getPosition()))
-                                    sequence.addUndoableEdit(new Point2DMovedROIEdit(ROI2DShape.this, pt, savedPosition));
+                                    sequence.addUndoableEdit(
+                                            new Point2DMovedROIEdit(ROI2DShape.this, pt, savedPosition));
                             }
                         }
                     }
@@ -1377,7 +1376,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                     switch (selectedPathPoint.getType())
                     {
-                    // we removed a MOVETO point ?
+                        // we removed a MOVETO point ?
                         case PathIterator.SEG_MOVETO:
                             // try to set next point to MOVETO state
                             if (index < controlPoints.size())

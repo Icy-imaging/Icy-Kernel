@@ -85,24 +85,23 @@ public class ROI3DLine extends ROI3DShape
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
         @Override
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
-            if (!super.rebuildVtkObjects())
-                return false;
+            super.rebuildVtkObjects();
 
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             // sub VTK object not yet initialized (it can happen, have to check why ??)
             if (tubeFilter == null)
-                return false;
+                return;
 
             // actor can be accessed in canvas3d for rendering so we need to synchronize access
             vtkPanel.lock();
@@ -115,25 +114,23 @@ public class ROI3DLine extends ROI3DShape
             {
                 vtkPanel.unlock();
             }
-
-            return true;
         }
 
-        protected boolean updateVtkTubeRadius()
+        protected void updateVtkTubeRadius()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             // sub VTK object not yet initialized (it can happen, have to check why ??)
             if (tubeFilter == null)
-                return false;
+                return;
 
             // update tube radius base on canvas scale X and image scale X
             final double radius = canvas.canvasToImageLogDeltaX((int) getStroke()) * scaling[0];
@@ -155,8 +152,6 @@ public class ROI3DLine extends ROI3DShape
                 // need to repaint
                 painterChanged();
             }
-
-            return true;
         }
 
         @Override

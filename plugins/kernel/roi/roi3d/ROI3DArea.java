@@ -18,6 +18,17 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.painter.VtkPainter;
@@ -35,18 +46,6 @@ import icy.type.rectangle.Rectangle3D;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
@@ -167,22 +166,22 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         /**
          * rebuild VTK objects (called only when VTK canvas is selected).
          */
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             // get previous polydata object
             final vtkPolyData previousPolyData = polyData;
@@ -247,13 +246,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             }
 
             // update color and others properties
-            return updateVtkDisplayProperties();
+            updateVtkDisplayProperties();
         }
 
-        protected boolean updateVtkDisplayProperties()
+        protected void updateVtkDisplayProperties()
         {
             if (surfaceActor == null)
-                return false;
+                return;
 
             final VtkCanvas cnv = canvas3d.get();
             final Color col = getDisplayColor();
@@ -297,8 +296,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -862,8 +859,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         else if (newSlice instanceof ROI2D)
             setSlice(z, new ROI2DArea(((ROI2D) newSlice).getBooleanMask(true)));
         else
-            throw new IllegalArgumentException("Can't add the result of the merge operation on 2D slice " + z + ": "
-                    + newSlice.getClassName());
+            throw new IllegalArgumentException(
+                    "Can't add the result of the merge operation on 2D slice " + z + ": " + newSlice.getClassName());
     }
 
     // /**

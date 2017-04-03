@@ -153,22 +153,22 @@ public class ROI2DPoint extends ROI2DShape
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
         @Override
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             final Point2D pos = getPoint();
             double curZ = getZ();
@@ -199,15 +199,13 @@ public class ROI2DPoint extends ROI2DShape
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
 
         @Override
-        protected boolean updateVtkDisplayProperties()
+        protected void updateVtkDisplayProperties()
         {
             if (actor == null)
-                return false;
+                return;
 
             final VtkCanvas cnv = canvas3d.get();
             final Color col = getDisplayColor();
@@ -233,8 +231,6 @@ public class ROI2DPoint extends ROI2DShape
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
     }
 

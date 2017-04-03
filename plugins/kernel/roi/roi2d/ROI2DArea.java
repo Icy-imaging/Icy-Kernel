@@ -18,6 +18,28 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -41,29 +63,6 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
-
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.IndexColorModel;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkImageData;
@@ -208,22 +207,22 @@ public class ROI2DArea extends ROI2D
         /**
          * rebuild VTK objects (called only when VTK canvas is selected).
          */
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             // get previous polydata object
             final vtkPolyData previousPolyData = polyData;
@@ -289,13 +288,13 @@ public class ROI2DArea extends ROI2D
             }
 
             // update color and others properties
-            return updateVtkDisplayProperties();
+            updateVtkDisplayProperties();
         }
 
-        protected boolean updateVtkDisplayProperties()
+        protected void updateVtkDisplayProperties()
         {
             if (surfaceActor == null)
-                return false;
+                return;
 
             final VtkCanvas cnv = canvas3d.get();
             final Color col = getDisplayColor();
@@ -339,8 +338,6 @@ public class ROI2DArea extends ROI2D
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
 
         protected void setVtkObjectsColor(Color color)
@@ -351,22 +348,22 @@ public class ROI2DArea extends ROI2D
                 VtkUtil.setPolyDataColor(polyData, color, canvas3d.get());
         }
 
-        protected boolean updateVtkObjectsBounds()
+        protected void updateVtkObjectsBounds()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             final Rectangle3D bounds = getBounds5D().toRectangle3D();
             // apply scaling on bounds
@@ -401,8 +398,6 @@ public class ROI2DArea extends ROI2D
             {
                 vtkPanel.unlock();
             }
-            
-            return true;            
         }
 
         void updateCursor()

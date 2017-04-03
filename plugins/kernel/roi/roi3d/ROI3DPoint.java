@@ -3,6 +3,14 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -18,15 +26,6 @@ import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.vtk.IcyVtkPanel;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
@@ -101,7 +100,8 @@ public class ROI3DPoint extends ROI3DShape
                 {
                     final Point3D pos = getPoint();
                     final double ray = getAdjustedStroke(canvas);
-                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2, ray * 2);
+                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2,
+                            ray * 2);
 
                     // get canvas Z position
                     final int cnvZ = canvas.getPositionZ();
@@ -159,22 +159,22 @@ public class ROI3DPoint extends ROI3DShape
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
         @Override
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             final Point3D pos = getPoint();
 
@@ -199,15 +199,13 @@ public class ROI3DPoint extends ROI3DShape
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
 
         @Override
-        protected boolean updateVtkDisplayProperties()
+        protected void updateVtkDisplayProperties()
         {
             if (actor == null)
-                return false;
+                return;
 
             final VtkCanvas cnv = canvas3d.get();
             final Color col = getDisplayColor();
@@ -233,8 +231,6 @@ public class ROI3DPoint extends ROI3DShape
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
     }
 

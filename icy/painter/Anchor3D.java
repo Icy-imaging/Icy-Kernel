@@ -18,19 +18,6 @@
  */
 package icy.painter;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.CollapsibleEvent;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point3D;
-import icy.type.point.Point5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
-import icy.util.XMLUtil;
-import icy.vtk.IcyVtkPanel;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -46,6 +33,18 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point3D;
+import icy.type.point.Point5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.XMLUtil;
+import icy.vtk.IcyVtkPanel;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkInformation;
@@ -714,10 +713,10 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
         return true;
     }
 
-    protected boolean updateVtkDisplayProperties()
+    protected void updateVtkDisplayProperties()
     {
         if (actor == null)
-            return false;
+            return;
 
         final VtkCanvas cnv = canvas3d.get();
         final Color col = isSelected() ? getSelectedColor() : getColor();
@@ -753,24 +752,22 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
 
         // need to repaint
         painterChanged();
-
-        return true;
     }
 
-    protected boolean updateVtkRadius()
+    protected void updateVtkRadius()
     {
         final VtkCanvas canvas = canvas3d.get();
         // canvas was closed
         if (canvas == null)
-            return false;
+            return;
 
         final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
         // canvas was closed
         if (vtkPanel == null)
-            return false;
+            return;
 
         if (vtkSource == null)
-            return false;
+            return;
 
         // update sphere radius base on canvas scale X
         final double radius = getAdjRay(canvas) * scaling[0];
@@ -792,8 +789,6 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
             // need to repaint
             painterChanged();
         }
-
-        return true;
     }
 
     @Override
@@ -1038,8 +1033,8 @@ public class Anchor3D extends Overlay implements VtkPainter, Runnable
         try
         {
             setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
-            setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR,
-                    DEFAULT_SELECTED_COLOR.getRGB())));
+            setSelectedColor(
+                    new Color(XMLUtil.getElementIntValue(node, ID_SELECTEDCOLOR, DEFAULT_SELECTED_COLOR.getRGB())));
             setX(XMLUtil.getElementDoubleValue(node, ID_POS_X, 0d));
             setY(XMLUtil.getElementDoubleValue(node, ID_POS_Y, 0d));
             setZ(XMLUtil.getElementDoubleValue(node, ID_POS_Z, 0d));

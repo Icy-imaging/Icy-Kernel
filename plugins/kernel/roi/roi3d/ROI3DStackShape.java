@@ -3,15 +3,6 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import icy.canvas.IcyCanvas;
-import icy.painter.VtkPainter;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle3D;
-import icy.vtk.IcyVtkPanel;
-import icy.vtk.VtkUtil;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.InputEvent;
@@ -21,6 +12,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import icy.canvas.IcyCanvas;
+import icy.painter.VtkPainter;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle3D;
+import icy.vtk.IcyVtkPanel;
+import icy.vtk.VtkUtil;
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DShape;
 import vtk.vtkActor;
@@ -174,22 +173,22 @@ public abstract class ROI3DStackShape extends ROI3DStack<ROI2DShape>
         /**
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
-        protected boolean rebuildVtkObjects()
+        protected void rebuildVtkObjects()
         {
             final VtkCanvas canvas = canvas3d.get();
             // canvas was closed
             if (canvas == null)
-                return false;
+                return;
 
             final IcyVtkPanel vtkPanel = canvas.getVtkPanel();
             // canvas was closed
             if (vtkPanel == null)
-                return false;
+                return;
 
             final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
-                return false;
+                return;
 
             // get bounds
             final Rectangle3D bounds = getBounds3D();
@@ -320,13 +319,13 @@ public abstract class ROI3DStackShape extends ROI3DStack<ROI2DShape>
             }
 
             // update color and others properties
-            return updateVtkDisplayProperties();
+            updateVtkDisplayProperties();
         }
 
-        protected boolean updateVtkDisplayProperties()
+        protected void updateVtkDisplayProperties()
         {
             if (actor == null)
-                return false;
+                return;
 
             final VtkCanvas cnv = canvas3d.get();
             final vtkProperty vtkProperty = actor.GetProperty();
@@ -372,8 +371,6 @@ public abstract class ROI3DStackShape extends ROI3DStack<ROI2DShape>
 
             // need to repaint
             painterChanged();
-
-            return true;
         }
 
         protected void setVtkObjectsColor(Color color)

@@ -103,9 +103,9 @@ public class Icy
     public static final int EXIT_FORCE_DELAY = 3000;
 
     /**
-     * ICY Version
+     * Icy Version
      */
-    public static Version version = new Version("1.9.0.0");
+    public static Version version = new Version("1.9.0.1");
 
     /**
      * Main interface
