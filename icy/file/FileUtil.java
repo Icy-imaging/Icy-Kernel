@@ -42,6 +42,8 @@ public class FileUtil
 {
     public static final char separatorChar = '/';
     public static final String separator = "/";
+    
+    public static final String APPLICATION_DIRECTORY = getApplicationDirectory();
 
     /**
      * Cleanup the file path (replace some problematic character by "_")

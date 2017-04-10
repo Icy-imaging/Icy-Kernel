@@ -18,12 +18,6 @@
  */
 package icy.update;
 
-import icy.file.FileUtil;
-import icy.update.ElementDescriptor.ElementFile;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-import icy.util.ZipUtil;
-
 import java.io.File;
 import java.util.ArrayList;
 
@@ -31,13 +25,19 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import icy.file.FileUtil;
+import icy.update.ElementDescriptor.ElementFile;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.util.ZipUtil;
+
 public class Updater
 {
     public static final String ICYKERNEL_NAME = "ICY Kernel";
     public static final String ICYUPDATER_NAME = "ICY Updater";
 
-    public static final String UPDATE_DIRECTORY = FileUtil.getApplicationDirectory() + FileUtil.separator + "update";
-    public static final String BACKUP_DIRECTORY = FileUtil.getApplicationDirectory() + FileUtil.separator + "backup";
+    public static final String UPDATE_DIRECTORY = FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + "update";
+    public static final String BACKUP_DIRECTORY = FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + "backup";
     public static final String UPDATE_BASE_NAME = "update";
     public static final String UPDATE_EXT_NAME = ".xml";
     public static final String UPDATE_NAME = UPDATE_BASE_NAME + UPDATE_EXT_NAME;
@@ -124,8 +124,8 @@ public class Updater
     public static ArrayList<ElementDescriptor> getLocalElements()
     {
         // get local elements from XML file
-        final ArrayList<ElementDescriptor> result = loadElementsFromXML(FileUtil.getApplicationDirectory()
-                + FileUtil.separator + VERSION_NAME);
+        final ArrayList<ElementDescriptor> result = loadElementsFromXML(
+                FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + VERSION_NAME);
 
         // validate elements
         validateElements(result);
@@ -369,7 +369,7 @@ public class Updater
 
         if (updateFile(localPath, file.getDateModif()))
         {
-            final File dest = new File(localPath);
+            final File dest = new File(FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + localPath);
 
             // there is no reason the file doesn't exists but anyway...
             if (dest.exists())
@@ -392,14 +392,17 @@ public class Updater
      */
     public static boolean backup(String localPath)
     {
+        final String src = FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + localPath;
         // file exist ? backup it
-        if (FileUtil.exists(localPath))
+        if (FileUtil.exists(src))
         {
-            if (!FileUtil.copy(localPath, BACKUP_DIRECTORY + FileUtil.separator + localPath, true, true))
+            final String dest = BACKUP_DIRECTORY + FileUtil.separator + localPath;
+
+            if (!FileUtil.copy(src, dest, true, true))
                 return false;
 
             // verify that backup file exist
-            return FileUtil.exists(BACKUP_DIRECTORY + FileUtil.separator + localPath);
+            return FileUtil.exists(dest);
         }
 
         return true;
@@ -425,7 +428,8 @@ public class Updater
         }
 
         // move file
-        if (!FileUtil.rename(UPDATE_DIRECTORY + FileUtil.separator + localPath, localPath, true))
+        if (!FileUtil.rename(UPDATE_DIRECTORY + FileUtil.separator + localPath,
+                FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + localPath, true))
         {
             // move failed
             System.err.println("Updater.udpateFile('" + localPath + "') failed !");
@@ -443,7 +447,7 @@ public class Updater
      */
     public static boolean needUpdate(String localPath, long dateModif)
     {
-        final File localFile = new File(localPath);
+        final File localFile = new File(FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + localPath);
 
         return (!localFile.exists()) || (dateModif == 0L) || (localFile.lastModified() != dateModif);
     }

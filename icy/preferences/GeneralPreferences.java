@@ -178,7 +178,7 @@ public class GeneralPreferences
 
     public static String getResultFolder()
     {
-        return prefGeneral.get(ID_RESULT_FOLDER, FileUtil.getApplicationDirectory() + FileUtil.separator + "result");
+        return prefGeneral.get(ID_RESULT_FOLDER, FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + "result");
     }
 
     public static String getUserLogin()

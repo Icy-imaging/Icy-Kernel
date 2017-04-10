@@ -149,8 +149,11 @@ public class ThumbnailComponent extends JToggleButton
             final float sx = imageComp.getWidth() / ix;
             final float sy = imageComp.getHeight() / iy;
             final float s = Math.min(sx, sy);
+            final int w = (int) (ix * s);
+            final int h = (int) (iy * s);
 
-            image = ImageUtil.scaleQuality(img, (int) (ix * s), (int) (iy * s));
+            if ((w > 0) && (h > 0))
+                image = ImageUtil.scaleQuality(img, w, h);
         }
 
         imageComp.setImage(image);

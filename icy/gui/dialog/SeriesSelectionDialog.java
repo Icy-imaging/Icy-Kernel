@@ -51,6 +51,7 @@ import icy.sequence.MetaDataUtil;
 import icy.util.OMEUtil;
 import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
+import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
@@ -80,7 +81,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     protected IFormatReader reader;
     protected SequenceFileImporter importer;
     protected String id;
-    protected OMEXMLMetadataImpl metadata;
+    protected OMEXMLMetadata metadata;
     protected int[] selectedSeries;
     protected final MouseAdapter serieDoubleClickAction;
     protected final Thread loadingThread;
@@ -230,7 +231,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
      * @throws IOException
      * @throws UnsupportedFormatException
      */
-    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadataImpl metadata)
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadata metadata)
             throws UnsupportedFormatException, IOException
     {
         super("Series selection", null, Icy.getMainInterface().getMainFrame());
@@ -355,6 +356,16 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         pack();
         ComponentUtil.center(SeriesSelectionDialog.this);
         setVisible(true);
+    }
+
+    /**
+     * @deprecated Use {@link #SeriesSelectionDialog(SequenceFileImporter, String, OMEXMLMetadata)} instead.
+     */
+    @Deprecated
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadataImpl metadata)
+            throws UnsupportedFormatException, IOException
+    {
+        this(importer, id, (OMEXMLMetadata) metadata);
     }
 
     /**

@@ -18,19 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.CollapsibleEvent;
-import icy.painter.Anchor2D;
-import icy.resource.ResourceUtil;
-import icy.roi.ROI;
-import icy.roi.ROIEvent;
-import icy.sequence.Sequence;
-import icy.type.point.Point5D;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-import icy.vtk.IcyVtkPanel;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
@@ -40,6 +27,20 @@ import java.awt.geom.Rectangle2D;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.painter.Anchor2D;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.resource.ResourceUtil;
+import icy.roi.ROI;
+import icy.roi.ROIEvent;
+import icy.sequence.Sequence;
+import icy.type.point.Point5D;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.vtk.IcyVtkPanel;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
@@ -85,16 +86,6 @@ public class ROI2DPoint extends ROI2DShape
             return true;
         }
 
-        // @Override
-        // public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
-        // {
-        // super.mouseMove(e, imagePoint, canvas);
-        //
-        // // special case: we want to set focus when we have control point selected
-        // if (hasSelectedPoint())
-        // setFocused(true);
-        // }
-
         @Override
         public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
@@ -115,7 +106,8 @@ public class ROI2DPoint extends ROI2DShape
                 {
                     final Point2D pos = getPoint();
                     final double ray = getAdjustedStroke(canvas);
-                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2, ray * 2);
+                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2,
+                            ray * 2);
 
                     // draw shape
                     g2.setColor(getDisplayColor());
@@ -308,6 +300,24 @@ public class ROI2DPoint extends ROI2DShape
     public Point2D getPoint()
     {
         return position.getPosition();
+    }
+
+    /**
+     * Called when anchor overlay changed
+     */
+    @Override
+    public void controlPointOverlayChanged(OverlayEvent event)
+    {
+        // we only mind about painter change from anchor...
+        if (event.getType() == OverlayEventType.PAINTER_CHANGED)
+        {
+            // here we want to have ROI focused when point is selected (special case for ROIPoint)
+            if (hasSelectedPoint())
+                setFocused(true);
+
+            // anchor changed --> ROI painter changed
+            getOverlay().painterChanged();
+        }
     }
 
     @Override

@@ -41,7 +41,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import icy.common.exception.UnsupportedFormatException;
-import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.file.SequenceFileImporter;
 import icy.gui.component.RangeComponent;
@@ -216,6 +215,10 @@ public class LoaderOptionPanel extends JPanel
                     {
                         if (importer.open(fileId, 0))
                         {
+                            // interrupt process
+                            if (isInterrupted())
+                                break;
+
                             try
                             {
                                 if (!metaDataDone)
@@ -256,6 +259,10 @@ public class LoaderOptionPanel extends JPanel
 
                                     metaDataDone = true;
                                 }
+
+                                // interrupt process
+                                if (isInterrupted())
+                                    break;
 
                                 if (!thumbnailDone)
                                 {
@@ -1042,6 +1049,20 @@ public class LoaderOptionPanel extends JPanel
             cancelPreview();
             metadata = null;
             metadataFieldsOk = true;
+            if (previewThread != null)
+            {
+                try
+                {
+                    previewThread.join();
+                }
+                catch (InterruptedException e)
+                {
+                    // ignore
+                }
+            }
+            
+            preview.setImage(ResourceUtil.ICON_PICTURE);
+            preview.setInfos("Multiple selection...");
         }
     }
 

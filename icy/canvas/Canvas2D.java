@@ -1977,7 +1977,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     final Canvas2DSmoothMover smoothTransform;
 
+    // internal
     String textInfos;
+    Dimension previousImageSize;
     boolean modifyingZoom;
     boolean modifyingRotation;
 
@@ -2003,6 +2005,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         textInfos = null;
         modifyingZoom = false;
         modifyingRotation = false;
+        previousImageSize = new Dimension(getImageSizeX(), getImageSizeY());
 
         smoothTransform.addListener(new MultiSmoothMoverAdapter()
         {
@@ -2780,7 +2783,30 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         canvasView.refresh();
     }
 
+    /**
+     * Return an ARGB BufferedImage form of the image located at position [T, Z, C].<br>
+     * If the 'out' image is not compatible with wanted image, a new image is returned.
+     */
     public BufferedImage getARGBImage(int t, int z, int c, BufferedImage out)
+    {
+        final IcyBufferedImage img = Canvas2D.this.getImage(t, z, c);
+
+        if (img != null)
+        {
+            final BufferedImage result;
+
+            if ((out != null) && ImageUtil.sameSize(img, out))
+                result = out;
+            else
+                result = new BufferedImage(img.getSizeX(), img.getSizeY(), BufferedImage.TYPE_INT_ARGB);
+
+            return IcyBufferedImageUtil.toBufferedImage(img, result, getLut());
+        }
+
+        return null;
+    }
+
+    public BufferedImage getARGBImage(int t, int z, int c, BufferedImage out, boolean adaptSize)
     {
         final IcyBufferedImage img = Canvas2D.this.getImage(t, z, c);
 
@@ -3179,6 +3205,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             canvasView.imageChanged();
             canvasView.refresh();
+        }
+    }
+
+    @Override
+    protected void sequenceTypeChanged()
+    {
+        super.sequenceTypeChanged();
+
+        // sequence XY dimension changed ?
+        if ((previousImageSize.width != getImageSizeX()) || (previousImageSize.height != getImageSizeY()))
+        {
+            // fit to canvas enabled ? --> adapt zoom to new sequence XY dimension
+            if (getFitToCanvas())
+                fitImageToCanvas(true);
         }
     }
 

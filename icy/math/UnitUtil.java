@@ -18,9 +18,9 @@
  */
 package icy.math;
 
-import icy.util.StringUtil;
-
 import java.util.concurrent.TimeUnit;
+
+import icy.util.StringUtil;
 
 /**
  * Unit conversion utilities class.
@@ -29,6 +29,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class UnitUtil
 {
+    /**
+     * Constants for special characters
+     */
+    public static final char MICRO_CHAR = '\u00B5';
+    public static final String MICRO_STRING = "\u00B5";
+
     public static enum UnitPrefix
     {
         GIGA, MEGA, KILO, NONE, MILLI, MICRO, NANO, PICO;
@@ -47,7 +53,7 @@ public class UnitUtil
                 case MILLI:
                     return "m";
                 case MICRO:
-                    return "µ";
+                    return MICRO_STRING;
                 case NANO:
                     return "n";
                 case PICO:
