@@ -140,6 +140,11 @@ public class Anchor2D extends Overlay implements VtkPainter, Runnable
     public static final Color DEFAULT_NORMAL_COLOR = Color.YELLOW;
     public static final Color DEFAULT_SELECTED_COLOR = Color.WHITE;
 
+    public static final String PROPERTY_COLOR = ID_COLOR;
+    public static final String PROPERTY_SELECTEDCOLOR = ID_SELECTEDCOLOR;
+    public static final String PROPERTY_SELECTED = ID_SELECTED;
+    public static final String PROPERTY_RAY = ID_RAY;
+
     /**
      * position (canvas)
      */
@@ -635,6 +640,7 @@ public class Anchor2D extends Overlay implements VtkPainter, Runnable
         {
             color = value;
             needPropertiesUpdate = true;
+            propertyChanged(PROPERTY_COLOR);
             painterChanged();
         }
     }
@@ -657,6 +663,7 @@ public class Anchor2D extends Overlay implements VtkPainter, Runnable
         {
             selectedColor = value;
             needPropertiesUpdate = true;
+            propertyChanged(PROPERTY_SELECTEDCOLOR);
             painterChanged();
         }
     }
@@ -684,6 +691,7 @@ public class Anchor2D extends Overlay implements VtkPainter, Runnable
                 startDragMousePosition = null;
 
             needPropertiesUpdate = true;
+            propertyChanged(PROPERTY_SELECTED);
             painterChanged();
         }
     }

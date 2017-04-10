@@ -67,6 +67,7 @@ import icy.util.XMLUtil;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
+import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
@@ -1059,7 +1060,7 @@ public class Loader
      * @throws OutOfMemoryError
      *         if there is not enough memory to open the image
      */
-    public static void checkOpening(OMEXMLMetadataImpl meta, int serie, int resolution, int sizeZ, int sizeT,
+    public static void checkOpening(OMEXMLMetadata meta, int serie, int resolution, int sizeZ, int sizeT,
             String messageSuffix) throws UnsupportedOperationException, OutOfMemoryError
     {
         checkOpening(resolution, MetaDataUtil.getSizeX(meta, serie), MetaDataUtil.getSizeY(meta, serie),
@@ -1092,7 +1093,7 @@ public class Loader
      * @throws OutOfMemoryError
      *         if there is not enough memory to open the image
      */
-    public static void checkOpening(OMEXMLMetadataImpl meta, int serie, int resolution, String messageSuffix)
+    public static void checkOpening(OMEXMLMetadata meta, int serie, int resolution, String messageSuffix)
             throws UnsupportedOperationException, OutOfMemoryError
     {
         checkOpening(meta, serie, resolution, MetaDataUtil.getSizeZ(meta, serie), MetaDataUtil.getSizeT(meta, serie),
@@ -1943,7 +1944,9 @@ public class Loader
      * @param path
      *        Image file to load.
      * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select serie to open from a
+     *        serie selector dialog.
      * @param addToRecent
      *        If set to true the path will be traced in recent opened sequence.
      * @param showProgress
@@ -2230,7 +2233,9 @@ public class Loader
      * @param path
      *        image file to load
      * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select serie to open from a
+     *        serie selector dialog.
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
      *        The retrieved image resolution is equal to
@@ -2468,7 +2473,9 @@ public class Loader
      * @param path
      *        image file to load
      * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select series to open from a
+     *        serie selector dialog.
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
      *        The retrieved image resolution is equal to
@@ -2524,20 +2531,19 @@ public class Loader
             imp.open(path, 0);
 
             // get metadata
-            final OMEXMLMetadataImpl meta = imp.getMetaData();
+            final OMEXMLMetadata meta = imp.getMetaData();
             // clean the metadata
             MetaDataUtil.clean(meta);
 
             // serie selection
             int selectedSerie;
 
-            // give the opportunity to select the serie(s) to open ?
+            // give the opportunity to select the serie (single one) to open ?
             if (serie == -1)
             {
                 try
                 {
-                    // serie selection (create a new importer instance as selectSerie(..) does async
-                    // processes)
+                    // serie selection (create a new importer instance as selectSerie(..) does async processes)
                     selectedSerie = selectSerie(imp.getClass().newInstance(), path, meta, 0);
                 }
                 catch (Throwable t)
@@ -2972,7 +2978,7 @@ public class Loader
      *        Caller should allocate 100 positions for the internal single load process.
      * @return the Sequence object or <code>null</code>
      */
-    static Sequence internalLoadSingle(SequenceFileImporter importer, OMEXMLMetadataImpl metadata, int serie,
+    static Sequence internalLoadSingle(SequenceFileImporter importer, OMEXMLMetadata metadata, int serie,
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
@@ -3103,7 +3109,7 @@ public class Loader
                         "Image file '" + path + "' is not supported by " + importer.toString() + " importer.");
 
             // get metadata
-            final OMEXMLMetadataImpl meta = importer.getMetaData();
+            final OMEXMLMetadata meta = importer.getMetaData();
             // clean the metadata
             MetaDataUtil.clean(meta);
 
@@ -3115,8 +3121,7 @@ public class Loader
             {
                 try
                 {
-                    // serie selection (create a new importer instance as selectSerie(..) does async
-                    // processes)
+                    // serie selection (create a new importer instance as selectSerie(..) does async processes)
                     selectedSeries = selectSeries(importer.getClass().newInstance(), path, meta, 0, false);
                 }
                 catch (Throwable t)
@@ -3217,7 +3222,7 @@ public class Loader
         final double posZ = sequence.getPositionZ();
 
         // get sequence metadata
-        final OMEXMLMetadataImpl metadata = sequence.getMetadata();
+        final OMEXMLMetadata metadata = sequence.getMetadata();
 
         // cleanup planes
         for (int t = sizeT - 1; t >= 0; t--)
@@ -3298,9 +3303,8 @@ public class Loader
      * Display the Serie Selection frame for the given image and returns selected serie(s).<br>
      * Returns a 0 length array if user canceled serie selection.
      */
-    public static int[] selectSeries(final SequenceFileImporter importer, final String path,
-            final OMEXMLMetadataImpl meta, int defaultSerie, boolean singleSelection)
-            throws UnsupportedFormatException, IOException
+    public static int[] selectSeries(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
+            int defaultSerie, boolean singleSelection) throws UnsupportedFormatException, IOException
     {
         final int serieCount = MetaDataUtil.getNumSerie(meta);
         final int[] tmp = new int[serieCount + 1];
@@ -3363,11 +3367,21 @@ public class Loader
     }
 
     /**
-     * Display the Serie Selection frame for the given image and return the selected serie (single
-     * selection).<br>
+     * Display the Serie Selection frame for the given image and returns selected serie(s).<br>
+     * Returns a 0 length array if user canceled serie selection.
+     */
+    public static int[] selectSeries(final SequenceFileImporter importer, final String path,
+            final OMEXMLMetadataImpl meta, int defaultSerie, boolean singleSelection)
+            throws UnsupportedFormatException, IOException
+    {
+        return selectSeries(importer, path, (OMEXMLMetadata) meta, defaultSerie, singleSelection);
+    }
+
+    /**
+     * Display the Serie Selection frame for the given image and return the selected serie (single selection).<br>
      * Returns <code>-1</code> if user canceled serie selection.
      */
-    public static int selectSerie(final SequenceFileImporter importer, final String path, final OMEXMLMetadataImpl meta,
+    public static int selectSerie(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
             int defaultSerie) throws UnsupportedFormatException, IOException
     {
         final int selected[] = selectSeries(importer, path, meta, defaultSerie, true);
@@ -3376,6 +3390,16 @@ public class Loader
             return selected[0];
 
         return -1;
+    }
+
+    /**
+     * @deprecated Use {@link #selectSerie(SequenceFileImporter, String, OMEXMLMetadata, int)} instead
+     */
+    @Deprecated
+    public static int selectSerie(final SequenceFileImporter importer, final String path, final OMEXMLMetadataImpl meta,
+            int defaultSerie) throws UnsupportedFormatException, IOException
+    {
+        return selectSerie(importer, path, (OMEXMLMetadata) meta, defaultSerie);
     }
 
     static List<String> explode(List<String> paths)
@@ -3487,7 +3511,7 @@ public class Loader
                         loadingFrame.setAction("Reading metadata");
                     }
 
-                    final OMEXMLMetadataImpl metadata = getMetaData(filenames.get(0));
+                    final OMEXMLMetadata metadata = getMetaData(filenames.get(0));
 
                     if (loadingFrame != null)
                     {

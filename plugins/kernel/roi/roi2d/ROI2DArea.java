@@ -43,7 +43,9 @@ import org.w3c.dom.Node;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
+import icy.gui.inspector.RoisPanel;
 import icy.image.ImageUtil;
+import icy.main.Icy;
 import icy.painter.VtkPainter;
 import icy.resource.ResourceUtil;
 import icy.roi.BooleanMask2D;
@@ -722,7 +724,34 @@ public class ROI2DArea extends ROI2D
             else
                 mouseClick(e, (Point2D) null, canvas);
 
-            // cancel the default action of ROIPainter implementation which unselecting ROI on right click
+            // not yet consumed...
+            if (!e.isConsumed())
+            {
+                // and process ROI stuff now
+                if (isActiveFor(canvas))
+                {
+                    final int clickCount = e.getClickCount();
+
+                    // double click
+                    if (clickCount == 2)
+                    {
+                        // focused ?
+                        if (isFocused())
+                        {
+                            // show in ROI panel
+                            final RoisPanel roiPanel = Icy.getMainInterface().getRoisPanel();
+
+                            if (roiPanel != null)
+                            {
+                                roiPanel.scrollTo(ROI2DArea.this);
+                                // consume event
+                                e.consume();
+                            }
+                        }
+                    }
+                }
+            }
+            
         }
 
         @Override

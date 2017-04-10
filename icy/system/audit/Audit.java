@@ -201,7 +201,7 @@ public class Audit
             return true;
         if ((mem != 0) && (mem != SystemUtil.getTotalMemory()))
             return true;
-        if (!StringUtil.isEmpty(appFolder) && !StringUtil.equals(appFolder, FileUtil.getApplicationDirectory()))
+        if (!StringUtil.isEmpty(appFolder) && !StringUtil.equals(appFolder, FileUtil.APPLICATION_DIRECTORY))
             return true;
 
         return false;
@@ -215,7 +215,7 @@ public class Audit
         ApplicationPreferences.setOs(SystemUtil.getOSArchIdString());
         prefs.putInt(ID_CLIENT_CPUNUMBER, SystemUtil.getNumberOfCPUs());
         prefs.putLong(ID_CLIENT_TOTAL_MEMORY, SystemUtil.getTotalMemory());
-        ApplicationPreferences.setAppFolder(FileUtil.getApplicationDirectory());
+        ApplicationPreferences.setAppFolder(FileUtil.APPLICATION_DIRECTORY);
     }
 
     private static void processIdAudit()

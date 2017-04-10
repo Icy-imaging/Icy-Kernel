@@ -18,6 +18,11 @@
  */
 package icy.file;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
 import icy.gui.menu.ApplicationMenu;
@@ -35,23 +40,18 @@ import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.IFormatWriter;
 import loci.formats.UnknownFormatException;
-import loci.formats.ome.OMEXMLMetadata;
+import loci.formats.meta.MetadataRetrieve;
 import loci.formats.out.APNGWriter;
 import loci.formats.out.AVIWriter;
 import loci.formats.out.JPEG2000Writer;
 import loci.formats.out.JPEGWriter;
 import loci.formats.out.OMETiffWriter;
 import loci.formats.out.TiffWriter;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Sequence / Image saver class.<br>
@@ -68,20 +68,20 @@ public class Saver
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
             DataType dataType) throws ServiceException
     {
-        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, false);
+        return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, false);
     }
 
     /**
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
             boolean signedDataType) throws ServiceException
     {
-        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT,
+        return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT,
                 DataType.getDataType(dataType, signedDataType), false);
     }
 
@@ -89,20 +89,21 @@ public class Saver
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, DataType dataType)
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, DataType dataType)
             throws ServiceException
     {
-        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, 1, 1, dataType, false);
+        return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC, 1, 1, dataType, false);
     }
 
     /**
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int dataType, boolean signedDataType)
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int dataType, boolean signedDataType)
             throws ServiceException
     {
-        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, DataType.getDataType(dataType, signedDataType), false);
+        return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC,
+                DataType.getDataType(dataType, signedDataType), false);
     }
 
     /**
@@ -377,7 +378,8 @@ public class Saver
      * @param dataType
      *        image data type
      */
-    public static boolean isCompatible(ImageFileFormat imageFileFormat, int numChannel, boolean alpha, DataType dataType)
+    public static boolean isCompatible(ImageFileFormat imageFileFormat, int numChannel, boolean alpha,
+            DataType dataType)
     {
         return isCompatible(imageFileFormat, IcyColorModel.createInstance(numChannel, dataType));
     }
@@ -836,8 +838,8 @@ public class Saver
             try
             {
                 separateCh = getSeparateChannelFlag(writer, numChannel, dataType);
-                writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(width, height, numChannel, dataType,
-                        separateCh));
+                writer.setMetadataRetrieve((MetadataRetrieve) MetaDataUtil.generateMetaData(width, height, numChannel,
+                        dataType, separateCh));
             }
             catch (ServiceException e)
             {
@@ -925,7 +927,7 @@ public class Saver
 
         try
         {
-            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(image, separateChannel));
+            writer.setMetadataRetrieve((MetadataRetrieve) MetaDataUtil.generateMetaData(image, separateChannel));
         }
         catch (ServiceException e)
         {
@@ -1063,7 +1065,7 @@ public class Saver
         // set settings
         writer.setFramesPerSecond(fps);
         // generate metadata
-        writer.setMetadataRetrieve(metadata);
+        writer.setMetadataRetrieve((MetadataRetrieve) metadata);
         // no interleave (XP default viewer want interleaved channel to correctly read image)
         writer.setInterleaved(false);
         // set id

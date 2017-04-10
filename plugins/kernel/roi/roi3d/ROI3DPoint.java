@@ -15,6 +15,8 @@ import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
 import icy.painter.Anchor3D;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
@@ -69,16 +71,6 @@ public class ROI3DPoint extends ROI3DShape
 
             return true;
         }
-
-        // @Override
-        // public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
-        // {
-        // super.mouseMove(e, imagePoint, canvas);
-        //
-        // // special case: we want to set focus when we have control point selected
-        // if (hasSelectedPoint())
-        // setFocused(true);
-        // }
 
         @Override
         public void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
@@ -297,6 +289,24 @@ public class ROI3DPoint extends ROI3DShape
     public Point3D getPoint()
     {
         return position.getPosition();
+    }
+
+    /**
+     * Called when anchor overlay changed
+     */
+    @Override
+    public void controlPointOverlayChanged(OverlayEvent event)
+    {
+        // we only mind about painter change from anchor...
+        if (event.getType() == OverlayEventType.PAINTER_CHANGED)
+        {
+            // here we want to have ROI focused when point is selected (special case for ROIPoint)
+            if (hasSelectedPoint())
+                setFocused(true);
+
+            // anchor changed --> ROI painter changed
+            getOverlay().painterChanged();
+        }
     }
 
     @Override

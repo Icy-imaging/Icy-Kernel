@@ -18,13 +18,6 @@
  */
 package icy.gui.plugin;
 
-import icy.gui.frame.ActionFrame;
-import icy.gui.util.GuiUtil;
-import icy.plugin.PluginDescriptor;
-import icy.plugin.PluginUpdater;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -44,6 +37,13 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import icy.gui.frame.ActionFrame;
+import icy.gui.util.GuiUtil;
+import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginUpdater;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 /**
  * @author Stephane
@@ -77,7 +77,9 @@ public class PluginUpdateFrame extends ActionFrame
             @Override
             public void valueChanged(ListSelectionEvent e)
             {
-                if (pluginList.getSelectedValue() != null)
+                final PluginDescriptor plugin = (PluginDescriptor) pluginList.getSelectedValue();
+
+                if (plugin != null)
                 {
                     // plugin.loadChangeLog() can take lot of time, better to do that in background...
                     ThreadUtil.bgRun(new Runnable()
@@ -85,20 +87,15 @@ public class PluginUpdateFrame extends ActionFrame
                         @Override
                         public void run()
                         {
-                            final PluginDescriptor plugin = (PluginDescriptor) pluginList.getSelectedValue();
+                            plugin.loadChangeLog();
+                            final String changeLog = plugin.getChangeLog();
 
-                            if (plugin != null)
-                            {
-                                plugin.loadChangeLog();
-                                final String changeLog = plugin.getChangeLog();
-
-                                if (StringUtil.isEmpty(changeLog))
-                                    changeLogArea.setText("no change log");
-                                else
-                                    changeLogArea.setText(changeLog);
-                                changeLogArea.setCaretPosition(0);
-                                changeLogTitleLabel.setText(plugin.getName() + " change log");
-                            }
+                            if (StringUtil.isEmpty(changeLog))
+                                changeLogArea.setText("no change log");
+                            else
+                                changeLogArea.setText(changeLog);
+                            changeLogArea.setCaretPosition(0);
+                            changeLogTitleLabel.setText(plugin.getName() + " change log");
                         }
                     });
                 }

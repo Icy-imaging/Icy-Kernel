@@ -430,7 +430,7 @@ public class IcyUpdater
     private static boolean canDoUpdate()
     {
         // check for updater presence
-        boolean requiredFilesExist = FileUtil.exists(FileUtil.getApplicationDirectory() + FileUtil.separator
+        boolean requiredFilesExist = FileUtil.exists(FileUtil.APPLICATION_DIRECTORY + FileUtil.separator
                 + Updater.UPDATER_NAME);
         // // in update directory ?
         // requiredFilesExist |= FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator +
@@ -455,7 +455,7 @@ public class IcyUpdater
             if (FileUtil.exists(updateName))
             {
                 // replace updater
-                if (!FileUtil.rename(updateName, FileUtil.getApplicationDirectory() + FileUtil.separator
+                if (!FileUtil.rename(updateName, FileUtil.APPLICATION_DIRECTORY + FileUtil.separator
                         + Updater.UPDATER_NAME, true))
                 {
                     System.err.println("Can't update 'Upater.jar', Update process can't continue.");
