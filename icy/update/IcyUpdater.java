@@ -480,7 +480,8 @@ public class IcyUpdater
             params += Updater.ARG_NOSTART + " ";
 
         // launch updater
-        SystemUtil.execJAR(Updater.UPDATER_NAME, params, "", FileUtil.APPLICATION_DIRECTORY);
+        // WARNING: don't use application folder here, it doesn't work as expected !
+        SystemUtil.execJAR(Updater.UPDATER_NAME, params);
 
         // you have to exit application then...
         return true;
