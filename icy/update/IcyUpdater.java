@@ -18,23 +18,6 @@
  */
 package icy.update;
 
-import icy.file.FileUtil;
-import icy.gui.frame.ActionFrame;
-import icy.gui.frame.progress.AnnounceFrame;
-import icy.gui.frame.progress.CancelableProgressFrame;
-import icy.gui.frame.progress.DownloadFrame;
-import icy.gui.frame.progress.FailedAnnounceFrame;
-import icy.gui.frame.progress.ProgressFrame;
-import icy.gui.util.GuiUtil;
-import icy.main.Icy;
-import icy.network.NetworkUtil;
-import icy.network.URLUtil;
-import icy.preferences.ApplicationPreferences;
-import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
-import icy.update.ElementDescriptor.ElementFile;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -52,6 +35,23 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import icy.file.FileUtil;
+import icy.gui.frame.ActionFrame;
+import icy.gui.frame.progress.AnnounceFrame;
+import icy.gui.frame.progress.CancelableProgressFrame;
+import icy.gui.frame.progress.DownloadFrame;
+import icy.gui.frame.progress.FailedAnnounceFrame;
+import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.GuiUtil;
+import icy.main.Icy;
+import icy.network.NetworkUtil;
+import icy.network.URLUtil;
+import icy.preferences.ApplicationPreferences;
+import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
+import icy.update.ElementDescriptor.ElementFile;
+import icy.util.StringUtil;
 
 /**
  * @author stephane
@@ -149,8 +149,8 @@ public class IcyUpdater
                 // error (or cancel) while downloading XML ?
                 if (!downloadAndSaveForUpdate(
                         ApplicationPreferences.getUpdateRepositoryBase()
-                                + ApplicationPreferences.getUpdateRepositoryFile() + "?" + params, Updater.UPDATE_NAME,
-                        checkingFrame, !silent))
+                                + ApplicationPreferences.getUpdateRepositoryFile() + "?" + params,
+                        Updater.UPDATE_NAME, checkingFrame, !silent))
                 {
                     // remove partially downloaded files
                     FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
@@ -260,8 +260,8 @@ public class IcyUpdater
                             Icy.confirmRestart();
                         }
                         else
-                            new FailedAnnounceFrame(
-                                    "An error occured while downloading files (see details in console)", 10000);
+                            new FailedAnnounceFrame("An error occured while downloading files (see details in console)",
+                                    10000);
                     }
                 });
             }
@@ -377,8 +377,9 @@ public class IcyUpdater
                         if (Updater.needUpdate(elementFile.getLocalPath(), elementFile.getDateModif()))
                         {
                             // error (or cancel) while downloading ?
-                            if (!downloadAndSaveForUpdate(URLUtil.getNetworkURLString(
-                                    ApplicationPreferences.getUpdateRepositoryBase(), elementFile.getOnlinePath()),
+                            if (!downloadAndSaveForUpdate(
+                                    URLUtil.getNetworkURLString(ApplicationPreferences.getUpdateRepositoryBase(),
+                                            elementFile.getOnlinePath()),
                                     elementFile.getLocalPath(), downloadingFrame, showProgress))
                             {
                                 // remove partially downloaded files
@@ -430,8 +431,8 @@ public class IcyUpdater
     private static boolean canDoUpdate()
     {
         // check for updater presence
-        boolean requiredFilesExist = FileUtil.exists(FileUtil.APPLICATION_DIRECTORY + FileUtil.separator
-                + Updater.UPDATER_NAME);
+        boolean requiredFilesExist = FileUtil
+                .exists(FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME);
         // // in update directory ?
         // requiredFilesExist |= FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator +
         // Updater.UPDATER_NAME);
@@ -455,8 +456,8 @@ public class IcyUpdater
             if (FileUtil.exists(updateName))
             {
                 // replace updater
-                if (!FileUtil.rename(updateName, FileUtil.APPLICATION_DIRECTORY + FileUtil.separator
-                        + Updater.UPDATER_NAME, true))
+                if (!FileUtil.rename(updateName,
+                        FileUtil.APPLICATION_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME, true))
                 {
                     System.err.println("Can't update 'Upater.jar', Update process can't continue.");
                     return false;
@@ -479,7 +480,7 @@ public class IcyUpdater
             params += Updater.ARG_NOSTART + " ";
 
         // launch updater
-        SystemUtil.execJAR(FileUtil.getApplicationDirectory() + FileUtil.separator + Updater.UPDATER_NAME, params);
+        SystemUtil.execJAR(Updater.UPDATER_NAME, params, "", FileUtil.APPLICATION_DIRECTORY);
 
         // you have to exit application then...
         return true;
