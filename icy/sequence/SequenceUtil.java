@@ -163,12 +163,16 @@ public class SequenceUtil
                 return null;
 
             final List<BufferedImage> images = new ArrayList<BufferedImage>();
+            final List<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();
 
             for (int i = 0; i < sequences.length; i++)
             {
                 final Sequence seq = sequences[i];
                 final int c = channels[i];
 
+                // get colormap
+                colormaps.add(seq.getColorMap(c));
+                // get image
                 IcyBufferedImage img = getImageFromSequenceInternal(seq, t, z, c, fillEmpty);
 
                 // create an empty image
@@ -182,7 +186,18 @@ public class SequenceUtil
                 images.add(img);
             }
 
-            return IcyBufferedImage.createFrom(images);
+            final IcyBufferedImage result = IcyBufferedImage.createFrom(images);
+
+            // restore colormap
+            for (int c = 0; c < result.getSizeC(); c++)
+            {
+                final IcyColorMap map = colormaps.get(c);
+
+                if (map != null)
+                    result.setColorMap(c, colormaps.get(c), false);
+            }
+
+            return result;
         }
     }
 
@@ -436,8 +451,8 @@ public class SequenceUtil
 
             for (int i = 0; i < num; i++)
                 for (int z = 0; z < sizeZ; z++)
-                    sequence.setImage(t + i, z, IcyBufferedImageUtil.getCopy(AddTHelper.getExtendedImage(sequence, t
-                            + i, z, t, num, copyLast)));
+                    sequence.setImage(t + i, z, IcyBufferedImageUtil
+                            .getCopy(AddTHelper.getExtendedImage(sequence, t + i, z, t, num, copyLast)));
         }
         finally
         {
@@ -711,8 +726,8 @@ public class SequenceUtil
 
             for (int i = 0; i < num; i++)
                 for (int t = 0; t < sizeT; t++)
-                    sequence.setImage(t, z + i, IcyBufferedImageUtil.getCopy(AddZHelper.getExtendedImage(sequence, t, z
-                            + i, z, num, copyLast)));
+                    sequence.setImage(t, z + i, IcyBufferedImageUtil
+                            .getCopy(AddZHelper.getExtendedImage(sequence, t, z + i, z, num, copyLast)));
         }
         finally
         {
@@ -1142,22 +1157,20 @@ public class SequenceUtil
             }
         }
 
-        int c = 0;
-        for (Sequence seq : sequences)
+        for (int i = 0; i < sequences.length; i++)
         {
-            for (int sc = 0; sc < seq.getSizeC(); sc++, c++)
-            {
-                final String channelName = seq.getChannelName(sc);
-                final IcyColorMap channelColor = seq.getColorMap(sc);
+            final Sequence seq = sequences[i];
+            final int c = channels[i];
+            final String channelName = seq.getChannelName(c);
+            final IcyColorMap channelColor = seq.getColorMap(c);
 
-                // not default channel name --> we keep it
-                if (!StringUtil.equals(seq.getDefaultChannelName(sc), channelName))
-                    result.setChannelName(c, channelName);
+            // not default channel name --> we keep it
+            if (!StringUtil.equals(seq.getDefaultChannelName(c), channelName))
+                result.setChannelName(i, channelName);
 
-                // not default white color map --> we keep it
-                if (!channelColor.equals(LinearColorMap.white_))
-                    result.setColormap(c, channelColor, true);
-            }
+            // not default white color map --> we keep it
+            if (!channelColor.equals(LinearColorMap.white_))
+                result.setColormap(i, channelColor, true);
         }
 
         return result;
@@ -1250,8 +1263,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z, IcyBufferedImageUtil.getCopy(MergeZHelper.getImage(sequences, sizeX, sizeY,
-                        sizeC, t, z, interlaced, fillEmpty, rescale)));
+                result.setImage(t, z, IcyBufferedImageUtil.getCopy(
+                        MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale)));
 
                 ind++;
             }
@@ -1333,8 +1346,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z, IcyBufferedImageUtil.getCopy(MergeTHelper.getImage(sequences, sizeX, sizeY,
-                        sizeC, t, z, interlaced, fillEmpty, rescale)));
+                result.setImage(t, z, IcyBufferedImageUtil.getCopy(
+                        MergeTHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale)));
 
                 ind++;
             }
@@ -1751,8 +1764,8 @@ public class SequenceUtil
             {
                 for (int z = 0; z < source.getSizeZ(); z++)
                 {
-                    final IcyBufferedImage converted = IcyBufferedImageUtil.convertType(source.getImage(t, z),
-                            dataType, scalers);
+                    final IcyBufferedImage converted = IcyBufferedImageUtil.convertType(source.getImage(t, z), dataType,
+                            scalers);
 
                     // FIXME : why we did that ??
                     // this is not a good idea to force bounds when rescale = false
@@ -1911,7 +1924,7 @@ public class SequenceUtil
         }
 
         result.setName(source.getName() + " (resized)");
-        
+
         // content was resized ?
         if (resizeContent)
         {
@@ -2062,8 +2075,8 @@ public class SequenceUtil
     public static Sequence getSubSequence(Sequence source, int startX, int startY, int startC, int startZ, int startT,
             int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT)
     {
-        return getSubSequence(source, new Rectangle5D.Integer(startX, startY, startZ, startT, startC, sizeX, sizeY,
-                sizeZ, sizeT, sizeC));
+        return getSubSequence(source,
+                new Rectangle5D.Integer(startX, startY, startZ, startT, startC, sizeX, sizeY, sizeZ, sizeT, sizeC));
     }
 
     /**
@@ -2077,7 +2090,8 @@ public class SequenceUtil
     }
 
     /**
-     * Creates a new sequence which is a sub part of the source sequence defined by the specified {@link ROI} bounds.<br>
+     * Creates a new sequence which is a sub part of the source sequence defined by the specified {@link ROI}
+     * bounds.<br>
      * 
      * @param source
      *        the source sequence
@@ -2172,7 +2186,7 @@ public class SequenceUtil
                 for (Overlay overlay : source.getOverlays())
                     result.addOverlay(overlay);
             }
-            
+
             // preserve channel informations
             for (int c = 0; c < source.getSizeC(); c++)
             {
@@ -2180,7 +2194,7 @@ public class SequenceUtil
                 result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
                 result.setColormap(c, source.getColorMap(c));
             }
-            
+
             if (nameSuffix)
                 result.setName(source.getName() + " (copy)");
         }
@@ -2340,7 +2354,8 @@ public class SequenceUtil
     }
 
     /**
-     * Convert the given Rectangle region from the source Sequence into the original image region coordinates (pixel)<br>
+     * Convert the given Rectangle region from the source Sequence into the original image region coordinates
+     * (pixel)<br>
      * This method use the {@link Sequence#getOriginResolution()} and {@link Sequence#getOriginXYRegion()} informations
      * to compute the original image region coordinates.
      * 
