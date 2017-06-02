@@ -89,6 +89,7 @@ import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Image sequence object.<br>
@@ -210,14 +211,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Z range from original image if this image is a crop in Z of the original image.<br>
      * Default value is -1, -1 if we have the whole Z range.
      */
-    protected int originZRangeMin;
-    protected int originZRangeMax;
+    protected int originZMin;
+    protected int originZMax;
     /**
      * T range from original image if this image is a crop in T of the original image.<br>
      * Default value is -1, -1 if we have the whole T range.
      */
-    protected int originTRangeMin;
-    protected int originTRangeMax;
+    protected int originTMin;
+    protected int originTMax;
     /**
      * Channel position from original image if this image is a single channel extraction of the original image.<br>
      * Default value is -1 which mean that all channels were preserved.
@@ -227,7 +228,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Metadata
      */
-    protected OMEXMLMetadataImpl metaData;
+    protected OMEXMLMetadata metaData;
     // /**
     // * X, Y, Z resolution (in mm)
     // */
@@ -278,7 +279,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Creates a new empty sequence with specified meta data object and name.
      */
-    public Sequence(OMEXMLMetadataImpl meta, String name)
+    public Sequence(OMEXMLMetadata meta, String name)
     {
         super();
 
@@ -291,7 +292,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // set metadata object
         if (meta == null)
-            metaData = MetaDataUtil.createDefaultMetadata(name);
+            metaData = MetaDataUtil.createMetadata(name);
         else
             metaData = meta;
 
@@ -308,10 +309,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         originResolution = 0;
         originXYRegion = null;
-        originZRangeMin = -1;
-        originZRangeMax = -1;
-        originTRangeMin = -1;
-        originTRangeMax = -1;
+        originZMin = -1;
+        originZMax = -1;
+        originTMin = -1;
+        originTMax = -1;
         originChannel = -1;
 
         // default pixel size and time interval
@@ -343,6 +344,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * @deprecated Use {@link #Sequence(OMEXMLMetadata, String)} instead.
+     */
+    @Deprecated
+    public Sequence(OMEXMLMetadataImpl meta, String name)
+    {
+        this((OMEXMLMetadata) meta, name);
+    }
+
+    /**
      * Creates a sequence with specified name and containing the specified image
      */
     public Sequence(String name, IcyBufferedImage image)
@@ -355,15 +365,24 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence(String name, BufferedImage image)
     {
-        this((OMEXMLMetadataImpl) null, name);
+        this((OMEXMLMetadata) null, name);
 
         addImage(image);
     }
 
     /**
+     * @deprecated Use {@link #Sequence(OMEXMLMetadata)} instead.
+     */
+    @Deprecated
+    public Sequence(OMEXMLMetadataImpl meta)
+    {
+        this((OMEXMLMetadata) meta);
+    }
+
+    /**
      * Creates a new empty sequence with specified metadata.
      */
-    public Sequence(OMEXMLMetadataImpl meta)
+    public Sequence(OMEXMLMetadata meta)
     {
         this(meta, null);
     }
@@ -381,7 +400,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence(BufferedImage image)
     {
-        this((OMEXMLMetadataImpl) null, null);
+        this((OMEXMLMetadata) null, null);
 
         addImage(image);
     }
@@ -391,7 +410,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence(String name)
     {
-        this(null, name);
+        this((OMEXMLMetadata) null, name);
     }
 
     /**
@@ -399,7 +418,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence()
     {
-        this((OMEXMLMetadataImpl) null, null);
+        this((OMEXMLMetadata) null, null);
     }
 
     @Override
@@ -499,7 +518,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void copyMetaDataFrom(Sequence source, boolean copyName)
     {
         // copy all metadata from source
-        metaData = OMEUtil.createOMEMetadata(source.getMetadata());
+        metaData = OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata());
 
         // restore name if needed
         if (copyName)
@@ -542,7 +561,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         try
         {
-            undoManager.addEdit(new DataSequenceEdit(SequenceUtil.getCopy(this, false, false, false), this));
+            undoManager.addEdit(new DataSequenceEdit(SequenceUtil.getCopy(this, false, false, false), this, name));
             return true;
         }
         catch (Throwable t)
@@ -563,7 +582,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         try
         {
-            undoManager.addEdit(new MetadataSequenceEdit(OMEUtil.createOMEMetadata(metaData), this));
+            undoManager.addEdit(new MetadataSequenceEdit(OMEUtil.createOMEXMLMetadata(metaData), this, name));
             return true;
         }
         catch (Throwable t)
@@ -845,7 +864,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         String result = "";
 
         // retrieve the serie index
-        final int serieNum = getSerieIndex();
+        final int serieNum = getSeries();
 
         // multi serie image --> add a specific extension
         if (serieNum != 0)
@@ -866,16 +885,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             result += "_XY(" + xyRegion.x + "," + xyRegion.y + "-" + xyRegion.width + "," + xyRegion.height + ")";
 
         // retrieve the Z range
-        final int zMin = getOriginZRangeMin();
-        final int zMax = getOriginZRangeMax();
+        final int zMin = getOriginZMin();
+        final int zMax = getOriginZMax();
 
         // sub Z range --> add a specific extension
         if ((zMin != -1) || (zMax != -1))
             result += "_Z(" + zMin + "-" + zMax + ")";
 
         // retrieve the T range
-        final int tMin = getOriginTRangeMin();
-        final int tMax = getOriginTRangeMax();
+        final int tMin = getOriginTMin();
+        final int tMax = getOriginTMax();
 
         // sub T range --> add a specific extension
         if ((tMin != -1) || (tMax != -1))
@@ -920,7 +939,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns the resolution level from the origin image (defined by {@link #getFilename()}).<br>
      * By default it returns 0 if this sequence corresponds to the full resolution of the original image.<br>
-     * A value of 1 mean original resolution / 2<br>
+     * 1 --> original resolution / 2<br>
      * 2 --> original resolution / 4<br>
      * 3 --> original resolution / 8<br>
      * ...
@@ -964,76 +983,76 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Returns the Z range minimum from original image if this image is a crop in Z of the original image.<br>
      * Default value is -1 which mean we have the whole Z range.
      */
-    public int getOriginZRangeMin()
+    public int getOriginZMin()
     {
-        return originZRangeMin;
+        return originZMin;
     }
 
     /**
      * Internal use only, you should not directly use this method.
      * 
-     * @see #getOriginZRangeMin()
+     * @see #getOriginZMin()
      */
-    public void setOriginZRangeMin(int value)
+    public void setOriginZMin(int value)
     {
-        originZRangeMin = value;
+        originZMin = value;
     }
 
     /**
      * Returns the Z range maximum from original image if this image is a crop in Z of the original image.<br>
      * Default value is -1 which mean we have the whole Z range.
      */
-    public int getOriginZRangeMax()
+    public int getOriginZMax()
     {
-        return originZRangeMax;
+        return originZMax;
     }
 
     /**
      * Internal use only, you should not directly use this method.
      * 
-     * @see #getOriginZRangeMax()
+     * @see #getOriginZMax()
      */
-    public void setOriginZRangeMax(int value)
+    public void setOriginZMax(int value)
     {
-        originZRangeMax = value;
+        originZMax = value;
     }
 
     /**
      * Returns the T range minimum from original image if this image is a crop in T of the original image.<br>
      * Default value is -1 which mean we have the whole T range.
      */
-    public int getOriginTRangeMin()
+    public int getOriginTMin()
     {
-        return originTRangeMin;
+        return originTMin;
     }
 
     /**
      * Internal use only, you should not directly use this method.
      * 
-     * @see #getOriginTRangeMin()
+     * @see #getOriginTMin()
      */
-    public void setOriginTRangeMin(int value)
+    public void setOriginTMin(int value)
     {
-        originTRangeMin = value;
+        originTMin = value;
     }
 
     /**
      * Returns the T range maximum from original image if this image is a crop in T of the original image.<br>
      * Default value is -1 which mean we have the whole T range.
      */
-    public int getOriginTRangeMax()
+    public int getOriginTMax()
     {
-        return originTRangeMax;
+        return originTMax;
     }
 
     /**
      * Internal use only, you should not directly use this method.
      * 
-     * @see #getOriginTRangeMax()
+     * @see #getOriginTMax()
      */
-    public void setOriginTRangeMax(int value)
+    public void setOriginTMax(int value)
     {
-        originTRangeMax = value;
+        originTMax = value;
     }
 
     /**
@@ -1055,16 +1074,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         originChannel = value;
     }
-
+    
     /**
-     * Returns serie index if the Sequence comes from a multi serie image.<br>
+     * Returns series index if the Sequence comes from a multi serie image.<br>
      * By default it returns 0 if the sequence comes from a single serie image or if this is the
-     * first serie image.
+     * first series image.
      */
-    public int getSerieIndex()
+    public int getSeries()
     {
         // retrieve the image ID (sequences are always single serie)
-        final String id = MetaDataUtil.getImageID(getMetadata(), 0);
+        final String id = MetaDataUtil.getImageID(getOMEXMLMetadata(), 0);
 
         if (id.startsWith("Image:"))
         {
@@ -1078,9 +1097,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * @deprecated Use {@link #getSeries()} instead
+     */
+    @Deprecated
+    public int getSerieIndex()
+    {
+        return getSeries();
+    }
+
+    /**
      * Returns meta data object
      */
-    public OMEXMLMetadataImpl getMetadata()
+    public OMEXMLMetadata getOMEXMLMetadata()
     {
         return metaData;
     }
@@ -1088,7 +1116,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Set the meta data object
      */
-    public void setMetaData(OMEXMLMetadataImpl metaData)
+    public void setMetaData(OMEXMLMetadata metaData)
     {
         if (this.metaData != metaData)
         {
@@ -1096,6 +1124,24 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             // all meta data changed
             metaChanged(null);
         }
+    }
+
+    /**
+     * @deprecated Use {@link #getOMEXMLMetadata()} instead.
+     */
+    @Deprecated
+    public OMEXMLMetadataImpl getMetadata()
+    {
+        return (OMEXMLMetadataImpl) getOMEXMLMetadata();
+    }
+
+    /**
+     * @deprecated Use {@link #setMetaData(OMEXMLMetadata)} instead.
+     */
+    @Deprecated
+    public void setMetaData(OMEXMLMetadataImpl metaData)
+    {
+        setMetaData((OMEXMLMetadata) metaData);
     }
 
     /**

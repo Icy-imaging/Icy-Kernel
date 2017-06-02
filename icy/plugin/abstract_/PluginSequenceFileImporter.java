@@ -3,18 +3,18 @@
  */
 package icy.plugin.abstract_;
 
+import java.awt.Rectangle;
+import java.io.IOException;
+import java.util.List;
+
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
 import icy.plugin.interface_.PluginNoEDTConstructor;
-
-import java.awt.Rectangle;
-import java.io.IOException;
-import java.util.List;
-
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Plugin specialized for Sequence file import operation (see the {@link SequenceFileImporter} interface)
@@ -30,6 +30,7 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
     // default helper
     protected class InternalImageProviderHelper extends AbstractImageProvider
     {
+        @Deprecated
         @Override
         public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
         {
@@ -51,6 +52,13 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
         super();
 
         interfaceHelper = new InternalImageProviderHelper();
+    }
+
+    // default implementation as ImageProvider interface changed
+    @Override
+    public OMEXMLMetadata getOMEXMLMetaData() throws UnsupportedFormatException, IOException
+    {
+        return interfaceHelper.getOMEXMLMetaData();
     }
 
     // default implementation, override it if you need specific value for faster tile access
@@ -92,15 +100,15 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
 
     // default implementation using the region getImage(..) method, better to override
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
-            IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c)
+            throws UnsupportedFormatException, IOException
     {
         return interfaceHelper.getImage(serie, resolution, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t) throws UnsupportedFormatException,
-            IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t)
+            throws UnsupportedFormatException, IOException
     {
         return interfaceHelper.getImage(serie, resolution, z, t);
     }

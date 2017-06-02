@@ -18,22 +18,23 @@
  */
 package icy.vtk;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
 import icy.canvas.Layer;
+import icy.common.exception.TooLargeArrayException;
 import icy.image.colormap.IcyColorMap;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.painter.Overlay;
 import icy.painter.VtkPainter;
 import icy.roi.ROI;
+import icy.sequence.Sequence;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
 import icy.type.rectangle.Rectangle5D;
-
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
@@ -117,10 +118,10 @@ public class VtkUtil
             case BYTE:
                 return VTK_UNSIGNED_CHAR;
 
-                // FIXME: signed char not supported by VTK java wrapper ??
-                // case BYTE:
-                // return VTK_CHAR;
-                // return VTK_SIGNED_CHAR;
+            // FIXME: signed char not supported by VTK java wrapper ??
+            // case BYTE:
+            // return VTK_CHAR;
+            // return VTK_SIGNED_CHAR;
 
             case USHORT:
                 return VTK_UNSIGNED_SHORT;
@@ -722,6 +723,41 @@ public class VtkUtil
     }
 
     /**
+     * Build and return volume image data from given Sequence object.
+     * 
+     * @param sequence
+     *        the sequence object we want to get volume image data
+     * @param posT
+     *        frame index
+     * @param posC
+     *        channel index (-1 for all channel)
+     */
+    public static vtkImageData getImageData(Sequence sequence, int posT, int posC)
+            throws TooLargeArrayException, OutOfMemoryError
+    {
+        if ((sequence == null) || sequence.isEmpty())
+            return null;
+
+        final Object data;
+        final vtkImageData result;
+
+        if (posC == -1)
+        {
+            data = sequence.getDataCopyCXYZ(posT);
+            result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                    sequence.getSizeZ(), sequence.getSizeC());
+        }
+        else
+        {
+            data = sequence.getDataCopyXYZ(posT, posC);
+            result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                    sequence.getSizeZ(), 1);
+        }
+
+        return result;
+    }
+
+    /**
      * Creates and returns a {@link vtkImageData} object from the specified 1D array data.
      */
     public static vtkImageData getImageData(Object data, DataType dataType, int sizeX, int sizeY, int sizeZ, int sizeC)
@@ -1029,7 +1065,7 @@ public class VtkUtil
     public static vtkPolyData getOutline(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax)
     {
         final double points[][] = new double[8][3];
-        final int indexes[][] = { {0, 2, 3, 1}, {4, 5, 7, 6}, {0, 1, 5, 4}, {1, 3, 7, 5}, {0, 4, 6, 2}, {3, 2, 6, 7}};
+        final int indexes[][] = {{0, 2, 3, 1}, {4, 5, 7, 6}, {0, 1, 5, 4}, {1, 3, 7, 5}, {0, 4, 6, 2}, {3, 2, 6, 7}};
 
         for (int i = 0; i < 8; i++)
         {

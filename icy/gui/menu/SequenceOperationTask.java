@@ -18,15 +18,24 @@
  */
 package icy.gui.menu;
 
+import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
+import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
+import org.pushingpixels.flamingo.api.common.RichTooltip;
+import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
+import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
+import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
+import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
+import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
+import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
+
+import icy.action.FileActions;
 import icy.action.SequenceOperationActions;
 import icy.action.SequenceOperationActions.ExtractChannelAction;
 import icy.action.SequenceOperationActions.RemoveChannelAction;
-import icy.gui.component.IcyTextField;
-import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
-import icy.gui.util.ComponentUtil;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
@@ -36,23 +45,67 @@ import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.StringUtil;
 
-import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
-import org.pushingpixels.flamingo.api.common.JCommandButton;
-import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
-import org.pushingpixels.flamingo.api.common.RichTooltip;
-import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
-import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
-import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
-import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
-import org.pushingpixels.flamingo.api.ribbon.JRibbonComponent;
-import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
-import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
-
 /**
  * @author Stephane
  */
 public class SequenceOperationTask extends RibbonTask
 {
+    public static class FileBand extends JRibbonBand
+    {
+        /**
+        *
+        */
+        private static final long serialVersionUID = -2677243480668715388L;
+
+        public static final String BAND_NAME = "File";
+
+        final IcyCommandButton openButton;
+        final IcyCommandButton openRegionButton;
+        final IcyCommandButton saveButton;
+
+        public FileBand()
+        {
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_DOC));
+
+            openButton = new IcyCommandButton(FileActions.openSequenceAction);
+            openRegionButton = new IcyCommandButton(FileActions.openSequenceRegionAction);
+            // openAreaButton = new IcyCommandButton("Open region", new IcyIcon(ResourceUtil.ICON_CROP));
+            // openAreaButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+            // openAreaButton.setPopupRichTooltip(new RichTooltip("Open selected region",
+            // "Open the selected ROI region from the original image at a specific resolution level"));
+            // openAreaButton.setPopupCallback(new PopupPanelCallback()
+            // {
+            // @Override
+            // public JPopupPanel getPopupPanel(JCommandButton commandButton)
+            // {
+            // final JCommandPopupMenu result = new JCommandPopupMenu();
+            //
+            // for (int r = 0; r < 5; r++)
+            // result.addMenuButton(new IcyCommandMenuButton(new OpenSequenceRegionAction(r)));
+            //
+            // return result;
+            // }
+            // });
+            saveButton = new IcyCommandButton(FileActions.saveAsSequenceAction);
+
+            addCommandButton(openButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(openRegionButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(saveButton, RibbonElementPriority.MEDIUM);
+
+            RibbonUtil.setRestrictiveResizePolicies(this);
+            updateButtonsState();
+        }
+
+        void updateButtonsState()
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            openRegionButton.setEnabled(
+                    (sequence != null) && (!StringUtil.isEmpty(sequence.getFilename())) && sequence.hasSelectedROI());
+            saveButton.setEnabled(Icy.getMainInterface().getActiveSequence() != null);
+        }
+    }
+
     public static class CopyConvertBand extends JRibbonBand
     {
         /**
@@ -60,7 +113,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = -2677243480668715388L;
 
-        public static final String NAME = "Copy / Convert";
+        public static final String BAND_NAME = "Copy / Convert";
 
         final IcyCommandButton cloneButton;
         final IcyCommandButton convertButton;
@@ -68,7 +121,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public CopyConvertBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
 
             setToolTipText("Copy and data type conversion operation");
 
@@ -111,9 +164,8 @@ public class SequenceOperationTask extends RibbonTask
             // data type conversion
             convertButtonRaw = new IcyCommandButton("Raw conversion", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
             convertButtonRaw.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
-            convertButtonRaw
-                    .setPopupRichTooltip(new RichTooltip("Raw data type conversion",
-                            "Convert the sequence to the selected data type (values remain unchanged or are clamped in case of overflow)"));
+            convertButtonRaw.setPopupRichTooltip(new RichTooltip("Raw data type conversion",
+                    "Convert the sequence to the selected data type (values remain unchanged or are clamped in case of overflow)"));
             convertButtonRaw.setPopupCallback(new PopupPanelCallback()
             {
                 @Override
@@ -145,7 +197,7 @@ public class SequenceOperationTask extends RibbonTask
             updateButtonsState();
         }
 
-        public IcyCommandToggleMenuButton getConvertButton(final Sequence sequence, final DataType dataType,
+        public static IcyCommandToggleMenuButton getConvertButton(final Sequence sequence, final DataType dataType,
                 final boolean scaled, CommandToggleButtonGroup group)
         {
             final IcyCommandToggleMenuButton result = new IcyCommandToggleMenuButton(
@@ -169,8 +221,8 @@ public class SequenceOperationTask extends RibbonTask
         void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getActiveSequence();
-            final boolean enabled = seq != null;
-            final boolean notEmpty = enabled && !seq.isEmpty();
+            final boolean enabled = (seq != null);
+            final boolean notEmpty = (seq != null) && !seq.isEmpty();
 
             cloneButton.setEnabled(enabled);
             convertButton.setEnabled(notEmpty);
@@ -185,7 +237,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = -2677243480668715388L;
 
-        public static final String NAME = "Rendering";
+        public static final String BAND_NAME = "Rendering";
 
         final IcyCommandButton argbButton;
         final IcyCommandButton rgbButton;
@@ -193,7 +245,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public RenderingBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
 
             setToolTipText("Color and gray rendering");
 
@@ -231,7 +283,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = -7475753600896040618L;
 
-        private static final String NAME = "Plane (XY)";
+        private static final String BAND_NAME = "Plane (XY)";
 
         final IcyCommandButton cropButton;
         final IcyCommandButton canvasResizeButton;
@@ -241,7 +293,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public PlanarOperationBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_PICTURE));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_PICTURE));
 
             setToolTipText("XY (plane) operation");
 
@@ -294,7 +346,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = -2677243480668715388L;
 
-        public static final String NAME = "Channel (C)";
+        public static final String BAND_NAME = "Channel (C)";
 
         final IcyCommandButton extractButton;
         final IcyCommandButton removeButton;
@@ -302,7 +354,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public ChannelOperationBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
 
             setToolTipText("Channel operation");
 
@@ -333,7 +385,8 @@ public class SequenceOperationTask extends RibbonTask
                             result.addMenuButton(button);
                         }
 
-                        result.addMenuButton(new IcyCommandMenuButton(SequenceOperationActions.extractAllChannelAction));
+                        result.addMenuButton(
+                                new IcyCommandMenuButton(SequenceOperationActions.extractAllChannelAction));
                     }
 
                     return result;
@@ -344,8 +397,8 @@ public class SequenceOperationTask extends RibbonTask
             // single channel remove
             removeButton = new IcyCommandButton("Remove", new IcyIcon(ResourceUtil.ICON_INDENT_REMOVE));
             removeButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
-            removeButton.setPopupRichTooltip(new RichTooltip("Remove channel",
-                    "Remove the selected channel from active sequence."));
+            removeButton.setPopupRichTooltip(
+                    new RichTooltip("Remove channel", "Remove the selected channel from active sequence."));
             removeButton.setPopupCallback(new PopupPanelCallback()
             {
                 @Override
@@ -386,7 +439,7 @@ public class SequenceOperationTask extends RibbonTask
         {
             final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
-            final boolean several = enabled && (seq.getSizeC() > 1);
+            final boolean several = (seq != null) && (seq.getSizeC() > 1);
 
             extractButton.setEnabled(several);
             removeButton.setEnabled(several);
@@ -401,7 +454,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = 8301134961618666184L;
 
-        public static final String NAME = "Stack (Z)";
+        public static final String BAND_NAME = "Stack (Z)";
 
         final IcyCommandButton reverseButton;
         final IcyCommandButton extractButton;
@@ -412,7 +465,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public ZOperationBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V1));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V1));
 
             setToolTipText("Z (stack) operation");
 
@@ -451,8 +504,8 @@ public class SequenceOperationTask extends RibbonTask
         {
             final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
-            final boolean notEmpty = enabled && !seq.isEmpty();
-            final boolean several = enabled && (seq.getSizeZ() > 1);
+            final boolean notEmpty = (seq != null) && !seq.isEmpty();
+            final boolean several = (seq != null) && (seq.getSizeZ() > 1);
 
             reverseButton.setEnabled(several);
             extractButton.setEnabled(several);
@@ -470,7 +523,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = 3728386745443331069L;
 
-        public static final String NAME = "Frame (T)";
+        public static final String BAND_NAME = "Frame (T)";
 
         final IcyCommandButton reverseButton;
         final IcyCommandButton extractButton;
@@ -481,7 +534,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public TOperationBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_H1));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_H1));
 
             setToolTipText("T (frame) operation");
 
@@ -520,8 +573,8 @@ public class SequenceOperationTask extends RibbonTask
         {
             final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
-            final boolean notEmpty = enabled && !seq.isEmpty();
-            final boolean several = enabled && (seq.getSizeT() > 1);
+            final boolean notEmpty = (seq != null) && !seq.isEmpty();
+            final boolean several = (seq != null) && (seq.getSizeT() > 1);
 
             reverseButton.setEnabled(several);
             extractButton.setEnabled(several);
@@ -539,7 +592,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = 8210688977085548878L;
 
-        private static final String NAME = "Z / T conversion";
+        private static final String BAND_NAME = "Z / T conversion";
 
         final IcyCommandButton convertToZButton;
         final IcyCommandButton convertToTButton;
@@ -547,7 +600,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public ZTConversionBand()
         {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
+            super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
 
             setToolTipText("Z/T conversion");
 
@@ -570,9 +623,8 @@ public class SequenceOperationTask extends RibbonTask
         void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getActiveSequence();
-            final boolean enabled = (seq != null);
-            final boolean severalZ = enabled && (seq.getSizeZ() > 1);
-            final boolean severalT = enabled && (seq.getSizeT() > 1);
+            final boolean severalZ = (seq != null) && (seq.getSizeZ() > 1);
+            final boolean severalT = (seq != null) && (seq.getSizeT() > 1);
 
             convertToTButton.setEnabled(severalZ);
             convertToZButton.setEnabled(severalT);
@@ -580,81 +632,9 @@ public class SequenceOperationTask extends RibbonTask
         }
     }
 
-    public static class ModifyRibbonBand extends JRibbonBand
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -2677243480668715388L;
+    public static final String NAME = "Image / Sequence";
 
-        public static final String NAME = "Fill operation";
-
-        final IcyTextField fillValueField;
-        // final IcyButton fillImage;
-        final IcyButton fillSequence;
-
-        public ModifyRibbonBand()
-        {
-            super(NAME, new IcyIcon("document"));
-
-            setToolTipText("Fill operation");
-
-            fillValueField = new IcyTextField();
-            ComponentUtil.setFixedWidth(fillValueField, 90);
-            fillValueField.setToolTipText("Value used for filling");
-            fillValueField.setText("0");
-
-            fillSequence = new IcyButton(SequenceOperationActions.fillSequenceAction);
-            fillSequence.setFlat(true);
-
-            JRibbonComponent comp;
-
-            comp = new JRibbonComponent(fillSequence);
-            comp.setResizingAware(true);
-            addRibbonComponent(comp);
-            comp = new JRibbonComponent(fillValueField);
-            comp.setResizingAware(true);
-            addRibbonComponent(comp);
-
-            RibbonUtil.setRestrictiveResizePolicies(this);
-            updateButtonsState();
-        }
-
-        public double getFillValue()
-        {
-            double value = StringUtil.parseDouble(fillValueField.getText(), 0);
-
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-
-            if ((sequence != null) && (!sequence.isFloatDataType()))
-            {
-                final double bounds[] = sequence.getDataType_().getDefaultBounds();
-
-                // limit value to data type bounds
-                if (value < bounds[0])
-                    value = bounds[0];
-                if (value > bounds[1])
-                    value = bounds[1];
-            }
-
-            // set value back if incorrect
-            fillValueField.setText(Double.toString(value));
-
-            return value;
-        }
-
-        void updateButtonsState()
-        {
-            final Sequence seq = Icy.getMainInterface().getActiveSequence();
-            final boolean enabled = (seq != null) && !seq.isEmpty();
-
-            fillValueField.setEnabled(enabled);
-            fillSequence.setEnabled(enabled);
-        }
-    }
-
-    public static final String NAME = "Sequence operation";
-
+    final FileBand fileBand;
     final CopyConvertBand copyConvertBand;
     final RenderingBand colorConvertBand;
     final ZTConversionBand stackConversionBand;
@@ -662,23 +642,23 @@ public class SequenceOperationTask extends RibbonTask
     final ChannelOperationBand channelOperationBand;
     final ZOperationBand zStackOperationBand;
     final TOperationBand tStackOperationBand;
-    final ModifyRibbonBand modifyBand;
     final Runnable buttonUpdater;
 
     public SequenceOperationTask()
     {
-        super(NAME, new CopyConvertBand(), new PlanarOperationBand(), new ChannelOperationBand(), new ZOperationBand(),
-                new TOperationBand(), new ZTConversionBand(), new RenderingBand(), new ModifyRibbonBand());
+        super(NAME, new FileBand(), new CopyConvertBand(), new PlanarOperationBand(), new ChannelOperationBand(),
+                new ZOperationBand(), new TOperationBand(), new ZTConversionBand(), new RenderingBand());
 
-        copyConvertBand = (CopyConvertBand) getBand(0);
-        planarOperationBand = (PlanarOperationBand) getBand(1);
-        channelOperationBand = (ChannelOperationBand) getBand(2);
-        zStackOperationBand = (ZOperationBand) getBand(3);
-        tStackOperationBand = (TOperationBand) getBand(4);
-        stackConversionBand = (ZTConversionBand) getBand(5);
-        colorConvertBand = (RenderingBand) getBand(6);
-        modifyBand = (ModifyRibbonBand) getBand(7);
+        fileBand = (FileBand) getBand(0);
+        copyConvertBand = (CopyConvertBand) getBand(1);
+        planarOperationBand = (PlanarOperationBand) getBand(2);
+        channelOperationBand = (ChannelOperationBand) getBand(3);
+        zStackOperationBand = (ZOperationBand) getBand(4);
+        tStackOperationBand = (TOperationBand) getBand(5);
+        stackConversionBand = (ZTConversionBand) getBand(6);
+        colorConvertBand = (RenderingBand) getBand(7);
 
+        fileBand.updateButtonsState();
         copyConvertBand.updateButtonsState();
         colorConvertBand.updateButtonsState();
         channelOperationBand.updateButtonsState();
@@ -686,7 +666,6 @@ public class SequenceOperationTask extends RibbonTask
         stackConversionBand.updateButtonsState();
         zStackOperationBand.updateButtonsState();
         tStackOperationBand.updateButtonsState();
-        modifyBand.updateButtonsState();
 
         buttonUpdater = new Runnable()
         {
@@ -701,6 +680,7 @@ public class SequenceOperationTask extends RibbonTask
                     @Override
                     public void run()
                     {
+                        fileBand.updateButtonsState();
                         copyConvertBand.updateButtonsState();
                         colorConvertBand.updateButtonsState();
                         channelOperationBand.updateButtonsState();
@@ -708,16 +688,19 @@ public class SequenceOperationTask extends RibbonTask
                         stackConversionBand.updateButtonsState();
                         zStackOperationBand.updateButtonsState();
                         tStackOperationBand.updateButtonsState();
-                        modifyBand.updateButtonsState();
                     }
                 });
             }
         };
     }
 
+    /**
+     * @deprecated Use Too
+     */
+    @Deprecated
     public double getFillValue()
     {
-        return modifyBand.getFillValue();
+        return Icy.getMainInterface().getROIRibbonTask().getFillValue();
     }
 
     /**

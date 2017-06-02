@@ -18,11 +18,6 @@
  */
 package icy.util;
 
-import icy.file.FileUtil;
-import icy.plugin.PluginLoader;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,7 +37,10 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import sun.net.www.protocol.file.FileURLConnection;
+import icy.file.FileUtil;
+import icy.plugin.PluginLoader;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 
 /**
  * @author stephane
@@ -504,8 +502,8 @@ public class ClassUtil
                     result.add(basePath + childFilename);
 
                 // then search in sub folder
-                findResourcesRecursive(childFile, includeJar, includeFolder, includeHidden, result, basePath
-                        + childFilename + '/');
+                findResourcesRecursive(childFile, includeJar, includeFolder, includeHidden, result,
+                        basePath + childFilename + '/');
             }
             else
                 findResourceInFile(childFile, includeJar, includeHidden, result, basePath);
@@ -535,7 +533,8 @@ public class ClassUtil
     }
 
     /**
-     * This method finds all classes that are located in the package identified by the given <code>packageName</code>.<br>
+     * This method finds all classes that are located in the package identified by the given
+     * <code>packageName</code>.<br>
      * <b>ATTENTION:</b><br>
      * This is a relative expensive operation. Depending on your classpath multiple
      * directories,JAR-, and WAR-files may need to be scanned. <br>
@@ -549,8 +548,7 @@ public class ClassUtil
      * @throws IOException
      *         if the operation failed with an I/O error.
      */
-    public static Set<String> findClassNamesInPackage(String packageName, boolean includeSubPackages)
-            throws IOException
+    public static Set<String> findClassNamesInPackage(String packageName, boolean includeSubPackages) throws IOException
     {
         final HashSet<String> classes = new HashSet<String>();
 
@@ -560,7 +558,8 @@ public class ClassUtil
     }
 
     /**
-     * This method finds all classes that are located in the package identified by the given <code>packageName</code>.<br>
+     * This method finds all classes that are located in the package identified by the given
+     * <code>packageName</code>.<br>
      * <b>ATTENTION:</b><br>
      * This is a relative expensive operation. Depending on your classpath multiple
      * directories,JAR-, and WAR-files may need to be scanned. <br>
@@ -936,8 +935,10 @@ public class ClassUtil
 
             if (connection instanceof JarURLConnection)
                 return new File(((JarURLConnection) connection).getJarFileURL().toURI());
-            if (connection instanceof FileURLConnection)
-                return new File(classUrl.toURI());
+            // if (connection instanceof FileURLConnection)
+            // return new File(classUrl.toURI());
+            // try from URI
+            return new File(classUrl.toURI());
         }
         catch (Exception e)
         {
@@ -973,8 +974,8 @@ public class ClassUtil
      * @deprecated Use {@link ReflectionUtil#getField(Object, String, boolean)} instead
      */
     @Deprecated
-    public static Field getField(Object object, String fieldName, boolean forceAccess) throws SecurityException,
-            NoSuchFieldException
+    public static Field getField(Object object, String fieldName, boolean forceAccess)
+            throws SecurityException, NoSuchFieldException
     {
         return ReflectionUtil.getField(object, fieldName, forceAccess);
     }

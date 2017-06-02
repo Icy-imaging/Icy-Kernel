@@ -50,9 +50,9 @@ import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
 import icy.util.OMEUtil;
 import loci.formats.IFormatReader;
-import loci.formats.meta.IMetadata;
-import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.MetadataRetrieve;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Dialog used to select which serie to open for multi serie image.
@@ -126,7 +126,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
         if (reader != null)
         {
-            metadata = OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore());
+            metadata = OMEUtil.getOMEXMLMetadata((MetadataRetrieve) reader.getMetadataStore());
             series = reader.getSeriesCount();
         }
         else
@@ -244,7 +244,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
         initialize();
 
-        final int series = MetaDataUtil.getNumSerie(metadata);
+        final int series = MetaDataUtil.getNumSeries(metadata);
 
         // double cick action = direct selection
         serieDoubleClickAction = new MouseAdapter()
@@ -377,7 +377,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     public SeriesSelectionDialog(SequenceFileImporter importer, String id)
             throws UnsupportedFormatException, IOException
     {
-        this(importer, id, Loader.getMetaData(importer, id));
+        this(importer, id, Loader.getOMEXMLMetaData(importer, id));
     }
 
     /**

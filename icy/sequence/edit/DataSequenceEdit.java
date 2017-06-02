@@ -3,11 +3,11 @@
  */
 package icy.sequence.edit;
 
-import icy.sequence.Sequence;
-
 import java.awt.Image;
 
 import javax.swing.undo.CannotUndoException;
+
+import icy.sequence.Sequence;
 
 /**
  * Default lazy sequence data undoable edit (do a complete sequence data copy to restore previous
@@ -20,16 +20,26 @@ public class DataSequenceEdit extends AbstractSequenceEdit
 {
     Sequence previous;
 
-    public DataSequenceEdit(Sequence previous, Sequence sequence, Image icon)
+    public DataSequenceEdit(Sequence previous, Sequence sequence, String name, Image icon)
     {
-        super(sequence, "Sequence data changed", icon);
+        super(sequence, name, icon);
 
         this.previous = previous;
     }
 
+    public DataSequenceEdit(Sequence previous, Sequence sequence, String name)
+    {
+        this(previous, sequence, name, null);
+    }
+
+    public DataSequenceEdit(Sequence previous, Sequence sequence, Image icon)
+    {
+        this(previous, sequence, "Sequence data changed", icon);
+    }
+
     public DataSequenceEdit(Sequence previous, Sequence sequence)
     {
-        this(previous, sequence, null);
+        this(previous, sequence, "Sequence data changed", null);
     }
 
     @Override

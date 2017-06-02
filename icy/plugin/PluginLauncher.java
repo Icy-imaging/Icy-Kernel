@@ -18,6 +18,8 @@
  */
 package icy.plugin;
 
+import java.util.concurrent.Callable;
+
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
@@ -28,8 +30,6 @@ import icy.system.IcyExceptionHandler;
 import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
-
-import java.util.concurrent.Callable;
 
 /**
  * This class launch plugins and register them to the main application.<br>

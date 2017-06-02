@@ -67,8 +67,8 @@ import icy.util.XMLUtil;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
-import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Sequence / Image loader class.
@@ -1209,25 +1209,60 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #getMetaData(File)} instead.
-     */
-    @Deprecated
-    protected static OMEXMLMetadataImpl getMetaData(IFormatReader reader, String path)
-            throws FormatException, IOException
-    {
-        // prepare meta data store structure
-        reader.setMetadataStore(new OMEXMLMetadataImpl());
-        // load file with LOCI library
-        reader.setId(path);
-
-        return (OMEXMLMetadataImpl) reader.getMetadataStore();
-    }
-
-    /**
      * Loads and returns metadata of the specified image file with given importer.<br>
      * It can returns <code>null</code> if the specified file is not a valid or supported) image
      * file.
      */
+    public static OMEXMLMetadata getOMEXMLMetaData(SequenceFileImporter importer, String path)
+            throws UnsupportedFormatException, IOException
+    {
+        if (importer.open(path, 0))
+        {
+            try
+            {
+                return importer.getOMEXMLMetaData();
+            }
+            finally
+            {
+                importer.close();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Loads and returns metadata of the specified image file.<br>
+     * It can returns <code>null</code> if the specified file is not a valid or supported) image
+     * file.
+     */
+    public static OMEXMLMetadata getOMEXMLMetaData(String path) throws UnsupportedFormatException, IOException
+    {
+        OMEXMLMetadata result;
+        UnsupportedFormatException lastError = null;
+
+        for (SequenceFileImporter importer : getSequenceFileImporters(path))
+        {
+            try
+            {
+                result = getOMEXMLMetaData(importer, path);
+
+                if (result != null)
+                    return result;
+            }
+            catch (UnsupportedFormatException e)
+            {
+                lastError = e;
+            }
+        }
+
+        throw new UnsupportedFormatException("Image file '" + path + "' is not supported :\n", lastError);
+    }
+
+    /**
+     * @deprecated Use {@link #getOMEXMLMetaData(SequenceFileImporter, String)} instead.
+     */
+    @Deprecated
     public static OMEXMLMetadataImpl getMetaData(SequenceFileImporter importer, String path)
             throws UnsupportedFormatException, IOException
     {
@@ -1247,8 +1282,9 @@ public class Loader
     }
 
     /**
-     * Loads and returns metadata of the specified image file.
+     * @deprecated Use {@link #getOMEXMLMetaData(String)} instead
      */
+    @Deprecated
     public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
     {
         OMEXMLMetadataImpl result;
@@ -1273,12 +1309,27 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #getMetaData(String)} instead.
+     * @deprecated Use {@link #getOMEXMLMetaData(String)} instead.
      */
     @Deprecated
     public static OMEXMLMetadataImpl getMetaData(File file) throws UnsupportedFormatException, IOException
     {
         return getMetaData(file.getAbsolutePath());
+    }
+
+    /**
+     * @deprecated Use {@link #getOMEXMLMetaData(String)} instead.
+     */
+    @Deprecated
+    protected static OMEXMLMetadataImpl getMetaData(IFormatReader reader, String path)
+            throws FormatException, IOException
+    {
+        // prepare meta data store structure
+        reader.setMetadataStore(new OMEXMLMetadataImpl());
+        // load file with LOCI library
+        reader.setId(path);
+
+        return (OMEXMLMetadataImpl) reader.getMetadataStore();
     }
 
     // /**
@@ -2531,7 +2582,7 @@ public class Loader
             imp.open(path, 0);
 
             // get metadata
-            final OMEXMLMetadata meta = imp.getMetaData();
+            final OMEXMLMetadata meta = imp.getOMEXMLMetaData();
             // clean the metadata
             MetaDataUtil.clean(meta);
 
@@ -2939,12 +2990,13 @@ public class Loader
     }
 
     /**
-     * Internal load a single file and return result as a Sequence.<br>
+     * <b>Internal use only !</b><br>
+     * Load a single file and return result as a Sequence.<br>
      * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
      * loading of current path.
      * 
      * @param importer
-     *        Importer used to open the image file (cannot be <code>null</code> here)
+     *        Opened importer used to load the image file (cannot be <code>null</code> here)
      * @param metadata
      *        Metadata of the image
      * @param serie
@@ -2978,7 +3030,7 @@ public class Loader
      *        Caller should allocate 100 positions for the internal single load process.
      * @return the Sequence object or <code>null</code>
      */
-    static Sequence internalLoadSingle(SequenceFileImporter importer, OMEXMLMetadata metadata, int serie,
+    public static Sequence internalLoadSingle(SequenceFileImporter importer, OMEXMLMetadata metadata, int serie,
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
@@ -3014,10 +3066,10 @@ public class Loader
                 " Try to open a sub resolution or sub part of the image only.");
 
         // create result sequence with desired serie metadata
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(metadata, serie));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(metadata, serie));
 
         // setup sequence properties and metadata from the opening setting
-        setupSequence(result, FileUtil.getGenericPath(importer.getOpened()), MetaDataUtil.getNumSerie(metadata) > 1,
+        setupSequence(result, FileUtil.getGenericPath(importer.getOpened()), MetaDataUtil.getNumSeries(metadata) > 1,
                 serie, region, resolution, sizeZ, sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
 
         // number of image to process
@@ -3069,7 +3121,8 @@ public class Loader
     }
 
     /**
-     * Internal load a single file and return result as Sequence list (for multi serie).<br>
+     * <b>Internal use only !</b><br>
+     * Load a single file and return result as Sequence list (for multi serie).<br>
      * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
      * loading of current path.
      * 
@@ -3085,7 +3138,7 @@ public class Loader
      *        the loading frame used to display progress of the operation (can be null)
      * @throws IOException
      */
-    static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int serie,
+    public static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int serie,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final double endStep;
@@ -3109,7 +3162,7 @@ public class Loader
                         "Image file '" + path + "' is not supported by " + importer.toString() + " importer.");
 
             // get metadata
-            final OMEXMLMetadata meta = importer.getMetaData();
+            final OMEXMLMetadata meta = importer.getOMEXMLMetaData();
             // clean the metadata
             MetaDataUtil.clean(meta);
 
@@ -3222,7 +3275,7 @@ public class Loader
         final double posZ = sequence.getPositionZ();
 
         // get sequence metadata
-        final OMEXMLMetadata metadata = sequence.getMetadata();
+        final OMEXMLMetadata metadata = sequence.getOMEXMLMetadata();
 
         // cleanup planes
         for (int t = sizeT - 1; t >= 0; t--)
@@ -3284,14 +3337,14 @@ public class Loader
         // adjust Z Range
         if ((minZ > 0) || (maxZ < (sizeZ - 1)))
         {
-            sequence.setOriginZRangeMin(minZ);
-            sequence.setOriginZRangeMax(maxZ);
+            sequence.setOriginZMin(minZ);
+            sequence.setOriginZMax(maxZ);
         }
         // adjust T Range
         if ((minT > 0) || (maxT < (sizeT - 1)))
         {
-            sequence.setOriginTRangeMin(minT);
-            sequence.setOriginTRangeMax(maxT);
+            sequence.setOriginTMin(minT);
+            sequence.setOriginTMax(maxT);
         }
 
         // set final name and filename
@@ -3306,7 +3359,7 @@ public class Loader
     public static int[] selectSeries(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
             int defaultSerie, boolean singleSelection) throws UnsupportedFormatException, IOException
     {
-        final int serieCount = MetaDataUtil.getNumSerie(meta);
+        final int serieCount = MetaDataUtil.getNumSeries(meta);
         final int[] tmp = new int[serieCount + 1];
 
         if (serieCount > 0)
@@ -3511,7 +3564,7 @@ public class Loader
                         loadingFrame.setAction("Reading metadata");
                     }
 
-                    final OMEXMLMetadata metadata = getMetaData(filenames.get(0));
+                    final OMEXMLMetadata metadata = getOMEXMLMetaData(filenames.get(0));
 
                     if (loadingFrame != null)
                     {

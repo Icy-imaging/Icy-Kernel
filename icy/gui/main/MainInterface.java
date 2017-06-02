@@ -19,11 +19,19 @@
 
 package icy.gui.main;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.undo.UndoManager;
+
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.LayersPanel;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.menu.ApplicationMenu;
+import icy.gui.menu.ROITask;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -38,13 +46,6 @@ import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 import icy.undo.IcyUndoManager;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.undo.UndoManager;
 
 /**
  * MainInterface
@@ -411,8 +412,14 @@ public interface MainInterface
     public abstract void setSelectedTool(String command);
 
     /**
-     * Returns the tool task of the Ribbon menu.
+     * Returns the ROI task of the Ribbon menu.
      */
+    public abstract ROITask getROIRibbonTask();
+
+    /**
+     * @deprecated Use {@link #getROIRibbonTask()} instead
+     */
+    @Deprecated
     public abstract ToolRibbonTask getToolRibbon();
 
     /**

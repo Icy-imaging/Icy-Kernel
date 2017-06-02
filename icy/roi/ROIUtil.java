@@ -18,6 +18,17 @@
  */
 package icy.roi;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import icy.image.IcyBufferedImage;
 import icy.image.IntensityInfo;
 import icy.math.DataIteratorMath;
@@ -39,17 +50,6 @@ import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
-
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import plugins.kernel.roi.descriptor.intensity.ROIIntensityDescriptorsPlugin;
 import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
 import plugins.kernel.roi.descriptor.intensity.ROIMeanIntensityDescriptor;
@@ -92,7 +92,8 @@ public class ROIUtil
     /**
      * Returns all available ROI descriptors (see {@link ROIDescriptor}) and their attached plugin
      * (see {@link PluginROIDescriptor}).<br/>
-     * This list can be extended by installing new plugin(s) implementing the {@link PluginROIDescriptor} interface.<br/>
+     * This list can be extended by installing new plugin(s) implementing the {@link PluginROIDescriptor}
+     * interface.<br/>
      * This method is an alias of {@link ROIDescriptor#getDescriptors()}
      * 
      * @see ROIDescriptor#compute(ROI, Sequence)
@@ -106,7 +107,7 @@ public class ROIUtil
     /**
      * Computes the specified descriptor from the input {@link ROIDescriptor} set on given ROI
      * and returns the result (or <code>null</code> if the descriptor is not found).<br/>
-     * This method is an alias of {@link ROIDescriptor#computeDescriptor(Set, String, ROI, Sequence)}
+     * This method is an alias of {@link ROIDescriptor#computeDescriptor(Collection, String, ROI, Sequence)}
      * 
      * @param roiDescriptors
      *        the input {@link ROIDescriptor} set (see {@link #getROIDescriptors()} method)
@@ -124,6 +125,16 @@ public class ROIUtil
      *         <code>null</code> while the calculation requires it, or if
      *         the specified Z, T or C position are not supported by the descriptor
      */
+    public static Object computeDescriptor(Collection<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
+            Sequence sequence)
+    {
+        return ROIDescriptor.computeDescriptor(roiDescriptors, descriptorId, roi, sequence);
+    }
+
+    /**
+     * @deprecated Use {@link ROIDescriptor#computeDescriptor(Collection, String, ROI, Sequence)} instead
+     */
+    @Deprecated
     public static Object computeDescriptor(Set<ROIDescriptor> roiDescriptors, String descriptorId, ROI roi,
             Sequence sequence)
     {
@@ -1176,10 +1187,10 @@ public class ROIUtil
 
                 for (int z = 0; z < roiSize.sizeZ; z++)
                 {
-                    final BooleanMask2D roi1Mask2D = new BooleanMask2D(bounds2D, roi1.getBooleanMask2D(bounds2D,
-                            bounds.z + z, bounds.t + t, bounds.c + c, true));
-                    final BooleanMask2D roi2Mask2D = new BooleanMask2D(bounds2D, roi2.getBooleanMask2D(bounds2D,
-                            bounds.z + z, bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D roi1Mask2D = new BooleanMask2D(bounds2D,
+                            roi1.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t, bounds.c + c, true));
+                    final BooleanMask2D roi2Mask2D = new BooleanMask2D(bounds2D,
+                            roi2.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t, bounds.c + c, true));
 
                     mask3D[z] = BooleanMask2D.getIntersection(roi1Mask2D, roi2Mask2D);
                 }
@@ -1420,7 +1431,7 @@ public class ROIUtil
      * Converts the specified 2D ROI to 3D Stack ROI (ROI3DStack) by stacking it along the Z axis given zMin and zMax
      * (inclusive) parameters.
      * 
-     * @return the converted 3D stack ROI or <code>null</code> if the ROI
+     * @return the converted 3D stack ROI or <code>null</code> if the input ROI was null
      */
     public static ROI convertToStack(ROI2D roi, int zMin, int zMax)
     {
@@ -1485,8 +1496,8 @@ public class ROIUtil
                 final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
 
                 for (int z = 0; z < roiSize.sizeZ; z++)
-                    mask3D[z] = new BooleanMask2D(bounds2D, roi.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t,
-                            bounds.c + c, true));
+                    mask3D[z] = new BooleanMask2D(bounds2D,
+                            roi.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t, bounds.c + c, true));
 
                 mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
             }
@@ -1580,8 +1591,8 @@ public class ROIUtil
 
         }
 
-        throw new UnsupportedOperationException("ROIUtil.convertToShape(ROI): Operation not supported for this ROI: "
-                + roi.getName());
+        throw new UnsupportedOperationException(
+                "ROIUtil.convertToShape(ROI): Operation not supported for this ROI: " + roi.getName());
     }
 
     /**
@@ -1643,8 +1654,8 @@ public class ROIUtil
                 "ROIUtil.getConnectedComponents(ROI): Operation not supported for this ROI: " + roi.getName());
     }
 
-    static boolean computePolysFromLine(Line2D line, Point2D edgePt1, Point2D edgePt2, Polygon2D poly1,
-            Polygon2D poly2, boolean inner)
+    static boolean computePolysFromLine(Line2D line, Point2D edgePt1, Point2D edgePt2, Polygon2D poly1, Polygon2D poly2,
+            boolean inner)
     {
         final Line2D edgeLine = new Line2D.Double(edgePt1, edgePt2);
 
@@ -1686,7 +1697,8 @@ public class ROIUtil
     }
 
     /**
-     * Cut the specified ROI with the given Line2D (extended to ROI bounds) and return the 2 resulting ROI in a list.<br>
+     * Cut the specified ROI with the given Line2D (extended to ROI bounds) and return the 2 resulting ROI in a
+     * list.<br>
      * If the specified ROI cannot be cut by the given Line2D then <code>null</code> is returned.
      */
     public static List<ROI> split(ROI roi, Line2D line)
@@ -1771,8 +1783,8 @@ public class ROIUtil
      *        if set to <code>true</code> then each ROI will be draw as a separate label (value) in the sequence
      *        starting from 1.
      */
-    public static Sequence convertToSequence(List<ROI> inputRois, int sizeX, int sizeY, int sizeC, int sizeZ,
-            int sizeT, DataType dataType, boolean label)
+    public static Sequence convertToSequence(List<ROI> inputRois, int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
+            DataType dataType, boolean label)
     {
         final List<ROI> rois = new ArrayList<ROI>();
         final Rectangle5D bounds = new Rectangle5D.Double();
@@ -1876,8 +1888,8 @@ public class ROIUtil
     public static Sequence convertToSequence(List<ROI> inputRois, Sequence sequence, boolean label)
     {
         if (sequence == null)
-            return convertToSequence(inputRois, 0, 0, 0, 0, 0, label ? ((inputRois.size() > 255) ? DataType.USHORT
-                    : DataType.UBYTE) : DataType.UBYTE, label);
+            return convertToSequence(inputRois, 0, 0, 0, 0, 0,
+                    label ? ((inputRois.size() > 255) ? DataType.USHORT : DataType.UBYTE) : DataType.UBYTE, label);
 
         return convertToSequence(inputRois, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
                 sequence.getSizeZ(), sequence.getSizeT(), sequence.getDataType_(), label);

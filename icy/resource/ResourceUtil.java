@@ -158,6 +158,8 @@ public class ResourceUtil
     public static final Image ICON_ROI_XOR = ResourceUtil.getAlphaIconAsImage("roi_xor.png");
     public static final Image ICON_ROI_SUB = ResourceUtil.getAlphaIconAsImage("roi_sub.png");
 
+    public static final Image ICON_ROI_INTERIOR = ResourceUtil.getAlphaIconAsImage("roi_interior.png");
+
     public static final Image ICON_ROI_COMP = ResourceUtil.getAlphaIconAsImage("separate_obj.png");
 
     public static final Image ICON_BOOL_MASK = ResourceUtil.getAlphaIconAsImage("boolean_mask.png");

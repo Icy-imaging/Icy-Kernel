@@ -18,16 +18,6 @@
  */
 package icy.network;
 
-import icy.common.listener.ProgressListener;
-import icy.common.listener.weak.WeakListener;
-import icy.file.FileUtil;
-import icy.preferences.NetworkPreferences;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-import icy.system.audit.Audit;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.io.BufferedInputStream;
@@ -52,12 +42,31 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedTrustManager;
+
+import icy.common.listener.ProgressListener;
+import icy.common.listener.weak.WeakListener;
+import icy.file.FileUtil;
+import icy.preferences.NetworkPreferences;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
+import icy.system.audit.Audit;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 import sun.misc.BASE64Encoder;
 
 /**
@@ -87,8 +96,8 @@ public class NetworkUtil
      * 
      * @author Stephane
      */
-    public static class WeakInternetAccessListener extends WeakListener<InternetAccessListener> implements
-            InternetAccessListener
+    public static class WeakInternetAccessListener extends WeakListener<InternetAccessListener>
+            implements InternetAccessListener
     {
         public WeakInternetAccessListener(InternetAccessListener listener)
         {
@@ -181,6 +190,81 @@ public class NetworkUtil
     };
 
     /**
+     * 'Accept all certificates' trust manager
+     */
+    private static class AcceptAllX509TrustManager extends X509ExtendedTrustManager
+    {
+        public AcceptAllX509TrustManager()
+        {
+            super();
+        }
+
+        @Override
+        public java.security.cert.X509Certificate[] getAcceptedIssuers()
+        {
+            return null;
+        }
+
+        @Override
+        public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType)
+        {
+            // ignore
+        }
+
+        @Override
+        public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType)
+        {
+            // ignore
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket)
+                throws CertificateException
+        {
+            // ignore
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
+                throws CertificateException
+        {
+            // ignore
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket)
+                throws CertificateException
+        {
+            // ignore
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
+                throws CertificateException
+        {
+            // ignore
+        }
+    };
+
+    /**
+     * 'Accept all' host name verifier
+     */
+    private static class FakeHostnameVerifier implements HostnameVerifier
+    {
+        public FakeHostnameVerifier()
+        {
+            super();
+        }
+
+        @Override
+        public boolean verify(String hostname, SSLSession session)
+        {
+            // always return true
+            return true;
+        }
+    };
+
+    /**
      * URL
      */
     public static final String WEBSITE_HOST = "icy.bioimageanalysis.org";
@@ -223,10 +307,34 @@ public class NetworkUtil
         internetAccess = false;
 
         updateNetworkSetting();
+        // accept all HTTPS connections by default
+        installTruster();
 
         // start monitor thread
         internetMonitor.setPriority(Thread.MIN_PRIORITY);
         internetMonitor.start();
+    }
+
+    private static void installTruster()
+    {
+        try
+        {
+            // install the accept all host name verifier
+            HttpsURLConnection.setDefaultHostnameVerifier(new FakeHostnameVerifier());
+
+            // create a trust manager that does not validate certificate chains
+            final TrustManager[] trustAllCerts = new TrustManager[] {new AcceptAllX509TrustManager()};
+
+            // install the all-trusting trust manager
+            final SSLContext sc = SSLContext.getInstance("SSL");
+
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, false, true);
+        }
     }
 
     /**

@@ -18,6 +18,35 @@
  */
 package icy.gui.menu;
 
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+
+import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
+import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
+import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
+import org.pushingpixels.flamingo.api.common.RichTooltip;
+import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
+import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
+import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
+import org.pushingpixels.flamingo.api.ribbon.JRibbon;
+import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
+import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
+import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
+import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
+
 import icy.action.GeneralActions;
 import icy.action.PreferencesActions;
 import icy.action.WindowActions;
@@ -56,35 +85,6 @@ import icy.workspace.Workspace.TaskDefinition.BandDefinition.ItemDefinition;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
-
-import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
-import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
-import org.pushingpixels.flamingo.api.common.JCommandButton;
-import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
-import org.pushingpixels.flamingo.api.common.RichTooltip;
-import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
-import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
-import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
-import org.pushingpixels.flamingo.api.ribbon.JRibbon;
-import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
-import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
-import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
-import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
-
 /**
  * This class is used to separate ribbon construction from the ribbon frame
  * 
@@ -120,13 +120,12 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
     private final JRibbon ribbon;
     private final ApplicationMenu applicationMenu;
-    // private final JRibbonBand othersPluginsBand;
+    private final SequenceOperationTask sequenceOperationTask;
+    // use ToolRibbonTask constructor to preserve backward compatibility
+    private final ToolRibbonTask roiTask;
+    private final ImageJTask ijTask;
     private final JRibbonBand setupPluginsBand;
     private final JRibbonBand newPluginsBand;
-    // private final ImageRibbonTask imageTask;
-    private final SequenceOperationTask sequenceOperationTask;
-    private final ToolRibbonTask toolRibbonTask;
-    private final ImageJTask ijTask;
     final JMenu othersPluginsMenu;
 
     CommandToggleButtonGroup multiWindowGroup;
@@ -148,7 +147,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
         applicationMenu = new ApplicationMenu();
         ribbon.setApplicationMenu(applicationMenu);
-        final RichTooltip toolTip = new RichTooltip("ICY Application menu", "Load, close and save Sequence from there.");
+        final RichTooltip toolTip = new RichTooltip("ICY Application menu",
+                "Load, close and save Sequence from there.");
         ribbon.setApplicationMenuRichTooltip(toolTip);
         // ribbon.configureHelp(new ICYResizableIcon(new IcyIcon("lightbulb"),
         // new
@@ -161,14 +161,12 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         // FIXED TASKS
 
         // load image task first as tools task need all plugins loaded...
-        // imageTask = new ImageRibbonTask();
         sequenceOperationTask = new SequenceOperationTask();
-        toolRibbonTask = new ToolRibbonTask();
+        // use ToolRibbonTask constructor to preserve backward compatibility
+        roiTask = new ToolRibbonTask();
         ijTask = new ImageJTask();
-        // we want tools task to be the first task
-        ribbon.addTask(toolRibbonTask);
-        // ribbon.addTask(imageTask);
         ribbon.addTask(sequenceOperationTask);
+        ribbon.addTask(roiTask);
         ribbon.addTask(ijTask);
 
         // WORKSPACES
@@ -216,9 +214,18 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         });
     }
 
+    public ROITask getROIRibbonTask()
+    {
+        return roiTask;
+    }
+
+    /**
+     * @deprecated Use {@link #getROIRibbonTask()} instead
+     */
+    @Deprecated
     public ToolRibbonTask getToolRibbon()
     {
-        return toolRibbonTask;
+        return roiTask;
     }
 
     public SequenceOperationTask getSequenceOperationTask()
@@ -572,8 +579,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                     // special case of OTHER plugins
                     if (band == othersPluginsBandDef)
                     {
-                        final IcyCommandButton btn = new IcyCommandButton("Other Plugins", new IcyIcon(
-                                ResourceUtil.ICON_COG));
+                        final IcyCommandButton btn = new IcyCommandButton("Other Plugins",
+                                new IcyIcon(ResourceUtil.ICON_COG));
                         btn.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                         btn.setPopupRichTooltip(new RichTooltip("Other plugins",
                                 "You can find here all plugins which are not associated to a workspace"));
@@ -784,8 +791,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         // WINDOWS
         final IcyCommandButton windowsButton = new IcyCommandButton(new IcyIcon("app_window"));
 
-        windowsButton.setPopupRichTooltip(new RichTooltip("Windows",
-                "Show specific windows and general windows setting..."));
+        windowsButton.setPopupRichTooltip(
+                new RichTooltip("Windows", "Show specific windows and general windows setting..."));
         windowsButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
         windowsButton.setPopupCallback(new PopupPanelCallback()
         {
@@ -807,8 +814,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                 result.addMenuSeparator();
 
                 // LOOK AND FEEL
-                final IcyCommandMenuButton lafButton = new IcyCommandMenuButton("Appearance", new IcyIcon(
-                        ResourceUtil.ICON_SMILEY_HAPPY));
+                final IcyCommandMenuButton lafButton = new IcyCommandMenuButton("Appearance",
+                        new IcyIcon(ResourceUtil.ICON_SMILEY_HAPPY));
 
                 lafButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 lafButton.setPopupRichTooltip(new RichTooltip("Look and feel", "Change appearance of the interface"));
@@ -880,8 +887,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
                 // OPENED SEQUENCES
                 final ArrayList<Viewer> allViewers = Icy.getMainInterface().getViewers();
-                final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences", new IcyIcon(
-                        ResourceUtil.ICON_PICTURE));
+                final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences",
+                        new IcyIcon(ResourceUtil.ICON_PICTURE));
                 sequencesButton.setPopupRichTooltip(new RichTooltip("Opened sequences", "Show the selected sequence"));
                 sequencesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 sequencesButton.setPopupCallback(new PopupPanelCallback()
@@ -928,8 +935,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
                 // OPENED FRAMES
                 final ArrayList<IcyFrame> allFrames = IcyFrame.getAllFrames();
-                final IcyCommandMenuButton framesButton = new IcyCommandMenuButton("Opened frames", new IcyIcon(
-                        ResourceUtil.ICON_WINDOW));
+                final IcyCommandMenuButton framesButton = new IcyCommandMenuButton("Opened frames",
+                        new IcyIcon(ResourceUtil.ICON_WINDOW));
                 framesButton.setPopupRichTooltip(new RichTooltip("Opened frames", "Show all frames"));
                 framesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 framesButton.setPopupCallback(new PopupPanelCallback()
@@ -1001,8 +1008,8 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         // HELP / INFOS
         final IcyCommandButton helpAndInfoButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_INFO));
 
-        helpAndInfoButton.setPopupRichTooltip(new RichTooltip("General help and information",
-                "Help, Updates and Informations about Icy."));
+        helpAndInfoButton.setPopupRichTooltip(
+                new RichTooltip("General help and information", "Help, Updates and Informations about Icy."));
         helpAndInfoButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
         helpAndInfoButton.setPopupCallback(new PopupPanelCallback()
         {
@@ -1081,10 +1088,10 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
     @Override
     public void sequenceActivated(Sequence sequence)
     {
-        toolRibbonTask.onSequenceActivationChange();
+        sequenceOperationTask.onSequenceChange();
+        roiTask.onSequenceActivationChange();
         ijTask.onSequenceActivationChange();
         applicationMenu.onSequenceActivationChange();
-        sequenceOperationTask.onSequenceChange();
     }
 
     @Override
@@ -1101,6 +1108,9 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         if ((type == SequenceEventSourceType.SEQUENCE_DATA) || (type == SequenceEventSourceType.SEQUENCE_TYPE))
             sequenceOperationTask.onSequenceChange();
         if (type == SequenceEventSourceType.SEQUENCE_ROI)
-            toolRibbonTask.onSequenceChange();
+        {
+            sequenceOperationTask.onSequenceChange();
+            roiTask.onSequenceChange();
+        }
     }
 }

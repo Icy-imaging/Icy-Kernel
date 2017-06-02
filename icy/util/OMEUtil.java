@@ -30,13 +30,13 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 import loci.common.services.ServiceException;
 import loci.formats.MetadataTools;
-import loci.formats.meta.MetadataRetrieve;
-import loci.formats.meta.MetadataStore;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import loci.formats.services.OMEXMLService;
 import loci.formats.services.OMEXMLServiceImpl;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.quantity.Time;
+import ome.xml.meta.MetadataRetrieve;
 import ome.xml.meta.OMEXMLMetadata;
 import ome.xml.model.OME;
 import ome.xml.model.StructuredAnnotations;
@@ -50,7 +50,7 @@ import ome.xml.model.primitives.PositiveInteger;
  */
 public class OMEUtil
 {
-    private static final OMEXMLServiceImpl OMEService = new OMEXMLServiceImpl();
+    private static final OMEXMLService OMEService = new OMEXMLServiceImpl();
 
     /**
      * Safe integer evaluation from PositiveInteger object.<br>
@@ -201,7 +201,7 @@ public class OMEUtil
      * @deprecated Use {@link #createOMEXMLMetadata()} instead
      */
     @Deprecated
-    public synchronized static OMEXMLMetadataImpl createOMEMetadata()
+    public static OMEXMLMetadataImpl createOMEMetadata()
     {
         return (OMEXMLMetadataImpl) createOMEXMLMetadata();
     }
@@ -209,7 +209,7 @@ public class OMEUtil
     /**
      * Create a new OME Metadata object from the specified Metadata object.<br>
      */
-    public synchronized static OMEXMLMetadata createOMEXMLMetadata(MetadataRetrieve metadata)
+    public static OMEXMLMetadata createOMEXMLMetadata(MetadataRetrieve metadata)
     {
         final OMEXMLMetadata result = createOMEXMLMetadata();
 
@@ -232,7 +232,12 @@ public class OMEUtil
             }
         }
 
-        OMEService.convertMetadata(metadata, (MetadataStore) result);
+        synchronized (OMEService)
+        {
+            // need to cast to get rid of this old loci package stuff
+            OMEService.convertMetadata((loci.formats.meta.MetadataRetrieve) metadata,
+                    (loci.formats.meta.MetadataStore) result);
+        }
 
         return result;
     }
@@ -241,7 +246,7 @@ public class OMEUtil
      * @deprecated Use {@link #createOMEXMLMetadata(MetadataRetrieve)} instead
      */
     @Deprecated
-    public synchronized static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata)
+    public synchronized static OMEXMLMetadataImpl createOMEMetadata(loci.formats.meta.MetadataRetrieve metadata)
     {
         return (OMEXMLMetadataImpl) createOMEXMLMetadata(metadata);
     }
@@ -268,7 +273,7 @@ public class OMEUtil
      * @deprecated Use {@link #createOMEXMLMetadata(MetadataRetrieve,int)} instead
      */
     @Deprecated
-    public static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata, int serie)
+    public static OMEXMLMetadataImpl createOMEMetadata(loci.formats.meta.MetadataRetrieve metadata, int serie)
     {
         return (OMEXMLMetadataImpl) createOMEXMLMetadata(metadata, serie);
     }
@@ -289,7 +294,7 @@ public class OMEUtil
      * @deprecated Use {@link #getOMEXMLMetadata(MetadataRetrieve)} instead
      */
     @Deprecated
-    public static OMEXMLMetadataImpl getOMEMetadata(MetadataRetrieve metadata)
+    public static OMEXMLMetadataImpl getOMEMetadata(loci.formats.meta.MetadataRetrieve metadata)
     {
         return (OMEXMLMetadataImpl) getOMEXMLMetadata(metadata);
     }
@@ -316,7 +321,7 @@ public class OMEUtil
      * @deprecated Use {@link #getXMLDocument(OMEXMLMetadata)} instead
      */
     @Deprecated
-    public static Document getXMLDocument(MetadataRetrieve metadata)
+    public static Document getXMLDocument(loci.formats.meta.MetadataRetrieve metadata)
     {
         return getXMLDocument(getOMEXMLMetadata(metadata));
     }
@@ -329,16 +334,16 @@ public class OMEUtil
     public static OMEXMLMetadataImpl generateMetaData(OMEXMLMetadataImpl metadata, int sizeX, int sizeY, int sizeC,
             int sizeZ, int sizeT, DataType dataType, boolean separateChannel) throws ServiceException
     {
-        final OMEXMLMetadataImpl result;
+        final OMEXMLMetadata result;
 
         if (metadata == null)
-            result = MetaDataUtil.createDefaultMetadata("Sample");
+            result = MetaDataUtil.createMetadata("Sample");
         else
             result = metadata;
 
         MetaDataUtil.setMetaData(result, sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, separateChannel);
 
-        return result;
+        return (OMEXMLMetadataImpl) result;
     }
 
     /**

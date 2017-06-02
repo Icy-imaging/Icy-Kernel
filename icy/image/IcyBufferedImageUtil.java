@@ -18,6 +18,8 @@
  */
 package icy.image;
 
+import java.awt.AlphaComposite;
+import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -99,6 +101,8 @@ public class IcyBufferedImageUtil
 
         // else we need to convert to wanted type...
         final Graphics2D g = result.createGraphics();
+        // we don't want to blend over previous image (if any)
+        g.setComposite(AlphaComposite.Src);
         g.drawImage(getARGBImage(source, lut), 0, 0, null);
         g.dispose();
 

@@ -94,7 +94,7 @@ public class VisibleCellEditor extends AbstractCellEditor implements TableCellEd
             if (background == null || background instanceof javax.swing.plaf.UIResource)
             {
                 Color alternateColor = DefaultLookup.getColor(label, label.getUI(), "Table.alternateRowColor");
-                if (alternateColor != null && row % 2 == 0)
+                if (alternateColor != null && ((row & 1) == 0))
                     background = alternateColor;
             }
 

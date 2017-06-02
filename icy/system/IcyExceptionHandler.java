@@ -18,6 +18,14 @@
  */
 package icy.system;
 
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.plugin.PluginErrorReport;
@@ -32,14 +40,6 @@ import icy.plugin.interface_.PluginBundled;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
-import java.io.File;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author Stephane
  */
@@ -49,7 +49,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
     private static long lastErrorDialog = 0;
     private static long lastReport = 0;
-    private static Set<String> reportedPlugin = new HashSet<String>();
+    private static Set<String> reportedPlugins = new HashSet<String>();
 
     public static void init()
     {
@@ -444,10 +444,10 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             final String className = plugin.getClassName();
 
             // we already reported error for this plugin --> avoid spaming
-            if (reportedPlugin.contains(className))
+            if (reportedPlugins.contains(className))
                 return;
 
-            reportedPlugin.add(className);
+            reportedPlugins.add(className);
 
             values.put(NetworkUtil.ID_PLUGINCLASSNAME, className);
             values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());

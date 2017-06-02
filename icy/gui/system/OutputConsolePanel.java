@@ -18,34 +18,48 @@
  */
 package icy.gui.system;
 
-import icy.gui.component.ExternalizablePanel;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.frame.progress.ProgressFrame;
-import icy.gui.util.GuiUtil;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.system.IcyExceptionHandler;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.PrintStream;
 import java.util.EventListener;
 
 import javax.swing.Box;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+
+import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.GuiUtil;
+import icy.preferences.GeneralPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.system.IcyExceptionHandler;
+import icy.util.EventUtil;
 
 /**
  * @author Stephane
@@ -90,18 +104,20 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
      */
     private static final long serialVersionUID = 7142067146669860938L;
 
-    private static final int MAX_SIZE = 4 * 1024 * 1024; // 4 MB
-
-    final JTextPane textPane;
-    final StyledDocument doc;
+    final protected JTextPane textPane;
+    final protected StyledDocument doc;
     final SimpleAttributeSet normalAttributes;
     final SimpleAttributeSet errorAttributes;
 
+    final protected JSpinner logMaxLineField;
+    final protected JTextField logMaxLineTextField;
     final public IcyButton clearLogButton;
     final public IcyButton copyLogButton;
     final public IcyButton reportLogButton;
     final public IcyToggleButton scrollLockButton;
     final public JPanel bottomPanel;
+
+    int nbUpdate;
 
     public OutputConsolePanel()
     {
@@ -109,6 +125,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
 
         textPane = new JTextPane();
         doc = textPane.getStyledDocument();
+        nbUpdate = 0;
 
         errorAttributes = new SimpleAttributeSet();
         normalAttributes = new SimpleAttributeSet();
@@ -121,6 +138,9 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         StyleConstants.setFontSize(normalAttributes, 11);
         StyleConstants.setForeground(normalAttributes, Color.black);
 
+        logMaxLineField = new JSpinner(
+                new SpinnerNumberModel(GeneralPreferences.getOutputLogSize(), 100, 1000000, 100));
+        logMaxLineTextField = ((JSpinner.DefaultEditor) logMaxLineField.getEditor()).getTextField();
         clearLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
         copyLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC_COPY));
         reportLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC_EXPORT));
@@ -134,6 +154,66 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         reportLogButton.setFlat(true);
         scrollLockButton.setFlat(true);
 
+        logMaxLineField.setPreferredSize(new Dimension(80, 24));
+        // no focusable
+        logMaxLineField.setFocusable(false);
+        logMaxLineTextField.setFocusable(false);
+        logMaxLineTextField.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                // get focus on double click to enable manual edition
+                if (EventUtil.isLeftMouseButton(e))
+                {
+                    logMaxLineField.setFocusable(true);
+                    logMaxLineTextField.setFocusable(true);
+                    logMaxLineTextField.requestFocus();
+                }
+            }
+        });
+        logMaxLineTextField.addKeyListener(new KeyAdapter()
+        {
+            @Override
+            public void keyPressed(KeyEvent e)
+            {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
+                {
+                    // cancel manual edition ? --> remove focus
+                    if (logMaxLineTextField.isFocusable())
+                    {
+                        logMaxLineTextField.setFocusable(false);
+                        logMaxLineField.setFocusable(false);
+                    }
+                }
+            }
+        });
+        logMaxLineField.addChangeListener(new ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent e)
+            {
+                GeneralPreferences.setOutputLogSize(getLogMaxLine());
+
+                // manual edition ? --> remove focus
+                if (logMaxLineTextField.isFocusable())
+                {
+                    logMaxLineTextField.setFocusable(false);
+                    logMaxLineField.setFocusable(false);
+                }
+
+                try
+                {
+                    limitLog();
+                }
+                catch (Exception ex)
+                {
+                    // ignore
+
+                }
+            }
+        });
+        logMaxLineField.setToolTipText("Double-click to edit the maximum number of line (max = 1000000)");
         clearLogButton.setToolTipText("Clear all");
         copyLogButton.setToolTipText("Copy to clipboard");
         reportLogButton.setToolTipText("Report content to dev team");
@@ -187,11 +267,11 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
             }
         });
 
-        bottomPanel = GuiUtil.createPageBoxPanel(
-                Box.createVerticalStrut(4),
+        bottomPanel = GuiUtil.createPageBoxPanel(Box.createVerticalStrut(4),
                 GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
                         Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
-                        Box.createHorizontalStrut(4), scrollLockButton));
+                        Box.createHorizontalStrut(4), new JLabel("Limit"), Box.createHorizontalStrut(4),
+                        logMaxLineField, Box.createHorizontalStrut(4), scrollLockButton));
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -215,18 +295,24 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
     {
         try
         {
-            if (isError)
-                doc.insertString(doc.getLength(), text, errorAttributes);
-            else
-                doc.insertString(doc.getLength(), text, normalAttributes);
+            nbUpdate++;
 
-            // limit to maximum size
-            if (doc.getLength() > MAX_SIZE)
-                doc.remove(0, doc.getLength() - MAX_SIZE);
+            // insert text
+            synchronized (doc)
+            {
+                if (isError)
+                    doc.insertString(doc.getLength(), text, errorAttributes);
+                else
+                    doc.insertString(doc.getLength(), text, normalAttributes);
 
-            // scroll lock feature
-            if (!scrollLockButton.isSelected())
-                textPane.setCaretPosition(doc.getLength());
+                // do clean sometime..
+                if ((nbUpdate & 0x7F) == 0)
+                    limitLog();
+
+                // scroll lock feature
+                if (!scrollLockButton.isSelected())
+                    textPane.setCaretPosition(doc.getLength());
+            }
         }
         catch (Exception e)
         {
@@ -243,12 +329,51 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
     {
         try
         {
-            return doc.getText(0, doc.getLength());
+            synchronized (doc)
+            {
+                return doc.getText(0, doc.getLength());
+            }
         }
         catch (BadLocationException e)
         {
             return "";
         }
+    }
+
+    /**
+     * Apply maximum line limitation to the log output
+     * 
+     * @throws BadLocationException
+     */
+    public void limitLog() throws BadLocationException
+    {
+        final Element root = doc.getDefaultRootElement();
+        final int numLine = root.getElementCount();
+        final int logMaxLine = getLogMaxLine();
+
+        // limit to maximum wanted lines
+        if (numLine > logMaxLine)
+        {
+            final Element line = root.getElement(numLine - (logMaxLine + 1));
+            // remove "old" lines
+            doc.remove(0, line.getEndOffset());
+        }
+    }
+
+    /**
+     * Returns maximum log line number
+     */
+    public int getLogMaxLine()
+    {
+        return ((Integer) logMaxLineField.getValue()).intValue();
+    }
+
+    /**
+     * Sets maximum log line number
+     */
+    public void setLogMaxLine(int value)
+    {
+        logMaxLineField.setValue(Integer.valueOf(value));
     }
 
     private void changed(boolean isError)

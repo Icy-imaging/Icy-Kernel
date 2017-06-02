@@ -19,11 +19,18 @@
 
 package icy.gui.main;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.LayersPanel;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.menu.ApplicationMenu;
+import icy.gui.menu.ROITask;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -40,12 +47,6 @@ import icy.swimmingPool.SwimmingPool;
 import icy.type.collection.CollectionUtil;
 import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 
 /**
  * MainInterfaceBatch
@@ -451,8 +452,17 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public void setSelectedTool(String command)
     {
+        //
+    }
+    
+
+    @Override
+    public ROITask getROIRibbonTask()
+    {
+        return null;
     }
 
+    @Deprecated
     @Override
     public ToolRibbonTask getToolRibbon()
     {

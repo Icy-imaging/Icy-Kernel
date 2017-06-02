@@ -60,8 +60,8 @@ import javax.swing.Timer;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.gui.component.button.IcyToggleButton;
-import icy.gui.menu.ToolRibbonTask;
-import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
+import icy.gui.menu.ROITask;
+import icy.gui.menu.ROITask.ROITaskListener;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -101,7 +101,7 @@ import plugins.kernel.roi.tool.plugin.ROILineCutterPlugin;
  * 
  * @author Stephane
  */
-public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
+public class Canvas2D extends IcyCanvas2D implements ROITaskListener
 {
     /**
      * 
@@ -422,7 +422,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseClicked(MouseEvent e)
         {
-
+            // nothing here
         }
 
         @Override
@@ -473,13 +473,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseEntered(MouseEvent e)
         {
-
+            // nothing here
         }
 
         @Override
         public void mouseExited(MouseEvent e)
         {
-
+            // nothing here
         }
 
         @Override
@@ -951,7 +951,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // not yet consumed
             if (!consumed)
             {
-                final ToolRibbonTask toolTask = Icy.getMainInterface().getToolRibbon();
+                final ROITask toolTask = Icy.getMainInterface().getROIRibbonTask();
                 final Sequence seq = getSequence();
 
                 // left button press ?
@@ -1667,7 +1667,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         public void layersChanged()
         {
-
+            // nothing here
         }
 
         public boolean isDragging()
@@ -2079,7 +2079,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         updateZNav();
         updateTNav();
 
-        final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
+        final ROITask trt = Icy.getMainInterface().getROIRibbonTask();
         if (trt != null)
             trt.addListener(this);
     }
@@ -2094,7 +2094,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // shutdown mover object (else internal timer keep a reference to Canvas2D)
         smoothTransform.shutDown();
 
-        final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
+        final ROITask trt = Icy.getMainInterface().getROIRibbonTask();
         if (trt != null)
             trt.removeListener(this);
     }
@@ -3227,7 +3227,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         final Sequence seq = getSequence();
 
-        final ToolRibbonTask toolTask = Icy.getMainInterface().getToolRibbon();
+        final ROITask toolTask = Icy.getMainInterface().getROIRibbonTask();
 
         if (toolTask != null)
         {
