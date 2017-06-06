@@ -1920,17 +1920,17 @@ public class MetaDataUtil
 
         for (int t = 0; t < sizeT; t++)
         {
-            boolean remove = (posT != -1) && (posT != t);
+            final boolean removeT = (posT != -1) && (posT != t);
 
             for (int z = 0; z < sizeZ; z++)
             {
-                remove |= (posZ != -1) && (posZ != z);
+                final boolean removeZ = (posZ != -1) && (posZ != z);
 
                 for (int c = 0; c < sizeC; c++)
                 {
-                    remove |= (posC != -1) && (posC != c);
+                    final boolean removeC = (posC != -1) && (posC != c);
 
-                    if (remove)
+                    if (removeT || removeZ || removeC)
                         removePlane(img, t, z, c);
                 }
             }

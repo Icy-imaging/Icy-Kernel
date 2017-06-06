@@ -807,7 +807,16 @@ public abstract class IcyCanvas extends JPanel
                 {
                     orderedLayers = new ArrayList<Layer>(layers.values());
                 }
-                Collections.sort(orderedLayers);
+
+                try
+                {
+                    Collections.sort(orderedLayers);
+                }
+                catch (Exception e)
+                {
+                    // catch exceptions here as some we can have "IllegalArgumentException: Comparison method violates
+                    // its general contract!"
+                }
 
                 orderedLayersOutdated = false;
             }
