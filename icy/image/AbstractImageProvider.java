@@ -3,20 +3,19 @@
  */
 package icy.image;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.common.listener.ProgressListener;
-import icy.image.IcyBufferedImageUtil.FilterType;
-import icy.sequence.MetaDataUtil;
-import icy.system.SystemUtil;
-import icy.system.thread.Processor;
-
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import loci.formats.ome.OMEXMLMetadataImpl;
+import icy.common.exception.UnsupportedFormatException;
+import icy.common.listener.ProgressListener;
+import icy.image.IcyBufferedImageUtil.FilterType;
+import icy.sequence.MetaDataUtil;
+import icy.system.SystemUtil;
+import icy.system.thread.Processor;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Abstract implementation of the {@link ImageProvider} interface.<br>
@@ -44,7 +43,8 @@ public abstract class AbstractImageProvider implements ImageProvider
         boolean done;
         boolean failed;
 
-        public TileImageReader(int serie, int resolution, Rectangle region, int z, int t, int c, IcyBufferedImage result)
+        public TileImageReader(int serie, int resolution, Rectangle region, int z, int t, int c,
+                IcyBufferedImage result)
         {
             super();
 
@@ -93,18 +93,26 @@ public abstract class AbstractImageProvider implements ImageProvider
 
     public static final int DEFAULT_THUMBNAIL_SIZE = 160;
 
+    // default implementation as ImageProvider interface changed
+    @SuppressWarnings("deprecation")
+    @Override
+    public OMEXMLMetadata getOMEXMLMetaData() throws UnsupportedFormatException, IOException
+    {
+        return getMetaData();
+    }
+
     // default implementation, override it if you need specific value for faster tile access
     @Override
     public int getTileWidth(int serie) throws UnsupportedFormatException, IOException
     {
-        return MetaDataUtil.getSizeX(getMetaData(), serie);
+        return MetaDataUtil.getSizeX(getOMEXMLMetaData(), serie);
     }
 
     // default implementation, override it if you need specific value for faster tile access
     @Override
     public int getTileHeight(int serie) throws UnsupportedFormatException, IOException
     {
-        final OMEXMLMetadataImpl meta = getMetaData();
+        final OMEXMLMetadata meta = getOMEXMLMetaData();
         final int sx = MetaDataUtil.getSizeX(meta, serie);
 
         if (sx == 0)
@@ -121,7 +129,7 @@ public abstract class AbstractImageProvider implements ImageProvider
     @Override
     public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
     {
-        final OMEXMLMetadataImpl meta = getMetaData();
+        final OMEXMLMetadata meta = getOMEXMLMetaData();
         int sx = MetaDataUtil.getSizeX(meta, serie);
         int sy = MetaDataUtil.getSizeY(meta, serie);
         final int sz = MetaDataUtil.getSizeZ(meta, serie);
@@ -131,8 +139,8 @@ public abstract class AbstractImageProvider implements ImageProvider
         if ((sx == 0) || (sy == 0) || (sz == 0) || (st == 0))
             return null;
 
-        final double ratio = Math.min((double) DEFAULT_THUMBNAIL_SIZE / (double) sx, (double) DEFAULT_THUMBNAIL_SIZE
-                / (double) sy);
+        final double ratio = Math.min((double) DEFAULT_THUMBNAIL_SIZE / (double) sx,
+                (double) DEFAULT_THUMBNAIL_SIZE / (double) sy);
 
         // final thumbnail size
         final int tnx = (int) Math.round(sx * ratio);
@@ -141,7 +149,7 @@ public abstract class AbstractImageProvider implements ImageProvider
 
         // take middle image for thumbnail
         IcyBufferedImage result = getImage(serie, resolution, sz / 2, st / 2);
-        
+
         sx = result.getSizeX();
         sy = result.getSizeY();
         // wanted sub resolution of the image (
@@ -169,15 +177,15 @@ public abstract class AbstractImageProvider implements ImageProvider
 
     // default implementation using the region getImage(..) method, better to override
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
-            IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c)
+            throws UnsupportedFormatException, IOException
     {
         return getImage(serie, resolution, null, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t) throws UnsupportedFormatException,
-            IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t)
+            throws UnsupportedFormatException, IOException
     {
         return getImage(serie, resolution, null, z, t, -1);
     }
@@ -223,15 +231,15 @@ public abstract class AbstractImageProvider implements ImageProvider
     public IcyBufferedImage getImageByTile(int serie, int resolution, int z, int t, int c, int tileW, int tileH,
             ProgressListener listener) throws UnsupportedFormatException, IOException
     {
-        final OMEXMLMetadataImpl meta = getMetaData();
+        final OMEXMLMetadata meta = getOMEXMLMetaData();
         final int sizeX = MetaDataUtil.getSizeX(meta, serie);
         final int sizeY = MetaDataUtil.getSizeY(meta, serie);
 
         // resolution divider
         final int divider = (int) Math.pow(2, resolution);
         // allocate result
-        final IcyBufferedImage result = new IcyBufferedImage(sizeX / divider, sizeY / divider, MetaDataUtil.getSizeC(
-                meta, serie), MetaDataUtil.getDataType(meta, serie));
+        final IcyBufferedImage result = new IcyBufferedImage(sizeX / divider, sizeY / divider,
+                MetaDataUtil.getSizeC(meta, serie), MetaDataUtil.getDataType(meta, serie));
         // create processor
         final Processor readerProcessor = new Processor(Math.max(1, SystemUtil.getNumberOfCPUs() - 1));
 
@@ -394,7 +402,7 @@ public abstract class AbstractImageProvider implements ImageProvider
      */
     public int getResolutionFactor(int serie, int wantedSize) throws UnsupportedFormatException, IOException
     {
-        final OMEXMLMetadataImpl meta = getMetaData();
+        final OMEXMLMetadata meta = getOMEXMLMetaData();
         return getResolutionFactor(MetaDataUtil.getSizeX(meta, serie), MetaDataUtil.getSizeY(meta, serie), wantedSize);
     }
 }

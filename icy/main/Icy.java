@@ -105,7 +105,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("1.9.1.0");
+    public static Version version = new Version("1.9.2.0");
 
     /**
      * Main interface
@@ -544,7 +544,7 @@ public class Icy
         final String mess;
 
         if (StringUtil.isEmpty(message))
-            mess = "Application need to be restarted so changes can take effet. Do it now ?";
+            mess = "Application need to be restarted so changes can take effect. Do it now ?";
         else
             mess = message;
 
@@ -803,6 +803,7 @@ public class Icy
                 // clean up native library files
                 // unPrepareNativeLibraries();
 
+                // release lock
                 if (lock != null)
                     SingleInstanceCheck.release(lock);
 

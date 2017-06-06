@@ -177,7 +177,16 @@ public class ROI2DLine extends ROI2DShape
 
     public void setLine(Line2D line)
     {
-        setBounds2D(line.getBounds2D());
+        beginUpdate();
+        try
+        {
+            pt1.setPosition(line.getP1());
+            pt2.setPosition(line.getP2());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     @Override

@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import icy.file.Saver;
-import icy.gui.dialog.ImageSaverDialog;
 import icy.gui.dialog.LoaderDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.dialog.SaverDialog;
@@ -329,9 +328,9 @@ public class FileActions
                 String path = sequence.getFilename();
 
                 if (!bounds.isEmpty())
-                    new LoaderDialog(path, bounds, true);
+                    new LoaderDialog(path, bounds, sequence.getSeries(), true);
                 else
-                    new LoaderDialog(path, null, true);
+                    new LoaderDialog(path, null, sequence.getSeries(), true);
             }
 
             return false;
@@ -409,7 +408,7 @@ public class FileActions
 
                 if (seq != null)
                 {
-                    new ImageSaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
+                    new SaverDialog(seq);
                     return true;
                 }
             }

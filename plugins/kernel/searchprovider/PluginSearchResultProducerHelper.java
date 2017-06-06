@@ -54,8 +54,8 @@ public class PluginSearchResultProducerHelper
     {
         if (plugin.getPluginClass() != null)
         {
-            // we don't want abstract nor interface plugin in results list
-            if (plugin.isAbstract() || plugin.isInterface())
+            // we don't want abstract, interface nor bundled plugin in results list
+            if (plugin.isAbstract() || plugin.isInterface() || plugin.isBundled())
                 return 0;
         }
 

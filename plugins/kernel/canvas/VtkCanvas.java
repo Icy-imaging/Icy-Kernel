@@ -1,5 +1,31 @@
 package plugins.kernel.canvas;
 
+import java.awt.AWTException;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.swing.JToolBar;
+
 import icy.canvas.Canvas3D;
 import icy.canvas.CanvasLayerEvent;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
@@ -36,33 +62,6 @@ import icy.vtk.VtkImageVolume;
 import icy.vtk.VtkImageVolume.VtkVolumeBlendType;
 import icy.vtk.VtkImageVolume.VtkVolumeMapperType;
 import icy.vtk.VtkUtil;
-
-import java.awt.AWTException;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.JToolBar;
-
 import plugins.kernel.canvas.VtkSettingPanel.SettingChangeListener;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
@@ -337,8 +336,8 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
 
         // restore settings
         settingPanel.setBackgroundColor(new Color(preferences.getInt(ID_BGCOLOR, 0x000000)));
-        settingPanel.setVolumeBlendingMode(VtkVolumeBlendType.values()[preferences.getInt(ID_BLENDING,
-                VtkVolumeBlendType.COMPOSITE.ordinal())]);
+        settingPanel.setVolumeBlendingMode(
+                VtkVolumeBlendType.values()[preferences.getInt(ID_BLENDING, VtkVolumeBlendType.COMPOSITE.ordinal())]);
 
         // volume mapper
         settingPanel.setGPURendering(preferences.getInt(ID_MAPPER, 0) != 0);
@@ -1296,31 +1295,9 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
      */
     protected vtkImageData getImageData()
     {
-        vtkImageData result = null;
-
-        final Sequence sequence = getSequence();
-        if ((sequence == null) || sequence.isEmpty())
-            return result;
-
-        final int posT = getPositionT();
-        final int posC = getPositionC();
-
-        final Object data;
-
         try
         {
-            if (posC == -1)
-            {
-                data = sequence.getDataCopyCXYZ(posT);
-                result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
-                        sequence.getSizeZ(), sequence.getSizeC());
-            }
-            else
-            {
-                data = sequence.getDataCopyXYZ(posT, posC);
-                result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
-                        sequence.getSizeZ(), 1);
-            }
+            return VtkUtil.getImageData(getSequence(), getPositionT(), getPositionC());
         }
         catch (TooLargeArrayException e)
         {
@@ -1332,8 +1309,6 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
             // just not enough memory
             return null;
         }
-
-        return result;
     }
 
     /**
@@ -1852,10 +1827,9 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
             return;
 
         // need to set scale ?
-        if (StringUtil.isEmpty(metadataName)
-                || (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_X)
-                        || StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Y) || StringUtil.equals(metadataName,
-                        Sequence.ID_PIXEL_SIZE_Z)))
+        if (StringUtil.isEmpty(metadataName) || (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_X)
+                || StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Y)
+                || StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Z)))
         {
             setVolumeScale(sequence.getPixelSizeX(), sequence.getPixelSizeY(), sequence.getPixelSizeZ());
         }
@@ -2011,6 +1985,10 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
 
     protected void propertyChange(String name, Object value)
     {
+        // we can ignore it in this case
+        if (propertiesUpdater == null)
+            return;
+        
         final Property prop = new Property(name, value);
 
         propertiesUpdater.submit(prop);

@@ -18,6 +18,10 @@
  */
 package icy.search;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
@@ -25,10 +29,6 @@ import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginSearchProvider;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * SearchEngine for Icy.
@@ -317,39 +317,52 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
             fireSearchCompletedEvent();
     }
 
+    public List<SearchEngineListener> getListeners()
+    {
+        synchronized (listeners)
+        {
+            return new ArrayList<SearchEngineListener>(listeners);
+        }
+    }
+
     public void addListener(SearchEngineListener listener)
     {
-        if (!listeners.contains(listener))
-            listeners.add(listener);
+        synchronized (listener)
+        {
+            if (!listeners.contains(listener))
+                listeners.add(listener);
+        }
     }
 
     public void removeListener(SearchEngineListener listener)
     {
-        listeners.remove(listener);
+        synchronized (listener)
+        {
+            listeners.remove(listener);
+        }
     }
 
     protected void fireResultChangedEvent(SearchResult result)
     {
-        for (SearchEngineListener listener : listeners)
+        for (SearchEngineListener listener : getListeners())
             listener.resultChanged(this, result);
     }
 
     protected void fireResultsChangedEvent()
     {
-        for (SearchEngineListener listener : listeners)
+        for (SearchEngineListener listener : getListeners())
             listener.resultsChanged(this);
     }
 
     protected void fireSearchStartedEvent()
     {
-        for (SearchEngineListener listener : listeners)
+        for (SearchEngineListener listener : getListeners())
             listener.searchStarted(this);
     }
 
     protected void fireSearchCompletedEvent()
     {
-        for (SearchEngineListener listener : listeners)
+        for (SearchEngineListener listener : getListeners())
             listener.searchCompleted(this);
     }
-
 }

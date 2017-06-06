@@ -34,10 +34,12 @@ import org.w3c.dom.Document;
 
 import icy.clipboard.Clipboard;
 import icy.file.FileUtil;
+import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.dialog.OpenDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.inspector.RoisPanel;
+import icy.gui.main.MainFrame;
 import icy.main.Icy;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
@@ -48,11 +50,14 @@ import icy.roi.ROI3D;
 import icy.roi.ROI4D;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceDataIterator;
 import icy.sequence.edit.ROIAddSequenceEdit;
 import icy.sequence.edit.ROIAddsSequenceEdit;
 import icy.sequence.edit.ROIReplacesSequenceEdit;
 import icy.system.SystemUtil;
+import icy.type.DataIteratorUtil;
 import icy.util.ClassUtil;
+import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
 import icy.util.XMLUtil;
@@ -73,8 +78,9 @@ public class RoiActions
     public static final String DEFAULT_ROI_DIR = "roi";
     public static final String DEFAULT_ROI_NAME = "roi.xml";
 
-    public static IcyAbstractAction loadAction = new IcyAbstractAction("Load", new IcyIcon(ResourceUtil.ICON_OPEN),
-            "Load ROI(s) from file", "Load ROI(s) from a XML file and add them to the active sequence")
+    public static IcyAbstractAction loadAction = new IcyAbstractAction("Load ROI(s)",
+            new IcyIcon(ResourceUtil.ICON_OPEN), "Load ROI(s) from file",
+            "Load ROI(s) from a XML file and add them to the active sequence")
     {
         /**
          * 
@@ -134,8 +140,9 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction saveAction = new IcyAbstractAction("Save", new IcyIcon(ResourceUtil.ICON_SAVE),
-            "Save selected ROI(s) to file", "Save the selected ROI(s) from active sequence into a XML file")
+    public static IcyAbstractAction saveAction = new IcyAbstractAction("Save ROI(s)",
+            new IcyIcon(ResourceUtil.ICON_SAVE), "Save selected ROI(s) to file",
+            "Save the selected ROI(s) from active sequence into a XML file")
     {
         /**
          * 
@@ -882,7 +889,132 @@ public class RoiActions
         }
     };
 
-    public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export",
+    public static IcyAbstractAction fillInteriorAction = new IcyAbstractAction("Fill interior",
+            new IcyIcon(ResourceUtil.ICON_ROI_INTERIOR), "Fill ROI(s) interior",
+            "Fill interior of the selected ROI(s) with specified value", true, "Fill ROI(s) interior...")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+                if (mainFrame != null)
+                {
+                    final double value = mainFrame.getMainRibbon().getROIRibbonTask().getFillValue();
+                    // create undo point
+                    final boolean canUndo = sequence.createUndoDataPoint("ROI fill interior");
+
+                    // cannot backup
+                    if (!canUndo)
+                    {
+                        // ask confirmation to continue
+                        if (!IdConfirmDialog.confirm(
+                                "Not enough memory to undo the operation, do you want to continue ?",
+                                "ROIFillInteriorConfirm"))
+                            return false;
+                    }
+
+                    for (ROI roi : sequence.getSelectedROIs())
+                        DataIteratorUtil.set(new SequenceDataIterator(sequence, roi, true), value);
+
+                    sequence.dataChanged();
+
+                    // no undo, clear undo manager after modification
+                    if (!canUndo)
+                        sequence.clearUndoManager();
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
+        }
+    };
+
+    public static IcyAbstractAction fillExteriorAction = new IcyAbstractAction("Fill exterior",
+            new IcyIcon(ResourceUtil.ICON_ROI_NOT), "Fill ROI(s) exterior",
+            "Fill exterior of the selected ROI(s) with specified value", true, "Fill ROI(s) exterior...")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+                if (mainFrame != null)
+                {
+                    final double value = mainFrame.getMainRibbon().getROIRibbonTask().getFillValue();
+                    // create undo point
+                    final boolean canUndo = sequence.createUndoDataPoint("ROI fill exterior");
+
+                    // cannot backup
+                    if (!canUndo)
+                    {
+                        // ask confirmation to continue
+                        if (!IdConfirmDialog.confirm(
+                                "Not enough memory to undo the operation, do you want to continue ?",
+                                "ROIFillExteriorConfirm"))
+                            return false;
+                    }
+
+                    try
+                    {
+                        final ROI roiUnion = ROIUtil.merge(sequence.getSelectedROIs(), BooleanOperator.OR);
+                        final ROI roiSeq = new ROI5DStackRectangle(sequence.getBounds5D());
+                        final ROI roi = roiSeq.getSubtraction(roiUnion);
+
+                        DataIteratorUtil.set(new SequenceDataIterator(sequence, roi), value);
+
+                        sequence.dataChanged();
+
+                        // no undo, clear undo manager after modification
+                        if (!canUndo)
+                            sequence.clearUndoManager();
+
+                        return true;
+                    }
+                    catch (UnsupportedOperationException ex)
+                    {
+                        // undo operation if possible
+                        if (canUndo)
+                            sequence.undo();
+
+                        MessageDialog.showDialog("Operation not supported", ex.getLocalizedMessage(),
+                                MessageDialog.ERROR_MESSAGE);
+
+                        return false;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
+        }
+    };
+
+    public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Excel export",
             new IcyIcon(ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export",
             "Export the content of the ROI table into a XLS/CSV file", true, "Exporting ROI informations...")
     {
@@ -1194,8 +1326,8 @@ public class RoiActions
     };
 
     public static IcyAbstractAction separateObjectsAction = new IcyAbstractAction("Separate",
-            new IcyIcon(ResourceUtil.ICON_ROI_COMP), "Separate objects from selected Mask ROI",
-            "Separate objects (connected components) from selected Mask ROI.")
+            new IcyIcon(ResourceUtil.ICON_ROI_COMP), "Separate regions from selected Mask ROI(s)",
+            "Separate unconnected regions from selected Mask ROI(s)")
     {
         @Override
         public boolean doAction(ActionEvent e)

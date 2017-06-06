@@ -494,7 +494,7 @@ public class FileUtil
         final int indexSep = finalPath.lastIndexOf(separatorChar);
         final int indexDot = finalPath.lastIndexOf('.');
 
-        if (indexDot < indexSep)
+        if ((indexDot == -1) || (indexDot < indexSep)) 
             return "";
 
         if (withDot)

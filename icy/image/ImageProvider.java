@@ -3,12 +3,12 @@
  */
 package icy.image;
 
-import icy.common.exception.UnsupportedFormatException;
-
 import java.awt.Rectangle;
 import java.io.IOException;
 
+import icy.common.exception.UnsupportedFormatException;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Image provider interface.<br>
@@ -44,6 +44,12 @@ public interface ImageProvider
      * <br>
      * and many others informations depending the available metadata in the image format.
      */
+    public OMEXMLMetadata getOMEXMLMetaData() throws UnsupportedFormatException, IOException;
+
+    /**
+     * @deprecated Use {@link #getOMEXMLMetaData()} instead.
+     */
+    @Deprecated
     public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException;
 
     /**
@@ -118,7 +124,7 @@ public interface ImageProvider
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param rectangle
-     *        The 2D region we want to retrieve.<br>
+     *        The 2D region we want to retrieve (considering the full image resolution).<br>
      *        If set to <code>null</code> then the whole image is returned.
      * @param z
      *        Z position of the image (slice) we want retrieve
@@ -142,7 +148,7 @@ public interface ImageProvider
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
      * @param rectangle
-     *        The 2D region we want to retrieve.<br>
+     *        The 2D region we want to retrieve (considering the full image resolution).<br>
      *        If set to <code>null</code> then the whole image is returned.
      * @param z
      *        Z position of the image (slice) we want retrieve
@@ -171,8 +177,8 @@ public interface ImageProvider
      *        C position of the image (channel) we want retrieve (-1 means all channel).
      * @return image
      */
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
-            IOException;
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c)
+            throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the image located at specified position.
@@ -190,8 +196,8 @@ public interface ImageProvider
      *        T position of the image (frame) we want retrieve
      * @return image
      */
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t) throws UnsupportedFormatException,
-            IOException;
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t)
+            throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the image located at specified position.

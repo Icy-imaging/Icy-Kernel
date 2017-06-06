@@ -68,7 +68,7 @@ public class ErrorReportFrame extends TitledFrame implements ActionListener
         mainPanel.add(panel, BorderLayout.CENTER);
 
         addToDesktopPane();
-        setSize(new Dimension(520, 450));
+        setSize(new Dimension(640, 450));
         setVisible(true);
         requestFocus();
         center();

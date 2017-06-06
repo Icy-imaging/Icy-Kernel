@@ -18,6 +18,13 @@
  */
 package icy.gui.sequence.tools;
 
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+
+import javax.swing.BorderFactory;
+
 import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.ComponentUtil;
@@ -31,13 +38,6 @@ import icy.sequence.SequenceUtil.MergeCHelper;
 import icy.sequence.SequenceUtil.MergeTHelper;
 import icy.sequence.SequenceUtil.MergeZHelper;
 import icy.system.thread.ThreadUtil;
-
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-
-import javax.swing.BorderFactory;
 
 /**
  * @author Stephane
@@ -120,22 +120,29 @@ public class SequenceDimensionMergeFrame extends ActionDialog
             final int sizeY = SequenceUtil.getMaxDim(sequences, DimensionId.Y);
             final int sizeC = getSizeC();
 
+            final IcyBufferedImage image;
+
             switch (getDimensionId())
             {
                 default:
                 case C:
 
-                    return MergeCHelper.getImage(sequences, mergePanel.getSelectedChannels(), sizeX, sizeY, t, z,
+                    image = MergeCHelper.getImage(sequences, mergePanel.getSelectedChannels(), sizeX, sizeY, t, z,
                             mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled());
+                    break;
 
                 case Z:
-                    return MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, mergePanel.isInterlaceEnabled(),
+                    image = MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, mergePanel.isInterlaceEnabled(),
                             mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled());
+                    break;
 
                 case T:
-                    return MergeTHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, mergePanel.isInterlaceEnabled(),
+                    image = MergeTHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, mergePanel.isInterlaceEnabled(),
                             mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled());
+                    break;
             }
+
+            return image;
         }
 
         @Override

@@ -30,7 +30,6 @@ import icy.gui.component.model.XMLTreeModel;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.util.OMEUtil;
-import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * @author Stephane
@@ -68,7 +67,7 @@ public class SequenceMetadataPanel extends JPanel
             @Override
             public void run()
             {
-                tree.setModel(new XMLTreeModel(OMEUtil.getXMLDocument((OMEXMLMetadata) sequence.getMetadata())));
+                tree.setModel(new XMLTreeModel(OMEUtil.getXMLDocument(sequence.getOMEXMLMetadata())));
 
                 int row = 0;
                 while (row < tree.getRowCount())

@@ -18,11 +18,11 @@
  */
 package icy.gui.dialog;
 
-import icy.main.Icy;
-import icy.system.thread.ThreadUtil;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+
+import icy.main.Icy;
+import icy.system.thread.ThreadUtil;
 
 /**
  * @author stephane
@@ -93,6 +93,13 @@ public class MessageDialog
                     JOptionPane.showMessageDialog(parent, message, title, messageType);
                 }
             });
+        }
+        else
+        {
+            if (messageType == ERROR_MESSAGE)
+                System.err.println(title + ": " + message);
+            else
+                System.out.println(title + ": " + message);
         }
     }
 }

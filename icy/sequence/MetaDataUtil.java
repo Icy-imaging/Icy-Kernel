@@ -30,9 +30,9 @@ import icy.util.XMLUtil;
 import loci.common.services.ServiceException;
 import loci.formats.FormatTools;
 import loci.formats.MetadataTools;
-import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.units.quantity.Time;
+import ome.xml.meta.MetadataRetrieve;
 import ome.xml.meta.OMEXMLMetadata;
 import ome.xml.model.Annotation;
 import ome.xml.model.Channel;
@@ -87,15 +87,33 @@ public class MetaDataUtil
     }
 
     /**
-     * Returns the number of image serie of the specified metaData description.
+     * Returns the number of image series of the specified metaData description.
      */
-    public static int getNumSerie(OMEXMLMetadata metaData)
+    public static int getNumSeries(OMEXMLMetadata metaData)
     {
         return metaData.getImageCount();
     }
 
     /**
-     * @deprecated Use {@link #getNumSerie(OMEXMLMetadata)} instead
+     * @deprecated Use {@link #getNumSeries(OMEXMLMetadata)} instead
+     */
+    @Deprecated
+    public static int getNumSerie(loci.formats.ome.OMEXMLMetadata metaData)
+    {
+        return getNumSeries(metaData);
+    }
+
+    /**
+     * @deprecated Use {@link #getNumSeries(OMEXMLMetadata)} instead
+     */
+    @Deprecated
+    public static int getNumSerie(OMEXMLMetadata metaData)
+    {
+        return getNumSeries(metaData);
+    }
+
+    /**
+     * @deprecated Use {@link #getNumSeries(OMEXMLMetadata)} instead
      */
     @Deprecated
     public static int getNumSerie(OMEXMLMetadataImpl metaData)
@@ -104,9 +122,9 @@ public class MetaDataUtil
     }
 
     /**
-     * Return image serie object at specified index for the specified metaData description.
+     * Return image series object at specified index for the specified metaData description.
      */
-    public static Image getSerie(OMEXMLMetadata metaData, int index)
+    public static Image getSeries(OMEXMLMetadata metaData, int index)
     {
         final OME ome = getOME(metaData);
 
@@ -117,18 +135,27 @@ public class MetaDataUtil
     }
 
     /**
-     * @deprecated Use {@link #getSerie(OMEXMLMetadata, int)} instead
+     * @deprecated Use {@link #getSeries(OMEXMLMetadata, int)} instead
+     */
+    @Deprecated
+    public static Image getSerie(OMEXMLMetadata metaData, int index)
+    {
+        return getSeries(metaData, index);
+    }
+
+    /**
+     * @deprecated Use {@link #getSeries(OMEXMLMetadata, int)} instead
      */
     @Deprecated
     public static Image getSerie(OMEXMLMetadataImpl metaData, int index)
     {
-        return getSerie((OMEXMLMetadata) metaData, index);
+        return getSeries(metaData, index);
     }
 
     /**
-     * Ensure the image serie at specified index exist for the specified metaData description.
+     * Ensure the image series at specified index exist for the specified metaData description.
      */
-    public static Image ensureSerie(OME ome, int index)
+    public static Image ensureSeries(OME ome, int index)
     {
         // create missing image
         while (ome.sizeOfImageList() <= index)
@@ -152,9 +179,18 @@ public class MetaDataUtil
     }
 
     /**
-     * Set the number of image serie for the specified metaData description.
+     * @deprecated Use {@link #ensureSeries(OME, int)} instead
      */
-    public static void setNumSerie(OMEXMLMetadata metaData, int num)
+    @Deprecated
+    public static Image ensureSerie(OME ome, int index)
+    {
+        return ensureSeries(ome, index);
+    }
+
+    /**
+     * Set the number of image series for the specified metaData description.
+     */
+    public static void setNumSeries(OMEXMLMetadata metaData, int num)
     {
         final OME ome = getOME(metaData);
 
@@ -163,7 +199,16 @@ public class MetaDataUtil
             ome.removeImage(ome.getImage(ome.sizeOfImageList() - 1));
 
         // create missing image
-        ensureSerie(ome, num - 1);
+        ensureSeries(ome, num - 1);
+    }
+
+    /**
+     * @deprecated Use {@link #setNumSeries(OMEXMLMetadata, int)} instead
+     */
+    @Deprecated
+    public static void setNumSerie(OMEXMLMetadata metaData, int num)
+    {
+        setNumSeries(metaData, num);
     }
 
     /**
@@ -357,9 +402,9 @@ public class MetaDataUtil
      * 
      * @return <code>true</code> if the operation succeed, <code>false</code> otherwise
      */
-    public static boolean removePlane(OMEXMLMetadata metadata, int serie, int t, int z, int c)
+    public static boolean removePlane(OMEXMLMetadata metadata, int series, int t, int z, int c)
     {
-        final Image img = getSerie(metadata, serie);
+        final Image img = getSeries(metadata, series);
         if (img == null)
             return false;
 
@@ -370,9 +415,9 @@ public class MetaDataUtil
      * @deprecated Use {@link #removePlane(OMEXMLMetadata, int, int, int, int)} instead
      */
     @Deprecated
-    public static boolean removePlane(OMEXMLMetadataImpl metadata, int serie, int t, int z, int c)
+    public static boolean removePlane(OMEXMLMetadataImpl metadata, int series, int t, int z, int c)
     {
-        return removePlane((OMEXMLMetadata) metadata, serie, t, z, c);
+        return removePlane((OMEXMLMetadata) metadata, series, t, z, c);
     }
 
     /**
@@ -385,7 +430,7 @@ public class MetaDataUtil
      * @param posC
      *        C position where we want to remove metadata (-1 for all)
      */
-    public static void removePlanes(OMEXMLMetadata metadata, int serie, int posT, int posZ, int posC)
+    public static void removePlanes(OMEXMLMetadata metadata, int series, int posT, int posZ, int posC)
     {
         final int minT, maxT;
         final int minZ, maxZ;
@@ -394,7 +439,7 @@ public class MetaDataUtil
         if (posT < 0)
         {
             minT = 0;
-            maxT = getSizeT(metadata, serie) - 1;
+            maxT = getSizeT(metadata, series) - 1;
         }
         else
         {
@@ -404,7 +449,7 @@ public class MetaDataUtil
         if (posZ < 0)
         {
             minZ = 0;
-            maxZ = getSizeZ(metadata, serie) - 1;
+            maxZ = getSizeZ(metadata, series) - 1;
         }
         else
         {
@@ -414,7 +459,7 @@ public class MetaDataUtil
         if (posC < 0)
         {
             minC = 0;
-            maxC = getSizeC(metadata, serie) - 1;
+            maxC = getSizeC(metadata, series) - 1;
         }
         else
         {
@@ -432,17 +477,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #removePlanes(OMEXMLMetadata, int, int, int, int)} instead
      */
     @Deprecated
-    public static void removePlanes(OMEXMLMetadataImpl metadata, int serie, int posT, int posZ, int posC)
+    public static void removePlanes(OMEXMLMetadataImpl metadata, int series, int posT, int posZ, int posC)
     {
-        removePlanes((OMEXMLMetadata) metadata, serie, posT, posZ, posC);
+        removePlanes((OMEXMLMetadata) metadata, series, posT, posZ, posC);
     }
 
     /**
-     * Returns the data type of the specified image serie.
+     * Returns the data type of the specified image series.
      */
-    public static DataType getDataType(OMEXMLMetadata metaData, int serie)
+    public static DataType getDataType(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return DataType.getDataTypeFromPixelType(pix.getType());
@@ -455,17 +500,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getDataType(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static DataType getDataType(OMEXMLMetadataImpl metaData, int serie)
+    public static DataType getDataType(OMEXMLMetadataImpl metaData, int series)
     {
-        return getDataType((OMEXMLMetadata) metaData, serie);
+        return getDataType((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Returns the width (sizeX) of the specified image serie.
+     * Returns the width (sizeX) of the specified image series.
      */
-    public static int getSizeX(OMEXMLMetadata metaData, int serie)
+    public static int getSizeX(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getSizeX(), 0);
@@ -477,17 +522,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getSizeX(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static int getSizeX(OMEXMLMetadataImpl metaData, int serie)
+    public static int getSizeX(OMEXMLMetadataImpl metaData, int series)
     {
-        return getSizeX((OMEXMLMetadata) metaData, serie);
+        return getSizeX((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Returns the height (sizeY) of the specified image serie.
+     * Returns the height (sizeY) of the specified image series.
      */
-    public static int getSizeY(OMEXMLMetadata metaData, int serie)
+    public static int getSizeY(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getSizeY(), 0);
@@ -499,17 +544,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getSizeY(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static int getSizeY(OMEXMLMetadataImpl metaData, int serie)
+    public static int getSizeY(OMEXMLMetadataImpl metaData, int series)
     {
-        return getSizeY((OMEXMLMetadata) metaData, serie);
+        return getSizeY((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Returns the number of channel (sizeC) of the specified image serie.
+     * Returns the number of channel (sizeC) of the specified image series.
      */
-    public static int getSizeC(OMEXMLMetadata metaData, int serie)
+    public static int getSizeC(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getSizeC(), 0);
@@ -521,17 +566,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getSizeC(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static int getSizeC(OMEXMLMetadataImpl metaData, int serie)
+    public static int getSizeC(OMEXMLMetadataImpl metaData, int series)
     {
-        return getSizeC((OMEXMLMetadata) metaData, serie);
+        return getSizeC((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Returns the depth (sizeZ) of the specified image serie.
+     * Returns the depth (sizeZ) of the specified image series.
      */
-    public static int getSizeZ(OMEXMLMetadata metaData, int serie)
+    public static int getSizeZ(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getSizeZ(), 0);
@@ -543,9 +588,9 @@ public class MetaDataUtil
      * @deprecated Use {@link #getSizeZ(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static int getSizeZ(OMEXMLMetadataImpl metaData, int serie)
+    public static int getSizeZ(OMEXMLMetadataImpl metaData, int series)
     {
-        return getSizeZ((OMEXMLMetadata) metaData, serie);
+        return getSizeZ((OMEXMLMetadata) metaData, series);
     }
 
     /**
@@ -557,11 +602,11 @@ public class MetaDataUtil
     }
 
     /**
-     * Returns the number of frame (sizeT) of the specified image serie.
+     * Returns the number of frame (sizeT) of the specified image series.
      */
-    public static int getSizeT(OMEXMLMetadata metaData, int serie)
+    public static int getSizeT(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return getSizeT(pix);
@@ -573,44 +618,44 @@ public class MetaDataUtil
      * @deprecated Use {@link #getSizeT(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static int getSizeT(OMEXMLMetadataImpl metaData, int serie)
+    public static int getSizeT(OMEXMLMetadataImpl metaData, int series)
     {
-        return getSizeT((OMEXMLMetadata) metaData, serie);
+        return getSizeT((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Returns the total data size (in bytes) of the specified image serie.
+     * Returns the total data size (in bytes) of the specified image series.
      */
-    public static long getDataSize(OMEXMLMetadata metaData, int serie)
+    public static long getDataSize(OMEXMLMetadata metaData, int series)
     {
-        return getDataSize(metaData, serie, 0);
+        return getDataSize(metaData, series, 0);
     }
 
     /**
-     * Returns the total data size (in bytes) of the specified image serie
+     * Returns the total data size (in bytes) of the specified image series
      * for the given resolution (0 = full, 1 = 1/2, ...)
      */
-    public static long getDataSize(OMEXMLMetadata metaData, int serie, int resolution)
+    public static long getDataSize(OMEXMLMetadata metaData, int series, int resolution)
     {
-        return getDataSize(metaData, serie, resolution, getSizeZ(metaData, serie), getSizeT(metaData, serie));
+        return getDataSize(metaData, series, resolution, getSizeZ(metaData, series), getSizeT(metaData, series));
     }
 
     /**
-     * Returns the total data size (in bytes) of the specified image serie
+     * Returns the total data size (in bytes) of the specified image series
      * for the given resolution (0 = full, 1 = 1/2, ...) and size informations
      */
-    public static long getDataSize(OMEXMLMetadata metaData, int serie, int resolution, int sizeZ, int sizeT)
+    public static long getDataSize(OMEXMLMetadata metaData, int series, int resolution, int sizeZ, int sizeT)
     {
-        return getDataSize(metaData, serie, resolution, sizeZ, sizeT, getSizeC(metaData, serie));
+        return getDataSize(metaData, series, resolution, sizeZ, sizeT, getSizeC(metaData, series));
     }
 
     /**
-     * Returns the total data size (in bytes) of the specified image serie
+     * Returns the total data size (in bytes) of the specified image series
      * for the given resolution (0 = full, 1 = 1/2, ...) and size informations
      */
-    public static long getDataSize(OMEXMLMetadata metaData, int serie, int resolution, int sizeZ, int sizeT, int sizeC)
+    public static long getDataSize(OMEXMLMetadata metaData, int series, int resolution, int sizeZ, int sizeT, int sizeC)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -626,113 +671,113 @@ public class MetaDataUtil
     }
 
     /**
-     * Sets the data type of the specified image serie.
+     * Sets the data type of the specified image series.
      */
-    public static void setDataType(OMEXMLMetadata metaData, int serie, DataType dataType)
+    public static void setDataType(OMEXMLMetadata metaData, int series, DataType dataType)
     {
-        metaData.setPixelsType(dataType.toPixelType(), serie);
+        metaData.setPixelsType(dataType.toPixelType(), series);
     }
 
     /**
      * @deprecated Use {@link #setDataType(OMEXMLMetadata, int, DataType)} instead
      */
     @Deprecated
-    public static void setDataType(OMEXMLMetadataImpl metaData, int serie, DataType dataType)
+    public static void setDataType(OMEXMLMetadataImpl metaData, int series, DataType dataType)
     {
-        setDataType((OMEXMLMetadata) metaData, serie, dataType);
+        setDataType((OMEXMLMetadata) metaData, series, dataType);
     }
 
     /**
-     * Sets the width (sizeX) of the specified image serie (need to be >= 1).
+     * Sets the width (sizeX) of the specified image series (need to be >= 1).
      */
-    public static void setSizeX(OMEXMLMetadata metaData, int serie, int sizeX)
+    public static void setSizeX(OMEXMLMetadata metaData, int series, int sizeX)
     {
-        metaData.setPixelsSizeX(OMEUtil.getPositiveInteger(sizeX), serie);
+        metaData.setPixelsSizeX(OMEUtil.getPositiveInteger(sizeX), series);
     }
 
     /**
      * @deprecated Use {@link #setSizeX(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void setSizeX(OMEXMLMetadataImpl metaData, int serie, int sizeX)
+    public static void setSizeX(OMEXMLMetadataImpl metaData, int series, int sizeX)
     {
-        setSizeX((OMEXMLMetadata) metaData, serie, sizeX);
+        setSizeX((OMEXMLMetadata) metaData, series, sizeX);
     }
 
     /**
-     * Sets the height (sizeY) of the specified image serie (need to be >= 1).
+     * Sets the height (sizeY) of the specified image series (need to be >= 1).
      */
-    public static void setSizeY(OMEXMLMetadata metaData, int serie, int sizeY)
+    public static void setSizeY(OMEXMLMetadata metaData, int series, int sizeY)
     {
-        metaData.setPixelsSizeY(OMEUtil.getPositiveInteger(sizeY), serie);
+        metaData.setPixelsSizeY(OMEUtil.getPositiveInteger(sizeY), series);
     }
 
     /**
      * @deprecated Use {@link #setSizeY(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void setSizeY(OMEXMLMetadataImpl metaData, int serie, int sizeY)
+    public static void setSizeY(OMEXMLMetadataImpl metaData, int series, int sizeY)
     {
-        setSizeY((OMEXMLMetadata) metaData, serie, sizeY);
+        setSizeY((OMEXMLMetadata) metaData, series, sizeY);
     }
 
     /**
-     * Sets the number of channel (sizeC) of the specified image serie (need to be >= 1).
+     * Sets the number of channel (sizeC) of the specified image series (need to be >= 1).
      */
-    public static void setSizeC(OMEXMLMetadata metaData, int serie, int sizeC)
+    public static void setSizeC(OMEXMLMetadata metaData, int series, int sizeC)
     {
-        metaData.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), serie);
+        metaData.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), series);
     }
 
     /**
      * @deprecated Use {@link #setSizeC(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void setSizeC(OMEXMLMetadataImpl metaData, int serie, int sizeC)
+    public static void setSizeC(OMEXMLMetadataImpl metaData, int series, int sizeC)
     {
-        setSizeC((OMEXMLMetadata) metaData, serie, sizeC);
+        setSizeC((OMEXMLMetadata) metaData, series, sizeC);
     }
 
     /**
-     * Sets the depth (sizeZ) of the specified image serie (need to be >= 1).
+     * Sets the depth (sizeZ) of the specified image series (need to be >= 1).
      */
-    public static void setSizeZ(OMEXMLMetadata metaData, int serie, int sizeZ)
+    public static void setSizeZ(OMEXMLMetadata metaData, int series, int sizeZ)
     {
-        metaData.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), serie);
+        metaData.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), series);
     }
 
     /**
      * @deprecated Use {@link #setSizeZ(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void setSizeZ(OMEXMLMetadataImpl metaData, int serie, int sizeZ)
+    public static void setSizeZ(OMEXMLMetadataImpl metaData, int series, int sizeZ)
     {
-        setSizeZ((OMEXMLMetadata) metaData, serie, sizeZ);
+        setSizeZ((OMEXMLMetadata) metaData, series, sizeZ);
     }
 
     /**
-     * Sets the number of frame (sizeT) of the specified image serie (need to be >= 1).
+     * Sets the number of frame (sizeT) of the specified image series (need to be >= 1).
      */
-    public static void setSizeT(OMEXMLMetadata metaData, int serie, int sizeT)
+    public static void setSizeT(OMEXMLMetadata metaData, int series, int sizeT)
     {
-        metaData.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), serie);
+        metaData.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), series);
     }
 
     /**
      * @deprecated Use {@link #setSizeT(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void setSizeT(OMEXMLMetadataImpl metaData, int serie, int sizeT)
+    public static void setSizeT(OMEXMLMetadataImpl metaData, int series, int sizeT)
     {
-        setSizeT((OMEXMLMetadata) metaData, serie, sizeT);
+        setSizeT((OMEXMLMetadata) metaData, series, sizeT);
     }
 
     /**
-     * Returns the id of the specified image serie.
+     * Returns the id of the specified image series.
      */
-    public static String getImageID(OMEXMLMetadata metaData, int serie)
+    public static String getImageID(OMEXMLMetadata metaData, int series)
     {
-        final Image img = getSerie(metaData, serie);
+        final Image img = getSeries(metaData, series);
 
         if (img != null)
             return StringUtil.getValue(img.getID(), "");
@@ -744,34 +789,34 @@ public class MetaDataUtil
      * @deprecated Use {@link #getImageID(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static String getImageID(OMEXMLMetadataImpl metaData, int serie)
+    public static String getImageID(OMEXMLMetadataImpl metaData, int series)
     {
-        return getImageID((OMEXMLMetadata) metaData, serie);
+        return getImageID((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Set the id of the specified image serie.
+     * Set the id of the specified image series.
      */
-    public static void setImageID(OMEXMLMetadata metaData, int serie, String value)
+    public static void setImageID(OMEXMLMetadata metaData, int series, String value)
     {
-        metaData.setImageID(value, serie);
+        metaData.setImageID(value, series);
     }
 
     /**
      * @deprecated Use {@link #setImageID(OMEXMLMetadata, int, String)} instead
      */
     @Deprecated
-    public static void setImageID(OMEXMLMetadataImpl metaData, int serie, String value)
+    public static void setImageID(OMEXMLMetadataImpl metaData, int series, String value)
     {
-        setImageID((OMEXMLMetadata) metaData, serie, value);
+        setImageID((OMEXMLMetadata) metaData, series, value);
     }
 
     /**
-     * Returns the name of the specified image serie.
+     * Returns the name of the specified image series.
      */
-    public static String getName(OMEXMLMetadata metaData, int serie)
+    public static String getName(OMEXMLMetadata metaData, int series)
     {
-        final Image img = getSerie(metaData, serie);
+        final Image img = getSeries(metaData, series);
 
         if (img != null)
             return StringUtil.getValue(img.getName(), "");
@@ -783,34 +828,34 @@ public class MetaDataUtil
      * @deprecated Use {@link #getName(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static String getName(OMEXMLMetadataImpl metaData, int serie)
+    public static String getName(OMEXMLMetadataImpl metaData, int series)
     {
-        return getName((OMEXMLMetadata) metaData, serie);
+        return getName((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Set the name of the specified image serie.
+     * Set the name of the specified image series.
      */
-    public static void setName(OMEXMLMetadata metaData, int serie, String value)
+    public static void setName(OMEXMLMetadata metaData, int series, String value)
     {
-        metaData.setImageName(value, serie);
+        metaData.setImageName(value, series);
     }
 
     /**
      * @deprecated Use {@link #setName(OMEXMLMetadata, int, String)} instead
      */
     @Deprecated
-    public static void setName(OMEXMLMetadataImpl metaData, int serie, String value)
+    public static void setName(OMEXMLMetadataImpl metaData, int series, String value)
     {
-        setName((OMEXMLMetadata) metaData, serie, value);
+        setName((OMEXMLMetadata) metaData, series, value);
     }
 
     /**
-     * Returns X pixel size (in µm) of the specified image serie.
+     * Returns X pixel size (in µm) of the specified image series.
      */
-    public static double getPixelSizeX(OMEXMLMetadata metaData, int serie, double defaultValue)
+    public static double getPixelSizeX(OMEXMLMetadata metaData, int series, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getPhysicalSizeX(), defaultValue);
@@ -822,17 +867,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getPixelSizeX(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static double getPixelSizeX(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
+    public static double getPixelSizeX(OMEXMLMetadataImpl metaData, int series, double defaultValue)
     {
-        return getPixelSizeX((OMEXMLMetadata) metaData, serie, defaultValue);
+        return getPixelSizeX((OMEXMLMetadata) metaData, series, defaultValue);
     }
 
     /**
-     * Returns Y pixel size (in µm) of the specified image serie.
+     * Returns Y pixel size (in µm) of the specified image series.
      */
-    public static double getPixelSizeY(OMEXMLMetadata metaData, int serie, double defaultValue)
+    public static double getPixelSizeY(OMEXMLMetadata metaData, int series, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getPhysicalSizeY(), defaultValue);
@@ -844,17 +889,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getPixelSizeY(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static double getPixelSizeY(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
+    public static double getPixelSizeY(OMEXMLMetadataImpl metaData, int series, double defaultValue)
     {
-        return getPixelSizeY((OMEXMLMetadata) metaData, serie, defaultValue);
+        return getPixelSizeY((OMEXMLMetadata) metaData, series, defaultValue);
     }
 
     /**
-     * Returns Z pixel size (in µm) of the specified image serie.
+     * Returns Z pixel size (in µm) of the specified image series.
      */
-    public static double getPixelSizeZ(OMEXMLMetadata metaData, int serie, double defaultValue)
+    public static double getPixelSizeZ(OMEXMLMetadata metaData, int series, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return OMEUtil.getValue(pix.getPhysicalSizeZ(), defaultValue);
@@ -866,18 +911,18 @@ public class MetaDataUtil
      * @deprecated Use {@link #getPixelSizeZ(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static double getPixelSizeZ(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
+    public static double getPixelSizeZ(OMEXMLMetadataImpl metaData, int series, double defaultValue)
     {
-        return getPixelSizeZ((OMEXMLMetadata) metaData, serie, defaultValue);
+        return getPixelSizeZ((OMEXMLMetadata) metaData, series, defaultValue);
     }
 
     /**
      * Computes and returns the T time interval (in second) from internal time positions.<br>
      * If there is no internal time positions <code>0d</code> is returned.
      */
-    public static double getTimeIntervalFromTimePositions(OMEXMLMetadata metaData, int serie)
+    public static double getTimeIntervalFromTimePositions(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         // try to compute time interval from time position
         if (pix != null)
@@ -890,17 +935,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getTimeIntervalFromTimePositions(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static double getTimeIntervalFromTimePositions(OMEXMLMetadataImpl metaData, int serie)
+    public static double getTimeIntervalFromTimePositions(OMEXMLMetadataImpl metaData, int series)
     {
-        return getTimeIntervalFromTimePositions((OMEXMLMetadata) metaData, serie);
+        return getTimeIntervalFromTimePositions((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Returns T time interval (in second) for the specified image serie.
+     * Returns T time interval (in second) for the specified image series.
      */
-    public static double getTimeInterval(OMEXMLMetadata metaData, int serie, double defaultValue)
+    public static double getTimeInterval(OMEXMLMetadata metaData, int series, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -916,85 +961,85 @@ public class MetaDataUtil
      * @deprecated Use {@link #getTimeInterval(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static double getTimeInterval(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
+    public static double getTimeInterval(OMEXMLMetadataImpl metaData, int series, double defaultValue)
     {
-        return getTimeInterval((OMEXMLMetadata) metaData, serie, defaultValue);
+        return getTimeInterval((OMEXMLMetadata) metaData, series, defaultValue);
     }
 
     /**
-     * Set X pixel size (in µm) of the specified image serie.
+     * Set X pixel size (in µm) of the specified image series.
      */
-    public static void setPixelSizeX(OMEXMLMetadata metaData, int serie, double value)
+    public static void setPixelSizeX(OMEXMLMetadata metaData, int series, double value)
     {
-        metaData.setPixelsPhysicalSizeX(OMEUtil.getLength(value), serie);
+        metaData.setPixelsPhysicalSizeX(OMEUtil.getLength(value), series);
     }
 
     /**
      * @deprecated Use {@link #setPixelSizeX(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static void setPixelSizeX(OMEXMLMetadataImpl metaData, int serie, double value)
+    public static void setPixelSizeX(OMEXMLMetadataImpl metaData, int series, double value)
     {
-        setPixelSizeX((OMEXMLMetadata) metaData, serie, value);
+        setPixelSizeX((OMEXMLMetadata) metaData, series, value);
     }
 
     /**
-     * Set Y pixel size (in µm) of the specified image serie.
+     * Set Y pixel size (in µm) of the specified image series.
      */
-    public static void setPixelSizeY(OMEXMLMetadata metaData, int serie, double value)
+    public static void setPixelSizeY(OMEXMLMetadata metaData, int series, double value)
     {
-        metaData.setPixelsPhysicalSizeY(OMEUtil.getLength(value), serie);
+        metaData.setPixelsPhysicalSizeY(OMEUtil.getLength(value), series);
     }
 
     /**
      * @deprecated Use {@link #setPixelSizeY(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static void setPixelSizeY(OMEXMLMetadataImpl metaData, int serie, double value)
+    public static void setPixelSizeY(OMEXMLMetadataImpl metaData, int series, double value)
     {
-        setPixelSizeY((OMEXMLMetadata) metaData, serie, value);
+        setPixelSizeY((OMEXMLMetadata) metaData, series, value);
     }
 
     /**
-     * Set Z pixel size (in µm) of the specified image serie.
+     * Set Z pixel size (in µm) of the specified image series.
      */
-    public static void setPixelSizeZ(OMEXMLMetadata metaData, int serie, double value)
+    public static void setPixelSizeZ(OMEXMLMetadata metaData, int series, double value)
     {
-        metaData.setPixelsPhysicalSizeZ(OMEUtil.getLength(value), serie);
+        metaData.setPixelsPhysicalSizeZ(OMEUtil.getLength(value), series);
     }
 
     /**
      * @deprecated Use {@link #setPixelSizeZ(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static void setPixelSizeZ(OMEXMLMetadataImpl metaData, int serie, double value)
+    public static void setPixelSizeZ(OMEXMLMetadataImpl metaData, int series, double value)
     {
-        setPixelSizeZ((OMEXMLMetadata) metaData, serie, value);
+        setPixelSizeZ((OMEXMLMetadata) metaData, series, value);
     }
 
     /**
-     * Set T time resolution (in second) of the specified image serie.
+     * Set T time resolution (in second) of the specified image series.
      */
-    public static void setTimeInterval(OMEXMLMetadata metaData, int serie, double value)
+    public static void setTimeInterval(OMEXMLMetadata metaData, int series, double value)
     {
-        metaData.setPixelsTimeIncrement(OMEUtil.getTime(value), serie);
+        metaData.setPixelsTimeIncrement(OMEUtil.getTime(value), series);
     }
 
     /**
      * @deprecated Use {@link #setTimeInterval(OMEXMLMetadata, int, double)} instead
      */
     @Deprecated
-    public static void setTimeInterval(OMEXMLMetadataImpl metaData, int serie, double value)
+    public static void setTimeInterval(OMEXMLMetadataImpl metaData, int series, double value)
     {
-        setTimeInterval((OMEXMLMetadata) metaData, serie, value);
+        setTimeInterval((OMEXMLMetadata) metaData, series, value);
     }
 
     /**
      * Returns the X field position (in µm) for the image at the specified Z, T, C position.
      */
-    public static double getPositionX(OMEXMLMetadata metaData, int serie, int t, int z, int c, double defaultValue)
+    public static double getPositionX(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -1010,9 +1055,9 @@ public class MetaDataUtil
     /**
      * Returns the Y field position (in µm) for the image at the specified Z, T, C position.
      */
-    public static double getPositionY(OMEXMLMetadata metaData, int serie, int t, int z, int c, double defaultValue)
+    public static double getPositionY(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -1028,9 +1073,9 @@ public class MetaDataUtil
     /**
      * Returns the Z field position (in µm) for the image at the specified Z, T, C position.
      */
-    public static double getPositionZ(OMEXMLMetadata metaData, int serie, int t, int z, int c, double defaultValue)
+    public static double getPositionZ(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -1060,9 +1105,9 @@ public class MetaDataUtil
     /**
      * Returns the time position (in second) for the image at the specified Z, T, C position.
      */
-    public static double getTimePosition(OMEXMLMetadata metaData, int serie, int t, int z, int c, double defaultValue)
+    public static double getTimePosition(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return getTimePosition(pix, t, z, c, defaultValue);
@@ -1119,9 +1164,9 @@ public class MetaDataUtil
     /**
      * Sets the X field position (in µm) for the image at the specified Z, T, C position.
      */
-    public static void setPositionX(OMEXMLMetadata metaData, int serie, int t, int z, int c, double value)
+    public static void setPositionX(OMEXMLMetadata metaData, int series, int t, int z, int c, double value)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -1135,9 +1180,9 @@ public class MetaDataUtil
     /**
      * Sets the Y field position (in µm) for the image at the specified Z, T, C position.
      */
-    public static void setPositionY(OMEXMLMetadata metaData, int serie, int t, int z, int c, double value)
+    public static void setPositionY(OMEXMLMetadata metaData, int series, int t, int z, int c, double value)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -1151,9 +1196,9 @@ public class MetaDataUtil
     /**
      * Sets the Z field position (in µm) for the image at the specified Z, T, C position.
      */
-    public static void setPositionZ(OMEXMLMetadata metaData, int serie, int t, int z, int c, double value)
+    public static void setPositionZ(OMEXMLMetadata metaData, int series, int t, int z, int c, double value)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
         {
@@ -1173,11 +1218,11 @@ public class MetaDataUtil
     }
 
     /**
-     * Returns the number of channel for the specified image serie in metaData description.
+     * Returns the number of channel for the specified image series in metaData description.
      */
-    public static int getNumChannel(OMEXMLMetadata metaData, int serie)
+    public static int getNumChannel(OMEXMLMetadata metaData, int series)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return pix.sizeOfChannelList();
@@ -1189,17 +1234,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getNumChannel(OMEXMLMetadata, int)} instead
      */
     @Deprecated
-    public static int getNumChannel(OMEXMLMetadataImpl metaData, int serie)
+    public static int getNumChannel(OMEXMLMetadataImpl metaData, int series)
     {
-        return getNumChannel((OMEXMLMetadata) metaData, serie);
+        return getNumChannel((OMEXMLMetadata) metaData, series);
     }
 
     /**
-     * Return channel object at specified index for the specified image serie.
+     * Return channel object at specified index for the specified image series.
      */
-    public static Channel getChannel(OMEXMLMetadata metaData, int serie, int index)
+    public static Channel getChannel(OMEXMLMetadata metaData, int series, int index)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if ((pix != null) && (index < pix.sizeOfChannelList()))
             return pix.getChannel(index);
@@ -1211,17 +1256,17 @@ public class MetaDataUtil
      * @deprecated Use {@link #getChannel(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static Channel getChannel(OMEXMLMetadataImpl metaData, int serie, int index)
+    public static Channel getChannel(OMEXMLMetadataImpl metaData, int series, int index)
     {
-        return getChannel((OMEXMLMetadata) metaData, serie, index);
+        return getChannel((OMEXMLMetadata) metaData, series, index);
     }
 
     /**
-     * Ensure the channel at specified index exist for the specified image serie.
+     * Ensure the channel at specified index exist for the specified image series.
      */
-    public static Channel ensureChannel(OMEXMLMetadata metaData, int serie, int index)
+    public static Channel ensureChannel(OMEXMLMetadata metaData, int series, int index)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             return ensureChannel(pix, index);
@@ -1233,13 +1278,13 @@ public class MetaDataUtil
      * @deprecated Use {@link #ensureChannel(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static Channel ensureChannel(OMEXMLMetadataImpl metaData, int serie, int index)
+    public static Channel ensureChannel(OMEXMLMetadataImpl metaData, int series, int index)
     {
-        return ensureChannel((OMEXMLMetadata) metaData, serie, index);
+        return ensureChannel((OMEXMLMetadata) metaData, series, index);
     }
 
     /**
-     * Ensure the channel at specified index exist for the specified image serie.
+     * Ensure the channel at specified index exist for the specified image series.
      */
     public static Channel ensureChannel(Pixels pix, int index)
     {
@@ -1251,11 +1296,11 @@ public class MetaDataUtil
     }
 
     /**
-     * Remove a channel for the specified image serie.
+     * Remove a channel for the specified image series.
      */
-    public static void removeChannel(OMEXMLMetadata metaData, int serie, int index)
+    public static void removeChannel(OMEXMLMetadata metaData, int series, int index)
     {
-        final Pixels pix = getPixels(metaData, serie);
+        final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
             removeChannel(pix, index);
@@ -1265,9 +1310,9 @@ public class MetaDataUtil
      * @deprecated Use {@link #removeChannel(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void removeChannel(OMEXMLMetadataImpl metaData, int serie, int index)
+    public static void removeChannel(OMEXMLMetadataImpl metaData, int series, int index)
     {
-        removeChannel((OMEXMLMetadata) metaData, serie, index);
+        removeChannel((OMEXMLMetadata) metaData, series, index);
     }
 
     /**
@@ -1280,16 +1325,16 @@ public class MetaDataUtil
     }
 
     /**
-     * Set the number of channel for the specified image serie in metaData description.<br>
+     * Set the number of channel for the specified image series in metaData description.<br>
      * This is different from {@link #getSizeC(OMEXMLMetadata, int)}.
      */
-    public static void setNumChannel(OMEXMLMetadata metaData, int serie, int num)
+    public static void setNumChannel(OMEXMLMetadata metaData, int series, int num)
     {
         final OME ome = getOME(metaData);
 
-        ensureSerie(ome, serie);
+        ensureSeries(ome, series);
 
-        final Image img = ome.getImage(serie);
+        final Image img = ome.getImage(series);
         Pixels pix = img.getPixels();
 
         if (pix == null)
@@ -1311,42 +1356,42 @@ public class MetaDataUtil
      * @deprecated Use {@link #setNumChannel(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static void setNumChannel(OMEXMLMetadataImpl metaData, int serie, int num)
+    public static void setNumChannel(OMEXMLMetadataImpl metaData, int series, int num)
     {
-        setNumChannel((OMEXMLMetadata) metaData, serie, num);
+        setNumChannel((OMEXMLMetadata) metaData, series, num);
     }
 
     /**
      * Initialize default channel name until specified index if they are missing from the meta data
      * description.
      */
-    private static void prepareMetaChannelName(OMEXMLMetadata metaData, int serie, int channel)
+    private static void prepareMetaChannelName(OMEXMLMetadata metaData, int series, int channel)
     {
-        int c = getNumChannel(metaData, serie);
+        int c = getNumChannel(metaData, series);
 
         while (channel >= c)
         {
             // set default channel name
-            metaData.setChannelName(getDefaultChannelName(c), serie, c);
+            metaData.setChannelName(getDefaultChannelName(c), series, c);
             c++;
         }
     }
 
     /**
-     * Returns name of specified channel image serie.
+     * Returns name of specified channel image series.
      */
-    public static String getChannelName(OMEXMLMetadata metaData, int serie, int channel)
+    public static String getChannelName(OMEXMLMetadata metaData, int series, int channel)
     {
         // needed as LOCI does not initialize them on read
-        prepareMetaChannelName(metaData, serie, channel);
+        prepareMetaChannelName(metaData, series, channel);
 
-        final String result = StringUtil.getValue(metaData.getChannelName(serie, channel),
+        final String result = StringUtil.getValue(metaData.getChannelName(series, channel),
                 getDefaultChannelName(channel));
         final String cleaned = XMLUtil.filterString(result);
 
         // cleaned string != original value --> set it
         if (!cleaned.equals(result))
-            setChannelName(metaData, serie, channel, cleaned);
+            setChannelName(metaData, series, channel, cleaned);
 
         return cleaned;
     }
@@ -1355,49 +1400,49 @@ public class MetaDataUtil
      * @deprecated Use {@link #getChannelName(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static String getChannelName(OMEXMLMetadataImpl metaData, int serie, int channel)
+    public static String getChannelName(OMEXMLMetadataImpl metaData, int series, int channel)
     {
-        return getChannelName((OMEXMLMetadata) metaData, serie, channel);
+        return getChannelName((OMEXMLMetadata) metaData, series, channel);
     }
 
     /**
-     * Set name of specified channel image serie.
+     * Set name of specified channel image series.
      */
-    public static void setChannelName(OMEXMLMetadata metaData, int serie, int channel, String value)
+    public static void setChannelName(OMEXMLMetadata metaData, int series, int channel, String value)
     {
         // needed as LOCI only add current channel if it's missing
-        prepareMetaChannelName(metaData, serie, channel - 1);
+        prepareMetaChannelName(metaData, series, channel - 1);
 
-        metaData.setChannelName(value, serie, channel);
+        metaData.setChannelName(value, series, channel);
     }
 
     /**
      * @deprecated Use {@link #setChannelName(OMEXMLMetadata, int, int, String)} instead
      */
     @Deprecated
-    public static void setChannelName(OMEXMLMetadataImpl metaData, int serie, int channel, String value)
+    public static void setChannelName(OMEXMLMetadataImpl metaData, int series, int channel, String value)
     {
-        setChannelName((OMEXMLMetadata) metaData, serie, channel, value);
+        setChannelName((OMEXMLMetadata) metaData, series, channel, value);
     }
 
     /**
-     * Returns Color of specified channel image serie.
+     * Returns Color of specified channel image series.
      */
-    public static Color getChannelColor(OMEXMLMetadata metaData, int serie, int channel)
+    public static Color getChannelColor(OMEXMLMetadata metaData, int series, int channel)
     {
         // needed as LOCI does not initialize them on read
-        prepareMetaChannelName(metaData, serie, channel);
+        prepareMetaChannelName(metaData, series, channel);
 
-        return OMEUtil.getJavaColor(metaData.getChannelColor(serie, channel));
+        return OMEUtil.getJavaColor(metaData.getChannelColor(series, channel));
     }
 
     /**
      * @deprecated Use {@link #getChannelColor(OMEXMLMetadata, int, int)} instead
      */
     @Deprecated
-    public static Color getChannelColor(OMEXMLMetadataImpl metaData, int serie, int channel)
+    public static Color getChannelColor(OMEXMLMetadataImpl metaData, int series, int channel)
     {
-        return getChannelColor((OMEXMLMetadata) metaData, serie, channel);
+        return getChannelColor((OMEXMLMetadata) metaData, series, channel);
     }
 
     /**
@@ -1408,7 +1453,7 @@ public class MetaDataUtil
         final OMEXMLMetadata result = OMEUtil.createOMEXMLMetadata();
         final OME ome = getOME(result);
 
-        ensureSerie(ome, 0);
+        ensureSeries(ome, 0);
 
         result.setImageID(MetadataTools.createLSID("Image", 0), 0);
         result.setImageName(name, 0);
@@ -1429,9 +1474,9 @@ public class MetaDataUtil
      * @deprecated Use {@link OMEUtil#createOMEXMLMetadata(MetadataRetrieve, int)}
      */
     @Deprecated
-    public static OMEXMLMetadata createOMEMetadata(MetadataRetrieve metadata, int serie)
+    public static OMEXMLMetadata createOMEMetadata(loci.formats.meta.MetadataRetrieve metadata, int series)
     {
-        return OMEUtil.createOMEXMLMetadata(metadata, serie);
+        return OMEUtil.createOMEXMLMetadata(metadata, series);
     }
 
     /**
@@ -1568,7 +1613,7 @@ public class MetaDataUtil
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
             DataType dataType, boolean separateChannel) throws ServiceException
     {
-        final OMEXMLMetadata result = createDefaultMetadata("Sample");
+        final OMEXMLMetadata result = createMetadata("Sample");
 
         setMetaData(result, sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, separateChannel);
 
@@ -1626,7 +1671,7 @@ public class MetaDataUtil
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel) throws ServiceException
     {
         // do a copy as we mean use several time the same source sequence metadata
-        final OMEXMLMetadata result = OMEUtil.createOMEXMLMetadata(sequence.getMetadata());
+        final OMEXMLMetadata result = OMEUtil.createOMEXMLMetadata(sequence.getOMEXMLMetadata());
 
         setMetaData(result, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(), sequence.getSizeZ(),
                 sequence.getSizeT(), sequence.getDataType_(), separateChannel);
@@ -1635,13 +1680,13 @@ public class MetaDataUtil
     }
 
     /**
-     * Keep only the specified image serie.
+     * Keep only the specified image series.
      */
     public static void keepSingleSerie(OMEXMLMetadata metaData, int num)
     {
         final OME ome = getOME(metaData);
         final int numSeries = ome.sizeOfImageList();
-        final Image img = getSerie(metaData, num);
+        final Image img = getSeries(metaData, num);
 
         // keep only the desired image
         for (int i = numSeries - 1; i >= 0; i--)
@@ -1875,17 +1920,17 @@ public class MetaDataUtil
 
         for (int t = 0; t < sizeT; t++)
         {
-            boolean remove = (posT != -1) && (posT != t);
+            final boolean removeT = (posT != -1) && (posT != t);
 
             for (int z = 0; z < sizeZ; z++)
             {
-                remove |= (posZ != -1) && (posZ != z);
+                final boolean removeZ = (posZ != -1) && (posZ != z);
 
                 for (int c = 0; c < sizeC; c++)
                 {
-                    remove |= (posC != -1) && (posC != c);
+                    final boolean removeC = (posC != -1) && (posC != c);
 
-                    if (remove)
+                    if (removeT || removeZ || removeC)
                         removePlane(img, t, z, c);
                 }
             }
@@ -1902,9 +1947,9 @@ public class MetaDataUtil
      * @param posC
      *        keep Plane at given C position (-1 to keep all)
      */
-    public static void keepPlanes(OMEXMLMetadata metadata, int serie, int posT, int posZ, int posC)
+    public static void keepPlanes(OMEXMLMetadata metadata, int series, int posT, int posZ, int posC)
     {
-        final Image img = getSerie(metadata, serie);
+        final Image img = getSeries(metadata, series);
 
         if (img != null)
             keepPlanes(img, posT, posZ, posC);

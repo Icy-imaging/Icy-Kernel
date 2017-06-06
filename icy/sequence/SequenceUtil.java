@@ -18,6 +18,20 @@
  */
 package icy.sequence;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
+import javax.swing.SwingConstants;
+
 import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
@@ -34,22 +48,7 @@ import icy.type.collection.array.Array1DUtil;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.swing.SwingConstants;
-
-import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * {@link Sequence} utilities class.<br>
@@ -164,12 +163,16 @@ public class SequenceUtil
                 return null;
 
             final List<BufferedImage> images = new ArrayList<BufferedImage>();
+            final List<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();
 
             for (int i = 0; i < sequences.length; i++)
             {
                 final Sequence seq = sequences[i];
                 final int c = channels[i];
 
+                // get colormap
+                colormaps.add(seq.getColorMap(c));
+                // get image
                 IcyBufferedImage img = getImageFromSequenceInternal(seq, t, z, c, fillEmpty);
 
                 // create an empty image
@@ -183,7 +186,18 @@ public class SequenceUtil
                 images.add(img);
             }
 
-            return IcyBufferedImage.createFrom(images);
+            final IcyBufferedImage result = IcyBufferedImage.createFrom(images);
+
+            // restore colormap
+            for (int c = 0; c < result.getSizeC(); c++)
+            {
+                final IcyColorMap map = colormaps.get(c);
+
+                if (map != null)
+                    result.setColorMap(c, colormaps.get(c), false);
+            }
+
+            return result;
         }
     }
 
@@ -437,8 +451,8 @@ public class SequenceUtil
 
             for (int i = 0; i < num; i++)
                 for (int z = 0; z < sizeZ; z++)
-                    sequence.setImage(t + i, z, IcyBufferedImageUtil.getCopy(AddTHelper.getExtendedImage(sequence, t
-                            + i, z, t, num, copyLast)));
+                    sequence.setImage(t + i, z, IcyBufferedImageUtil
+                            .getCopy(AddTHelper.getExtendedImage(sequence, t + i, z, t, num, copyLast)));
         }
         finally
         {
@@ -712,8 +726,8 @@ public class SequenceUtil
 
             for (int i = 0; i < num; i++)
                 for (int t = 0; t < sizeT; t++)
-                    sequence.setImage(t, z + i, IcyBufferedImageUtil.getCopy(AddZHelper.getExtendedImage(sequence, t, z
-                            + i, z, num, copyLast)));
+                    sequence.setImage(t, z + i, IcyBufferedImageUtil
+                            .getCopy(AddZHelper.getExtendedImage(sequence, t, z + i, z, num, copyLast)));
         }
         finally
         {
@@ -1047,7 +1061,7 @@ public class SequenceUtil
                     source.setImage(t, z, tmp.getImage(t, z));
 
             // get back modified metadata
-            source.setMetaData(tmp.getMetadata());
+            source.setMetaData(tmp.getOMEXMLMetadata());
             // and colormaps
             for (int c = 0; c < tmp.getSizeC(); c++)
                 source.setDefaultColormap(c, tmp.getDefaultColorMap(c), false);
@@ -1125,7 +1139,7 @@ public class SequenceUtil
         final Sequence result = new Sequence();
 
         if (sequences.length > 0)
-            result.setMetaData(OMEUtil.createOMEMetadata(sequences[0].getMetadata()));
+            result.setMetaData(OMEUtil.createOMEXMLMetadata(sequences[0].getOMEXMLMetadata()));
         result.setName("C Merge");
 
         int ind = 0;
@@ -1143,22 +1157,20 @@ public class SequenceUtil
             }
         }
 
-        int c = 0;
-        for (Sequence seq : sequences)
+        for (int i = 0; i < sequences.length; i++)
         {
-            for (int sc = 0; sc < seq.getSizeC(); sc++, c++)
-            {
-                final String channelName = seq.getChannelName(sc);
-                final IcyColorMap channelColor = seq.getColorMap(sc);
+            final Sequence seq = sequences[i];
+            final int c = channels[i];
+            final String channelName = seq.getChannelName(c);
+            final IcyColorMap channelColor = seq.getColorMap(c);
 
-                // not default channel name --> we keep it
-                if (!StringUtil.equals(seq.getDefaultChannelName(sc), channelName))
-                    result.setChannelName(c, channelName);
+            // not default channel name --> we keep it
+            if (!StringUtil.equals(seq.getDefaultChannelName(c), channelName))
+                result.setChannelName(i, channelName);
 
-                // not default white color map --> we keep it
-                if (!channelColor.equals(LinearColorMap.white_))
-                    result.setColormap(c, channelColor, true);
-            }
+            // not default white color map --> we keep it
+            if (!channelColor.equals(LinearColorMap.white_))
+                result.setColormap(i, channelColor, true);
         }
 
         return result;
@@ -1240,7 +1252,7 @@ public class SequenceUtil
         final Sequence result = new Sequence();
 
         if (sequences.length > 0)
-            result.setMetaData(OMEUtil.createOMEMetadata(sequences[0].getMetadata()));
+            result.setMetaData(OMEUtil.createOMEXMLMetadata(sequences[0].getOMEXMLMetadata()));
         result.setName("Z Merge");
 
         int ind = 0;
@@ -1251,8 +1263,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z, IcyBufferedImageUtil.getCopy(MergeZHelper.getImage(sequences, sizeX, sizeY,
-                        sizeC, t, z, interlaced, fillEmpty, rescale)));
+                result.setImage(t, z, IcyBufferedImageUtil.getCopy(
+                        MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale)));
 
                 ind++;
             }
@@ -1323,7 +1335,7 @@ public class SequenceUtil
         final Sequence result = new Sequence();
 
         if (sequences.length > 0)
-            result.setMetaData(OMEUtil.createOMEMetadata(sequences[0].getMetadata()));
+            result.setMetaData(OMEUtil.createOMEXMLMetadata(sequences[0].getOMEXMLMetadata()));
         result.setName("T Merge");
 
         int ind = 0;
@@ -1334,8 +1346,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z, IcyBufferedImageUtil.getCopy(MergeTHelper.getImage(sequences, sizeX, sizeY,
-                        sizeC, t, z, interlaced, fillEmpty, rescale)));
+                result.setImage(t, z, IcyBufferedImageUtil.getCopy(
+                        MergeTHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale)));
 
                 ind++;
             }
@@ -1445,7 +1457,7 @@ public class SequenceUtil
     @Deprecated
     public static Sequence extractChannels(Sequence source, List<Integer> channels)
     {
-        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         outSequence.beginUpdate();
         try
@@ -1493,7 +1505,7 @@ public class SequenceUtil
      */
     public static Sequence extractChannels(Sequence source, int... channels)
     {
-        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
         final int sizeT = source.getSizeT();
         final int sizeZ = source.getSizeZ();
         final int sizeC = source.getSizeC();
@@ -1510,7 +1522,7 @@ public class SequenceUtil
             outSequence.endUpdate();
         }
 
-        final OMEXMLMetadataImpl metadata = outSequence.getMetadata();
+        final OMEXMLMetadata metadata = outSequence.getOMEXMLMetadata();
 
         // remove channel metadata
         for (int ch = MetaDataUtil.getNumChannel(metadata, 0) - 1; ch >= 0; ch--)
@@ -1569,7 +1581,7 @@ public class SequenceUtil
      */
     public static Sequence extractSlice(Sequence source, int z)
     {
-        final OMEXMLMetadataImpl metadata = OMEUtil.createOMEMetadata(source.getMetadata());
+        final OMEXMLMetadata metadata = OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata());
         final Sequence outSequence = new Sequence(metadata);
 
         // keep only metadata for specified slice
@@ -1602,7 +1614,7 @@ public class SequenceUtil
      */
     public static Sequence extractFrame(Sequence source, int t)
     {
-        final OMEXMLMetadataImpl metadata = OMEUtil.createOMEMetadata(source.getMetadata());
+        final OMEXMLMetadata metadata = OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata());
         final Sequence outSequence = new Sequence(metadata);
 
         // keep only metadata for specified frame
@@ -1692,7 +1704,7 @@ public class SequenceUtil
     @Deprecated
     public static Sequence convertToType(Sequence source, DataType dataType, Scaler scaler)
     {
-        final Sequence output = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence output = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         output.beginUpdate();
         try
@@ -1743,7 +1755,7 @@ public class SequenceUtil
      */
     public static Sequence convertType(Sequence source, DataType dataType, Scaler[] scalers)
     {
-        final Sequence output = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence output = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         output.beginUpdate();
         try
@@ -1752,8 +1764,8 @@ public class SequenceUtil
             {
                 for (int z = 0; z < source.getSizeZ(); z++)
                 {
-                    final IcyBufferedImage converted = IcyBufferedImageUtil.convertType(source.getImage(t, z),
-                            dataType, scalers);
+                    final IcyBufferedImage converted = IcyBufferedImageUtil.convertType(source.getImage(t, z), dataType,
+                            scalers);
 
                     // FIXME : why we did that ??
                     // this is not a good idea to force bounds when rescale = false
@@ -1805,7 +1817,7 @@ public class SequenceUtil
     {
         final int sizeT = source.getSizeT();
         final int sizeZ = source.getSizeZ();
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         result.beginUpdate();
         try
@@ -1888,7 +1900,7 @@ public class SequenceUtil
     {
         final int sizeT = source.getSizeT();
         final int sizeZ = source.getSizeZ();
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         result.beginUpdate();
         try
@@ -1912,7 +1924,7 @@ public class SequenceUtil
         }
 
         result.setName(source.getName() + " (resized)");
-        
+
         // content was resized ?
         if (resizeContent)
         {
@@ -1976,7 +1988,7 @@ public class SequenceUtil
      */
     public static Sequence getSubSequence(Sequence source, Rectangle5D.Integer region)
     {
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         final Rectangle region2d = region.toRectangle2D().getBounds();
         final int startZ;
@@ -2063,8 +2075,8 @@ public class SequenceUtil
     public static Sequence getSubSequence(Sequence source, int startX, int startY, int startC, int startZ, int startT,
             int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT)
     {
-        return getSubSequence(source, new Rectangle5D.Integer(startX, startY, startZ, startT, startC, sizeX, sizeY,
-                sizeZ, sizeT, sizeC));
+        return getSubSequence(source,
+                new Rectangle5D.Integer(startX, startY, startZ, startT, startC, sizeX, sizeY, sizeZ, sizeT, sizeC));
     }
 
     /**
@@ -2078,7 +2090,8 @@ public class SequenceUtil
     }
 
     /**
-     * Creates a new sequence which is a sub part of the source sequence defined by the specified {@link ROI} bounds.<br>
+     * Creates a new sequence which is a sub part of the source sequence defined by the specified {@link ROI}
+     * bounds.<br>
      * 
      * @param source
      *        the source sequence
@@ -2157,7 +2170,7 @@ public class SequenceUtil
      */
     public static Sequence getCopy(Sequence source, boolean copyROI, boolean copyOverlay, boolean nameSuffix)
     {
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
 
         result.beginUpdate();
         try
@@ -2173,7 +2186,7 @@ public class SequenceUtil
                 for (Overlay overlay : source.getOverlays())
                     result.addOverlay(overlay);
             }
-            
+
             // preserve channel informations
             for (int c = 0; c < source.getSizeC(); c++)
             {
@@ -2181,7 +2194,7 @@ public class SequenceUtil
                 result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
                 result.setColormap(c, source.getColorMap(c));
             }
-            
+
             if (nameSuffix)
                 result.setName(source.getName() + " (copy)");
         }
@@ -2242,7 +2255,7 @@ public class SequenceUtil
      */
     public static Sequence convertColor(Sequence source, int imageType, LUT lut)
     {
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(source.getOMEXMLMetadata()));
         // image receiver
         final BufferedImage imgOut = new BufferedImage(source.getSizeX(), source.getSizeY(), imageType);
 
@@ -2341,7 +2354,8 @@ public class SequenceUtil
     }
 
     /**
-     * Convert the given Rectangle region from the source Sequence into the original image region coordinates (pixel)<br>
+     * Convert the given Rectangle region from the source Sequence into the original image region coordinates
+     * (pixel)<br>
      * This method use the {@link Sequence#getOriginResolution()} and {@link Sequence#getOriginXYRegion()} informations
      * to compute the original image region coordinates.
      * 

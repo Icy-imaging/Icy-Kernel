@@ -3,13 +3,12 @@
  */
 package icy.sequence.edit;
 
-import icy.sequence.Sequence;
-
 import java.awt.Image;
 
 import javax.swing.undo.CannotUndoException;
 
-import loci.formats.ome.OMEXMLMetadataImpl;
+import icy.sequence.Sequence;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * Default lazy sequence metadata undoable edit (do a complete sequence metadata copy to restore
@@ -20,18 +19,32 @@ import loci.formats.ome.OMEXMLMetadataImpl;
  */
 public class MetadataSequenceEdit extends AbstractSequenceEdit
 {
-    OMEXMLMetadataImpl previous;
+    OMEXMLMetadata previous;
 
-    public MetadataSequenceEdit(OMEXMLMetadataImpl previous, Sequence sequence, Image icon)
+    public MetadataSequenceEdit(OMEXMLMetadata previous, Sequence sequence, String name, Image icon)
     {
-        super(sequence, "Sequence metadata changed", icon);
+        super(sequence, name, icon);
 
         this.previous = previous;
     }
 
-    public MetadataSequenceEdit(OMEXMLMetadataImpl previous, Sequence sequence)
+    public MetadataSequenceEdit(OMEXMLMetadata previous, Sequence sequence, Image icon)
     {
-        this(previous, sequence, null);
+        this(previous, sequence, "Sequence metadata changed", icon);
+
+        this.previous = previous;
+    }
+
+    public MetadataSequenceEdit(OMEXMLMetadata previous, Sequence sequence, String name)
+    {
+        this(previous, sequence, name, null);
+
+        this.previous = previous;
+    }
+
+    public MetadataSequenceEdit(OMEXMLMetadata previous, Sequence sequence)
+    {
+        this(previous, sequence, "Sequence metadata changed", null);
     }
 
     @Override

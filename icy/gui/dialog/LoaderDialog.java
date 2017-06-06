@@ -100,10 +100,12 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
      *        default file path (can be null)
      * @param region
      *        default XY region (can be null)
+     * @param series
+     *        default series (can be -1)
      * @param autoLoad
      *        If true the selected file(s) are automatically loaded.
      */
-    public LoaderDialog(String defaultPath, Rectangle region, boolean autoLoad)
+    public LoaderDialog(String defaultPath, Rectangle region, int series, boolean autoLoad)
     {
         super();
 
@@ -176,13 +178,12 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         if (defaultPath != null)
         {
             // refresh preview
-            optionPanel.updatePreview(defaultPath);
+            optionPanel.updatePreview(defaultPath, series);
             updateOptionPanel();
+            // have a default XY region ?
+            if (region != null)
+                optionPanel.setXYRegion(region);
         }
-
-        // have a default XY region ?
-        if (region != null)
-            optionPanel.setXYRegion(region);
 
         // listen file filter change
         addPropertyChangeListener(this);
@@ -242,16 +243,17 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
                     {
 
                         // load selected image file with advanced option
-                        Loader.load((SequenceFileImporter) importer, firstPath, -1, optionPanel.getResolutionLevel(),
-                                optionPanel.getXYRegion(), optionPanel.getZMin(), optionPanel.getZMax(),
-                                optionPanel.getTMin(), optionPanel.getTMax(), optionPanel.getChannel(), true, true);
+                        Loader.load((SequenceFileImporter) importer, firstPath, optionPanel.getSeries(),
+                                optionPanel.getResolutionLevel(), optionPanel.getXYRegion(), optionPanel.getZMin(),
+                                optionPanel.getZMax(), optionPanel.getTMin(), optionPanel.getTMax(),
+                                optionPanel.getChannel(), true, true);
                     }
                     else
                     {
                         // load selected file
-                        Loader.load(null, firstPath, -1, optionPanel.getResolutionLevel(), optionPanel.getXYRegion(),
-                                optionPanel.getZMin(), optionPanel.getZMax(), optionPanel.getTMin(),
-                                optionPanel.getTMax(), optionPanel.getChannel(), true, true);
+                        Loader.load(null, firstPath, optionPanel.getSeries(), optionPanel.getResolutionLevel(),
+                                optionPanel.getXYRegion(), optionPanel.getZMin(), optionPanel.getZMax(),
+                                optionPanel.getTMin(), optionPanel.getTMax(), optionPanel.getChannel(), true, true);
                     }
                 }
             }
@@ -260,6 +262,30 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         // store interface option
         preferences.putInt(ID_WIDTH, getWidth());
         preferences.putInt(ID_HEIGTH, getHeight());
+    }
+
+    /**
+     * Display a dialog to select image or resource file(s) and load them.<br>
+     * <br>
+     * To only get selected files from the dialog you must do:<br>
+     * <code> LoaderDialog dialog = new LoaderDialog(false);</code><br>
+     * <code> File[] selectedFiles = dialog.getSelectedFiles()</code><br>
+     * <br>
+     * To directly load selected files just use:<br>
+     * <code>new LoaderDialog(true);</code><br>
+     * or<br>
+     * <code>new LoaderDialog();</code>
+     * 
+     * @param defaultPath
+     *        default file path (can be null)
+     * @param region
+     *        default XY region (can be null)
+     * @param autoLoad
+     *        If true the selected file(s) are automatically loaded.
+     */
+    public LoaderDialog(String defaultPath, Rectangle region, boolean autoLoad)
+    {
+        this(defaultPath, region, -1, autoLoad);
     }
 
     /**
@@ -425,6 +451,14 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
     public int getChannel()
     {
         return optionPanel.getChannel();
+    }
+
+    /**
+     * Get series selection (-1 for all)
+     */
+    public int getSeries()
+    {
+        return optionPanel.getSeries();
     }
 
     @Override

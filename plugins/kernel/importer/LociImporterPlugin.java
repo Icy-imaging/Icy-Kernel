@@ -33,6 +33,7 @@ import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ByteArrayConvert;
+import icy.type.rectangle.Rectangle2DUtil;
 import icy.util.ColorUtil;
 import icy.util.StringUtil;
 import jxl.biff.drawing.PNGReader;
@@ -46,6 +47,7 @@ import loci.formats.gui.ExtensionFileFilter;
 import loci.formats.in.APNGReader;
 import loci.formats.in.JPEG2000Reader;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.xml.meta.OMEXMLMetadata;
 
 /**
  * LOCI Bio-Formats library importer class.
@@ -115,6 +117,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     // get reader and working buffers
                     final IFormatReader r = getReader();
                     final WorkBuffer buf = buffers.pop();
+                    // adjust rectangle to current reader resolution if needed
+                    final Rectangle adjRect = Rectangle2DUtil
+                            .getScaledRectangle(region, getResolutionScaleFactor(), true).getBounds();
 
                     try
                     {
@@ -123,12 +128,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                             // get image tile
                             if (c == -1)
                             {
-                                img = getImageInternal(r, region, z, t, false, buf.rawBuffer, buf.channelBuffer,
+                                img = getImageInternal(r, adjRect, z, t, false, buf.rawBuffer, buf.channelBuffer,
                                         buf.pixelBuffer);
                             }
                             else
                             {
-                                img = getImageInternal(r, region, z, t, c, false, buf.rawBuffer, buf.channelBuffer,
+                                img = getImageInternal(r, adjRect, z, t, c, false, buf.rawBuffer, buf.channelBuffer,
                                         buf.pixelBuffer);
                             }
                         }
@@ -177,7 +182,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             this.t = t;
             this.c = c;
 
-            final OMEXMLMetadataImpl meta = getMetaData();
+            final OMEXMLMetadata meta = getOMEXMLMetaData();
             final int sizeX = MetaDataUtil.getSizeX(meta, serie);
             final int sizeY = MetaDataUtil.getSizeY(meta, serie);
             final int numThread = Math.max(1, SystemUtil.getNumberOfCPUs() - 1);
@@ -304,6 +309,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     protected boolean originalMetadata;
     protected boolean groupFiles;
 
+    /**
+     * internal resolution levels
+     */
+    protected int[] resolutions;
+
     public LociImporterPlugin()
     {
         super();
@@ -317,6 +327,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
         originalMetadata = false;
         groupFiles = false;
+        resolutions = null;
     }
 
     protected void setReader(String path) throws FormatException, IOException
@@ -329,7 +340,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             // don't check if the file is currently opened
             if (!isOpen(path))
             {
-                // try to check with extension only first then open it if needed
+                // try to check only with extension first then open it if needed
+                // Note that OME TIFF can be opened with the classic TIFF reader
                 if (!reader.isThisType(path, false) && !reader.isThisType(path, true))
                     reader = mainReader.getReader(path);
             }
@@ -484,21 +496,17 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
             // ensure we have the correct reader
             setReader(adjPath);
-
-            // disable file grouping
-            reader.setGroupFiles(groupFiles);
-            // we want all metadata
-            reader.setOriginalMetadataPopulated(originalMetadata);
-            // prepare meta data store structure
-            reader.setMetadataStore(new OMEXMLMetadataImpl());
-            // load file with LOCI library
-            reader.setId(adjPath);
+            // then open it
+            openReader(reader, adjPath);
 
             // set reader in reader pool
             synchronized (readersPool)
             {
                 readersPool.add(reader);
             }
+
+            // need to update resolution levels
+            resolutions = null;
 
             return true;
         }
@@ -526,6 +534,25 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
+     * Open reader for given file path
+     */
+    protected void openReader(IFormatReader reader, String path) throws FormatException, IOException
+    {
+        // disable flattening sub resolution
+        reader.setFlattenedResolutions(false);
+        // filter metadata
+        reader.setMetadataFiltered(true);
+        // set file grouping
+        reader.setGroupFiles(groupFiles);
+        // set metadata option
+        reader.setOriginalMetadataPopulated(originalMetadata);
+        // prepare meta data store structure
+        reader.setMetadataStore(new OMEXMLMetadataImpl());
+        // set path (id)
+        reader.setId(path);
+    }
+
+    /**
      * Clone the current used reader conserving its properties and current path
      */
     protected IFormatReader cloneReader()
@@ -537,27 +564,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         // create the new reader instance
         final IFormatReader result = reader.getClass().newInstance();
 
-        // get opened file
-        final String path = getOpened();
+        // get opened file (directly from reader so we have wanted format)
+        final String path = reader.getCurrentFile();
 
         if (path != null)
-        {
-            // better for Bio-Formats to have system path format
-            final String adjPath = new File(path).getAbsolutePath();
-
-            // disable file grouping
-            result.setGroupFiles(groupFiles);
-            // we want all metadata
-            result.setOriginalMetadataPopulated(originalMetadata);
-            // prepare meta data store structure
-            result.setMetadataStore(new OMEXMLMetadataImpl());
-            // load file with LOCI library
-            result.setId(adjPath);
-
-            // preserve serie and resolution info
-            result.setSeries(reader.getSeries());
-            result.setResolution(reader.getResolution());
-        }
+            // open reader for path
+            openReader(result, path);
 
         return result;
     }
@@ -572,13 +584,26 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     {
         try
         {
+            final IFormatReader result;
+
             synchronized (readersPool)
             {
                 if (readersPool.isEmpty())
                     readersPool.add(cloneReader());
                 // allocate last reader (faster)
-                return readersPool.remove(readersPool.size() - 1);
+                result = readersPool.remove(readersPool.size() - 1);
             }
+
+            final int s = reader.getSeries();
+            final int r = reader.getResolution();
+
+            // ensure we are working on same series and resolution
+            if (result.getSeries() != s)
+                result.setSeries(s);
+            if (result.getResolution() != r)
+                result.setResolution(r);
+
+            return result;
         }
         catch (InstantiationException e)
         {
@@ -606,38 +631,106 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Prepare the reader to read data from specified serie and at specified resolution.<br>
+     * Prepare the reader to read data from specified series and at specified resolution.<br>
+     * WARNING: this method should not be called while image reading operation are still occurring (multi threaded
+     * read).
      * 
      * @return the image divisor factor to match the wanted resolution if needed
      */
     protected int prepareReader(int serie, int resolution)
     {
-        final int resCount;
-        final int res;
+        // series changed ?
+        if (reader.getSeries() != serie)
+        {
+            // set wanted serie
+            reader.setSeries(serie);
+            // reset resolution level
+            resolutions = null;
+        }
 
-        // set wanted serie
-        reader.setSeries(serie);
+        // need to update resolution levels ?
+        if (resolutions == null)
+        {
+            // set default resolution
+            reader.setResolution(0);
 
-        // set wanted resolution
-        resCount = reader.getResolutionCount();
-        if (resolution >= resCount)
-            res = resCount - 1;
-        else
-            res = resolution;
-        reader.setResolution(res);
+            // get default sizeX
+            final double sizeX = reader.getSizeX();
+            // get resolution count for this serie
+            final int resCount = reader.getResolutionCount();
 
-        return resolution - res;
+            // init resolution levels
+            final List<Integer> validResolutions = new ArrayList<Integer>(16);
+            // full resolution at 0 (always)
+            validResolutions.add(Integer.valueOf(0));
+
+            // check the sub resolution level
+            for (int r = 1; r < resCount; r++)
+            {
+                // set resolution level in reader
+                reader.setResolution(r);
+
+                // get real resolution level
+                final double level = Math.log(sizeX / reader.getSizeX()) / Math.log(2);
+                final double levelInt = Math.floor(level);
+
+                // we only want 2^x sub resolution
+                if (Math.abs(level - levelInt) < 0.005d)
+                    validResolutions.add(Integer.valueOf((int) levelInt));
+            }
+
+            // copy back to resolutions
+            resolutions = new int[validResolutions.size()];
+            for (int i = 0; i < resolutions.length; i++)
+                resolutions[i] = validResolutions.get(i).intValue();
+        }
+
+        if (resolution > 0)
+        {
+            // find closest (but strictly <=) available resolution level
+            int indRes = 1;
+            while ((indRes < resolutions.length) && (resolutions[indRes] <= resolution))
+                indRes++;
+
+            // get back to correct resolution level index
+            indRes--;
+            // set resolution level
+            reader.setResolution(indRes);
+
+            // return difference between selected resolution level and wanted resolution level
+            return resolution - resolutions[indRes];
+        }
+
+        // just use default full resolution
+        reader.setResolution(0);
+
+        return 0;
+    }
+
+    /**
+     * Internal use only
+     */
+    protected double getResolutionScaleFactor()
+    {
+        return Math.pow(2, resolutions[reader.getResolution()]);
     }
 
     @Override
-    public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
+    public OMEXMLMetadata getOMEXMLMetaData() throws UnsupportedFormatException, IOException
     {
         // no image currently opened
         if (getOpened() == null)
             return null;
 
         // don't need thread safe reader for this
-        return (OMEXMLMetadataImpl) reader.getMetadataStore();
+        return (OMEXMLMetadata) reader.getMetadataStore();
+    }
+
+    @Deprecated
+    @Override
+    public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
+    {
+        return (OMEXMLMetadataImpl) getOMEXMLMetaData();
     }
 
     @Override
@@ -685,7 +778,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             try
             {
                 // get image
-                return getThumbnail(reader, reader.getSizeZ() / 2, reader.getSizeT() / 2);
+                return getThumbnail(r, r.getSizeZ() / 2, r.getSizeT() / 2);
             }
             finally
             {
@@ -722,11 +815,19 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             {
                 final Object result;
                 final IFormatReader r = getReader();
+                final Rectangle adjRect;
+
+                // adjust rectangle to current reader resolution if needed
+                if (rectangle != null)
+                    adjRect = Rectangle2DUtil.getScaledRectangle(rectangle, getResolutionScaleFactor(), true)
+                            .getBounds();
+                else
+                    adjRect = null;
 
                 try
                 {
                     // get pixels
-                    result = getPixelsInternal(reader, rectangle, z, t, c, false);
+                    result = getPixelsInternal(r, adjRect, z, t, c, false);
                 }
                 finally
                 {
@@ -760,12 +861,24 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             final int downScaleLevel = prepareReader(serie, resolution);
 
             final IFormatReader r = getReader();
+            final Rectangle adjRect;
+
+            // adjust rectangle to current reader resolution if needed
+            if (rectangle != null)
+                adjRect = Rectangle2DUtil.getScaledRectangle(rectangle, getResolutionScaleFactor(), true).getBounds();
+            else
+                adjRect = null;
+
             try
             {
                 // get image
-                final IcyBufferedImage result = getImage(reader, rectangle, z, t, c);
+                final IcyBufferedImage result = getImage(r, adjRect, z, t, c);
                 // return down scaled version if needed
                 return downScale(result, downScaleLevel);
+            }
+            catch (IOException e)
+            {
+                throw e;
             }
             // not enough memory error ?
             catch (OutOfMemoryError e)
@@ -794,10 +907,16 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
                 throw e;
             }
-            catch (IOException e)
+            catch (Exception e)
             {
-                throw e;
+                // we can have NegativeArraySizeException here for instance
+                // try to use tile loading when we need rescaling
+                if (downScaleLevel > 0)
+                    return getImageByTile(serie, resolution, z, t, c, getTileWidth(serie), getTileHeight(serie), null);
+
+                throw new UnsupportedOperationException(e);
             }
+
             finally
             {
                 releaseReader(r);
@@ -837,8 +956,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
     /**
      * Load a thumbnail version of the image located at (Z, T, C) position from the specified
-     * {@link IFormatReader} and
-     * returns it as an IcyBufferedImage.
+     * {@link IFormatReader} and returns it as an IcyBufferedImage.
      * 
      * @param reader
      *        {@link IFormatReader}
@@ -875,8 +993,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
     /**
      * Load a thumbnail version of the image located at (Z, T) position from the specified
-     * {@link IFormatReader} and
-     * returns it as an IcyBufferedImage.<br>
+     * {@link IFormatReader} and returns it as an IcyBufferedImage.<br>
      * <i>Slow compatible version (load the original image and resize it)</i>
      * 
      * @param reader
@@ -924,7 +1041,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        Reader used to load the image
      * @param rect
-     *        Region we want to retrieve data.<br>
+     *        Define the image rectangular region we want to retrieve data for (considering current selected image
+     *        resolution).<br>
      *        Set to <code>null</code> to retrieve the whole image.
      * @param z
      *        Z position of the image to load
@@ -951,7 +1069,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        {@link IFormatReader}
      * @param rect
-     *        Region we want to retrieve data.<br>
+     *        Define the image rectangular region we want to retrieve data for (considering current selected image
+     *        resolution).<br>
      *        Set to <code>null</code> to retrieve the whole image.
      * @param z
      *        Z position of the image to load
@@ -1002,7 +1121,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param dataType
      *        pixel data type
      * @param rect
-     *        Define the image rectangular region we want to load.<br>
+     *        Define the pixels rectangular region we want to load (considering current selected image resolution).<br>
      *        Should be adjusted if <i>thumbnail</i> parameter is <code>true</code>
      * @param z
      *        Z position of the pixels to load
@@ -1012,8 +1131,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      *        Channel index to load
      * @param thumbnail
      *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
-     *        parameter should
-     *        contains thumbnail size
+     *        parameter should contains thumbnail size
      * @param rawBuffer
      *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY *
      *        Datatype.size]) used to
@@ -1041,7 +1159,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
 
         // check we can open the image
-        // Loader.checkOpening(reader.getResolution(), rect.width, rect.height, 1, 1, 1, dataType,
+        // Loader.checkOpening(resolutions[reader.getResolution()], rect.width, rect.height, 1, 1, 1, dataType,
         // "");
 
         // prepare informations
@@ -1083,7 +1201,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        Reader used to load the pixels
      * @param rect
-     *        Region we want to retrieve data.<br>
+     *        Define the pixels rectangular region we want to load (considering current selected image resolution).<br>
      *        Set to <code>null</code> to retrieve the whole image.
      * @param z
      *        Z position of the pixels to load
@@ -1120,7 +1238,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        Reader used to load the image
      * @param rect
-     *        Define the image rectangular region we want to load.<br>
+     *        Define the image rectangular region we want to retrieve data for (considering current selected image
+     *        resolution).<br>
      *        Should be adjusted if <i>thumbnail</i> parameter is <code>true</code>
      * @param z
      *        Z position of the image to load
@@ -1130,8 +1249,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      *        Channel index to load
      * @param thumbnail
      *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
-     *        parameter should
-     *        contains thumbnail size
+     *        parameter should contains thumbnail size
      * @param rawBuffer
      *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY *
      *        Datatype.size]) used to
@@ -1189,7 +1307,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             // colormap not set (or black) ? --> try to use metadata
             if ((map == null) || map.isBlack())
             {
-                final OMEXMLMetadataImpl metaData = (OMEXMLMetadataImpl) reader.getMetadataStore();
+                final OMEXMLMetadata metaData = (OMEXMLMetadata) reader.getMetadataStore();
                 final Color color = MetaDataUtil.getChannelColor(metaData, reader.getSeries(), c);
 
                 if ((color != null) && !ColorUtil.isBlack(color))
@@ -1214,7 +1332,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        Reader used to load the image
      * @param rect
-     *        Region we want to retrieve data.<br>
+     *        Define the image rectangular region we want to retrieve data for (considering current selected image
+     *        resolution).<br>
      *        Set to <code>null</code> to retrieve the whole image.
      * @param z
      *        Z position of the image to load
@@ -1249,27 +1368,24 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        {@link IFormatReader}
      * @param rect
-     *        Define the image rectangular region we want to load.<br>
+     *        Define the image rectangular region we want to retrieve data for (considering current selected image
+     *        resolution).<br>
      *        Should be adjusted if <i>thumbnail</i> parameter is <code>true</code>
      * @param z
      *        Z position of the image to load
      * @param t
      *        T position of the image to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
-     *        parameter should
+     *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i> parameter should
      *        contains thumbnail size
      * @param rawBuffer
-     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY *
-     *        Datatype.size]) used to
+     *        pre allocated byte data buffer ([reader.getRGBChannelCount() * SizeX * SizeY * Datatype.size]) used to
      *        read the whole RGB raw data (can be <code>null</code>)
      * @param channelBuffer
-     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the
-     *        channel raw data (can be
+     *        pre allocated byte data buffer ([SizeX * SizeY * Datatype.size]) used to read the channel raw data (can be
      *        <code>null</code>)
      * @param pixelBuffer
-     *        pre allocated 2D array ([SizeC, SizeX*SizeY]) pixel data buffer used to receive the
-     *        pixel converted data
+     *        pre allocated 2D array ([SizeC, SizeX*SizeY]) pixel data buffer used to receive the pixel converted data
      *        and to build the result image (can be <code>null</code>)
      * @return {@link IcyBufferedImage}
      * @throws UnsupportedOperationException
@@ -1291,13 +1407,13 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final int sizeC = effSizeC * rgbChanCount;
 
         // check we can open the image
-        // Loader.checkOpening(reader.getResolution(), sizeX, sizeY, sizeC, 1, 1, dataType, "");
+        // Loader.checkOpening(resolutions[reader.getResolution()], sizeX, sizeY, sizeC, 1, 1, dataType, "");
 
-        final int serie = reader.getSeries();
+        final int series = reader.getSeries();
         // prepare informations
         final boolean indexed = reader.isIndexed();
         final boolean little = reader.isLittleEndian();
-        final OMEXMLMetadataImpl metaData = (OMEXMLMetadataImpl) reader.getMetadataStore();
+        final OMEXMLMetadata metaData = (OMEXMLMetadata) reader.getMetadataStore();
 
         // prepare internal image data array
         final Object[] pixelData;
@@ -1375,7 +1491,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             // colormap not yet set (or black) ? --> try to use metadata
             if ((colormaps[effC] == null) || colormaps[effC].isBlack())
             {
-                final Color color = MetaDataUtil.getChannelColor(metaData, serie, effC);
+                final Color color = MetaDataUtil.getChannelColor(metaData, series, effC);
 
                 if ((color != null) && !ColorUtil.isBlack(color))
                     colormaps[effC] = new LinearColorMap("Channel " + effC, color);
@@ -1425,15 +1541,15 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * @param reader
      *        {@link IFormatReader}
      * @param rect
-     *        Region we want to retrieve data.<br>
+     *        Define the image rectangular region we want to retrieve data for (considering current selected image
+     *        resolution).<br>
      *        Set to <code>null</code> to retrieve the whole image.
      * @param z
      *        Z position of the image to load
      * @param t
      *        T position of the image to load
      * @param thumbnail
-     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code>
-     *        parameter is then ignored)
+     *        Set to <code>true</code> to request a thumbnail of the image (<code>rect</code> parameter is then ignored)
      * @return {@link IcyBufferedImage}
      */
     protected static IcyBufferedImage getImageInternal(IFormatReader reader, Rectangle rect, int z, int t,
@@ -1466,7 +1582,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         if (buffer == null)
         {
             // return whole image
-            if ((rect == null) || rect.equals(imgRect))
+            if ((rect == null) || rect.contains(imgRect))
                 return reader.openBytes(index);
 
             // return region

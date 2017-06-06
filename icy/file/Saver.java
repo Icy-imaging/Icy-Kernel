@@ -1212,7 +1212,7 @@ public class Saver
         final LUT lut = sequence.getDefaultLUT();
 
         // create compatible sequence
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(sequence.getMetadata()));
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(sequence.getOMEXMLMetadata()));
 
         result.beginUpdate();
         try

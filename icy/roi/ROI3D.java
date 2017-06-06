@@ -18,6 +18,18 @@
  */
 package icy.roi;
 
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
@@ -32,18 +44,6 @@ import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.XMLUtil;
-
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.w3c.dom.Node;
 
 /**
  * 3D ROI base class
@@ -823,7 +823,8 @@ public abstract class ROI3D extends ROI
         if (canTranslate())
         {
             final Point3D oldPos = getPosition3D();
-            translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY(), position.getZ() - oldPos.getZ());
+            translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY(),
+                    position.getZ() - oldPos.getZ());
         }
     }
 
@@ -869,7 +870,7 @@ public abstract class ROI3D extends ROI
      */
     public void translate(double dx, double dy, double dz)
     {
-
+        // need a default implementation to not break all overriding classes
     }
 
     @Override
