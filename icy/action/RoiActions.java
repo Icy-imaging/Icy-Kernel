@@ -18,6 +18,8 @@
  */
 package icy.action;
 
+import java.awt.Color;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -44,6 +46,7 @@ import icy.main.Icy;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROI3D;
@@ -63,6 +66,7 @@ import icy.util.XLSUtil;
 import icy.util.XMLUtil;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
+import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
 import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
 import plugins.kernel.roi.roi4d.ROI4DStackRectangle;

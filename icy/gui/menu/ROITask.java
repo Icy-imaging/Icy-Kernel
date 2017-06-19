@@ -772,6 +772,9 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
         for (AbstractCommandButton button : RibbonUtil.getButtons(roi3dBand))
             if (name.equals(button.getName()))
                 return (IcyCommandToggleButton) button;
+        for (AbstractCommandButton button : RibbonUtil.getButtons(roiExtBand))
+            if (name.equals(button.getName()))
+                return (IcyCommandToggleButton) button;
 
         return null;
     }

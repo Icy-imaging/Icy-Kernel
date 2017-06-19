@@ -119,7 +119,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     final WorkBuffer buf = buffers.pop();
                     // adjust rectangle to current reader resolution if needed
                     final Rectangle adjRect = Rectangle2DUtil
-                            .getScaledRectangle(region, getResolutionScaleFactor(), true).getBounds();
+                            .getScaledRectangle(region, getResolutionDiviserFactor(), false, true).getBounds();
 
                     try
                     {
@@ -715,6 +715,14 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         return Math.pow(2, resolutions[reader.getResolution()]);
     }
 
+    /**
+     * Internal use only
+     */
+    protected double getResolutionDiviserFactor()
+    {
+        return 1d / getResolutionScaleFactor();
+    }
+
     @Override
     public OMEXMLMetadata getOMEXMLMetaData() throws UnsupportedFormatException, IOException
     {
@@ -819,7 +827,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
                 // adjust rectangle to current reader resolution if needed
                 if (rectangle != null)
-                    adjRect = Rectangle2DUtil.getScaledRectangle(rectangle, getResolutionScaleFactor(), true)
+                    adjRect = Rectangle2DUtil.getScaledRectangle(rectangle, getResolutionDiviserFactor(), false, true)
                             .getBounds();
                 else
                     adjRect = null;
@@ -865,7 +873,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
             // adjust rectangle to current reader resolution if needed
             if (rectangle != null)
-                adjRect = Rectangle2DUtil.getScaledRectangle(rectangle, getResolutionScaleFactor(), true).getBounds();
+                adjRect = Rectangle2DUtil.getScaledRectangle(rectangle, getResolutionDiviserFactor(), false, true)
+                        .getBounds();
             else
                 adjRect = null;
 

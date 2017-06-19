@@ -38,7 +38,7 @@ import org.w3c.dom.Document;
  */
 public abstract class OnlineSearchResultProducer extends SearchResultProducer
 {
-    protected static final String SEARCH_URL = "http://bioimageanalysis.org/icy/search/search.php?search=";
+    protected static final String SEARCH_URL = "http://icy.bioimageanalysis.org/search/search.php?search=";
     protected static final long REQUEST_INTERVAL = 400;
     protected static final long MAXIMUM_SEARCH_TIME = 10000;
 

@@ -88,7 +88,7 @@ public class Loader
         /** Channel (C) dimension prefixes (taken from Bio-Formats for almost) */
         static final String[] prefixesC = {"c", "ch", "b", "band", "w", "wl", "wave", "wavelength"};
 
-        /** Serie (S)dimension prefixes (taken from Bio-Formats for almost) */
+        /** Series (S)dimension prefixes (taken from Bio-Formats for almost) */
         static final String[] prefixesS = {"s", "series", "sp", "f"};
 
         public DimensionId dim;
@@ -1031,19 +1031,16 @@ public class Loader
     }
 
     /**
-     * Check if we have enough resource to open the image defined by the given metadata information,
-     * serie index and
+     * Check if we have enough resource to open the image defined by the given metadata information, series index and
      * wanted resolution.<br>
-     * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we
-     * don't have enough
-     * memory to store the whole image the method throw an exception with an informative error
-     * message about the
+     * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we* don't have enough
+     * memory to store the whole image the method throw an exception with an informative error message about the
      * encountered limitation.
      * 
      * @param meta
      *        metadata of the image
-     * @param serie
-     *        serie index
+     * @param series
+     *        series index
      * @param resolution
      *        wanted image resolution: a value of <code>0</code> means full resolution of the
      *        original image while value
@@ -1060,27 +1057,25 @@ public class Loader
      * @throws OutOfMemoryError
      *         if there is not enough memory to open the image
      */
-    public static void checkOpening(OMEXMLMetadata meta, int serie, int resolution, int sizeZ, int sizeT,
+    public static void checkOpening(OMEXMLMetadata meta, int series, int resolution, int sizeZ, int sizeT,
             String messageSuffix) throws UnsupportedOperationException, OutOfMemoryError
     {
-        checkOpening(resolution, MetaDataUtil.getSizeX(meta, serie), MetaDataUtil.getSizeY(meta, serie),
-                MetaDataUtil.getSizeC(meta, serie), sizeZ, sizeT, MetaDataUtil.getDataType(meta, serie), messageSuffix);
+        checkOpening(resolution, MetaDataUtil.getSizeX(meta, series), MetaDataUtil.getSizeY(meta, series),
+                MetaDataUtil.getSizeC(meta, series), sizeZ, sizeT, MetaDataUtil.getDataType(meta, series),
+                messageSuffix);
     }
 
     /**
-     * Check if we have enough resource to open the image defined by the given metadata information,
-     * serie index and
+     * Check if we have enough resource to open the image defined by the given metadata information, series index and
      * wanted resolution.<br>
-     * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we
-     * don't have enough
-     * memory to store the whole image the method throw an exception with an informative error
-     * message about the
+     * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we don't have enough
+     * memory to store the whole image the method throw an exception with an informative error message about the
      * encountered limitation.
      * 
      * @param meta
      *        metadata of the image
-     * @param serie
-     *        serie index
+     * @param series
+     *        series index
      * @param resolution
      *        wanted image resolution: a value of <code>0</code> means full resolution of the
      *        original image while value
@@ -1093,15 +1088,15 @@ public class Loader
      * @throws OutOfMemoryError
      *         if there is not enough memory to open the image
      */
-    public static void checkOpening(OMEXMLMetadata meta, int serie, int resolution, String messageSuffix)
+    public static void checkOpening(OMEXMLMetadata meta, int series, int resolution, String messageSuffix)
             throws UnsupportedOperationException, OutOfMemoryError
     {
-        checkOpening(meta, serie, resolution, MetaDataUtil.getSizeZ(meta, serie), MetaDataUtil.getSizeT(meta, serie),
+        checkOpening(meta, series, resolution, MetaDataUtil.getSizeZ(meta, series), MetaDataUtil.getSizeT(meta, series),
                 messageSuffix);
     }
 
     // /**
-    // * Returns the best resolution to use from the given metadata information and serie index.<br>
+    // * Returns the best resolution to use from the given metadata information and series index.<br>
     // * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if
     // we don't have enough
     // * memory to store the whole image (depending wanted constraint) then a sub resolution index
@@ -1113,22 +1108,22 @@ public class Loader
     // *
     // * @param meta
     // * metadata of the image
-    // * @param serie
-    // * serie index
+    // * @param series
+    // * series index
     // * @param showMessage
     // * show announce frame or message in the output log when one size constraint is meet and
     // induce resolution
     // * decrease
     // */
-    // public static int getBestResolution(OMEXMLMetadataImpl meta, int serie, boolean showMessage)
+    // public static int getBestResolution(OMEXMLMetadataImpl meta, int series, boolean showMessage)
     // {
     // // easy trick to disable message display when needed
     // boolean warningDisplayed = !showMessage;
     // // default resolution to open (full resolution)
     // int resolution = 0;
     // // size of XY plane
-    // long sizeXY = (long) MetaDataUtil.getSizeX(meta, serie) * (long) MetaDataUtil.getSizeY(meta,
-    // serie);
+    // long sizeXY = (long) MetaDataUtil.getSizeX(meta, series) * (long) MetaDataUtil.getSizeY(meta,
+    // series);
     //
     // // we can't handle that plane size
     // if (sizeXY > Integer.MAX_VALUE)
@@ -1158,7 +1153,7 @@ public class Loader
     // long freeInByte = SystemUtil.getJavaFreeMemory() - (16 * 1024 * 1024);
     // // check that we have enough memory for the whole image and the ARGB image used for display
     // (sizeXY * 4)
-    // long sizeInByte = MetaDataUtil.getDataSize(meta, serie, resolution) + (sizeXY * 4);
+    // long sizeInByte = MetaDataUtil.getDataSize(meta, series, resolution) + (sizeXY * 4);
     //
     // // not enough memory to store the whole image ?
     // if (sizeInByte > freeInByte)
@@ -1353,18 +1348,18 @@ public class Loader
      *        Importer used to open and load the thumbnail from the image file.
      * @param path
      *        image file path.
-     * @param serie
-     *        Serie index we want to retrieve thumbnail from (for multi serie image).<br>
+     * @param series
+     *        Series index we want to retrieve thumbnail from (for multi series image).<br>
      *        Set to 0 if unsure.
      */
-    public static IcyBufferedImage loadThumbnail(SequenceFileImporter importer, String path, int serie)
+    public static IcyBufferedImage loadThumbnail(SequenceFileImporter importer, String path, int series)
             throws UnsupportedFormatException, IOException
     {
         if (importer.open(path, 0))
         {
             try
             {
-                return importer.getThumbnail(serie);
+                return importer.getThumbnail(series);
             }
             finally
             {
@@ -1380,11 +1375,11 @@ public class Loader
      * 
      * @param path
      *        image file path.
-     * @param serie
-     *        Serie index we want to retrieve thumbnail from (for multi serie image).<br>
+     * @param series
+     *        Series index we want to retrieve thumbnail from (for multi series image).<br>
      *        Set to 0 if unsure.
      */
-    public static IcyBufferedImage loadThumbnail(String path, int serie) throws UnsupportedFormatException, IOException
+    public static IcyBufferedImage loadThumbnail(String path, int series) throws UnsupportedFormatException, IOException
     {
         IcyBufferedImage result;
         UnsupportedFormatException lastError = null;
@@ -1393,7 +1388,7 @@ public class Loader
         {
             try
             {
-                result = loadThumbnail(importer, path, serie);
+                result = loadThumbnail(importer, path, series);
 
                 if (result != null)
                     return result;
@@ -1478,8 +1473,8 @@ public class Loader
      *        Importer used to open and load the image file.
      * @param path
      *        image file path.
-     * @param serie
-     *        Serie index we want to retrieve image from (for multi serie image).<br>
+     * @param series
+     *        Series index we want to retrieve image from (for multi series image).<br>
      *        Set to 0 if unsure (default).
      * @param z
      *        Z position of the image to open.
@@ -1488,7 +1483,7 @@ public class Loader
      * @throws IOException
      * @throws UnsupportedFormatException
      */
-    public static IcyBufferedImage loadImage(SequenceFileImporter importer, String path, int serie, int z, int t)
+    public static IcyBufferedImage loadImage(SequenceFileImporter importer, String path, int series, int z, int t)
             throws UnsupportedFormatException, IOException
     {
         if ((importer == null) || !importer.open(path, 0))
@@ -1496,7 +1491,7 @@ public class Loader
 
         try
         {
-            return importer.getImage(serie, z, t);
+            return importer.getImage(series, z, t);
         }
         finally
         {
@@ -1512,8 +1507,8 @@ public class Loader
      * 
      * @param path
      *        image file path.
-     * @param serie
-     *        Serie index we want to retrieve image from (for multi serie image).<br>
+     * @param series
+     *        Series index we want to retrieve image from (for multi series image).<br>
      *        Set to 0 if unsure (default).
      * @param z
      *        Z position of the image to open.
@@ -1522,10 +1517,10 @@ public class Loader
      * @throws IOException
      * @throws UnsupportedFormatException
      */
-    public static IcyBufferedImage loadImage(String path, int serie, int z, int t)
+    public static IcyBufferedImage loadImage(String path, int series, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        return loadImage(getSequenceFileImporter(path, true), path, serie, z, t);
+        return loadImage(getSequenceFileImporter(path, true), path, series, z, t);
     }
 
     /**
@@ -1551,8 +1546,8 @@ public class Loader
             result.addAll(loadSequences(paths, -1, separate, autoOrder, false, showProgress));
         else
         {
-            for (int serie : series)
-                result.addAll(loadSequences(paths, serie, separate, autoOrder, false, showProgress));
+            for (int s : series)
+                result.addAll(loadSequences(paths, s, separate, autoOrder, false, showProgress));
         }
 
         return result.toArray(new Sequence[result.size()]);
@@ -1742,10 +1737,10 @@ public class Loader
      *             instead.
      */
     @Deprecated
-    public static Sequence[] loadSequences(File[] files, int serie, boolean separate, boolean autoOrder,
+    public static Sequence[] loadSequences(File[] files, int series, boolean separate, boolean autoOrder,
             boolean showProgress)
     {
-        final List<Sequence> result = loadSequences(FileUtil.toPaths(CollectionUtil.asList(files)), serie, separate,
+        final List<Sequence> result = loadSequences(FileUtil.toPaths(CollectionUtil.asList(files)), series, separate,
                 autoOrder, false, showProgress);
         return result.toArray(new Sequence[result.size()]);
     }
@@ -1757,15 +1752,15 @@ public class Loader
      * 
      * @param files
      *        List of image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
      */
     @Deprecated
-    public static Sequence loadSequence(File[] files, int serie, boolean showProgress)
+    public static Sequence loadSequence(File[] files, int series, boolean showProgress)
     {
-        final Sequence[] result = loadSequences(files, serie, false, true, showProgress);
+        final Sequence[] result = loadSequences(files, series, false, true, showProgress);
 
         if (result.length > 0)
             return result[0];
@@ -1777,9 +1772,9 @@ public class Loader
      * @deprecated Use {@link #loadSequence(String, int, boolean)} instead.
      */
     @Deprecated
-    public static Sequence loadSequence(File file, int serie, boolean showProgress)
+    public static Sequence loadSequence(File file, int series, boolean showProgress)
     {
-        return loadSequence(new File[] {file}, serie, showProgress);
+        return loadSequence(new File[] {file}, series, showProgress);
     }
 
     /**
@@ -1789,7 +1784,7 @@ public class Loader
      * As the function can take sometime you should not call it from the AWT EDT.<br>
      * The method returns an empty array if an error occurred or if no file could be opened (not
      * supported).<br>
-     * If the user cancelled the action (serie selection dialog) then it returns <code>null</code>.
+     * If the user cancelled the action (series selection dialog) then it returns <code>null</code>.
      * 
      * @param importer
      *        Importer used to open and load image files.<br>
@@ -1798,10 +1793,10 @@ public class Loader
      *        selection dialog.
      * @param paths
      *        List of image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user<br>
-     *        to select the serie to open from a serie selector dialog.
+     *        to select the series to open from a series selector dialog.
      * @param separate
      *        Force image to be loaded in separate sequence.
      * @param autoOrder
@@ -1811,7 +1806,7 @@ public class Loader
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int serie,
+    public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
             boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
     {
         final List<Sequence> result = new ArrayList<Sequence>();
@@ -1841,7 +1836,7 @@ public class Loader
                     && (currPaths.size() == singlePaths.size());
 
             // load sequence
-            result.addAll(loadSequences(imp, currPaths, serie, separate, autoOrder, dir, addToRecent, showProgress));
+            result.addAll(loadSequences(imp, currPaths, series, separate, autoOrder, dir, addToRecent, showProgress));
 
             // remove loaded files
             singlePaths.removeAll(currPaths);
@@ -1886,10 +1881,10 @@ public class Loader
      * 
      * @param paths
      *        List of image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user<br>
-     *        to select the serie to open from a serie selector dialog.
+     *        to select the series to open from a series selector dialog.
      * @param separate
      *        Force image to be loaded in separate sequence.
      * @param autoOrder
@@ -1899,10 +1894,10 @@ public class Loader
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static List<Sequence> loadSequences(List<String> paths, int serie, boolean separate, boolean autoOrder,
+    public static List<Sequence> loadSequences(List<String> paths, int series, boolean separate, boolean autoOrder,
             boolean addToRecent, boolean showProgress)
     {
-        return loadSequences(null, paths, serie, separate, autoOrder, addToRecent, showProgress);
+        return loadSequences(null, paths, series, separate, autoOrder, addToRecent, showProgress);
     }
 
     /**
@@ -1914,20 +1909,20 @@ public class Loader
      *        Importer used to load the image file (shouldn't be <code>null</code>).
      * @param paths
      *        List of image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
-     *        serie selector dialog.
+     *        series selector dialog.
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
      *        Show progression of loading process.
      * @see #getSequenceFileImporter(String, boolean)
      */
-    public static Sequence loadSequence(SequenceFileImporter importer, List<String> paths, int serie,
+    public static Sequence loadSequence(SequenceFileImporter importer, List<String> paths, int series,
             boolean addToRecent, boolean showProgress)
     {
-        final List<Sequence> result = loadSequences(importer, paths, serie, false, true, false, addToRecent,
+        final List<Sequence> result = loadSequences(importer, paths, series, false, true, false, addToRecent,
                 showProgress);
 
         if (result.size() > 0)
@@ -1945,16 +1940,16 @@ public class Loader
      *        Importer used to load the image file (shouldn't be null).
      * @param paths
      *        List of image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
      * @see #getSequenceFileImporter(String, boolean)
      */
-    public static Sequence loadSequence(SequenceFileImporter importer, List<String> paths, int serie,
+    public static Sequence loadSequence(SequenceFileImporter importer, List<String> paths, int series,
             boolean showProgress)
     {
-        return loadSequence(importer, paths, serie, false, showProgress);
+        return loadSequence(importer, paths, series, false, showProgress);
     }
 
     /**
@@ -1966,18 +1961,18 @@ public class Loader
      * 
      * @param paths
      *        List of image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
      * @see #getSequenceFileImporter(String, boolean)
      */
-    public static Sequence loadSequence(List<String> paths, int serie, boolean showProgress)
+    public static Sequence loadSequence(List<String> paths, int series, boolean showProgress)
     {
         if (paths.isEmpty())
             return null;
 
-        return loadSequence(getSequenceFileImporter(paths.get(0), false), paths, serie, showProgress);
+        return loadSequence(getSequenceFileImporter(paths.get(0), false), paths, series, showProgress);
     }
 
     /**
@@ -1994,19 +1989,19 @@ public class Loader
      *        compatible importer will be automatically used.
      * @param path
      *        Image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
-     *        -1 is a special value so it gives a chance to the user to select serie to open from a
-     *        serie selector dialog.
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select series to open from a
+     *        series selector dialog.
      * @param addToRecent
      *        If set to true the path will be traced in recent opened sequence.
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static Sequence loadSequence(SequenceFileImporter importer, String path, int serie, boolean addToRecent,
+    public static Sequence loadSequence(SequenceFileImporter importer, String path, int series, boolean addToRecent,
             boolean showProgress)
     {
-        return loadSequence(importer, path, serie, 0, null, -1, -1, -1, -1, -1, addToRecent, showProgress);
+        return loadSequence(importer, path, series, 0, null, -1, -1, -1, -1, -1, addToRecent, showProgress);
     }
 
     /**
@@ -2022,14 +2017,14 @@ public class Loader
      *        compatible importer will be automatically used.
      * @param path
      *        Image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static Sequence loadSequence(SequenceFileImporter importer, String path, int serie, boolean showProgress)
+    public static Sequence loadSequence(SequenceFileImporter importer, String path, int series, boolean showProgress)
     {
-        return loadSequence(importer, path, serie, false, showProgress);
+        return loadSequence(importer, path, series, false, showProgress);
     }
 
     /**
@@ -2042,14 +2037,14 @@ public class Loader
      * 
      * @param path
      *        Image file to load.
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static Sequence loadSequence(String path, int serie, boolean showProgress)
+    public static Sequence loadSequence(String path, int series, boolean showProgress)
     {
-        return loadSequence(null, path, serie, showProgress);
+        return loadSequence(null, path, series, showProgress);
     }
 
     /**
@@ -2283,10 +2278,10 @@ public class Loader
      *        compatible importer will be automatically used.
      * @param path
      *        image file to load
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
-     *        -1 is a special value so it gives a chance to the user to select serie to open from a
-     *        serie selector dialog.
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select series to open from a
+     *        series selector dialog.
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
      *        The retrieved image resolution is equal to
@@ -2316,7 +2311,7 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    public static void load(final SequenceFileImporter importer, final String path, final int serie,
+    public static void load(final SequenceFileImporter importer, final String path, final int series,
             final int resolution, final Rectangle region, final int minZ, final int maxZ, final int minT,
             final int maxT, final int channel, final boolean addToRecent, final boolean showProgress)
     {
@@ -2327,7 +2322,7 @@ public class Loader
             public void run()
             {
                 // load sequence
-                final Sequence sequence = loadSequence(importer, path, serie, resolution, region, minZ, maxZ, minT,
+                final Sequence sequence = loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT,
                         maxT, channel, addToRecent, showProgress);
 
                 // and display it
@@ -2500,12 +2495,12 @@ public class Loader
      *             instead.
      */
     @Deprecated
-    static Sequence[] loadSequences(SequenceFileImporter importer, File[] files, int serie, boolean separate,
+    static Sequence[] loadSequences(SequenceFileImporter importer, File[] files, int series, boolean separate,
             boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
         final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
-        final List<Sequence> result = loadSequences(importer, paths, serie, separate, autoOrder, directory, addToRecent,
-                showProgress);
+        final List<Sequence> result = loadSequences(importer, paths, series, separate, autoOrder, directory,
+                addToRecent, showProgress);
         return result.toArray(new Sequence[result.size()]);
     }
 
@@ -2523,10 +2518,10 @@ public class Loader
      *        compatible importer will be automatically used.
      * @param path
      *        image file to load
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
-     *        serie selector dialog.
+     *        series selector dialog.
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
      *        The retrieved image resolution is equal to
@@ -2556,7 +2551,7 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    public static Sequence loadSequence(SequenceFileImporter importer, String path, int serie, int resolution,
+    public static Sequence loadSequence(SequenceFileImporter importer, String path, int series, int resolution,
             Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, boolean addToRecent,
             boolean showProgress)
     {
@@ -2586,30 +2581,30 @@ public class Loader
             // clean the metadata
             MetaDataUtil.clean(meta);
 
-            // serie selection
+            // series selection
             int selectedSerie;
 
-            // give the opportunity to select the serie (single one) to open ?
-            if (serie == -1)
+            // give the opportunity to select the series (single one) to open ?
+            if (series == -1)
             {
                 try
                 {
-                    // serie selection (create a new importer instance as selectSerie(..) does async processes)
+                    // series selection (create a new importer instance as selectSerie(..) does async processes)
                     selectedSerie = selectSerie(imp.getClass().newInstance(), path, meta, 0);
                 }
                 catch (Throwable t)
                 {
                     IcyExceptionHandler.showErrorMessage(t, true, true);
-                    System.err.print("Opening first serie by default...");
+                    System.err.print("Opening first series by default...");
                     selectedSerie = 0;
                 }
 
-                // user cancelled action in the serie selection ? null = cancel
+                // user cancelled action in the series selection ? null = cancel
                 if (selectedSerie == -1)
                     return null;
             }
             else
-                selectedSerie = serie;
+                selectedSerie = series;
 
             // load the image
             result = internalLoadSingle(imp, meta, selectedSerie, resolution, region, minZ, maxZ, minT, maxT, channel,
@@ -2666,10 +2661,10 @@ public class Loader
      *        Importer used to open and load images (cannot be <code>null</code> here).
      * @param paths
      *        list of image file to load
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
-     *        serie selector dialog.
+     *        series selector dialog.
      * @param separate
      *        Force image to be loaded in separate sequence
      * @param autoOrder
@@ -2681,7 +2676,7 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int serie, boolean separate,
+    static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series, boolean separate,
             boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
         final List<Sequence> result = new ArrayList<Sequence>();
@@ -2720,7 +2715,7 @@ public class Loader
                 for (String path : paths)
                 {
                     // load the file
-                    final List<Sequence> sequences = internalLoadSingle(importer, path, serie, loadingFrame);
+                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, loadingFrame);
 
                     // special case where loading was interrupted
                     if (sequences == null)
@@ -2761,7 +2756,7 @@ public class Loader
                 {
                     final String path = filePos.path;
                     // load the file
-                    final List<Sequence> sequences = internalLoadSingle(importer, path, serie, loadingFrame);
+                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, loadingFrame);
 
                     // special case where loading was interrupted
                     if (sequences == null)
@@ -2802,7 +2797,7 @@ public class Loader
                                 concat = false;
                         }
 
-                        // update serie index
+                        // update series index
                         lastS = s;
                     }
                     else
@@ -2999,8 +2994,8 @@ public class Loader
      *        Opened importer used to load the image file (cannot be <code>null</code> here)
      * @param metadata
      *        Metadata of the image
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
      *        The retrieved image resolution is equal to
@@ -3030,15 +3025,15 @@ public class Loader
      *        Caller should allocate 100 positions for the internal single load process.
      * @return the Sequence object or <code>null</code>
      */
-    public static Sequence internalLoadSingle(SequenceFileImporter importer, OMEXMLMetadata metadata, int serie,
+    public static Sequence internalLoadSingle(SequenceFileImporter importer, OMEXMLMetadata metadata, int series,
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
-        final int sizeX = (region == null) ? MetaDataUtil.getSizeX(metadata, serie) : region.width;
-        final int sizeY = (region == null) ? MetaDataUtil.getSizeY(metadata, serie) : region.height;
-        final int sizeZ = MetaDataUtil.getSizeZ(metadata, serie);
-        final int sizeT = MetaDataUtil.getSizeT(metadata, serie);
-        final int sizeC = MetaDataUtil.getSizeC(metadata, serie);
+        final int sizeX = (region == null) ? MetaDataUtil.getSizeX(metadata, series) : region.width;
+        final int sizeY = (region == null) ? MetaDataUtil.getSizeY(metadata, series) : region.height;
+        final int sizeZ = MetaDataUtil.getSizeZ(metadata, series);
+        final int sizeT = MetaDataUtil.getSizeT(metadata, series);
+        final int sizeC = MetaDataUtil.getSizeC(metadata, series);
 
         final int adjMinZ, adjMaxZ;
         final int adjMinT, adjMaxT;
@@ -3062,15 +3057,15 @@ public class Loader
 
         // check that we can open the image
         checkOpening(resolution, sizeX, sizeY, (channel == -1) ? sizeC : 1, (adjMaxZ - adjMinZ) + 1,
-                (adjMaxT - adjMinT) + 1, MetaDataUtil.getDataType(metadata, serie),
+                (adjMaxT - adjMinT) + 1, MetaDataUtil.getDataType(metadata, series),
                 " Try to open a sub resolution or sub part of the image only.");
 
-        // create result sequence with desired serie metadata
-        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(metadata, serie));
+        // create result sequence with desired series metadata
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(metadata, series));
 
         // setup sequence properties and metadata from the opening setting
         setupSequence(result, FileUtil.getGenericPath(importer.getOpened()), MetaDataUtil.getNumSeries(metadata) > 1,
-                serie, region, resolution, sizeZ, sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
+                series, region, resolution, sizeZ, sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
 
         // number of image to process
         final int numImage = ((adjMaxZ - adjMinZ) + 1) * ((adjMaxT - adjMinT) + 1);
@@ -3098,10 +3093,10 @@ public class Loader
                         // load image and add it to the sequence
                         if (channel == -1)
                             result.setImage(t - adjMinT, z - adjMinZ,
-                                    importer.getImage(serie, resolution, region, z, t));
+                                    importer.getImage(series, resolution, region, z, t));
                         else
                             result.setImage(t - adjMinT, z - adjMinZ,
-                                    importer.getImage(serie, resolution, region, z, t, channel));
+                                    importer.getImage(series, resolution, region, z, t, channel));
 
                         progress += progressStep;
 
@@ -3122,7 +3117,7 @@ public class Loader
 
     /**
      * <b>Internal use only !</b><br>
-     * Load a single file and return result as Sequence list (for multi serie).<br>
+     * Load a single file and return result as Sequence list (for multi series).<br>
      * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
      * loading of current path.
      * 
@@ -3130,15 +3125,15 @@ public class Loader
      *        Importer to use to open and load images (cannot be <code>null</code> here)
      * @param path
      *        image file to load
-     * @param serie
-     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
-     *        serie selector dialog.
+     *        series selector dialog.
      * @param loadingFrame
      *        the loading frame used to display progress of the operation (can be null)
      * @throws IOException
      */
-    public static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int serie,
+    public static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int series,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final double endStep;
@@ -3166,30 +3161,30 @@ public class Loader
             // clean the metadata
             MetaDataUtil.clean(meta);
 
-            // serie selection
+            // series selection
             int selectedSeries[];
 
-            // give the opportunity to select the serie(s) to open ?
-            if (serie == -1)
+            // give the opportunity to select the series(s) to open ?
+            if (series == -1)
             {
                 try
                 {
-                    // serie selection (create a new importer instance as selectSerie(..) does async processes)
+                    // series selection (create a new importer instance as selectSerie(..) does async processes)
                     selectedSeries = selectSeries(importer.getClass().newInstance(), path, meta, 0, false);
                 }
                 catch (Throwable t)
                 {
                     IcyExceptionHandler.showErrorMessage(t, true, true);
-                    System.err.print("Opening first serie by default...");
+                    System.err.print("Opening first series by default...");
                     selectedSeries = new int[] {0};
                 }
 
-                // user cancelled action in the serie selection ? null = cancel
+                // user cancelled action in the series selection ? null = cancel
                 if (selectedSeries.length == 0)
                     return null;
             }
             else
-                selectedSeries = new int[] {serie};
+                selectedSeries = new int[] {series};
 
             // add sequence to result
             for (int s : selectedSeries)
@@ -3221,9 +3216,9 @@ public class Loader
      * @param path
      *        image path
      * @param multiSerie
-     *        <code>true</code> if this Sequence comes from a multi serie dataset
-     * @param serie
-     *        serie index
+     *        <code>true</code> if this Sequence comes from a multi series dataset
+     * @param series
+     *        series index
      * @param region
      *        Rectangle region we want to load from original image
      * @param resolution
@@ -3245,7 +3240,7 @@ public class Loader
      * @param channel
      *        channel we want to load (-1 for all)
      */
-    public static void setupSequence(Sequence sequence, String path, boolean multiSerie, int serie, Rectangle region,
+    public static void setupSequence(Sequence sequence, String path, boolean multiSerie, int series, Rectangle region,
             int resolution, int sizeZ, int sizeT, int sizeC, int minZ, int maxZ, int minT, int maxT, int channel)
     {
         // default name
@@ -3254,9 +3249,9 @@ public class Loader
         // default name used --> use better name
         if (sequence.isDefaultName())
         {
-            // multi series image --> add serie info
+            // multi series image --> add series info
             if (multiSerie)
-                name += " - serie " + StringUtil.toString(serie);
+                name += " - series " + StringUtil.toString(series);
         }
         else
         {
@@ -3331,7 +3326,7 @@ public class Loader
             sequence.setPixelSizeY(psy * divider);
 
             // adjust name
-            name += " - resolution=1/" + StringUtil.toString(divider);
+            name += " - binning=" + StringUtil.toString(divider);
         }
 
         // adjust Z Range
@@ -3353,8 +3348,8 @@ public class Loader
     }
 
     /**
-     * Display the Serie Selection frame for the given image and returns selected serie(s).<br>
-     * Returns a 0 length array if user canceled serie selection.
+     * Display the Series Selection frame for the given image and returns selected series(s).<br>
+     * Returns a 0 length array if user canceled series selection.
      */
     public static int[] selectSeries(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
             int defaultSerie, boolean singleSelection) throws UnsupportedFormatException, IOException
@@ -3366,7 +3361,7 @@ public class Loader
         {
             tmp[0] = 1;
 
-            // multi serie, display selection dialog
+            // multi series, display selection dialog
             if (serieCount > 1)
             {
                 // allow user to select series to open
@@ -3402,11 +3397,11 @@ public class Loader
                     else if (exception[0] instanceof IOException)
                         throw (IOException) exception[0];
                 }
-                // use the pre selected serie
+                // use the pre selected series
                 else
                     tmp[1] = defaultSerie;
             }
-            // only 1 serie so open it
+            // only 1 series so open it
             else
                 tmp[1] = 0;
         }
@@ -3420,8 +3415,8 @@ public class Loader
     }
 
     /**
-     * Display the Serie Selection frame for the given image and returns selected serie(s).<br>
-     * Returns a 0 length array if user canceled serie selection.
+     * Display the Series Selection frame for the given image and returns selected series(s).<br>
+     * Returns a 0 length array if user canceled series selection.
      */
     public static int[] selectSeries(final SequenceFileImporter importer, final String path,
             final OMEXMLMetadataImpl meta, int defaultSerie, boolean singleSelection)
@@ -3431,8 +3426,8 @@ public class Loader
     }
 
     /**
-     * Display the Serie Selection frame for the given image and return the selected serie (single selection).<br>
-     * Returns <code>-1</code> if user canceled serie selection.
+     * Display the Series Selection frame for the given image and return the selected series (single selection).<br>
+     * Returns <code>-1</code> if user canceled series selection.
      */
     public static int selectSerie(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
             int defaultSerie) throws UnsupportedFormatException, IOException
