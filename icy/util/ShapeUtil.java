@@ -18,9 +18,6 @@
  */
 package icy.util;
 
-import icy.painter.Anchor2D;
-import icy.painter.PathAnchor2D;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -36,6 +33,9 @@ import java.awt.geom.RectangularShape;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import icy.painter.Anchor2D;
+import icy.painter.PathAnchor2D;
 
 /**
  * @author Stephane
@@ -281,23 +281,53 @@ public class ShapeUtil
      *        the scale factor
      * @param centered
      *        if true then scaling is centered (shape location is modified)
+     * @param scalePosition
+     *        if true then position is also 'rescaled' (shape location is modified)
      */
-    public static void scale(RectangularShape shape, double factor, boolean centered)
+    public static void scale(RectangularShape shape, double factor, boolean centered, boolean scalePosition)
     {
         final double w = shape.getWidth();
         final double h = shape.getHeight();
         final double newW = w * factor;
         final double newH = h * factor;
+        final double newX;
+        final double newY;
+
+        if (scalePosition)
+        {
+            newX = shape.getX() * factor;
+            newY = shape.getY() * factor;
+        }
+        else
+        {
+            newX = shape.getX();
+            newY = shape.getY();
+        }
 
         if (centered)
         {
             final double deltaW = (newW - w) / 2;
             final double deltaH = (newH - h) / 2;
 
-            shape.setFrame(shape.getX() - deltaW, shape.getY() - deltaH, newW, newH);
+            shape.setFrame(newX - deltaW, newY - deltaH, newW, newH);
         }
         else
-            shape.setFrame(shape.getX(), shape.getY(), newW, newH);
+            shape.setFrame(newX, newY, newW, newH);
+    }
+
+    /**
+     * Scale the specified {@link RectangularShape} by specified factor.
+     * 
+     * @param shape
+     *        the {@link RectangularShape} to scale
+     * @param factor
+     *        the scale factor
+     * @param centered
+     *        if true then scaling is centered (shape location is modified)
+     */
+    public static void scale(RectangularShape shape, double factor, boolean centered)
+    {
+        scale(shape, factor, centered, false);
     }
 
     /**

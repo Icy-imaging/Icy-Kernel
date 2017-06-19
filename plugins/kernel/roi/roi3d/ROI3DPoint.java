@@ -308,7 +308,7 @@ public class ROI3DPoint extends ROI3DShape
             getOverlay().painterChanged();
         }
     }
-
+    
     @Override
     public boolean contains(ROI roi)
     {

@@ -1,13 +1,13 @@
 package icy.type.rectangle;
 
-import icy.type.geom.Line2DUtil;
-import icy.util.ShapeUtil;
-
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+
+import icy.type.geom.Line2DUtil;
+import icy.util.ShapeUtil;
 
 public class Rectangle2DUtil
 {
@@ -56,14 +56,32 @@ public class Rectangle2DUtil
      *        the scale factor
      * @param centered
      *        if true then scaling is centered (rect location is modified)
+     * @param scalePosition
+     *        if true then position is also rescaled (rect location is modified)
      */
-    public static Rectangle2D getScaledRectangle(Rectangle2D rect, double factor, boolean centered)
+    public static Rectangle2D getScaledRectangle(Rectangle2D rect, double factor, boolean centered,
+            boolean scalePosition)
     {
         final Rectangle2D result = new Rectangle2D.Double();
 
         result.setFrame(rect);
-        ShapeUtil.scale(result, factor, centered);
+        ShapeUtil.scale(result, factor, centered, scalePosition);
 
         return result;
+    }
+
+    /**
+     * Returns a scaled form of the specified {@link Rectangle2D} by specified factor.
+     * 
+     * @param rect
+     *        the {@link Rectangle2D} to scale
+     * @param factor
+     *        the scale factor
+     * @param centered
+     *        if true then scaling is centered (rect location is modified)
+     */
+    public static Rectangle2D getScaledRectangle(Rectangle2D rect, double factor, boolean centered)
+    {
+        return getScaledRectangle(rect, factor, centered, false);
     }
 }

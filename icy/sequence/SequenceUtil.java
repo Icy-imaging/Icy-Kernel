@@ -24,7 +24,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1190,9 +1189,28 @@ public class SequenceUtil
      */
     public static Sequence concatC(Sequence[] sequences, boolean fillEmpty, boolean rescale, ProgressListener pl)
     {
-        final int channels[] = new int[sequences.length];
-        Arrays.fill(channels, -1);
-        return concatC(sequences, channels, fillEmpty, rescale, pl);
+        // compute expanded sequence array and channels array length
+        int len = 0;
+        for (Sequence s : sequences)
+            len += s.getSizeC();
+
+        final Sequence[] newSequences = new Sequence[len];
+        final int[] channels = new int[len];
+
+        // fill newSequences and channels arrays
+        int ind = 0;
+        for (Sequence s : sequences)
+        {
+            for (int c = 0; c < s.getSizeC(); c++)
+            {
+                newSequences[ind] = s;
+                channels[ind] = c;
+                ind++;
+
+            }
+        }
+
+        return concatC(newSequences, channels, fillEmpty, rescale, pl);
     }
 
     /**

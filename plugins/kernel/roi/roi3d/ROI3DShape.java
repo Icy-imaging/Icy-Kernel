@@ -1451,7 +1451,17 @@ public class ROI3DShape extends ROI3D implements Shape3D
     @Override
     public Rectangle3D computeBounds3D()
     {
-        return shape.getBounds();
+        final Rectangle3D result = shape.getBounds();
+        
+        // shape shouldn't be empty (even for single Point) --> always use a minimal bounds
+        if (result.isEmpty())
+        {
+            result.setSizeX(0.001d);
+            result.setSizeY(0.001d);
+            result.setSizeZ(0.001d);
+        }
+
+        return result;
     }
 
     @Override

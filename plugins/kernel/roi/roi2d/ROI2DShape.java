@@ -22,6 +22,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.InputEvent;
@@ -1655,6 +1656,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     {
         if ((width <= 0) || (height <= 0))
             return new boolean[0];
+        
+        // special case
+        if (inclusive && (width == 1) && (height == 1) && getPosition().equals(new Point(x, y)))
+            return new boolean[] {true};
 
         final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         final Graphics2D g = img.createGraphics();
@@ -1732,7 +1737,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     @Override
     public Rectangle2D computeBounds2D()
     {
-        return shape.getBounds2D();
+        final Rectangle2D result = shape.getBounds2D();
+
+        // shape shouldn't be empty (even for single Point) --> always use a minimal bounds
+        if (result.isEmpty())
+            result.setFrame(result.getX(), result.getY(), 0.001d, 0.001d);
+
+        return result;
     }
 
     @Override
