@@ -46,7 +46,7 @@ public class PluginSearchResultProducerHelper
             result += r;
         }
 
-        // return  mean score
+        // return mean score
         return result / words.length;
     }
 
