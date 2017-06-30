@@ -6,7 +6,6 @@ package icy.image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import icy.common.exception.UnsupportedFormatException;
@@ -248,7 +247,7 @@ public abstract class AbstractImageProvider implements ImageProvider
 
         try
         {
-            final List<Rectangle> tiles = getTileList(sizeX, sizeY, tileW, tileH);
+            final List<Rectangle> tiles = ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
 
             // submit all tasks
             for (Rectangle tile : tiles)
@@ -323,37 +322,12 @@ public abstract class AbstractImageProvider implements ImageProvider
     }
 
     /**
-     * Get the list of tiles to fill the given XY plan size.
-     * 
-     * @param sizeX
-     *        plan sizeX
-     * @param sizeY
-     *        plan sizeY
-     * @param tileW
-     *        tile width
-     * @param tileH
-     *        tile height
+     * @deprecated USe {@link ImageUtil#getTileList(int, int, int, int)} instead
      */
+    @Deprecated
     public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
     {
-        final List<Rectangle> result = new ArrayList<Rectangle>();
-        int x, y;
-
-        for (y = 0; y < (sizeY - tileH); y += tileH)
-        {
-            for (x = 0; x < (sizeX - tileW); x += tileW)
-                result.add(new Rectangle(x, y, tileW, tileH));
-            // last tile column
-            result.add(new Rectangle(x, y, sizeX - x, tileH));
-        }
-
-        // last tiles row
-        for (x = 0; x < (sizeX - tileW); x += tileW)
-            result.add(new Rectangle(x, y, tileW, sizeY - y));
-        // last column/row tile
-        result.add(new Rectangle(x, y, sizeX - x, sizeY - y));
-
-        return result;
+        return ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
     }
 
     /**

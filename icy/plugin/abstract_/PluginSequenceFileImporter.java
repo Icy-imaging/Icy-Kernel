@@ -5,7 +5,6 @@ package icy.plugin.abstract_;
 
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.util.List;
 
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
@@ -132,14 +131,6 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
             ProgressListener listener) throws UnsupportedFormatException, IOException
     {
         return interfaceHelper.getImageByTile(serie, resolution, z, t, c, tileW, tileH, listener);
-    }
-
-    /**
-     * See {@link AbstractImageProvider#getTileList(int, int, int, int)}
-     */
-    public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
-    {
-        return AbstractImageProvider.getTileList(sizeX, sizeY, tileW, tileH);
     }
 
     /**

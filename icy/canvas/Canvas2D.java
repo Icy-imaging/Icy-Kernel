@@ -48,6 +48,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -57,6 +58,7 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import icy.canvas.Canvas2D.CanvasView.ImageCache.ImageCacheTile;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.gui.component.button.IcyToggleButton;
@@ -67,6 +69,7 @@ import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.ImageUtil;
+import icy.image.lut.LUT;
 import icy.main.Icy;
 import icy.math.Interpolator;
 import icy.math.MathUtil;
@@ -143,11 +146,13 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
             if (g == null)
                 return;
 
-            final BufferedImage img = canvasView.imageCache.getImage();
+            final List<ImageCacheTile> tiles = canvasView.imageCache.getImage();
 
-            if (img != null)
-                g.drawImage(img, null, 0, 0);
-            else
+            // draw image
+            for (ImageCacheTile tile : tiles)
+                g.drawImage(tile.image, tile.rect.x, tile.rect.y, null);
+
+            if (tiles.isEmpty())
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -535,11 +540,18 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
             if (trans != null)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
-                final BufferedImage img = canvasView.imageCache.getImage();
+                final List<ImageCacheTile> tiles = canvasView.imageCache.getImage();
+                // final BufferedImage img = canvasView.imageCache.getImage();
 
                 // draw image
-                if (img != null)
-                    g2.drawImage(img, trans, null);
+                for (ImageCacheTile tile : tiles)
+                {
+                    trans.translate(tile.rect.getX(), tile.rect.getY());
+                    g2.drawImage(tile.image, trans, null);
+                    trans.translate(-tile.rect.getX(), -tile.rect.getY());
+                }
+                // if (img != null)
+                // g2.drawImage(img, trans, null);
 
                 // then apply canvas inverse transformation
                 trans.scale(1 / getScaleX(), 1 / getScaleY());
@@ -604,10 +616,31 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
 
         public class ImageCache implements Runnable
         {
+            public class ImageCacheTile
+            {
+                final static int TILE_SIZE = 2048;
+
+                public Rectangle rect;
+                public BufferedImage image;
+
+                public ImageCacheTile(Rectangle r, BufferedImage img)
+                {
+                    super();
+
+                    rect = new Rectangle(r);
+                    image = img;
+                }
+
+                public ImageCacheTile(Rectangle r)
+                {
+                    this(r, new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB));
+                }
+            }
+
             /**
              * image cache
              */
-            private BufferedImage image;
+            private List<ImageCacheTile> tiles;
 
             /**
              * processor
@@ -627,7 +660,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 // we want the processor to stay alive for sometime
                 processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
-                image = null;
+                tiles = new ArrayList<ImageCacheTile>();
                 needRebuild = true;
                 notEnoughMemory = false;
 
@@ -660,9 +693,13 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 getViewComponent().repaint();
             }
 
-            public BufferedImage getImage()
+            public List<ImageCacheTile> getImage()
             {
-                return image;
+                synchronized(tiles)
+                {
+                    // duplicate list
+                    return new ArrayList<ImageCacheTile>(tiles);
+                }
             }
 
             public boolean getNotEnoughMemory()
@@ -678,8 +715,48 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
 
                 try
                 {
-                    // build image
-                    image = Canvas2D.this.getARGBImage(getPositionT(), getPositionZ(), getPositionC(), image);
+                    // get original image
+                    final IcyBufferedImage icyImage = Canvas2D.this.getImage(getPositionT(), getPositionZ(),
+                            getPositionC());
+                    // get tiles list
+                    final List<Rectangle> newTiles = ImageUtil.getTileList(icyImage.getSizeX(), icyImage.getSizeY(),
+                            ImageCacheTile.TILE_SIZE, ImageCacheTile.TILE_SIZE);
+                    final int len = newTiles.size();
+
+                    int indNewTiles = 0;
+                    // compare with previous tile list
+                    for (ImageCacheTile tile : tiles)
+                    {
+                        if (indNewTiles < len)
+                        {
+                            final Rectangle oldRect = tile.rect;
+                            final Rectangle newRect = newTiles.get(indNewTiles);
+
+                            // size changed ? --> re alloc image
+                            if ((oldRect.width != newRect.width) || (oldRect.height != newRect.height))
+                                // re alloc image
+                                tile.image = new BufferedImage(newRect.width, newRect.height,
+                                        BufferedImage.TYPE_INT_ARGB);
+                            // adjust rect (position) if needed
+                            tile.rect = newRect;
+                        }
+
+                        indNewTiles++;
+                    }
+
+                    // remove extras tiles
+                    while (tiles.size() > len)
+                        tiles.remove(tiles.size() - 1);
+                    // add extras tiles
+                    while (indNewTiles < len)
+                        tiles.add(new ImageCacheTile(newTiles.get(indNewTiles++)));
+
+                    // rebuild images
+                    final LUT l = getLut();
+                    for (ImageCacheTile tile : tiles)
+                        tile.image = IcyBufferedImageUtil
+                                .toBufferedImage(IcyBufferedImageUtil.getSubImage(icyImage, tile.rect), tile.image, l);
+
                     notEnoughMemory = false;
                 }
                 catch (OutOfMemoryError e)
@@ -2802,16 +2879,6 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
 
             return IcyBufferedImageUtil.toBufferedImage(img, result, getLut());
         }
-
-        return null;
-    }
-
-    public BufferedImage getARGBImage(int t, int z, int c, BufferedImage out, boolean adaptSize)
-    {
-        final IcyBufferedImage img = Canvas2D.this.getImage(t, z, c);
-
-        if (img != null)
-            return IcyBufferedImageUtil.toBufferedImage(img, out, getLut());
 
         return null;
     }
