@@ -695,7 +695,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
 
             public List<ImageCacheTile> getImage()
             {
-                synchronized(tiles)
+                synchronized (tiles)
                 {
                     // duplicate list
                     return new ArrayList<ImageCacheTile>(tiles);
@@ -1259,8 +1259,8 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                     if (curScaleY == -1)
                         curScaleY = smoothTransform.getDestValue(SCALE_Y);
 
-                    curScaleX = curScaleX * sx;
-                    curScaleY = curScaleY * sy;
+                    curScaleX = Math.max(0.01d, Math.min(100d, curScaleX * sx));
+                    curScaleY = Math.max(0.01d, Math.min(100d, curScaleY * sy));
 
                     double newScaleX = curScaleX;
                     double newScaleY = curScaleY;
