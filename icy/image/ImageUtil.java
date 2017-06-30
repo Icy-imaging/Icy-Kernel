@@ -45,6 +45,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -648,6 +650,40 @@ public class ImageUtil
     public static boolean sameSize(BufferedImage im1, BufferedImage im2)
     {
         return (im1.getWidth() == im2.getWidth()) && (im1.getHeight() == im2.getHeight());
+    }
+    
+    /**
+     * Get the list of tiles to fill the given XY plan size.
+     * 
+     * @param sizeX
+     *        plan sizeX
+     * @param sizeY
+     *        plan sizeY
+     * @param tileW
+     *        tile width
+     * @param tileH
+     *        tile height
+     */
+    public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
+    {
+        final List<Rectangle> result = new ArrayList<Rectangle>();
+        int x, y;
+
+        for (y = 0; y < (sizeY - tileH); y += tileH)
+        {
+            for (x = 0; x < (sizeX - tileW); x += tileW)
+                result.add(new Rectangle(x, y, tileW, tileH));
+            // last tile column
+            result.add(new Rectangle(x, y, sizeX - x, tileH));
+        }
+
+        // last tiles row
+        for (x = 0; x < (sizeX - tileW); x += tileW)
+            result.add(new Rectangle(x, y, tileW, sizeY - y));
+        // last column/row tile
+        result.add(new Rectangle(x, y, sizeX - x, sizeY - y));
+
+        return result;
     }
 
     /**

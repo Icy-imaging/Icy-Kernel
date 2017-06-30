@@ -23,6 +23,7 @@ import icy.file.Loader;
 import icy.gui.dialog.LoaderDialog.AllImagesFileFilter;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
+import icy.image.ImageUtil;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.LinearColorMap;
 import icy.plugin.abstract_.PluginSequenceFileImporter;
@@ -213,7 +214,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
             try
             {
-                final List<Rectangle> tiles = getTileList(sizeX, sizeY, tileW, tileH);
+                final List<Rectangle> tiles = ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
 
                 // submit all tasks
                 for (Rectangle tile : tiles)

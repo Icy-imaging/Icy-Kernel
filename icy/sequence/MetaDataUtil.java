@@ -360,9 +360,9 @@ public class MetaDataUtil
             return false;
 
         final int numPlane = pix.sizeOfPlaneList();
-
-        // no plane here --> return false
-        if (index >= numPlane)
+        
+        // single plane information or no plane here --> return false
+        if ((numPlane <= 1) || (index >= numPlane))
             return false;
 
         final Plane plane = getPlane(pix, index);

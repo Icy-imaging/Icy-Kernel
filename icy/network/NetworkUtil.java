@@ -735,7 +735,27 @@ public class NetworkUtil
 
         try
         {
-            return download(ip, uc.getContentLength(), listener);
+            final byte[] result = download(ip, uc.getContentLength(), listener);
+            
+            // we test response code for HTTP connection
+            if (uc instanceof HttpURLConnection)
+            {
+                final HttpURLConnection huc = (HttpURLConnection) uc;
+
+                // not ok ?
+                if (huc.getResponseCode() != HttpURLConnection.HTTP_OK)
+                {
+                    if (displayError)
+                    {
+                        System.out.println("Error while downloading '" + huc.getURL() + "':");
+                        System.out.println(huc.getResponseMessage());
+                    }
+
+                    return null;
+                }
+            }
+
+            return result; 
         }
         catch (Exception e)
         {
@@ -802,7 +822,7 @@ public class NetworkUtil
             bin = (BufferedInputStream) in;
         else
             bin = new BufferedInputStream(in);
-
+        
         final ByteArrayOutputStream bout = new ByteArrayOutputStream((int) ((len > 0) ? len : READ_BLOCKSIZE));
         // read per block of 64 KB
         final byte[] data = new byte[READ_BLOCKSIZE];
@@ -815,7 +835,7 @@ public class NetworkUtil
             while (count >= 0)
             {
                 count = bin.read(data);
-                if (count < 0)
+                if (count <= 0)
                 {
                     // unexpected length
                     if ((len != -1) && (off != len))

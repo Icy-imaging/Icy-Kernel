@@ -227,8 +227,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         newValue(1, cpuLoad);
 
         setInfo(0,
-                "Memory: " + UnitUtil.getBytesString(usedMemory) + "  (Max: "
-                        + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + ")");
+                "Memory: " + UnitUtil.getBytesString(usedMemory) + " / "
+                        + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
         setInfo(1, "CPU: " + cpuLoad + "%");
 
         repaint();

@@ -18,8 +18,18 @@
  */
 package icy.plugin;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.swing.event.EventListenerList;
+
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
+import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.DownloadFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
@@ -35,15 +45,6 @@ import icy.update.Updater;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.util.ZipUtil;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.swing.event.EventListenerList;
 
 /**
  * @author Stephane
@@ -688,8 +689,8 @@ public class PluginInstaller implements Runnable
                     if (showError)
                     {
                         System.err.println("Can't resolve dependencies for plugin '" + plugin.getName() + "' :");
-                        System.err.println(onlinePlugin.getName() + " " + onlinePlugin.getVersion()
-                                + " found in repository");
+                        System.err.println(
+                                onlinePlugin.getName() + " " + onlinePlugin.getVersion() + " found in repository");
                         System.err.println("but version " + ident.getVersion() + " or greater needed.");
                     }
 
@@ -755,6 +756,7 @@ public class PluginInstaller implements Runnable
             List<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
             final Set<PluginDescriptor> pluginsOk = new HashSet<PluginDescriptor>();
             final Set<PluginDescriptor> pluginsNOk = new HashSet<PluginDescriptor>();
+            final Set<PluginDescriptor> pluginsNewJava = new HashSet<PluginDescriptor>();
 
             // get dependencies
             for (int i = installingPlugins.size() - 1; i >= 0; i--)
@@ -865,11 +867,26 @@ public class PluginInstaller implements Runnable
                 // send report when we have verification error
                 if (!StringUtil.isEmpty(error))
                 {
-                    IcyExceptionHandler.report(plugin, "An error occured while installing the plugin :\n" + error);
-                    // print error
-                    System.err.println(error);
+                    final String mess = "Fatal error while loading '" + plugin.getClassName() + "' class from "
+                            + plugin.getJarFilename() + " :\n" + error;
 
-                    pluginsNOk.add(plugin);
+                    // new java version required ?
+                    if (error.contains(PluginLoader.NEWER_JAVA_REQUIRED))
+                    {
+                        // print error in console
+                        System.err.println(mess);
+                        // add to list
+                        pluginsNewJava.add(plugin);
+                    }
+                    else
+                    {
+                        // report error to developer
+                        IcyExceptionHandler.report(plugin, "An error occured while installing the plugin :\n" + error);
+                        // print error
+                        System.err.println(mess);
+                        // add to list
+                        pluginsNOk.add(plugin);
+                    }
                 }
             }
 
@@ -902,18 +919,36 @@ public class PluginInstaller implements Runnable
                 System.out.println();
             }
 
+            if (!pluginsNewJava.isEmpty())
+            {
+                System.out.println();
+                System.out.println("The following plugin(s) require a newer version of java:");
+                for (PluginDescriptor plugin : pluginsNewJava)
+                {
+                    System.err.println(plugin.getName() + " " + plugin.getVersion());
+                    // notify about installation even fails
+                    fireInstalledEvent(plugin, false);
+                }
+                System.out.println();
+            }
+
             if (showProgress && !Icy.getMainInterface().isHeadLess())
             {
                 if (pluginsNOk.isEmpty())
-                    new SuccessfullAnnounceFrame("Plugin(s) installation was successful !");
+                    new SuccessfullAnnounceFrame("Plugin(s) installation was successful !", 10);
                 else if (pluginsOk.isEmpty())
-                    new FailedAnnounceFrame("Plugin(s) installation failed !");
+                    new FailedAnnounceFrame("Plugin(s) installation failed !", 10);
                 else
                     new FailedAnnounceFrame(
-                            "Some plugin(s) installation failed (looks at the output console for detail) !");
+                            "Some plugin(s) installation failed (looks at the output console for detail) !", 10);
+
+                // notify about new java version required
+                for (PluginDescriptor plugin : pluginsNewJava)
+                    new AnnounceFrame("Plugin '" + plugin.getName() + " requires a new version of Java !", 10);
             }
         }
         finally
+
         {
             // installation end
             installingPlugins.clear();

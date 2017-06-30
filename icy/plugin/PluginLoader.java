@@ -60,6 +60,9 @@ public class PluginLoader
     public final static String PLUGIN_PACKAGE = "plugins";
     public final static String PLUGIN_KERNEL_PACKAGE = "plugins.kernel";
     public final static String PLUGIN_PATH = "plugins";
+    
+    // used to identify java version problem
+    public final static String NEWER_JAVA_REQUIRED = "Newer java version required";
 
     /**
      * static class
@@ -269,8 +272,8 @@ public class PluginLoader
             }
             catch (UnsupportedClassVersionError e)
             {
-                // java version error
-                System.err.println("Newer java version required for class '" + className + "' (discarded)");
+                // java version error (here we just notify in the console)
+                System.err.println(NEWER_JAVA_REQUIRED + " for class '" + className + "' (discarded)");
             }
             catch (Error e)
             {
@@ -742,9 +745,6 @@ public class PluginLoader
      */
     public static String verifyPlugin(PluginDescriptor plugin)
     {
-        final String mess = "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                + plugin.getJarFilename() + " :\n";
-
         synchronized (instance.loader)
         {
             try
@@ -754,25 +754,25 @@ public class PluginLoader
             }
             catch (UnsupportedClassVersionError e)
             {
-                return mess + "Newer java version required.";
+                return NEWER_JAVA_REQUIRED + ".";
             }
             catch (Error e)
             {
-                return mess + e.toString();
+                return e.toString();
             }
             catch (ClassCastException e)
             {
-                return mess + IcyExceptionHandler.getErrorMessage(e, false)
+                return IcyExceptionHandler.getErrorMessage(e, false)
                         + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class.";
             }
             catch (ClassNotFoundException e)
             {
-                return mess + IcyExceptionHandler.getErrorMessage(e, false)
+                return IcyExceptionHandler.getErrorMessage(e, false)
                         + "Verify you correctly set the class name in your plugin description.";
             }
             catch (Exception e)
             {
-                return mess + IcyExceptionHandler.getErrorMessage(e, false);
+                return IcyExceptionHandler.getErrorMessage(e, false);
             }
         }
 

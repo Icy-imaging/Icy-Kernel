@@ -147,6 +147,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             numChannel += image.getSizeC();
 
         final Object[] data = Array2DUtil.createArray(dataType, numChannel);
+        final IcyColorMap[] colormaps = new IcyColorMap[numChannel];
 
         // get data from all images
         int destC = 0;
@@ -158,11 +159,20 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 throw new IllegalArgumentException("All images contained in imageList should have the same dimension");
 
             for (int c = 0; c < image.getSizeC(); c++)
-                data[destC++] = image.getDataXY(c);
+            {
+                data[destC] = image.getDataXY(c);
+                colormaps[destC++] = image.getColorMap(c);
+            }
         }
 
-        // create and return the image
-        return new IcyBufferedImage(width, height, data, dataType.isSigned());
+        // create result image
+        final IcyBufferedImage result = new IcyBufferedImage(width, height, data, dataType.isSigned());
+
+        // restore colormaps
+        for (int c = 0; c < result.getSizeC(); c++)
+            result.setColorMap(c, colormaps[c], false);
+
+        return result;
     }
 
     /**
