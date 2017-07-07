@@ -244,16 +244,22 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
                         // load selected image file with advanced option
                         Loader.load((SequenceFileImporter) importer, firstPath, optionPanel.getSeries(),
-                                optionPanel.getResolutionLevel(), optionPanel.getXYRegion(), optionPanel.getZMin(),
-                                optionPanel.getZMax(), optionPanel.getTMin(), optionPanel.getTMax(),
-                                optionPanel.getChannel(), true, true);
+                                optionPanel.getResolutionLevel(), optionPanel.getXYRegion(),
+                                optionPanel.getFullZRange() ? -1 : optionPanel.getZMin(),
+                                optionPanel.getFullZRange() ? -1 : optionPanel.getZMax(),
+                                optionPanel.getFullTRange() ? -1 : optionPanel.getTMin(),
+                                optionPanel.getFullTRange() ? -1 : optionPanel.getTMax(), optionPanel.getChannel(),
+                                true, true);
                     }
                     else
                     {
                         // load selected file
                         Loader.load(null, firstPath, optionPanel.getSeries(), optionPanel.getResolutionLevel(),
-                                optionPanel.getXYRegion(), optionPanel.getZMin(), optionPanel.getZMax(),
-                                optionPanel.getTMin(), optionPanel.getTMax(), optionPanel.getChannel(), true, true);
+                                optionPanel.getXYRegion(), optionPanel.getFullZRange() ? -1 : optionPanel.getZMin(),
+                                optionPanel.getFullZRange() ? -1 : optionPanel.getZMax(),
+                                optionPanel.getFullTRange() ? -1 : optionPanel.getTMin(),
+                                optionPanel.getFullTRange() ? -1 : optionPanel.getTMax(), optionPanel.getChannel(),
+                                true, true);
                     }
                 }
             }

@@ -83,6 +83,20 @@ public abstract class ROIDescriptor
 
         return null;
     }
+    
+    /**
+     * Returns the descriptor identified by the given id from the given list of {@link ROIDescriptor}.<br>
+     * It can return <code>null</code> if the descriptor is not found in the given list.
+     * 
+     * @param id
+     *        the id of the descriptor ({@link ROIBasicMeasureDescriptorsPlugin#ID_VOLUME} for instance) @see
+     *        #getDescriptors()
+     * @see #computeDescriptor(String, ROI, Sequence)
+     */
+    public static ROIDescriptor getDescriptor(String id)
+    {
+        return getDescriptor(getDescriptors().keySet(), id);
+    }
 
     /**
      * Computes the specified descriptor from the input {@link ROIDescriptor} set on given ROI

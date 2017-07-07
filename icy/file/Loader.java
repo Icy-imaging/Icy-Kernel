@@ -2272,8 +2272,7 @@ public class Loader
      * @param importer
      *        Importer used to load the image file.<br>
      *        If set to <code>null</code> the loader will search for a compatible importer and if
-     *        several importers
-     *        match the user will have to select the appropriate one from a selection dialog if
+     *        several importers match the user will have to select the appropriate one from a selection dialog if
      *        <code>showProgress</code> parameter is set to <code>true</code> otherwise the first
      *        compatible importer will be automatically used.
      * @param path
@@ -2321,13 +2320,30 @@ public class Loader
             @Override
             public void run()
             {
-                // load sequence
-                final Sequence sequence = loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT,
-                        maxT, channel, addToRecent, showProgress);
+                // normal opening operation ?
+                if ((resolution == 0) && (region == null) && (minZ <= 0) && (maxZ == -1) && (minT <= 0) && (maxT == -1)
+                        && (channel == -1))
+                {
+                    // load sequence (we use this method to allow multi series opening)
+                    final List<Sequence> sequences = loadSequences(
+                            (importer == null) ? getSequenceFileImporter(path, !showProgress) : importer,
+                            CollectionUtil.asList(path), series, true, false, false, addToRecent, showProgress);
 
-                // and display it
-                if (sequence != null)
-                    Icy.getMainInterface().addSequence(sequence);
+                    // and display them
+                    for (Sequence sequence : sequences)
+                        if (sequence != null)
+                            Icy.getMainInterface().addSequence(sequence);
+                }
+                else
+                {
+                    // load sequence
+                    final Sequence sequence = loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT,
+                            maxT, channel, addToRecent, showProgress);
+
+                    // and display it
+                    if (sequence != null)
+                        Icy.getMainInterface().addSequence(sequence);
+                }
             }
         });
     }
@@ -2719,7 +2735,11 @@ public class Loader
 
                     // special case where loading was interrupted
                     if (sequences == null)
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
 
                     if (sequences.size() > 0)
                     {
@@ -2734,7 +2754,11 @@ public class Loader
 
                     // interrupt loading
                     if ((loadingFrame != null) && loadingFrame.isCancelRequested())
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
                 }
             }
             else
@@ -2760,7 +2784,11 @@ public class Loader
 
                     // special case where loading was interrupted
                     if (sequences == null)
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
 
                     final int s = filePos.getS();
                     final int z = filePos.getZ();
@@ -2835,7 +2863,11 @@ public class Loader
 
                     // interrupt loading
                     if ((loadingFrame != null) && loadingFrame.isCancelRequested())
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
                 }
 
                 // concatenate last sequences in map and add it to result list
@@ -3352,7 +3384,7 @@ public class Loader
      * Returns a 0 length array if user canceled series selection.
      */
     public static int[] selectSeries(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
-            int defaultSerie, boolean singleSelection) throws UnsupportedFormatException, IOException
+            int defaultSerie, final boolean singleSelection) throws UnsupportedFormatException, IOException
     {
         final int serieCount = MetaDataUtil.getNumSeries(meta);
         final int[] tmp = new int[serieCount + 1];
@@ -3378,7 +3410,7 @@ public class Loader
                         {
                             try
                             {
-                                final int[] series = new SeriesSelectionDialog(importer, path, meta)
+                                final int[] series = new SeriesSelectionDialog(importer, path, meta, singleSelection)
                                         .getSelectedSeries();
                                 // get result
                                 tmp[0] = series.length;

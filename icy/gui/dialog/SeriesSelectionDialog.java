@@ -82,8 +82,10 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     protected SequenceFileImporter importer;
     protected String id;
     protected OMEXMLMetadata metadata;
+    protected boolean singleSelection;
     protected int[] selectedSeries;
     protected final MouseAdapter serieDoubleClickAction;
+    protected final ActionListener serieSimpleClickAction;
     protected final Thread loadingThread;
 
     /**
@@ -97,10 +99,19 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         this.reader = reader;
         // default is empty
         selectedSeries = new int[] {};
+        singleSelection = false;
 
         initialize();
 
-        // double cick action = direct selection
+        serieSimpleClickAction = new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // not used here
+            }
+        };
+        // double click action = direct selection
         serieDoubleClickAction = new MouseAdapter()
         {
             @Override
@@ -225,20 +236,15 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         setVisible(true);
     }
 
-    /**
-     * Create a new dialog to select the series to open from an image.
-     * 
-     * @throws IOException
-     * @throws UnsupportedFormatException
-     */
-    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadata metadata)
-            throws UnsupportedFormatException, IOException
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadata metadata,
+            boolean singleSelection)
     {
         super("Series selection", null, Icy.getMainInterface().getMainFrame());
 
         this.importer = importer;
         this.id = id;
         this.metadata = metadata;
+        this.singleSelection = singleSelection;
         // default is empty
         selectedSeries = new int[] {};
 
@@ -246,7 +252,26 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
         final int series = MetaDataUtil.getNumSeries(metadata);
 
-        // double cick action = direct selection
+        // simple click action = simple selection
+        serieSimpleClickAction = new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final Object source = e.getSource();
+
+                // unselect all others
+                if (SeriesSelectionDialog.this.singleSelection)
+                {
+                    for (ThumbnailComponent thumb : serieComponents)
+                    {
+                        if (thumb != source)
+                            thumb.setSelected(false);
+                    }
+                }
+            }
+        };
+        // double click action = direct selection
         serieDoubleClickAction = new MouseAdapter()
         {
             @Override
@@ -289,6 +314,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                     // add mouse listener (double click action)
                     thumb.addMouseListener(serieDoubleClickAction);
+                    // single click action
+                    thumb.addActionListener(serieSimpleClickAction);
 
                     // remove mouse listener (double click action)
                     if (serieComponents[index] != null)
@@ -340,7 +367,6 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
                     thumb.setSelected(true);
             }
         });
-
         // action on "Unselect All"
         unselectAllBtn.addActionListener(new ActionListener()
         {
@@ -352,10 +378,26 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
             }
         });
 
+        // select/unselect all buttons visible only if not in "single selection" mode
+        selectAllBtn.setVisible(!singleSelection);
+        unselectAllBtn.setVisible(!singleSelection);
+
         setPreferredSize(new Dimension(740, 520));
         pack();
         ComponentUtil.center(SeriesSelectionDialog.this);
         setVisible(true);
+    }
+
+    /**
+     * Create a new dialog to select the series to open from an image.
+     * 
+     * @throws IOException
+     * @throws UnsupportedFormatException
+     */
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadata metadata)
+            throws UnsupportedFormatException, IOException
+    {
+        this(importer, id, metadata, false);
     }
 
     /**
@@ -394,7 +436,11 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         getContentPane().add(panel, BorderLayout.NORTH);
         panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-        JLabel lblSelect = new JLabel("Click on a serie to select / unselect it or double click to directly open it.");
+        final JLabel lblSelect;
+        if (singleSelection)
+            lblSelect = new JLabel("Select the series and click 'Ok' or directly double click on it to open it.");
+        else
+            lblSelect = new JLabel("Click on a serie to select / unselect it and click 'Ok' or double click to directly open it.");
         ComponentUtil.setFontBold(lblSelect);
         ComponentUtil.setFontSize(lblSelect, 12);
         panel.add(lblSelect);
@@ -433,7 +479,6 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         // kill loading task in 2 seconds
         new Timer().schedule(new TimerTask()
         {
-            @SuppressWarnings("deprecation")
             @Override
             public void run()
             {
@@ -441,7 +486,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
                 {
                     try
                     {
-                        loadingThread.stop();
+                        loadingThread.interrupt();
                     }
                     catch (Throwable t)
                     {
