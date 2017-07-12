@@ -18,6 +18,25 @@
  */
 package icy.roi;
 
+import java.awt.Color;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
@@ -42,21 +61,6 @@ import icy.util.EventUtil;
 import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
-
-import java.awt.Color;
-import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi3d.ROI3DArea;
 import plugins.kernel.roi.roi4d.ROI4DArea;
@@ -125,6 +129,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_SELECTED = "selected";
     public static final String ID_READONLY = "readOnly";
     public static final String ID_SHOWNAME = "showName";
+    public static final String ID_PROPERTIES = "properties";
 
     public static final ROIIdComparator idComparator = new ROIIdComparator();
     public static final ROINameComparator nameComparator = new ROINameComparator();
@@ -199,13 +204,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
         catch (NoSuchMethodException e)
         {
-            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
-                    + className + "', cannot create the ROI."), true);
+            IcyExceptionHandler.handleException(
+                    new NoSuchMethodException(
+                            "Default constructor not found in class '" + className + "', cannot create the ROI."),
+                    true);
         }
         catch (ClassNotFoundException e)
         {
-            IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + className
-                    + "' class, cannot create the ROI."), true);
+            IcyExceptionHandler.handleException(
+                    new ClassNotFoundException("Cannot find '" + className + "' class, cannot create the ROI."), true);
         }
         catch (Exception e)
         {
@@ -282,8 +289,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
         catch (Exception e)
         {
-            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
-                    + className + "', cannot create the ROI."), true);
+            IcyExceptionHandler.handleException(
+                    new NoSuchMethodException(
+                            "Default constructor not found in class '" + className + "', cannot create the ROI."),
+                    true);
         }
 
         return result;
@@ -1256,6 +1265,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean focused;
     protected boolean selected;
     protected boolean readOnly;
+    protected final Map<String, String> properties;
 
     // attached ROI icon
     protected Image icon;
@@ -1292,6 +1302,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         creating = false;
         focused = false;
         selected = false;
+        properties = new HashMap<String, String>();
 
         cachedBounds = new Rectangle5D.Double();
         cachedNumberOfPoints = 0d;
@@ -1636,12 +1647,78 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Generic way to retrieve a ROI property value.<br>
-     * Returns <code>null</code> if property name is invalid.
+     * Retrieve a ROI property value.<br>
+     * Returns <code>null</code> if the property value is empty.
      * 
-     * @param propertyName
-     *        property name (for instance {@link #PROPERTY_COLOR})
+     * @param name
+     *        Property name.<br>
+     *        Note that it can be default property name (as {@value #PROPERTY_READONLY}) in which case the value will be
+     *        returned in String format if possible or launch an {@link IllegalArgumentException} when not possible.
      */
+    public String getProperty(String name)
+    {
+        if (StringUtil.equals(name, PROPERTY_CREATING))
+            return Boolean.toString(isCreating());
+        if (StringUtil.equals(name, PROPERTY_NAME))
+            return getName();
+        if (StringUtil.equals(name, PROPERTY_OPACITY))
+            return Float.toString(getOpacity());
+        if (StringUtil.equals(name, PROPERTY_READONLY))
+            return Boolean.toString(isReadOnly());
+        if (StringUtil.equals(name, PROPERTY_SHOWNAME))
+            return Boolean.toString(getShowName());
+        if (StringUtil.equals(name, PROPERTY_STROKE))
+            return Double.toString(getStroke());
+
+        if (StringUtil.equals(name, PROPERTY_COLOR) || StringUtil.equals(name, PROPERTY_ICON))
+            throw new IllegalArgumentException("Cannot return value of property '" + name + "' as String");
+
+        synchronized (properties)
+        {
+            return properties.get(name);
+        }
+    }
+
+    /**
+     * Generic way to set ROI property value.
+     * 
+     * @param name
+     *        Property name.<br>
+     *        Note that it can be default property name (as {@value #PROPERTY_READONLY}) in which case the value will be
+     *        set in String format if possible or launch an {@link IllegalArgumentException} when not possible.
+     * @param value
+     *        the value to set in the property (for instance "FALSE" for {@link #PROPERTY_READONLY})
+     */
+    public void setProperty(String name, String value)
+    {
+        if (StringUtil.equals(name, PROPERTY_CREATING))
+            setCreating(Boolean.valueOf(value).booleanValue());
+        if (StringUtil.equals(name, PROPERTY_NAME))
+            setName(value);
+        if (StringUtil.equals(name, PROPERTY_OPACITY))
+            setOpacity(Float.valueOf(value).floatValue());
+        if (StringUtil.equals(name, PROPERTY_READONLY))
+            setReadOnly(Boolean.valueOf(value).booleanValue());
+        if (StringUtil.equals(name, PROPERTY_SHOWNAME))
+            setShowName(Boolean.valueOf(value).booleanValue());
+        if (StringUtil.equals(name, PROPERTY_STROKE))
+            setStroke(Double.valueOf(value).doubleValue());
+
+        if (StringUtil.equals(name, PROPERTY_COLOR) || StringUtil.equals(name, PROPERTY_ICON))
+            throw new IllegalArgumentException("Cannot set value of property '" + name + "' as String");
+
+        synchronized (properties)
+        {
+            properties.put(name, value);
+        }
+
+        propertyChanged(name);
+    }
+
+    /**
+     * @deprecated use {@link #getProperty(String)} instead.
+     */
+    @Deprecated
     public Object getPropertyValue(String propertyName)
     {
         if (StringUtil.equals(propertyName, PROPERTY_COLOR))
@@ -1665,13 +1742,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Generic way to set ROI property value.
-     * 
-     * @param propertyName
-     *        property name (for instance {@value #PROPERTY_COLOR})
-     * @param value
-     *        the value to set in the property (for instance Color.red for {@link #PROPERTY_COLOR})
+     * @deprecated use {@link #setProperty(String, String)}
      */
+    @Deprecated
     public void setPropertyValue(String propertyName, Object value)
     {
         if (StringUtil.equals(propertyName, PROPERTY_COLOR))
@@ -2168,9 +2241,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                         BooleanMask2D roiMask;
 
                         // take content first
-                        mask = new BooleanMask2D(containedBounds2D, getBooleanMask2D(containedBounds2D, z, t, c, false));
-                        roiMask = new BooleanMask2D(containedBounds2D, roi.getBooleanMask2D(containedBounds2D, z, t, c,
-                                false));
+                        mask = new BooleanMask2D(containedBounds2D,
+                                getBooleanMask2D(containedBounds2D, z, t, c, false));
+                        roiMask = new BooleanMask2D(containedBounds2D,
+                                roi.getBooleanMask2D(containedBounds2D, z, t, c, false));
 
                         // test first only on content
                         if (!mask.contains(roiMask))
@@ -2178,8 +2252,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                         // take content and edge
                         mask = new BooleanMask2D(containedBounds2D, getBooleanMask2D(containedBounds2D, z, t, c, true));
-                        roiMask = new BooleanMask2D(containedBounds2D, roi.getBooleanMask2D(containedBounds2D, z, t, c,
-                                true));
+                        roiMask = new BooleanMask2D(containedBounds2D,
+                                roi.getBooleanMask2D(containedBounds2D, z, t, c, true));
 
                         // then test on content and edge
                         if (!mask.contains(roiMask))
@@ -2412,8 +2486,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (bounds2D.isEmpty())
             return new BooleanMask2D(new Rectangle(), new boolean[0]);
 
-        return new BooleanMask2D(bounds2D, getBooleanMask2D(bounds2D.x, bounds2D.y, bounds2D.width, bounds2D.height, z,
-                t, c, inclusive));
+        return new BooleanMask2D(bounds2D,
+                getBooleanMask2D(bounds2D.x, bounds2D.y, bounds2D.width, bounds2D.height, z, t, c, inclusive));
     }
 
     /**
@@ -3067,6 +3141,19 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
             setShowName(XMLUtil.getElementBooleanValue(node, ID_SHOWNAME, false));
+
+            properties.clear();
+
+            final Node propertiesNode = XMLUtil.getElement(node, ID_PROPERTIES);
+            if (propertiesNode != null)
+            {
+                synchronized (properties)
+                {
+                    for (Element element : XMLUtil.getElements(propertiesNode))
+                        properties.put(element.getNodeName(), XMLUtil.getValue(element, ""));
+                }
+            }
+
             painter.loadFromXML(node);
         }
         finally
@@ -3095,6 +3182,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
         XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
         XMLUtil.setElementBooleanValue(node, ID_SHOWNAME, getShowName());
+
+        properties.put(PROPERTY_COLOR, getColor().toString());
+        properties.put(PROPERTY_READONLY, Boolean.toString(readOnly));
+        properties.put(PROPERTY_NAME, getName());
+        properties.put(PROPERTY_OPACITY, Double.toString(getOpacity()));
+
+        final Element propertiesNode = XMLUtil.setElement(node, ID_PROPERTIES);
+        final Set<Entry<String, String>> entries = properties.entrySet();
+
+        synchronized (properties)
+        {
+            for (Entry<String, String> entry : entries)
+                XMLUtil.setElementValue(propertiesNode, entry.getKey(), entry.getValue());
+        }
 
         painter.saveToXML(node);
 
@@ -3266,8 +3367,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                 // painter affecting display
                 if (StringUtil.isEmpty(property) || StringUtil.equals(property, PROPERTY_NAME)
-                        || StringUtil.equals(property, PROPERTY_SHOWNAME)
-                        || StringUtil.equals(property, PROPERTY_COLOR) || StringUtil.equals(property, PROPERTY_OPACITY)
+                        || StringUtil.equals(property, PROPERTY_SHOWNAME) || StringUtil.equals(property, PROPERTY_COLOR)
+                        || StringUtil.equals(property, PROPERTY_OPACITY)
                         || StringUtil.equals(property, PROPERTY_SHOWNAME)
                         || StringUtil.equals(property, PROPERTY_STROKE))
                     painter.painterChanged();

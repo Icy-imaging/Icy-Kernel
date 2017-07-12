@@ -18,22 +18,6 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import icy.canvas.IcyCanvas;
-import icy.painter.OverlayEvent;
-import icy.painter.OverlayListener;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI2D.ROI2DPainter;
-import icy.roi.ROI3D;
-import icy.roi.ROIEvent;
-import icy.roi.ROIListener;
-import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle3D;
-import icy.util.XMLUtil;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -52,6 +36,22 @@ import java.util.concurrent.Semaphore;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import icy.canvas.IcyCanvas;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayListener;
+import icy.roi.BooleanMask2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROI2D.ROI2DPainter;
+import icy.roi.ROI3D;
+import icy.roi.ROIEvent;
+import icy.roi.ROIListener;
+import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle3D;
+import icy.util.XMLUtil;
 
 /**
  * Base class defining a generic 3D ROI as a stack of individual 2D ROI slices.
@@ -159,8 +159,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setCreating(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setCreating(value);
+                }
             }
             finally
             {
@@ -184,8 +187,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setReadOnly(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setReadOnly(value);
+                }
             }
             finally
             {
@@ -209,8 +215,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setFocused(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setFocused(value);
+                }
             }
             finally
             {
@@ -234,8 +243,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setSelected(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setSelected(value);
+                }
             }
             finally
             {
@@ -259,8 +271,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setName(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setName(value);
+                }
             }
             finally
             {
@@ -284,8 +299,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setT(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setT(value);
+                }
             }
             finally
             {
@@ -309,8 +327,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setC(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setC(value);
+                }
             }
             finally
             {
@@ -340,10 +361,13 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
      */
     public int getSizeZ()
     {
-        if (slices.isEmpty())
-            return 0;
+        synchronized (slices)
+        {
+            if (slices.isEmpty())
+                return 0;
 
-        return (slices.lastKey().intValue() - slices.firstKey().intValue()) + 1;
+            return (slices.lastKey().intValue() - slices.firstKey().intValue()) + 1;
+        }
     }
 
     /**
@@ -393,8 +417,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             roi2d.addListener(this);
             roi2d.getOverlay().addOverlayListener(this);
 
-            // set new slice
-            slices.put(Integer.valueOf(z), roi2d);
+            synchronized (slices)
+            {
+                // set new slice
+                slices.put(Integer.valueOf(z), roi2d);
+            }
         }
 
         // notify ROI changed
@@ -406,8 +433,13 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
      */
     public R removeSlice(int z)
     {
-        // remove the current slice (if any)
-        final R result = slices.remove(Integer.valueOf(z));
+        final R result;
+
+        synchronized (slices)
+        {
+            // remove the current slice (if any)
+            result = slices.remove(Integer.valueOf(z));
+        }
 
         // remove listeners
         if (result != null)
@@ -431,13 +463,17 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         if (isEmpty())
             return;
 
-        for (R slice : slices.values())
+        synchronized (slices)
         {
-            slice.removeListener(this);
-            slice.getOverlay().removeOverlayListener(this);
+            for (R slice : slices.values())
+            {
+                slice.removeListener(this);
+                slice.getOverlay().removeOverlayListener(this);
+            }
+
+            slices.clear();
         }
 
-        slices.clear();
         roiChanged(true);
     }
 
@@ -449,8 +485,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         beginUpdate();
         try
         {
-            for (Entry<Integer, R> entry : roi.slices.entrySet())
-                add(entry.getKey().intValue(), entry.getValue());
+            synchronized (slices)
+            {
+                for (Entry<Integer, R> entry : roi.slices.entrySet())
+                    add(entry.getKey().intValue(), entry.getValue());
+            }
         }
         finally
         {
@@ -466,8 +505,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         beginUpdate();
         try
         {
-            for (Entry<Integer, R> entry : roi.slices.entrySet())
-                exclusiveAdd(entry.getKey().intValue(), entry.getValue());
+            synchronized (slices)
+            {
+                for (Entry<Integer, R> entry : roi.slices.entrySet())
+                    exclusiveAdd(entry.getKey().intValue(), entry.getValue());
+            }
         }
         finally
         {
@@ -483,21 +525,24 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         beginUpdate();
         try
         {
-            final Set<Integer> keys = roi.slices.keySet();
-            final Set<Integer> toRemove = new HashSet<Integer>();
+            synchronized (slices)
+            {
+                final Set<Integer> keys = roi.slices.keySet();
+                final Set<Integer> toRemove = new HashSet<Integer>();
 
-            // remove slices which are not contained
-            for (Integer key : slices.keySet())
-                if (!keys.contains(key))
-                    toRemove.add(key);
+                // remove slices which are not contained
+                for (Integer key : slices.keySet())
+                    if (!keys.contains(key))
+                        toRemove.add(key);
 
-            // do remove first
-            for (Integer key : toRemove)
-                removeSlice(key.intValue());
+                // do remove first
+                for (Integer key : toRemove)
+                    removeSlice(key.intValue());
 
-            // then process intersection
-            for (Entry<Integer, R> entry : roi.slices.entrySet())
-                intersect(entry.getKey().intValue(), entry.getValue());
+                // then process intersection
+                for (Entry<Integer, R> entry : roi.slices.entrySet())
+                    intersect(entry.getKey().intValue(), entry.getValue());
+            }
         }
         finally
         {
@@ -513,8 +558,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         beginUpdate();
         try
         {
-            for (Entry<Integer, R> entry : roi.slices.entrySet())
-                subtract(entry.getKey().intValue(), entry.getValue());
+            synchronized (slices)
+            {
+                for (Entry<Integer, R> entry : roi.slices.entrySet())
+                    subtract(entry.getKey().intValue(), entry.getValue());
+            }
         }
         finally
         {
@@ -918,17 +966,20 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     {
         Rectangle2D xyBounds = null;
 
-        for (R slice : slices.values())
+        synchronized (slices)
         {
-            final Rectangle2D bnd2d = slice.getBounds2D();
-
-            // only add non empty bounds
-            if (!bnd2d.isEmpty())
+            for (R slice : slices.values())
             {
-                if (xyBounds == null)
-                    xyBounds = (Rectangle2D) bnd2d.clone();
-                else
-                    xyBounds.add(bnd2d);
+                final Rectangle2D bnd2d = slice.getBounds2D();
+
+                // only add non empty bounds
+                if (!bnd2d.isEmpty())
+                {
+                    if (xyBounds == null)
+                        xyBounds = (Rectangle2D) bnd2d.clone();
+                    else
+                        xyBounds.add(bnd2d);
+                }
             }
         }
 
@@ -1021,8 +1072,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.unselectAllPoints();
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.unselectAllPoints();
+                }
             }
             finally
             {
@@ -1042,17 +1096,20 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         // 3D contour points = first slice points + all slices perimeter + last slice points
         double result = 0;
 
-        if (!slices.isEmpty())
+        synchronized (slices)
         {
-            final double psx = sequence.getPixelSizeX();
-            final double psy = sequence.getPixelSizeY();
-            final double psz = sequence.getPixelSizeZ();
+            if (!slices.isEmpty())
+            {
+                final double psx = sequence.getPixelSizeX();
+                final double psy = sequence.getPixelSizeY();
+                final double psz = sequence.getPixelSizeZ();
 
-            result = slices.firstEntry().getValue().getNumberOfPoints() * psx * psy;
-            result += slices.lastEntry().getValue().getNumberOfPoints() * psx * psy;
+                result = slices.firstEntry().getValue().getNumberOfPoints() * psx * psy;
+                result += slices.lastEntry().getValue().getNumberOfPoints() * psx * psy;
 
-            for (R slice : slices.values())
-                result += slice.getLength(sequence) * psz;
+                for (R slice : slices.values())
+                    result += slice.getLength(sequence) * psz;
+            }
         }
 
         return result;
@@ -1065,24 +1122,27 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         // 3D contour points = first slice points + inter slices contour points + last slice points
         double result = 0;
 
-        if (slices.size() <= 2)
+        synchronized (slices)
         {
-            for (R slice : slices.values())
-                result += slice.getNumberOfPoints();
-        }
-        else
-        {
-            final Entry<Integer, R> firstEntry = slices.firstEntry();
-            final Entry<Integer, R> lastEntry = slices.lastEntry();
-            final Integer firstKey = firstEntry.getKey();
-            final Integer lastKey = lastEntry.getKey();
+            if (slices.size() <= 2)
+            {
+                for (R slice : slices.values())
+                    result += slice.getNumberOfPoints();
+            }
+            else
+            {
+                final Entry<Integer, R> firstEntry = slices.firstEntry();
+                final Entry<Integer, R> lastEntry = slices.lastEntry();
+                final Integer firstKey = firstEntry.getKey();
+                final Integer lastKey = lastEntry.getKey();
 
-            result = firstEntry.getValue().getNumberOfPoints();
+                result = firstEntry.getValue().getNumberOfPoints();
 
-            for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                result += slice.getNumberOfContourPoints();
+                for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
+                    result += slice.getNumberOfContourPoints();
 
-            result += lastEntry.getValue().getNumberOfPoints();
+                result += lastEntry.getValue().getNumberOfPoints();
+            }
         }
 
         return result;
@@ -1093,8 +1153,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     {
         double volume = 0;
 
-        for (R slice : slices.values())
-            volume += slice.getNumberOfPoints();
+        synchronized (slices)
+        {
+            for (R slice : slices.values())
+                volume += slice.getNumberOfPoints();
+        }
 
         return volume;
     }
@@ -1102,9 +1165,12 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     @Override
     public boolean canTranslate()
     {
-        // only need to test the first entry
-        if (!slices.isEmpty())
-            return slices.firstEntry().getValue().canTranslate();
+        synchronized (slices)
+        {
+            // only need to test the first entry
+            if (!slices.isEmpty())
+                return slices.firstEntry().getValue().canTranslate();
+        }
 
         return false;
     }
@@ -1118,20 +1184,23 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         if ((z == 0) || isEmpty())
             return;
 
-        final Map<Integer, R> map = new HashMap<Integer, R>(slices);
-
-        slices.clear();
-        for (Entry<Integer, R> entry : map.entrySet())
+        synchronized (slices)
         {
-            final R roi = entry.getValue();
-            final int newZ = roi.getZ() + z;
+            final Map<Integer, R> map = new HashMap<Integer, R>(slices);
 
-//            // only positive value accepted
-//            if (newZ >= 0)
-//            {
+            slices.clear();
+            for (Entry<Integer, R> entry : map.entrySet())
+            {
+                final R roi = entry.getValue();
+                final int newZ = roi.getZ() + z;
+
+                // // only positive value accepted
+                // if (newZ >= 0)
+                // {
                 roi.setZ(newZ);
                 slices.put(Integer.valueOf(newZ), roi);
-//            }
+                // }
+            }
         }
 
         // notify ROI changed
@@ -1155,8 +1224,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.translate(dx, dy);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.translate(dx, dy);
+                }
             }
             finally
             {
@@ -1255,12 +1327,15 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         if (!super.saveToXML(node))
             return false;
 
-        for (R slice : slices.values())
+        synchronized (slices)
         {
-            Element sliceNode = XMLUtil.addElement(node, "slice");
+            for (R slice : slices.values())
+            {
+                Element sliceNode = XMLUtil.addElement(node, "slice");
 
-            if (!slice.saveToXML(sliceNode))
-                return false;
+                if (!slice.saveToXML(sliceNode))
+                    return false;
+            }
         }
 
         return true;
@@ -1346,8 +1421,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                     modifyingSlice.acquireUninterruptibly();
                     try
                     {
-                        for (R slice : slices.values())
-                            slice.getOverlay().setColor(value);
+                        synchronized (slices)
+                        {
+                            for (R slice : slices.values())
+                                slice.getOverlay().setColor(value);
+                        }
                     }
                     finally
                     {
@@ -1372,8 +1450,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 modifyingSlice.acquireUninterruptibly();
                 try
                 {
-                    for (R slice : slices.values())
-                        slice.getOverlay().setOpacity(value);
+                    synchronized (slices)
+                    {
+                        for (R slice : slices.values())
+                            slice.getOverlay().setOpacity(value);
+                    }
                 }
                 finally
                 {
@@ -1397,8 +1478,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 modifyingSlice.acquireUninterruptibly();
                 try
                 {
-                    for (R slice : slices.values())
-                        slice.getOverlay().setStroke(value);
+                    synchronized (slices)
+                    {
+                        for (R slice : slices.values())
+                            slice.getOverlay().setStroke(value);
+                    }
                 }
                 finally
                 {
@@ -1422,8 +1506,11 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
                 modifyingSlice.acquireUninterruptibly();
                 try
                 {
-                    for (R slice : slices.values())
-                        slice.getOverlay().setShowName(value);
+                    synchronized (slices)
+                    {
+                        for (R slice : slices.values())
+                            slice.getOverlay().setShowName(value);
+                    }
                 }
                 finally
                 {

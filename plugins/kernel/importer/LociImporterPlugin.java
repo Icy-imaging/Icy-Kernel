@@ -753,7 +753,13 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         prepareReader(serie, 0);
 
         // don't need thread safe reader for this
-        return reader.getOptimalTileWidth();
+        int result = reader.getOptimalTileWidth();
+
+        if (result == 0)
+            return result;
+
+        // we want closest power of 2 (smaller or equal)
+        return (int) Math.pow(2, Math.floor(Math.log(result) / Math.log(2d)));
     }
 
     @Override
@@ -767,7 +773,13 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         prepareReader(serie, 0);
 
         // don't need thread safe reader for this
-        return reader.getOptimalTileHeight();
+        int result = reader.getOptimalTileHeight();
+
+        if (result == 0)
+            return result;
+
+        // we want closest power of 2 (smaller or equal)
+        return (int) Math.pow(2, Math.floor(Math.log(result) / Math.log(2d)));
     }
 
     @SuppressWarnings("resource")

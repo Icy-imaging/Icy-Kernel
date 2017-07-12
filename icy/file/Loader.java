@@ -396,6 +396,42 @@ public class Loader
     private final static Set<String> nonImageExtensions = new HashSet<String>(
             CollectionUtil.asList(new String[] {"pdf", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
 
+    // keep trace of reported / warned plugin
+    private static Set<String> reportedImporterPlugins = new HashSet<String>();
+    private static Set<String> warnedImporterPlugins = new HashSet<String>();
+
+    private static void handleImporterError(PluginDescriptor plugin, Throwable t)
+    {
+        final String pluginId = plugin.getName() + " " + plugin.getVersion();
+
+        if (t instanceof UnsupportedClassVersionError)
+        {
+            if (!warnedImporterPlugins.contains(pluginId))
+            {
+                // show a specific message in the output console
+                System.err.println("Plugin '" + plugin.getName() + "' " + plugin.getVersion()
+                        + " is not compatible with java " + ((int) ((SystemUtil.getJavaVersionAsNumber() * 10) % 10)));
+                System.err.println("You need to install a newer version of java to use it.");
+
+                // add to the list of warned plugins
+                warnedImporterPlugins.add(pluginId);
+            }
+        }
+        else
+        {
+            if (!reportedImporterPlugins.contains(pluginId))
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(t, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+
+                // add to the list of warned plugins
+                reportedImporterPlugins.add(pluginId);
+            }
+        }
+    }
+
     /**
      * Returns all available resource importer.
      */
@@ -413,10 +449,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -440,10 +473,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -643,10 +673,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -670,10 +697,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -697,10 +721,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -2272,8 +2293,7 @@ public class Loader
      * @param importer
      *        Importer used to load the image file.<br>
      *        If set to <code>null</code> the loader will search for a compatible importer and if
-     *        several importers
-     *        match the user will have to select the appropriate one from a selection dialog if
+     *        several importers match the user will have to select the appropriate one from a selection dialog if
      *        <code>showProgress</code> parameter is set to <code>true</code> otherwise the first
      *        compatible importer will be automatically used.
      * @param path
@@ -2321,13 +2341,30 @@ public class Loader
             @Override
             public void run()
             {
-                // load sequence
-                final Sequence sequence = loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT,
-                        maxT, channel, addToRecent, showProgress);
+                // normal opening operation ?
+                if ((resolution == 0) && (region == null) && (minZ <= 0) && (maxZ == -1) && (minT <= 0) && (maxT == -1)
+                        && (channel == -1))
+                {
+                    // load sequence (we use this method to allow multi series opening)
+                    final List<Sequence> sequences = loadSequences(
+                            (importer == null) ? getSequenceFileImporter(path, !showProgress) : importer,
+                            CollectionUtil.asList(path), series, true, false, false, addToRecent, showProgress);
 
-                // and display it
-                if (sequence != null)
-                    Icy.getMainInterface().addSequence(sequence);
+                    // and display them
+                    for (Sequence sequence : sequences)
+                        if (sequence != null)
+                            Icy.getMainInterface().addSequence(sequence);
+                }
+                else
+                {
+                    // load sequence
+                    final Sequence sequence = loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT,
+                            maxT, channel, addToRecent, showProgress);
+
+                    // and display it
+                    if (sequence != null)
+                        Icy.getMainInterface().addSequence(sequence);
+                }
             }
         });
     }
@@ -2719,7 +2756,11 @@ public class Loader
 
                     // special case where loading was interrupted
                     if (sequences == null)
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
 
                     if (sequences.size() > 0)
                     {
@@ -2734,7 +2775,11 @@ public class Loader
 
                     // interrupt loading
                     if ((loadingFrame != null) && loadingFrame.isCancelRequested())
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
                 }
             }
             else
@@ -2760,7 +2805,11 @@ public class Loader
 
                     // special case where loading was interrupted
                     if (sequences == null)
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
 
                     final int s = filePos.getS();
                     final int z = filePos.getZ();
@@ -2835,7 +2884,11 @@ public class Loader
 
                     // interrupt loading
                     if ((loadingFrame != null) && loadingFrame.isCancelRequested())
+                    {
+                        // no error
+                        remainingFiles.clear();
                         break;
+                    }
                 }
 
                 // concatenate last sequences in map and add it to result list
@@ -3352,7 +3405,7 @@ public class Loader
      * Returns a 0 length array if user canceled series selection.
      */
     public static int[] selectSeries(final SequenceFileImporter importer, final String path, final OMEXMLMetadata meta,
-            int defaultSerie, boolean singleSelection) throws UnsupportedFormatException, IOException
+            int defaultSerie, final boolean singleSelection) throws UnsupportedFormatException, IOException
     {
         final int serieCount = MetaDataUtil.getNumSeries(meta);
         final int[] tmp = new int[serieCount + 1];
@@ -3378,7 +3431,7 @@ public class Loader
                         {
                             try
                             {
-                                final int[] series = new SeriesSelectionDialog(importer, path, meta)
+                                final int[] series = new SeriesSelectionDialog(importer, path, meta, singleSelection)
                                         .getSelectedSeries();
                                 // get result
                                 tmp[0] = series.length;

@@ -713,55 +713,64 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 // important to set it to false at beginning
                 needRebuild = false;
 
-                try
+                // get original image
+                final IcyBufferedImage icyImage = Canvas2D.this.getImage(getPositionT(), getPositionZ(),
+                        getPositionC());
+
+                // clear cache so we know we don't have any image at this position
+                if (icyImage == null)
+                    tiles.clear();
+                else
                 {
-                    // get original image
-                    final IcyBufferedImage icyImage = Canvas2D.this.getImage(getPositionT(), getPositionZ(),
-                            getPositionC());
-                    // get tiles list
-                    final List<Rectangle> newTiles = ImageUtil.getTileList(icyImage.getSizeX(), icyImage.getSizeY(),
-                            ImageCacheTile.TILE_SIZE, ImageCacheTile.TILE_SIZE);
-                    final int len = newTiles.size();
-
-                    int indNewTiles = 0;
-                    // compare with previous tile list
-                    for (ImageCacheTile tile : tiles)
+                    try
                     {
-                        if (indNewTiles < len)
                         {
-                            final Rectangle oldRect = tile.rect;
-                            final Rectangle newRect = newTiles.get(indNewTiles);
+                            // get tiles list
+                            final List<Rectangle> newTiles = ImageUtil.getTileList(icyImage.getSizeX(),
+                                    icyImage.getSizeY(), ImageCacheTile.TILE_SIZE, ImageCacheTile.TILE_SIZE);
+                            final int len = newTiles.size();
 
-                            // size changed ? --> re alloc image
-                            if ((oldRect.width != newRect.width) || (oldRect.height != newRect.height))
-                                // re alloc image
-                                tile.image = new BufferedImage(newRect.width, newRect.height,
-                                        BufferedImage.TYPE_INT_ARGB);
-                            // adjust rect (position) if needed
-                            tile.rect = newRect;
+                            int indNewTiles = 0;
+                            // compare with previous tile list
+                            for (ImageCacheTile tile : tiles)
+                            {
+                                if (indNewTiles < len)
+                                {
+                                    final Rectangle oldRect = tile.rect;
+                                    final Rectangle newRect = newTiles.get(indNewTiles);
+
+                                    // size changed ? --> re alloc image
+                                    if ((oldRect.width != newRect.width) || (oldRect.height != newRect.height))
+                                        // re alloc image
+                                        tile.image = new BufferedImage(newRect.width, newRect.height,
+                                                BufferedImage.TYPE_INT_ARGB);
+                                    // adjust rect (position) if needed
+                                    tile.rect = newRect;
+                                }
+
+                                indNewTiles++;
+                            }
+
+                            // remove extras tiles
+                            while (tiles.size() > len)
+                                tiles.remove(tiles.size() - 1);
+                            // add extras tiles
+                            while (indNewTiles < len)
+                                tiles.add(new ImageCacheTile(newTiles.get(indNewTiles++)));
+
+                            // rebuild images
+                            final LUT l = getLut();
+                            for (ImageCacheTile tile : tiles)
+                                tile.image = IcyBufferedImageUtil.toBufferedImage(
+                                        IcyBufferedImageUtil.getSubImage(icyImage, tile.rect), tile.image, l);
                         }
 
-                        indNewTiles++;
+                        notEnoughMemory = false;
                     }
-
-                    // remove extras tiles
-                    while (tiles.size() > len)
-                        tiles.remove(tiles.size() - 1);
-                    // add extras tiles
-                    while (indNewTiles < len)
-                        tiles.add(new ImageCacheTile(newTiles.get(indNewTiles++)));
-
-                    // rebuild images
-                    final LUT l = getLut();
-                    for (ImageCacheTile tile : tiles)
-                        tile.image = IcyBufferedImageUtil
-                                .toBufferedImage(IcyBufferedImageUtil.getSubImage(icyImage, tile.rect), tile.image, l);
-
-                    notEnoughMemory = false;
-                }
-                catch (OutOfMemoryError e)
-                {
-                    notEnoughMemory = true;
+                    catch (OutOfMemoryError e)
+                    {
+                        notEnoughMemory = true;
+                    }
                 }
 
                 // repaint now

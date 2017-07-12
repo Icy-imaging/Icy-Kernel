@@ -1020,6 +1020,11 @@ public class LoaderOptionPanel extends JPanel
         return 0;
     }
 
+    public boolean getFullZRange()
+    {
+        return (getZMin() == 0) && (getZMax() == (int) zRangeComp.getMax());
+    }
+
     public int getTMin()
     {
         if (tRangeComp.isVisible())
@@ -1034,6 +1039,11 @@ public class LoaderOptionPanel extends JPanel
             return (int) tRangeComp.getHigh();
 
         return 0;
+    }
+
+    public boolean getFullTRange()
+    {
+        return (getTMin() == 0) && (getTMax() == (int) tRangeComp.getMax());
     }
 
     public int getChannel()

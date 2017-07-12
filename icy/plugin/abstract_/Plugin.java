@@ -18,6 +18,17 @@
  */
 package icy.plugin.abstract_;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+import javax.swing.ImageIcon;
+
 import icy.file.FileUtil;
 import icy.gui.frame.IcyFrame;
 import icy.gui.viewer.Viewer;
@@ -38,17 +49,6 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.audit.Audit;
 import icy.util.ClassUtil;
-
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-
-import javax.swing.ImageIcon;
 
 /**
  * Base class for Plugin, provide some helper methods.<br>
@@ -86,8 +86,8 @@ public abstract class Plugin
             // descriptor not found (don't check for anonymous plugin class) ?
             if (!getClass().isAnonymousClass())
             {
-                System.out.println("Warning : Plugin '" + getClass().getName()
-                        + "' started but not found in PluginLoader !");
+                System.out.println(
+                        "Warning : Plugin '" + getClass().getName() + "' started but not found in PluginLoader !");
                 System.out.println("Local XML plugin description file is probably incorrect.");
             }
 
@@ -339,9 +339,51 @@ public abstract class Plugin
      * 
      * @param libName
      * @return true if the library was correctly loaded.
-     * @see SystemUtil#loadLibrary(String)
+     * @see #prepareLibrary(String)
      */
     public boolean loadLibrary(String libName)
+    {
+        final File file = prepareLibrary(libName);
+
+        if (file == null)
+            return false;
+
+        // and load it
+        System.load(file.getPath());
+
+        return true;
+    }
+
+    /**
+     * Extract a packed native library from the JAR file to a temporary native library folder so it can be easily loaded
+     * later.<br/>
+     * Native libraries should be packaged with the following directory & file structure:
+     * 
+     * <pre>
+     * /lib/unix32
+     *   libxxx.so
+     * /lib/unix64
+     *   libxxx.so
+     * /lib/mac32
+     *   libxxx.dylib
+     * /lib/mac64
+     *   libxxx.dylib
+     * /lib/win32
+     *   xxx.dll
+     * /lib/win64
+     *   xxx.dll
+     * /plugins/myname/mypackage    
+     *   MyPlugin.class
+     *   ....
+     * </pre>
+     * 
+     * Here "xxx" is the name of the native library.<br/>
+     * 
+     * @param libName
+     * @return the extracted native library file.
+     * @see #loadLibrary(String)
+     */
+    public File prepareLibrary(String libName)
     {
         try
         {
@@ -367,7 +409,7 @@ public abstract class Plugin
                 {
                     mappedlibName = mappedlibName.substring(0, mappedlibName.length() - 6) + ".jnilib";
                     libUrl = getResource(basePath + mappedlibName);
-                }                
+                }
             }
 
             // resource not found --> error
@@ -375,19 +417,17 @@ public abstract class Plugin
                 throw new IOException("Couldn't find resource " + basePath + mappedlibName);
 
             // extract resource
-            final File extractedFile = extractResource(SystemUtil.getTempLibraryDirectory() + FileUtil.separator
-                    + mappedlibName, libUrl);
-            // and load it
-            System.load(extractedFile.getPath());
+            final File extractedFile = extractResource(
+                    SystemUtil.getTempLibraryDirectory() + FileUtil.separator + mappedlibName, libUrl);
 
-            return true;
+            return extractedFile;
         }
         catch (IOException e)
         {
-            System.err.println("Error while loading packed library " + libName + ": " + e);
+            System.err.println("Error while extracting packed library " + libName + ": " + e);
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -404,10 +444,19 @@ public abstract class Plugin
     {
         // open resource stream
         final InputStream in = resource.openStream();
-        // load resource
-        final byte data[] = NetworkUtil.download(in);
         // create output file
         final File result = new File(outputPath);
+        final byte data[];
+
+        try
+        {
+            // load resource
+            data = NetworkUtil.download(in);
+        }
+        finally
+        {
+            in.close();
+        }
 
         // file already exist ??
         if (result.exists())

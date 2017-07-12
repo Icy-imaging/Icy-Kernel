@@ -18,24 +18,16 @@
  */
 package icy.gui.menu.search;
 
-import icy.main.Icy;
-import icy.search.SearchEngine;
-import icy.search.SearchResult;
-import icy.system.thread.ThreadUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JWindow;
@@ -43,7 +35,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -52,6 +43,11 @@ import javax.swing.table.TableColumnModel;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 import org.pushingpixels.flamingo.internal.ui.common.JRichTooltipPanel;
+
+import icy.main.Icy;
+import icy.search.SearchEngine;
+import icy.search.SearchResult;
+import icy.system.thread.ThreadUtil;
 
 /**
  * This class is the most important part of this plugin: it will handle and
@@ -81,7 +77,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     /** GUI */
     final SearchResultTableModel tableModel;
     final JTable table;
-    final JButton moreResultBtn;
     final JScrollPane scrollPane;
 
     /**
@@ -89,7 +84,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
      */
     private final Runnable refresher;
     private final Runnable toolTipRefresher;
-    boolean firstResultsDisplay;
 
     public SearchResultPanel(final SearchBar sb)
     {
@@ -101,7 +95,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         tooltip = null;
         toolTipResult = null;
         toolTipForceRefresh = false;
-        firstResultsDisplay = true;
 
         refresher = new Runnable()
         {
@@ -122,7 +115,8 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         };
 
         // build table (display 15 rows max)
-        tableModel = new SearchResultTableModel(MAX_ROW);
+        tableModel = new SearchResultTableModel(-1);
+
         table = new JTable(tableModel);
 
         // sets the different column values and renderers
@@ -200,26 +194,12 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             }
         });
 
-        // build GUI
-        moreResultBtn = new JButton("");
-        moreResultBtn.setHorizontalAlignment(SwingConstants.RIGHT);
-        moreResultBtn.setVerticalAlignment(SwingConstants.CENTER);
-        moreResultBtn.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                showCompleteList();
-            }
-        });
-
         scrollPane = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         // window used to display quick result list
         setLayout(new BorderLayout());
         add(scrollPane, BorderLayout.CENTER);
-        add(moreResultBtn, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(600, 400));
         setAlwaysOnTop(true);
         setVisible(false);
@@ -285,17 +265,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             table.getSelectionModel().removeSelectionInterval(0, table.getRowCount() - 1);
     }
 
-    void showCompleteList()
-    {
-        // no more limit on row count
-        tableModel.setMaxRowCount(-1);
-        // hide button
-        moreResultBtn.setVisible(false);
-
-        // update size
-        setSize(600, getPanelHeight());
-    }
-
     void hideToolTip()
     {
         if (tooltip != null)
@@ -318,8 +287,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
         result = Math.min(table.getRowCount(), MAX_ROW) * ROW_HEIGHT;
         result += (margin.top + margin.bottom) + (marginSC.top + marginSC.bottom) + (marginT.top + marginT.bottom);
-        if (moreResultBtn.isVisible())
-            result += moreResultBtn.getPreferredSize().height;
 
         return result;
     }
@@ -382,7 +349,8 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
     /**
      * Close the results panel.<br>
-     * If <code>reset</br> is true that also reset search.
+     * If <code>reset</br>
+     * is true that also reset search.
      */
     public void close(boolean reset)
     {
@@ -462,34 +430,10 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
                 table.setRowHeight(ROW_HEIGHT);
                 // refresh data model
                 tableModel.setResults(results);
-
-                if (firstResultsDisplay)
-                {
-                    // limit result list size to MAX_ROW and refresh table data
-                    if (tableModel.getMaxRowCount() != MAX_ROW)
-                        tableModel.setMaxRowCount(MAX_ROW);
-                    else
-                        tableModel.fireTableDataChanged();
-
-                    // no more need to re init the limited display
-                    firstResultsDisplay = false;
-                }
-                else
-                    tableModel.fireTableDataChanged();
+                tableModel.fireTableDataChanged();
 
                 // restore selected
                 setSelectedResult(selected);
-
-                final int maxRow = tableModel.getMaxRowCount();
-
-                // result list do not display all results ?
-                if ((maxRow > 0) && (resultCount > maxRow))
-                {
-                    moreResultBtn.setText(maxRow + " / " + resultCount + " (show all)");
-                    moreResultBtn.setVisible(true);
-                }
-                else
-                    moreResultBtn.setVisible(false);
 
                 // update bounds and display window
                 final Point p = searchBar.getLocationOnScreen();
@@ -540,11 +484,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         ThreadUtil.runSingle(toolTipRefresher);
     }
 
-    public void searchStarted()
-    {
-        firstResultsDisplay = true;
-    }
-
     public void resultChanged(SearchResult result)
     {
         if (isVisible())
@@ -561,7 +500,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             {
                 // ignore possible exception here
             }
-            
+
             // refresh toolTip if needed
             if (result == getSelectedResult())
             {

@@ -18,15 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.painter.Anchor2D;
-import icy.painter.LineAnchor2D;
-import icy.resource.ResourceUtil;
-import icy.roi.ROI;
-import icy.type.geom.Polyline2D;
-import icy.type.point.Point2DUtil;
-import icy.type.point.Point5D;
-import icy.util.XMLUtil;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
@@ -40,6 +31,15 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import icy.painter.Anchor2D;
+import icy.painter.LineAnchor2D;
+import icy.resource.ResourceUtil;
+import icy.roi.ROI;
+import icy.type.geom.Polyline2D;
+import icy.type.point.Point2DUtil;
+import icy.type.point.Point5D;
+import icy.util.XMLUtil;
 
 /**
  * @author Stephane
@@ -348,10 +348,10 @@ public class ROI2DPolyLine extends ROI2DShape
 
             removeAllPoint();
 
-            final ArrayList<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
-            if (nodesPoint != null)
+            final List<Node> pointsNode = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
+            if (pointsNode != null)
             {
-                for (Node n : nodesPoint)
+                for (Node n : pointsNode)
                 {
                     final Anchor2D pt = createAnchor(new Point2D.Double());
                     pt.loadPositionFromXML(n);
@@ -373,11 +373,11 @@ public class ROI2DPolyLine extends ROI2DShape
         if (!super.saveToXML(node))
             return false;
 
-        final Element dependances = XMLUtil.setElement(node, ID_POINTS);
+        final Element pointsNode = XMLUtil.setElement(node, ID_POINTS);
         synchronized (controlPoints)
         {
             for (Anchor2D pt : controlPoints)
-                pt.savePositionToXML(XMLUtil.addElement(dependances, ID_POINT));
+                pt.savePositionToXML(XMLUtil.addElement(pointsNode, ID_POINT));
         }
 
         return true;

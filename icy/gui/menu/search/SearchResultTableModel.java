@@ -35,27 +35,13 @@ public class SearchResultTableModel extends AbstractTableModel
 
     public static final int COL_RESULT_OBJECT = 1;
 
-    private int maxRowCount;
     private List<SearchResult> results;
 
     public SearchResultTableModel(int maxRowCount)
     {
-        this.maxRowCount = maxRowCount;
+        super();
+
         results = new ArrayList<SearchResult>();
-    }
-
-    public int getMaxRowCount()
-    {
-        return maxRowCount;
-    }
-
-    public void setMaxRowCount(int value)
-    {
-        if (maxRowCount != value)
-        {
-            maxRowCount = value;
-            fireTableDataChanged();
-        }
     }
 
     @Override
@@ -67,12 +53,7 @@ public class SearchResultTableModel extends AbstractTableModel
     @Override
     public int getRowCount()
     {
-        final int size = results.size();
-
-        if (maxRowCount > 0)
-            return Math.min(maxRowCount, size);
-
-        return size;
+        return results.size();
     }
 
     @Override
@@ -84,13 +65,7 @@ public class SearchResultTableModel extends AbstractTableModel
     @Override
     public Object getValueAt(int rowIndex, int columnIndex)
     {
-        int resultsCount = results.size();
-
-        // limit to maxRow
-        if (maxRowCount > 0)
-            resultsCount = Math.min(maxRowCount, resultsCount);
-
-        if (rowIndex < resultsCount)
+        if (rowIndex < getRowCount())
         {
             final SearchResult element = results.get(rowIndex);
 
