@@ -18,6 +18,22 @@
  */
 package plugins.kernel.roi.roi5d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.Semaphore;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
@@ -35,22 +51,6 @@ import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.XMLUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.concurrent.Semaphore;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  * Abstract class defining a generic 5D ROI as a stack of individual 4D ROI slices.
@@ -172,8 +172,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
                 modifyingSlice.acquireUninterruptibly();
                 try
                 {
-                    for (R slice : slices.values())
-                        slice.setColor(value);
+                    synchronized (slices)
+                    {
+                        for (R slice : slices.values())
+                            slice.setColor(value);
+                    }
                 }
                 finally
                 {
@@ -198,8 +201,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setOpacity(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setOpacity(value);
+                }
             }
             finally
             {
@@ -223,8 +229,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setStroke(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setStroke(value);
+                }
             }
             finally
             {
@@ -248,8 +257,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setCreating(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setCreating(value);
+                }
             }
             finally
             {
@@ -273,8 +285,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setReadOnly(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setReadOnly(value);
+                }
             }
             finally
             {
@@ -298,8 +313,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setFocused(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setFocused(value);
+                }
             }
             finally
             {
@@ -323,8 +341,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.setSelected(value);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.setSelected(value);
+                }
             }
             finally
             {
@@ -353,10 +374,13 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
      */
     public int getSizeC()
     {
-        if (slices.isEmpty())
-            return 0;
+        synchronized (slices)
+        {
+            if (slices.isEmpty())
+                return 0;
 
-        return (slices.lastKey().intValue() - slices.firstKey().intValue()) + 1;
+            return (slices.lastKey().intValue() - slices.firstKey().intValue()) + 1;
+        }
     }
 
     /**
@@ -398,7 +422,10 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         roi4d.addListener(this);
         roi4d.getOverlay().addOverlayListener(this);
 
-        slices.put(Integer.valueOf(c), roi4d);
+        synchronized (slices)
+        {
+            slices.put(Integer.valueOf(c), roi4d);
+        }
 
         // notify ROI changed
         roiChanged(true);
@@ -409,8 +436,13 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
      */
     public R removeSlice(int c)
     {
-        // remove the current slice (if any)
-        final R result = slices.remove(Integer.valueOf(c));
+        final R result;
+
+        synchronized (slices)
+        {
+            // remove the current slice (if any)
+            result = slices.remove(Integer.valueOf(c));
+        }
 
         // remove listeners
         if (result != null)
@@ -434,13 +466,17 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         if (isEmpty())
             return;
 
-        for (R slice : slices.values())
+        synchronized (slices)
         {
-            slice.removeListener(this);
-            slice.getOverlay().removeOverlayListener(this);
+            for (R slice : slices.values())
+            {
+                slice.removeListener(this);
+                slice.getOverlay().removeOverlayListener(this);
+            }
+
+            slices.clear();
         }
 
-        slices.clear();
         roiChanged(true);
     }
 
@@ -505,17 +541,20 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     {
         Rectangle4D xyztBounds = null;
 
-        for (R slice : slices.values())
+        synchronized (slices)
         {
-            final Rectangle4D bnd4d = slice.getBounds4D();
-
-            // only add non empty bounds
-            if (!bnd4d.isEmpty())
+            for (R slice : slices.values())
             {
-                if (xyztBounds == null)
-                    xyztBounds = (Rectangle4D) bnd4d.clone();
-                else
-                    xyztBounds.add(bnd4d);
+                final Rectangle4D bnd4d = slice.getBounds4D();
+
+                // only add non empty bounds
+                if (!bnd4d.isEmpty())
+                {
+                    if (xyztBounds == null)
+                        xyztBounds = (Rectangle4D) bnd4d.clone();
+                    else
+                        xyztBounds.add(bnd4d);
+                }
             }
         }
 
@@ -526,15 +565,18 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         final int c;
         final int sizeC;
 
-        if (!slices.isEmpty())
+        synchronized (slices)
         {
-            c = slices.firstKey().intValue();
-            sizeC = getSizeC();
-        }
-        else
-        {
-            c = 0;
-            sizeC = 0;
+            if (!slices.isEmpty())
+            {
+                c = slices.firstKey().intValue();
+                sizeC = getSizeC();
+            }
+            else
+            {
+                c = 0;
+                sizeC = 0;
+            }
         }
 
         return new Rectangle5D.Double(xyztBounds.getX(), xyztBounds.getY(), xyztBounds.getZ(), xyztBounds.getT(), c,
@@ -600,7 +642,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         // default
         return false;
     }
-    
+
     @Override
     public void unselectAllPoints()
     {
@@ -610,8 +652,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.unselectAllPoints();
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.unselectAllPoints();
+                }
             }
             finally
             {
@@ -631,24 +676,27 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         // 5D contour points = first slice points + inter slices contour points + last slice points
         double perimeter = 0;
 
-        if (slices.size() <= 2)
+        synchronized (slices)
         {
-            for (R slice : slices.values())
-                perimeter += slice.getNumberOfPoints();
-        }
-        else
-        {
-            final Entry<Integer, R> firstEntry = slices.firstEntry();
-            final Entry<Integer, R> lastEntry = slices.lastEntry();
-            final Integer firstKey = firstEntry.getKey();
-            final Integer lastKey = lastEntry.getKey();
+            if (slices.size() <= 2)
+            {
+                for (R slice : slices.values())
+                    perimeter += slice.getNumberOfPoints();
+            }
+            else
+            {
+                final Entry<Integer, R> firstEntry = slices.firstEntry();
+                final Entry<Integer, R> lastEntry = slices.lastEntry();
+                final Integer firstKey = firstEntry.getKey();
+                final Integer lastKey = lastEntry.getKey();
 
-            perimeter = firstEntry.getValue().getNumberOfPoints();
+                perimeter = firstEntry.getValue().getNumberOfPoints();
 
-            for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                perimeter += slice.getNumberOfContourPoints();
+                for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
+                    perimeter += slice.getNumberOfContourPoints();
 
-            perimeter += lastEntry.getValue().getNumberOfPoints();
+                perimeter += lastEntry.getValue().getNumberOfPoints();
+            }
         }
 
         return perimeter;
@@ -659,8 +707,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     {
         double volume = 0;
 
-        for (R slice : slices.values())
-            volume += slice.getNumberOfPoints();
+        synchronized (slices)
+        {
+            for (R slice : slices.values())
+                volume += slice.getNumberOfPoints();
+        }
 
         return volume;
     }
@@ -668,9 +719,12 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     @Override
     public boolean canTranslate()
     {
-        // only need to test the first entry
-        if (!slices.isEmpty())
-            return slices.firstEntry().getValue().canTranslate();
+        synchronized (slices)
+        {
+            // only need to test the first entry
+            if (!slices.isEmpty())
+                return slices.firstEntry().getValue().canTranslate();
+        }
 
         return false;
     }
@@ -684,19 +738,22 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         if ((c == 0) || isEmpty())
             return;
 
-        final Map<Integer, R> map = new HashMap<Integer, R>(slices);
-
-        slices.clear();
-        for (Entry<Integer, R> entry : map.entrySet())
+        synchronized (slices)
         {
-            final R roi = entry.getValue();
-            final int newC = roi.getC() + c;
+            final Map<Integer, R> map = new HashMap<Integer, R>(slices);
 
-            // only positive value accepted
-            if (newC >= 0)
+            slices.clear();
+            for (Entry<Integer, R> entry : map.entrySet())
             {
-                roi.setC(newC);
-                slices.put(Integer.valueOf(newC), roi);
+                final R roi = entry.getValue();
+                final int newC = roi.getC() + c;
+
+                // only positive value accepted
+                if (newC >= 0)
+                {
+                    roi.setC(newC);
+                    slices.put(Integer.valueOf(newC), roi);
+                }
             }
         }
 
@@ -721,8 +778,11 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
             modifyingSlice.acquireUninterruptibly();
             try
             {
-                for (R slice : slices.values())
-                    slice.translate(dx, dy, dz, dt);
+                synchronized (slices)
+                {
+                    for (R slice : slices.values())
+                        slice.translate(dx, dy, dz, dt);
+                }
             }
             finally
             {
@@ -821,12 +881,15 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         if (!super.saveToXML(node))
             return false;
 
-        for (R slice : slices.values())
+        synchronized (slices)
         {
-            Element sliceNode = XMLUtil.addElement(node, "slice");
+            for (R slice : slices.values())
+            {
+                Element sliceNode = XMLUtil.addElement(node, "slice");
 
-            if (!slice.saveToXML(sliceNode))
-                return false;
+                if (!slice.saveToXML(sliceNode))
+                    return false;
+            }
         }
 
         return true;

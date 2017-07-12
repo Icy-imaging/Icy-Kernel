@@ -396,6 +396,42 @@ public class Loader
     private final static Set<String> nonImageExtensions = new HashSet<String>(
             CollectionUtil.asList(new String[] {"pdf", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
 
+    // keep trace of reported / warned plugin
+    private static Set<String> reportedImporterPlugins = new HashSet<String>();
+    private static Set<String> warnedImporterPlugins = new HashSet<String>();
+
+    private static void handleImporterError(PluginDescriptor plugin, Throwable t)
+    {
+        final String pluginId = plugin.getName() + " " + plugin.getVersion();
+
+        if (t instanceof UnsupportedClassVersionError)
+        {
+            if (!warnedImporterPlugins.contains(pluginId))
+            {
+                // show a specific message in the output console
+                System.err.println("Plugin '" + plugin.getName() + "' " + plugin.getVersion()
+                        + " is not compatible with java " + ((int) ((SystemUtil.getJavaVersionAsNumber() * 10) % 10)));
+                System.err.println("You need to install a newer version of java to use it.");
+
+                // add to the list of warned plugins
+                warnedImporterPlugins.add(pluginId);
+            }
+        }
+        else
+        {
+            if (!reportedImporterPlugins.contains(pluginId))
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(t, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+
+                // add to the list of warned plugins
+                reportedImporterPlugins.add(pluginId);
+            }
+        }
+    }
+
     /**
      * Returns all available resource importer.
      */
@@ -413,10 +449,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -440,10 +473,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -643,10 +673,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -670,10 +697,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
@@ -697,10 +721,7 @@ public class Loader
             }
             catch (Throwable t)
             {
-                // show a message in the output console
-                IcyExceptionHandler.showErrorMessage(t, false, true);
-                // and send an error report (silent as we don't want a dialog appearing here)
-                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(t, true));
+                handleImporterError(plugin, t);
             }
         }
 
