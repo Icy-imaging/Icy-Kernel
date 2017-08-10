@@ -2561,13 +2561,11 @@ public class Loader
      *        series selector dialog.
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
-     *        So for instance level 0 is the default/full image resolution while level 1 is base
-     *        image
-     *        resolution / 2 and so on...
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base image resolution / 2
+     *        and so on...
      * @param region
-     *        The 2D region of the image we want to retrieve.<br>
+     *        The 2D region of the image we want to retrieve (in full image resolution).<br>
      *        If set to <code>null</code> then the whole XY plane of the image is returned.
      * @param minZ
      *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
@@ -3051,13 +3049,11 @@ public class Loader
      *        Series index to load (for multi series sequence), set to 0 if unsure (default).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
-     *        The retrieved image resolution is equal to
-     *        <code>image.resolution / (2^resolution)</code><br>
-     *        So for instance level 0 is the default/full image resolution while level 1 is base
-     *        image
-     *        resolution / 2 and so on...
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base image resolution / 2
+     *        and so on...
      * @param region
-     *        The 2D region of the image we want to retrieve.<br>
+     *        The 2D region of the image we want to retrieve (in full image resolution).<br>
      *        If set to <code>null</code> then the whole XY plane of the image is returned.
      * @param minZ
      *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
@@ -3082,8 +3078,17 @@ public class Loader
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
-        final int sizeX = (region == null) ? MetaDataUtil.getSizeX(metadata, series) : region.width;
-        final int sizeY = (region == null) ? MetaDataUtil.getSizeY(metadata, series) : region.height;
+        final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
+        final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
+        
+        final Rectangle adjRegion;
+        
+        if (region != null)
+            adjRegion = new Rectangle(0,  0,  imgSizeX, imgSizeY).intersection(region);
+        else adjRegion = null;
+
+        final int sizeX = (adjRegion == null) ? imgSizeX : adjRegion.width;
+        final int sizeY = (adjRegion == null) ? imgSizeY : adjRegion.height;
         final int sizeZ = MetaDataUtil.getSizeZ(metadata, series);
         final int sizeT = MetaDataUtil.getSizeT(metadata, series);
         final int sizeC = MetaDataUtil.getSizeC(metadata, series);
@@ -3118,7 +3123,7 @@ public class Loader
 
         // setup sequence properties and metadata from the opening setting
         setupSequence(result, FileUtil.getGenericPath(importer.getOpened()), MetaDataUtil.getNumSeries(metadata) > 1,
-                series, region, resolution, sizeZ, sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
+                series, adjRegion, resolution, sizeZ, sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
 
         // number of image to process
         final int numImage = ((adjMaxZ - adjMinZ) + 1) * ((adjMaxT - adjMinT) + 1);
@@ -3146,10 +3151,10 @@ public class Loader
                         // load image and add it to the sequence
                         if (channel == -1)
                             result.setImage(t - adjMinT, z - adjMinZ,
-                                    importer.getImage(series, resolution, region, z, t));
+                                    importer.getImage(series, resolution, adjRegion, z, t));
                         else
                             result.setImage(t - adjMinT, z - adjMinZ,
-                                    importer.getImage(series, resolution, region, z, t, channel));
+                                    importer.getImage(series, resolution, adjRegion, z, t, channel));
 
                         progress += progressStep;
 
@@ -3273,7 +3278,7 @@ public class Loader
      * @param series
      *        series index
      * @param region
-     *        Rectangle region we want to load from original image
+     *        Rectangle region we want to load from original image (full resolution)
      * @param resolution
      *        Resolution level to open
      * @param sizeZ

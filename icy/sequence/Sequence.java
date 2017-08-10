@@ -799,13 +799,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Origin filename (from/to which the sequence has been loaded/saved).<br>
+     * Returns the origin filename (from/to which the sequence has been loaded/saved).<br>
      * This filename information is also used to store the XML persistent data.<br/>
-     * null --> no file attachment<br>
-     * directory or metadata file --> multiples files attachment<br>
+     * null / empty --> no file attachment<br>
      * image file --> single file attachment
+     * directory or metadata file --> multiples files attachment<br>
      * 
-     * @return the filename.
+     * @return the origin filename
      */
     public String getFilename()
     {
@@ -813,6 +813,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Set the origin filename (from/to which the sequence has been loaded/saved).<br>
+     * When you set the filename you need to ensure that "sub part" information are correctly reset (setOriginXXX(...)
+     * methods) as this filename will be used to generate the XML persistent data file name.<br/>
+     * null / empty --> no file attachment<br>
+     * image file --> single file attachment
+     * directory or metadata file --> multiples files attachment<br>
+     * 
      * @param filename
      *        the filename to set
      */
@@ -911,7 +918,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Return the desired output filename for this Sequence (without file extension.<br>
+     * Return the desired output filename for this Sequence.<br>
      * It uses the origin filename and add a specific extension depending some internals properties.
      * 
      * @param withExtension
@@ -960,7 +967,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns the region (X,Y) from original image if this image is a crop of the original image.<br>
+     * Returns the region (X,Y) from original image if this image is a crop of the original image (in original image
+     * resolution).<br>
      * Default value is <code>null</code> (full size).
      */
     public Rectangle getOriginXYRegion()
@@ -1074,7 +1082,21 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         originChannel = value;
     }
-    
+
+    /**
+     * Reset origin information (used after saved operation normally, internal use only).
+     */
+    public void resetOriginInformation()
+    {
+        setOriginChannel(-1);
+        setOriginResolution(0);
+        setOriginTMin(-1);
+        setOriginTMax(-1);
+        setOriginZMin(-1);
+        setOriginZMax(-1);
+        setOriginXYRegion(null);
+    }
+
     /**
      * Returns series index if the Sequence comes from a multi serie image.<br>
      * By default it returns 0 if the sequence comes from a single serie image or if this is the

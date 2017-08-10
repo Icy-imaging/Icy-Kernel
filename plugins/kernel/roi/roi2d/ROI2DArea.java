@@ -751,7 +751,7 @@ public class ROI2DArea extends ROI2D
                     }
                 }
             }
-            
+
         }
 
         @Override
@@ -2474,6 +2474,35 @@ public class ROI2DArea extends ROI2D
     public void setAsBooleanMask(int x, int y, int w, int h, boolean[] booleanMask)
     {
         setAsBooleanMask(new Rectangle(x, y, w, h), booleanMask);
+    }
+
+    /**
+     * Fast up scaling by a factor of 2 (each point become a 2x2 block points)
+     */
+    public void upscale()
+    {
+        setAsBooleanMask(getBooleanMask(true).upscale());
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1 to 4 (default is 3)
+     */
+    public void downscale(int nbPointForTrue)
+    {
+        setAsBooleanMask(getBooleanMask(true).downscale(nbPointForTrue));
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     */
+    public void downscale()
+    {
+        setAsBooleanMask(getBooleanMask(true).downscale());
     }
 
     @Override

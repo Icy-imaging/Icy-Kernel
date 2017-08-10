@@ -27,12 +27,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import icy.image.IcyBufferedImage;
 import icy.image.IntensityInfo;
 import icy.math.DataIteratorMath;
 import icy.math.MathUtil;
+import icy.painter.Anchor2D;
+import icy.painter.Anchor3D;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
@@ -70,6 +73,7 @@ import plugins.kernel.roi.roi2d.ROI2DPolygon;
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
 import plugins.kernel.roi.roi2d.ROI2DShape;
 import plugins.kernel.roi.roi3d.ROI3DArea;
+import plugins.kernel.roi.roi3d.ROI3DShape;
 import plugins.kernel.roi.roi3d.ROI3DStackEllipse;
 import plugins.kernel.roi.roi3d.ROI3DStackPolygon;
 import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
@@ -1911,6 +1915,427 @@ public class ROIUtil
     }
 
     /**
+     * Scale (3D) the given ROI by specified X,Y,Z factors.<br>
+     * Only {@link ROI2DShape} and {@link ROI3DShape} are supported !
+     * 
+     * @param roi
+     *        input ROI we want to rescale
+     * @throws UnsupportedOperationException
+     *         if input ROI is not ROI2DShape or ROI3DShape (scaling supported only for these ROI)
+     */
+    public static void scale(ROI roi, double scaleX, double scaleY, double scaleZ) throws UnsupportedOperationException
+    {
+        // shape ROI --> can rescale easily
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roi2DShape = (ROI2DShape) roi;
+
+            // adjust control point position directly
+            for (Anchor2D pt : roi2DShape.getControlPoints())
+            {
+                final Point2D pos = pt.getPosition();
+                // change control point position
+                pt.setPosition(pos.getX() * scaleX, pos.getY() * scaleY);
+            }
+
+            final int z = roi2DShape.getZ();
+
+            // re scale Z position if needed
+            if ((z != -1) && (scaleZ != 1d))
+                roi2DShape.setZ((int) (z * scaleZ));
+        }
+        else if (roi instanceof ROI3DShape)
+        {
+            final ROI3DShape roi3DShape = (ROI3DShape) roi;
+
+            // adjust control point position directly
+            for (Anchor3D pt : roi3DShape.getControlPoints())
+            {
+                final Point3D pos = pt.getPosition();
+                // change control point position
+                pt.setPosition(pos.getX() * scaleX, pos.getY() * scaleY, pos.getZ() * scaleZ);
+            }
+        }
+        else
+            throw new UnsupportedOperationException("ROIUtil.scale: cannot rescale " + roi.getSimpleClassName() + " !");
+    }
+
+    /**
+     * Scale (2D) the given ROI by specified X/Y factor.<br>
+     * Only {@link ROI2DShape} and {@link ROI3DShape} are supported !
+     * 
+     * @param roi
+     *        input ROI we want to rescale
+     * @throws UnsupportedOperationException
+     *         if input ROI is not ROI2DShape or ROI3DShape (scaling supported only for these ROI)
+     */
+    public static void scale(ROI roi, double scaleX, double scaleY) throws UnsupportedOperationException
+    {
+        scale(roi, scaleX, scaleY, 1d);
+    }
+    
+    /**
+     * Scale the given ROI by specified scale factor.<br>
+     * Only {@link ROI2DShape} and {@link ROI3DShape} are supported !
+     * 
+     * @param roi
+     *        input ROI we want to rescale
+     * @throws UnsupportedOperationException
+     *         if input ROI is not ROI2DShape or ROI3DShape (scaling supported only for these ROI)
+     */
+    public static void scale(ROI roi, double scale) throws UnsupportedOperationException
+    {
+        scale(roi, scale, scale, scale);
+    }
+
+    /**
+     * Create and returns a new ROI which is a 2x up/down scaled version of the input ROI.<br>
+     * Note that the returned ROI can be ROI2DArea or ROI3DArea if original ROI format doesn't support 2X scale
+     * operation.
+     * 
+     * @param roi
+     *        input ROI we want to get the up scaled form
+     * @param scaleOnZ
+     *        Set to <code>true</code> to scale as well on Z dimension (XY dimension only otherwise)
+     * @param down
+     *        Set to <code>true</code> for down scaling and <code>false</code> for up scaling operation
+     * @throws UnsupportedOperationException
+     *         if input ROI is ROI4D or ROI5D (up scaling not supported for these ROI)
+     */
+    public static ROI get2XScaled(ROI roi, boolean scaleOnZ, boolean down) throws UnsupportedOperationException
+    {
+        if (roi == null)
+            return null;
+
+        final double scaling = down ? 0.5d : 2d;
+        ROI result = roi.getCopy();
+
+        // shape ROI --> can rescale easily
+        if ((result instanceof ROI2DShape) || (result instanceof ROI3DShape))
+            scale(result, scaling, scaling, scaleOnZ ? scaling : 1d);
+        else if (result instanceof ROI2D)
+        {
+            final ROI2DArea roi2DArea;
+
+            if (result instanceof ROI2DArea)
+            {
+                roi2DArea = (ROI2DArea) result;
+
+                // scale
+                if (down)
+                    roi2DArea.downscale();
+                else
+                    roi2DArea.upscale();
+
+                // scale Z position if wanted
+                if ((roi2DArea.getZ() != -1) && scaleOnZ)
+                    roi2DArea.setZ((int) (roi2DArea.getZ() * scaling));
+            }
+            else
+            {
+                final BooleanMask2D bm = ((ROI2D) result).getBooleanMask(true);
+
+                // scale
+                if (down)
+                    roi2DArea = new ROI2DArea(bm.downscale());
+                else
+                    roi2DArea = new ROI2DArea(bm.upscale());
+
+                // get original position
+                final Point5D pos = result.getPosition5D();
+
+                // restore Z,T,C position
+                if (Double.isInfinite(pos.getZ()))
+                    roi2DArea.setZ(-1);
+                else
+                    roi2DArea.setZ((int) (pos.getZ() * (scaleOnZ ? scaling : 1d)));
+                if (Double.isInfinite(pos.getT()))
+                    roi2DArea.setT(-1);
+                else
+                    roi2DArea.setT((int) pos.getT());
+                if (Double.isInfinite(pos.getC()))
+                    roi2DArea.setC(-1);
+                else
+                    roi2DArea.setC((int) pos.getC());
+
+                // copy properties
+                copyROIProperties(result, roi2DArea, true);
+
+                result = roi2DArea;
+            }
+        }
+        else if (result instanceof ROI3D)
+        {
+            final ROI3DArea roi3DArea;
+
+            // we want a ROI2DArea
+            if (result instanceof ROI3DArea)
+            {
+                roi3DArea = (ROI3DArea) result;
+
+                // scale
+                if (down)
+                {
+                    if (scaleOnZ)
+                        roi3DArea.downscale();
+                    else
+                        roi3DArea.downscale2D();
+                }
+                else
+                {
+                    if (scaleOnZ)
+                        roi3DArea.upscale();
+                    else
+                        roi3DArea.upscale2D();
+                }
+            }
+            else
+            {
+                final BooleanMask3D bm = ((ROI3D) result).getBooleanMask(true);
+
+                // scale
+                if (down)
+                {
+                    if (scaleOnZ)
+                        roi3DArea = new ROI3DArea(bm.downscale());
+                    else
+                        roi3DArea = new ROI3DArea(bm.downscale2D());
+                }
+                else
+                {
+                    if (scaleOnZ)
+                        roi3DArea = new ROI3DArea(bm.upscale());
+                    else
+                        roi3DArea = new ROI3DArea(bm.upscale2D());
+                }
+
+                // get original position
+                final Point5D pos = result.getPosition5D();
+
+                // restore T,C position
+                if (Double.isInfinite(pos.getT()))
+                    roi3DArea.setT(-1);
+                else
+                    roi3DArea.setT((int) pos.getT());
+                if (Double.isInfinite(pos.getC()))
+                    roi3DArea.setC(-1);
+                else
+                    roi3DArea.setC((int) pos.getC());
+
+                // copy properties
+                copyROIProperties(result, roi3DArea, true);
+
+                result = roi3DArea;
+            }
+        }
+        // 4D or 5D ROI --> scaling not supported
+        else
+            throw new UnsupportedOperationException("ROIUtil.adjustToSequenceOrigin: cannot rescale ROI4D or ROI5D !");
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new ROI which is a 2x up scaled version of the input ROI.<br>
+     * Note that the returned ROI can be ROI2DArea or ROI3DArea if original ROI format doesn't support up scale
+     * operation.
+     * 
+     * @param roi
+     *        input ROI we want to get the up scaled form
+     * @param scaleOnZ
+     *        Set to <code>true</code> to scale as well on Z dimension (XY dimension only otherwise)
+     * @throws UnsupportedOperationException
+     *         if input ROI is ROI4D or ROI5D (up scaling not supported for these ROI)
+     */
+    public static ROI getUpscaled(ROI roi, boolean scaleOnZ) throws UnsupportedOperationException
+    {
+        return get2XScaled(roi, scaleOnZ, false);
+    }
+
+    /**
+     * Create and returns a new ROI which is a 2x down scaled version of the input ROI.<br>
+     * Note that the returned ROI can be ROI2DArea or ROI3DArea if original ROI format doesn't support up scale
+     * operation.
+     * 
+     * @param roi
+     *        input ROI we want to get the up scaled form
+     * @param scaleOnZ
+     *        Set to <code>true</code> to scale as well on Z dimension (XY dimension only otherwise)
+     * @throws UnsupportedOperationException
+     *         if input ROI is ROI4D or ROI5D (up scaling not supported for these ROI)
+     */
+    public static ROI getDownscaled(ROI roi, boolean scaleOnZ) throws UnsupportedOperationException
+    {
+        return get2XScaled(roi, scaleOnZ, true);
+    }
+
+    /**
+     * Create and returns a new ROI adjusted to the specified sequence if it represents a sub region of another
+     * Sequence.<br>
+     * You need to use this function when you generated the ROI on the origin Sequence and want to have it adjusted to
+     * the given sub region Sequence coordinates.<br>
+     * ROI coordinates can be affected if the {@link Sequence#getOriginXYRegion()} is not <code>null</code>.<br>
+     * If {@link Sequence#getOriginResolution()} is not <code>0</code> then the returned ROI will be down scaled to fit
+     * the Sequence image resolution.<br>
+     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format..
+     * 
+     * @param roi
+     *        input ROI we want to get the adjusted form
+     * @param subSequence
+     *        the sequence representing the sub region of the origin Sequence (it should contains <i>origin</i>
+     *        information, see Sequence#getOriginXXX(} methods)
+     * @return adjusted ROI
+     * @throws UnsupportedOperationException
+     *         if input ROI is ROI4D or ROI5D while scaling is required (scaling not supported for these ROI)
+     */
+    public static ROI adjustToSequence(ROI roi, Sequence subSequence) throws UnsupportedOperationException
+    {
+        if (roi == null)
+            return null;
+
+        ROI result = roi.getCopy();
+
+        if (subSequence != null)
+        {
+            int res = subSequence.getOriginResolution();
+            final double scaleFactor = 1d / Math.pow(2d, res);
+
+            // down scaling
+            while (res-- > 0)
+                result = getDownscaled(result, false);
+
+            // can set position ? --> relocate it
+            if (result.canSetPosition())
+            {
+                // get current position
+                final Point5D pos = result.getPosition5D();
+
+                final Rectangle originPos = subSequence.getOriginXYRegion();
+                // sub region ?
+                if (originPos != null)
+                {
+                    pos.setX(pos.getX() - (originPos.getX() * scaleFactor));
+                    pos.setY(pos.getY() - (originPos.getY() * scaleFactor));
+                }
+
+                final int zMin = subSequence.getOriginZMin();
+                // sub Z stack part ?
+                if (zMin != -1)
+                {
+                    // can change it ? (we don't scale Z dimension)
+                    if (Double.isFinite(pos.getZ()))
+                        pos.setZ(pos.getZ() - zMin);
+                }
+
+                final int tMin = subSequence.getOriginTMin();
+                // sub T sequence part ?
+                if (tMin != -1)
+                {
+                    // can change it ? (we don't scale T dimension)
+                    if (Double.isFinite(pos.getT()))
+                        pos.setT(pos.getT() - tMin);
+                }
+
+                final int c = subSequence.getOriginChannel();
+                // sub channel ?
+                if (c != -1)
+                {
+                    // can change it ? (we don't scale C dimension)
+                    if (Double.isFinite(pos.getC()))
+                        pos.setC(pos.getC() - c);
+                }
+
+                // set back position
+                result.setPosition5D(pos);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new ROI adjusted to the origin sequence given the sub region Sequence.<br>
+     * You need to use this function when you generated the ROI on the given sub region Sequence and want to have it
+     * back in the origin Sequence coordinates.<br>
+     * ROI coordinates can be affected if the {@link Sequence#getOriginXYRegion()} is not <code>null</code>.<br>
+     * If {@link Sequence#getOriginResolution()} is not <code>0</code> then the returned ROI will be up scaled to fit
+     * the original image resolution.<br>
+     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format.
+     * 
+     * @param roi
+     *        input ROI we want to get the adjusted form
+     * @param subSequence
+     *        the sequence representing the sub region of the origin Sequence (it should contains <i>origin</i>
+     *        information, see Sequence#getOriginXXX(} methods)
+     * @return adjusted ROI
+     * @throws UnsupportedOperationException
+     *         if input ROI is ROI4D or ROI5D while scaling is required (scaling not supported for these ROI)
+     */
+    public static ROI adjustToOriginSequence(ROI roi, Sequence subSequence) throws UnsupportedOperationException
+    {
+        if (roi == null)
+            return null;
+
+        ROI result = roi.getCopy();
+
+        if (subSequence != null)
+        {
+            int res = subSequence.getOriginResolution();
+
+            // up scaling (2D)
+            while (res-- > 0)
+                result = getUpscaled(result, false);
+
+            // can set position ? --> relocate it
+            if (result.canSetPosition())
+            {
+                // get current position
+                final Point5D pos = result.getPosition5D();
+
+                final Rectangle originPos = subSequence.getOriginXYRegion();
+                // sub region ?
+                if (originPos != null)
+                {
+                    pos.setX(pos.getX() + originPos.getX());
+                    pos.setY(pos.getY() + originPos.getY());
+                }
+
+                final int zMin = subSequence.getOriginZMin();
+                // sub Z stack part ?
+                if (zMin != -1)
+                {
+                    // can change it ?
+                    if (Double.isFinite(pos.getZ()))
+                        pos.setZ(pos.getZ() + zMin);
+                }
+
+                final int tMin = subSequence.getOriginTMin();
+                // sub T sequence part ?
+                if (tMin != -1)
+                {
+                    // can change it ?
+                    if (Double.isFinite(pos.getT()))
+                        pos.setT(pos.getT() + tMin);
+                }
+
+                final int c = subSequence.getOriginChannel();
+                // sub channel ?
+                if (c != -1)
+                {
+                    // can change it ?
+                    if (Double.isFinite(pos.getC()))
+                        pos.setC(pos.getC() + c);
+                }
+
+                // set back position
+                result.setPosition5D(pos);
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Copy properties (name, color...) from <code>source</code> ROI and apply it to <code>destination</code> ROI.
      */
     public static void copyROIProperties(ROI source, ROI destination, boolean copyName)
@@ -1925,5 +2350,11 @@ public class ROIUtil
         destination.setStroke(source.getStroke());
         destination.setReadOnly(source.isReadOnly());
         destination.setSelected(source.isSelected());
+        destination.setShowName(source.getShowName());
+        destination.setGroupId(source.getGroupId());
+
+        // copy extended properties
+        for (Entry<String, String> propertyEntry : source.getProperties().entrySet())
+            destination.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
     }
 }
