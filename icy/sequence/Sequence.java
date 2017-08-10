@@ -984,7 +984,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void setOriginXYRegion(Rectangle value)
     {
         // better to use a copy
-        originXYRegion = new Rectangle(value);
+        if (value != null)
+            originXYRegion = new Rectangle(value);
+        // clear it
+        else
+            originXYRegion = null;
     }
 
     /**
