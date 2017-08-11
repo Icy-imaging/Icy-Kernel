@@ -18,8 +18,6 @@
  */
 package icy.action;
 
-import java.awt.Color;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -46,7 +44,6 @@ import icy.main.Icy;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROI3D;
@@ -66,7 +63,6 @@ import icy.util.XLSUtil;
 import icy.util.XMLUtil;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
-import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
 import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
 import plugins.kernel.roi.roi4d.ROI4DStackRectangle;
@@ -1392,29 +1388,210 @@ public class RoiActions
         }
     };
 
-    // public static IcyAbstractAction manualCutAction = new IcyAbstractAction("Manual cut",
-    // new IcyIcon(ResourceUtil.ICON_CUT), "Manual cut/split ROI",
-    // "Manual cut/split ROI by drawing a straight 2D line over it.")
-    // {
-    // @Override
-    // public boolean doAction(ActionEvent e)
-    // {
-    // // we do nothing here, ROI cut is done simulating a specific ROI
-    // final Viewer viewer = Icy.getMainInterface().getActiveViewer();
-    // if (viewer == null) return false;
-    //
-    //
-    //
-    //
-    // return false;
-    // }
-    //
-    // @Override
-    // public boolean isEnabled()
-    // {
-    // return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
-    // }
-    // };
+    public static IcyAbstractAction upscale2dAction = new IcyAbstractAction("Scale x2 (2D)",
+            new IcyIcon(ResourceUtil.ICON_ROI_UPSCALE), "Create up scaled version of selected ROI(s) (2D)",
+            "Create 2x factor up scaled version of selected ROI(s) (2D)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                    final List<ROI> newROIs = new ArrayList<ROI>();
+
+                    for (ROI roi : selectedROIs)
+                        newROIs.add(ROIUtil.getUpscaled(roi, false));
+
+                    if (!newROIs.isEmpty())
+                    {
+                        for (ROI roi : newROIs)
+                            sequence.addROI(roi);
+
+                        sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, newROIs,
+                                (newROIs.size() > 1) ? "ROIs scale x2" : "ROI scale x2"));
+                    }
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+    
+    public static IcyAbstractAction upscaleAction = new IcyAbstractAction("Scale x2",
+            new IcyIcon(ResourceUtil.ICON_ROI_UPSCALE), "Create x2 scaled version of selected ROI(s)",
+            "Create x2 factor scaled version of selected ROI(s)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                    final List<ROI> newROIs = new ArrayList<ROI>();
+
+                    for (ROI roi : selectedROIs)
+                        newROIs.add(ROIUtil.getUpscaled(roi, true));
+
+                    if (!newROIs.isEmpty())
+                    {
+                        for (ROI roi : newROIs)
+                            sequence.addROI(roi);
+
+                        sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, newROIs,
+                                (newROIs.size() > 1) ? "ROIs scale x2" : "ROI scale x2"));
+                    }
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+    
+    public static IcyAbstractAction downscale2dAction = new IcyAbstractAction("Scale /2 (2D)",
+            new IcyIcon(ResourceUtil.ICON_ROI_DOWNSCALE), "Create /2 scaled version of selected ROI(s) (2D)",
+            "Create /2 factor scaled version of selected ROI(s) (2D)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                    final List<ROI> newROIs = new ArrayList<ROI>();
+
+                    for (ROI roi : newROIs)
+                        newROIs.add(ROIUtil.getDownscaled(roi, false));
+
+                    if (!newROIs.isEmpty())
+                    {
+                        for (ROI roi : selectedROIs)
+                            sequence.addROI(roi);
+
+                        sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, newROIs,
+                                (newROIs.size() > 1) ? "ROIs scale /2" : "ROI scale /2"));
+                    }
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+    
+    public static IcyAbstractAction downscaleAction = new IcyAbstractAction("Scale /2",
+            new IcyIcon(ResourceUtil.ICON_ROI_DOWNSCALE), "Create down scaled version of selected ROI(s)",
+            "Create 2x factor down scaled version of selected ROI(s)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                    final List<ROI> newROIs = new ArrayList<ROI>();
+
+                    for (ROI roi : selectedROIs)
+                        newROIs.add(ROIUtil.getDownscaled(roi, true));
+
+                    if (!newROIs.isEmpty())
+                    {
+                        for (ROI roi : newROIs)
+                            sequence.addROI(roi);
+
+                        sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, newROIs,
+                                (newROIs.size() > 1) ? "ROIs scale /2" : "ROI scale /2"));
+                    }
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
 
     public static IcyAbstractAction autoSplitAction = new IcyAbstractAction("Auto split",
             new IcyIcon("split_roi", true), "Automatic split selected ROI",

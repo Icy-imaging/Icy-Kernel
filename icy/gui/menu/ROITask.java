@@ -431,6 +431,79 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
         }
     }
 
+    // static class ROIScaleBand extends JRibbonBand
+    // {
+    // public static final String BAND_NAME = "Resize";
+    //
+    // final IcyCommandButton upscaleButton;
+    // final IcyCommandMenuButton upscale2dButton;
+    // final IcyCommandButton downscaleButton;
+    // final IcyCommandMenuButton downscale2dButton;
+    //
+    // public ROIScaleBand()
+    // {
+    // super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_RESIZE_2));
+    //
+    // // up scale
+    // upscale2dButton = new IcyCommandMenuButton(RoiActions.upscale2dAction);
+    // upscaleButton = new IcyCommandButton(RoiActions.upscaleAction);
+    // upscaleButton.setCommandButtonKind(CommandButtonKind.ACTION_AND_POPUP_MAIN_ACTION);
+    // upscaleButton.setPopupCallback(new PopupPanelCallback()
+    // {
+    // @Override
+    // public JPopupPanel getPopupPanel(JCommandButton arg0)
+    // {
+    // final JCommandPopupMenu result = new JCommandPopupMenu();
+    //
+    // result.addMenuButton(upscale2dButton);
+    //
+    // return result;
+    // }
+    // });
+    //
+    // // down scale
+    // downscale2dButton = new IcyCommandMenuButton(RoiActions.downscale2dAction);
+    // downscaleButton = new IcyCommandButton(RoiActions.downscaleAction);
+    // downscaleButton.setCommandButtonKind(CommandButtonKind.ACTION_AND_POPUP_MAIN_ACTION);
+    // downscaleButton.setPopupCallback(new PopupPanelCallback()
+    // {
+    // @Override
+    // public JPopupPanel getPopupPanel(JCommandButton arg0)
+    // {
+    // final JCommandPopupMenu result = new JCommandPopupMenu();
+    //
+    // result.addMenuButton(downscale2dButton);
+    //
+    // return result;
+    // }
+    // });
+    //
+    // addCommandButton(upscaleButton, RibbonElementPriority.MEDIUM);
+    // addCommandButton(downscaleButton, RibbonElementPriority.MEDIUM);
+    //
+    // setToolTipText("Resize tools for ROI");
+    // RibbonUtil.setRestrictiveResizePolicies(this);
+    // }
+    //
+    // public void updateButtonsState()
+    // {
+    // boolean resizeEnable = false;
+    // final Sequence seq = Icy.getMainInterface().getActiveSequence();
+    //
+    // if (seq != null)
+    // {
+    // final List<ROI> selectedRois = seq.getSelectedROIs();
+    //
+    // resizeEnable = !selectedRois.isEmpty();
+    // }
+    //
+    // upscaleButton.setEnabled(resizeEnable);
+    // upscale2dButton.setEnabled(resizeEnable);
+    // downscaleButton.setEnabled(resizeEnable);
+    // downscale2dButton.setEnabled(resizeEnable);
+    // }
+    // }
+
     // static class ROIMorphoBand extends JRibbonBand
     // {
     // public static final String BAND_NAME = "Morphology";
@@ -613,6 +686,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
     final ROIExtBand roiExtBand;
     final ROIConversionBand roiConversionBand;
     final ROISeparationBand roiSeparationBand;
+    // final ROIScaleBand roiScaleBand;
     final ROIBooleanOpBand roiBooleanOpBand;
     final ROIFillBand roiFillBand;
     final ROIIOBand roiIOBand;
@@ -641,6 +715,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
         roiExtBand = (ROIExtBand) RibbonUtil.getBand(this, ROIExtBand.BAND_NAME);
         roiConversionBand = (ROIConversionBand) RibbonUtil.getBand(this, ROIConversionBand.BAND_NAME);
         roiSeparationBand = (ROISeparationBand) RibbonUtil.getBand(this, ROISeparationBand.BAND_NAME);
+        // roiScaleBand = (ROIScaleBand) RibbonUtil.getBand(this, ROIScaleBand.BAND_NAME);
         roiBooleanOpBand = (ROIBooleanOpBand) RibbonUtil.getBand(this, ROIBooleanOpBand.BAND_NAME);
         roiFillBand = (ROIFillBand) RibbonUtil.getBand(this, ROIFillBand.BAND_NAME);
         roiIOBand = (ROIIOBand) RibbonUtil.getBand(this, ROIIOBand.BAND_NAME);
@@ -664,6 +739,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
                         roiExtBand.updateButtonsState();
                         roiConversionBand.updateButtonsState();
                         roiSeparationBand.updateButtonsState();
+                        // roiScaleBand.updateButtonsState();
                         roiBooleanOpBand.updateButtonsState();
                         roiFillBand.updateButtonsState();
                         roiIOBand.updateButtonsState();

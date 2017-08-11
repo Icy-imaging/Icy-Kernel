@@ -2223,7 +2223,7 @@ public class ROIUtil
                 if (zMin != -1)
                 {
                     // can change it ? (we don't scale Z dimension)
-                    if (Double.isFinite(pos.getZ()))
+                    if (!Double.isInfinite(pos.getZ()))
                         pos.setZ(pos.getZ() - zMin);
                 }
 
@@ -2232,7 +2232,7 @@ public class ROIUtil
                 if (tMin != -1)
                 {
                     // can change it ? (we don't scale T dimension)
-                    if (Double.isFinite(pos.getT()))
+                    if (!Double.isInfinite(pos.getT()))
                         pos.setT(pos.getT() - tMin);
                 }
 
@@ -2241,7 +2241,7 @@ public class ROIUtil
                 if (c != -1)
                 {
                     // can change it ? (we don't scale C dimension)
-                    if (Double.isFinite(pos.getC()))
+                    if (!Double.isInfinite(pos.getC()))
                         pos.setC(pos.getC() - c);
                 }
 
@@ -2305,7 +2305,7 @@ public class ROIUtil
                 if (zMin != -1)
                 {
                     // can change it ?
-                    if (Double.isFinite(pos.getZ()))
+                    if (!Double.isInfinite(pos.getZ()))
                         pos.setZ(pos.getZ() + zMin);
                 }
 
@@ -2314,7 +2314,7 @@ public class ROIUtil
                 if (tMin != -1)
                 {
                     // can change it ?
-                    if (Double.isFinite(pos.getT()))
+                    if (!Double.isInfinite(pos.getT()))
                         pos.setT(pos.getT() + tMin);
                 }
 
@@ -2323,7 +2323,7 @@ public class ROIUtil
                 if (c != -1)
                 {
                     // can change it ?
-                    if (Double.isFinite(pos.getC()))
+                    if (!Double.isInfinite(pos.getC()))
                         pos.setC(pos.getC() + c);
                 }
 
