@@ -18,10 +18,6 @@
  */
 package icy.roi;
 
-import icy.type.TypeUtil;
-import icy.type.collection.array.DynamicArray;
-import icy.type.point.Point2DUtil;
-
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -30,6 +26,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import icy.type.TypeUtil;
+import icy.type.collection.array.DynamicArray;
+import icy.type.point.Point2DUtil;
 
 /**
  * Class to define a 2D boolean mask region and make basic boolean operation between masks.<br>
@@ -443,6 +443,150 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
+     * Fast 2x up scaling (each point become 2x2 bloc points).<br>
+     * This method create a new boolean mask.
+     */
+    public static BooleanMask2D upscale(BooleanMask2D mask)
+    {
+        final Rectangle srcBounds;
+        final boolean[] srcMask;
+        final boolean[] resMask;
+
+        synchronized (mask)
+        {
+            srcBounds = mask.bounds;
+            srcMask = mask.mask;
+        }
+
+        final int srcW = srcBounds.width;
+        final int srcH = srcBounds.height;
+
+        resMask = new boolean[srcW * srcH * 2 * 2];
+
+        int offSrc = 0;
+        int offRes = 0;
+        for (int y = 0; y < srcH; y++)
+        {
+            for (int x = 0; x < srcW; x++)
+            {
+                final boolean v = srcMask[offSrc++];
+
+                // unpack in 4 points
+                resMask[offRes + 0] = v;
+                resMask[offRes + 1] = v;
+                resMask[offRes + (srcW * 2) + 0] = v;
+                resMask[offRes + (srcW * 2) + 1] = v;
+
+                // next
+                offRes += 2;
+            }
+
+            // pass 1 line
+            offRes += srcW * 2;
+        }
+
+        return new BooleanMask2D(new Rectangle(srcBounds.x * 2, srcBounds.y * 2, srcW * 2, srcH * 2), resMask);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point value).<br>
+     * This method create a new int[] array returning the number of <code>true</code> point for each 2x2 block.
+     * 
+     * @param mask
+     *        the boolean mask to download
+     */
+    public static byte[] getDownscaleValues(BooleanMask2D mask)
+    {
+        final Rectangle srcBounds;
+        final boolean[] srcMask;
+        final byte[] resMask;
+
+        synchronized (mask)
+        {
+            srcBounds = mask.bounds;
+            srcMask = mask.mask;
+        }
+
+        final int resW = srcBounds.width / 2;
+        final int resH = srcBounds.height / 2;
+
+        resMask = new byte[resW * resH];
+
+        int offSrc = 0;
+        int offRes = 0;
+        for (int y = 0; y < resH; y++)
+        {
+            for (int x = 0; x < resW; x++)
+            {
+                byte v = 0;
+
+                if (srcMask[offSrc + 0])
+                    v++;
+                if (srcMask[offSrc + 1])
+                    v++;
+                if (srcMask[offSrc + (resW * 2) + 0])
+                    v++;
+                if (srcMask[offSrc + (resW * 2) + 1])
+                    v++;
+
+                // pack in 1 point
+                resMask[offRes++] = v;
+                // next
+                offSrc += 2;
+            }
+
+            // pass 1 line
+            offSrc += resW * 2;
+            // fix for odd width
+            if ((srcBounds.width & 1) == 1) offSrc += 2;
+        }
+
+        return resMask;
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     * 
+     * @param mask
+     *        the boolean mask to download
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1 to 4
+     */
+    public static BooleanMask2D downscale(BooleanMask2D mask, int nbPointForTrue)
+    {
+        final Rectangle srcBounds;
+
+        synchronized (mask)
+        {
+            srcBounds = mask.bounds;
+        }
+
+        final int validPt = Math.min(Math.max(nbPointForTrue, 1), 4);
+        final int resW = srcBounds.width / 2;
+        final int resH = srcBounds.height / 2;
+
+        final byte[] valueMask = getDownscaleValues(mask);
+        final boolean[] resMask = new boolean[resW * resH];
+
+        for (int i = 0; i < valueMask.length; i++)
+            resMask[i] = valueMask[i] >= validPt;
+
+        return new BooleanMask2D(new Rectangle(srcBounds.x / 2, srcBounds.y / 2, resW, resH), resMask);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     */
+    public static BooleanMask2D downscale(BooleanMask2D mask)
+    {
+        return downscale(mask, 3);
+    }
+
+    /**
      * Build global boolean mask from union of all specified mask
      */
     public static BooleanMask2D getUnion(List<BooleanMask2D> masks)
@@ -679,7 +823,8 @@ public class BooleanMask2D implements Cloneable
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask2D getExclusiveUnion(Rectangle bounds1, boolean[] mask1, Rectangle bounds2, boolean[] mask2)
+    public static BooleanMask2D getExclusiveUnion(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
+            boolean[] mask2)
     {
         final Rectangle union = bounds1.union(bounds2);
 
@@ -996,7 +1141,8 @@ public class BooleanMask2D implements Cloneable
      * @deprecated Uses {@link #getExclusiveUnionBooleanMask(Rectangle, boolean[], Rectangle, boolean[])} instead.
      */
     @Deprecated
-    public static BooleanMask2D getXorBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2, boolean[] mask2)
+    public static BooleanMask2D getXorBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
+            boolean[] mask2)
     {
         return getExclusiveUnionBooleanMask(bounds1, mask1, bounds2, mask2);
     }
@@ -1405,7 +1551,8 @@ public class BooleanMask2D implements Cloneable
      *      3456
      *       78
      * Ymax   9
-     * </pre>
+     *        </pre>
+     * 
      * @see #getComponentsPointsAsIntArray()
      */
     public Point[][] getComponentsPoints(boolean sorted)
@@ -2864,6 +3011,38 @@ public class BooleanMask2D implements Cloneable
                 bounds = value;
             }
         }
+    }
+
+    /**
+     * Fast 2x up scaling (each point become 2x2 bloc point).<br>
+     * This method create a new boolean mask.
+     */
+    public BooleanMask2D upscale()
+    {
+        return upscale(this);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     * 
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1-4 (default is 3)
+     */
+    public BooleanMask2D downscale(int nbPointForTrue)
+    {
+        return downscale(this, nbPointForTrue);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     */
+    public BooleanMask2D downscale()
+    {
+        return downscale(this);
     }
 
     @Override

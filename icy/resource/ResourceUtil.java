@@ -159,6 +159,8 @@ public class ResourceUtil
     public static final Image ICON_ROI_SUB = ResourceUtil.getAlphaIconAsImage("roi_sub.png");
 
     public static final Image ICON_ROI_INTERIOR = ResourceUtil.getAlphaIconAsImage("roi_interior.png");
+    public static final Image ICON_ROI_UPSCALE = ResourceUtil.getAlphaIconAsImage("roi_upscale.png");
+    public static final Image ICON_ROI_DOWNSCALE = ResourceUtil.getAlphaIconAsImage("roi_downscale.png");
 
     public static final Image ICON_ROI_COMP = ResourceUtil.getAlphaIconAsImage("separate_obj.png");
 

@@ -18,6 +18,13 @@
  */
 package icy.sequence;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.image.lut.LUT;
@@ -26,13 +33,6 @@ import icy.roi.ROI;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
-
-import java.util.LinkedList;
-import java.util.List;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  * @author Stephane
@@ -65,12 +65,12 @@ public class SequencePersistent implements XMLPersistent
      */
     private String getXMLFileName()
     {
-        final String baseName = sequence.getOutputBaseName("meta");
+        final String baseName = sequence.getOutputFilename(false);
 
         if (StringUtil.isEmpty(baseName))
             return null;
 
-        return baseName + sequence.getOutputExtension() + XMLUtil.FILE_DOT_EXTENSION;
+        return baseName + XMLUtil.FILE_DOT_EXTENSION;
     }
 
     /**
@@ -187,10 +187,8 @@ public class SequencePersistent implements XMLPersistent
         sequence.setTimeInterval(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, 1d));
 
         for (int c = 0; c < sequence.getSizeC(); c++)
-            sequence.setChannelName(
-                    c,
-                    XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c, MetaDataUtil.DEFAULT_CHANNEL_NAME
-                            + c));
+            sequence.setChannelName(c, XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c,
+                    MetaDataUtil.DEFAULT_CHANNEL_NAME + c));
 
         return true;
     }

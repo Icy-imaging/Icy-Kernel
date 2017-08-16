@@ -737,6 +737,8 @@ public class Saver
                 if (sequence.isDefaultName())
                     sequence.setName(fileName);
                 sequence.setFilename(fileBaseDirectory);
+                // reset origin informations as now we are saved
+                sequence.resetOriginInformation();
 
                 // assume that is the saved sequence (used for metadata)
                 savedSequence = sequence;
@@ -783,6 +785,8 @@ public class Saver
 
                 // we set filename on actual saved Sequence
                 savedSequence.setFilename(filePath);
+                // reset origin informations as now we are saved
+                sequence.resetOriginInformation();
 
                 // add as one item to recent file list
                 if (mainMenu != null)

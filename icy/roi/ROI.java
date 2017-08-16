@@ -1225,6 +1225,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, getDefaultColor().getRGB())));
                 setStroke(XMLUtil.getElementDoubleValue(node, ID_STROKE, getDefaultStroke()));
                 setOpacity(XMLUtil.getElementFloatValue(node, ID_OPACITY, getDefaultOpacity()));
+                setShowName(XMLUtil.getElementBooleanValue(node, ID_SHOWNAME, getDefaultShowName()));
             }
             finally
             {
@@ -1243,6 +1244,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             XMLUtil.setElementIntValue(node, ID_COLOR, color.getRGB());
             XMLUtil.setElementDoubleValue(node, ID_STROKE, stroke);
             XMLUtil.setElementFloatValue(node, ID_OPACITY, opacity);
+            XMLUtil.setElementBooleanValue(node, ID_SHOWNAME, showName);
 
             return true;
         }
@@ -1647,6 +1649,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Retrieve all custom ROI properties (map of (Key,Value)).
+     */
+    public Map<String, String> getProperties()
+    {
+        return new HashMap<String, String>(properties);
+    }
+
+    /**
      * Retrieve a ROI property value.<br>
      * Returns <code>null</code> if the property value is empty.
      * 
@@ -1657,25 +1667,31 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public String getProperty(String name)
     {
-        if (StringUtil.equals(name, PROPERTY_CREATING))
+        if (name == null)
+            return null;
+
+        // ignore case for property name
+        final String adjName = name.toLowerCase();
+
+        if (StringUtil.equals(adjName, PROPERTY_CREATING))
             return Boolean.toString(isCreating());
-        if (StringUtil.equals(name, PROPERTY_NAME))
+        if (StringUtil.equals(adjName, PROPERTY_NAME))
             return getName();
-        if (StringUtil.equals(name, PROPERTY_OPACITY))
+        if (StringUtil.equals(adjName, PROPERTY_OPACITY))
             return Float.toString(getOpacity());
-        if (StringUtil.equals(name, PROPERTY_READONLY))
+        if (StringUtil.equals(adjName, PROPERTY_READONLY))
             return Boolean.toString(isReadOnly());
-        if (StringUtil.equals(name, PROPERTY_SHOWNAME))
+        if (StringUtil.equals(adjName, PROPERTY_SHOWNAME))
             return Boolean.toString(getShowName());
-        if (StringUtil.equals(name, PROPERTY_STROKE))
+        if (StringUtil.equals(adjName, PROPERTY_STROKE))
             return Double.toString(getStroke());
 
-        if (StringUtil.equals(name, PROPERTY_COLOR) || StringUtil.equals(name, PROPERTY_ICON))
-            throw new IllegalArgumentException("Cannot return value of property '" + name + "' as String");
+        if (StringUtil.equals(adjName, PROPERTY_COLOR) || StringUtil.equals(adjName, PROPERTY_ICON))
+            throw new IllegalArgumentException("Cannot return value of property '" + adjName + "' as String");
 
         synchronized (properties)
         {
-            return properties.get(name);
+            return properties.get(adjName);
         }
     }
 
@@ -1691,28 +1707,34 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void setProperty(String name, String value)
     {
-        if (StringUtil.equals(name, PROPERTY_CREATING))
+        if (name == null)
+            return;
+
+        // ignore case for property name
+        final String adjName = name.toLowerCase();
+
+        if (StringUtil.equals(adjName, PROPERTY_CREATING))
             setCreating(Boolean.valueOf(value).booleanValue());
-        if (StringUtil.equals(name, PROPERTY_NAME))
+        if (StringUtil.equals(adjName, PROPERTY_NAME))
             setName(value);
-        if (StringUtil.equals(name, PROPERTY_OPACITY))
+        if (StringUtil.equals(adjName, PROPERTY_OPACITY))
             setOpacity(Float.valueOf(value).floatValue());
-        if (StringUtil.equals(name, PROPERTY_READONLY))
+        if (StringUtil.equals(adjName, PROPERTY_READONLY))
             setReadOnly(Boolean.valueOf(value).booleanValue());
-        if (StringUtil.equals(name, PROPERTY_SHOWNAME))
+        if (StringUtil.equals(adjName, PROPERTY_SHOWNAME))
             setShowName(Boolean.valueOf(value).booleanValue());
-        if (StringUtil.equals(name, PROPERTY_STROKE))
+        if (StringUtil.equals(adjName, PROPERTY_STROKE))
             setStroke(Double.valueOf(value).doubleValue());
 
-        if (StringUtil.equals(name, PROPERTY_COLOR) || StringUtil.equals(name, PROPERTY_ICON))
-            throw new IllegalArgumentException("Cannot set value of property '" + name + "' as String");
+        if (StringUtil.equals(adjName, PROPERTY_COLOR) || StringUtil.equals(adjName, PROPERTY_ICON))
+            throw new IllegalArgumentException("Cannot set value of property '" + adjName + "' as String");
 
         synchronized (properties)
         {
-            properties.put(name, value);
+            properties.put(adjName, value);
         }
 
-        propertyChanged(name);
+        propertyChanged(adjName);
     }
 
     /**
@@ -3140,7 +3162,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
-            setShowName(XMLUtil.getElementBooleanValue(node, ID_SHOWNAME, false));
 
             properties.clear();
 
@@ -3181,12 +3202,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementValue(node, ID_NAME, getName());
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
         XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
-        XMLUtil.setElementBooleanValue(node, ID_SHOWNAME, getShowName());
-
-        properties.put(PROPERTY_COLOR, getColor().toString());
-        properties.put(PROPERTY_READONLY, Boolean.toString(readOnly));
-        properties.put(PROPERTY_NAME, getName());
-        properties.put(PROPERTY_OPACITY, Double.toString(getOpacity()));
 
         final Element propertiesNode = XMLUtil.setElement(node, ID_PROPERTIES);
         final Set<Entry<String, String>> entries = properties.entrySet();

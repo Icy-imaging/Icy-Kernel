@@ -1049,6 +1049,67 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
+     * Fast up scaling by a factor of 2 (each point become a 2x2x2 block points)
+     */
+    public void upscale()
+    {
+        setAsBooleanMask(getBooleanMask(true).upscale());
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2x2 block points become 1 point).<br>
+     * 
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1 to 5 (default is 5)
+     */
+    public void downscale(int nbPointForTrue)
+    {
+        setAsBooleanMask(getBooleanMask(true).downscale(nbPointForTrue));
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2x2 block points become 1 point).<br>
+     */
+    public void downscale()
+    {
+        setAsBooleanMask(getBooleanMask(true).downscale());
+    }
+
+    /**
+     * Fast up scaling by a factor of 2 (each point become a 2x2 block points)
+     * 2D version (down scale is done on XY dimension only).<br>
+     */
+    public void upscale2D()
+    {
+        setAsBooleanMask(getBooleanMask(true).upscale2D());
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * 
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1 to 5 (default is 5)
+     */
+    public void downscale2D(int nbPointForTrue)
+    {
+        setAsBooleanMask(getBooleanMask(true).downscale2D(nbPointForTrue));
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     */
+    public void downscale2D()
+    {
+        setAsBooleanMask(getBooleanMask(true).downscale2D());
+    }
+
+    /**
      * Optimize the bounds size to the minimum surface which still include all mask.<br>
      * You should call it after consecutive remove operations if you directly addressed mask data.
      */

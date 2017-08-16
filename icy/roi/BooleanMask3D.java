@@ -1,12 +1,12 @@
 package icy.roi;
 
-import icy.type.collection.array.DynamicArray;
-import icy.type.point.Point3D;
-import icy.type.rectangle.Rectangle3D;
-
 import java.awt.Rectangle;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+
+import icy.type.collection.array.DynamicArray;
+import icy.type.point.Point3D;
+import icy.type.rectangle.Rectangle3D;
 
 /**
  * Class to define a 3D boolean mask region and make basic boolean operation between masks.<br>
@@ -335,6 +335,226 @@ public class BooleanMask3D implements Cloneable
     }
 
     /**
+     * Fast 2x up scaling (each point become 2x2x2 bloc points).<br>
+     * This method create a new boolean mask.
+     */
+    public static BooleanMask3D upscale(BooleanMask3D mask)
+    {
+        final TreeMap<Integer, BooleanMask2D> srcMask = mask.mask;
+        final TreeMap<Integer, BooleanMask2D> resMask = new TreeMap<Integer, BooleanMask2D>();
+
+        synchronized (mask)
+        {
+            final int minZ = srcMask.firstKey().intValue();
+            final int maxZ = srcMask.lastKey().intValue();
+
+            // single Z --> check for special MAX_INTEGER case
+            if ((minZ == maxZ) && (mask.bounds.sizeZ == Integer.MAX_VALUE))
+            {
+                // put up scaled version for all Z
+                resMask.put(Integer.valueOf(Integer.MIN_VALUE), srcMask.firstEntry().getValue().upscale());
+            }
+            else
+            {
+                for (Entry<Integer, BooleanMask2D> entry : srcMask.entrySet())
+                {
+                    final int key = entry.getKey().intValue();
+                    // get upscaled 2D mask
+                    final BooleanMask2D bm = entry.getValue().upscale();
+
+                    // duplicate it at (Z pos) * 2
+                    resMask.put(Integer.valueOf((key * 2) + 0), bm);
+                    resMask.put(Integer.valueOf((key * 2) + 1), (BooleanMask2D) bm.clone());
+                }
+            }
+        }
+
+        return new BooleanMask3D(resMask);
+    }
+
+    /**
+     * Internal use only
+     */
+    protected static BooleanMask2D mergeForDownscale(TreeMap<Integer, BooleanMask2D> masks, int destZ,
+            int nbPointForTrue)
+    {
+        final BooleanMask2D bm1 = masks.get(Integer.valueOf((destZ * 2) + 0));
+        final BooleanMask2D bm2 = masks.get(Integer.valueOf((destZ * 2) + 1));
+        final Rectangle bounds;
+
+        if (bm1 == null)
+        {
+            if (bm2 == null)
+                return null;
+
+            bounds = new Rectangle(bm2.bounds);
+        }
+        else if (bm2 == null)
+            bounds = new Rectangle(bm1.bounds);
+        else
+            bounds = bm1.bounds.union(bm2.bounds);
+
+        final byte[] maskValues1;
+        final byte[] maskValues2;
+        final int resW = bounds.width / 2;
+        final int resH = bounds.height / 2;
+
+        // get mask values from both mask
+        if (bm1 != null)
+        {
+            bm1.moveBounds(bounds);
+            maskValues1 = BooleanMask2D.getDownscaleValues(bm1);
+        }
+        else
+            maskValues1 = new byte[resW * resH];
+        if (bm2 != null)
+        {
+            bm2.moveBounds(bounds);
+            maskValues2 = BooleanMask2D.getDownscaleValues(bm2);
+        }
+        else
+            maskValues2 = new byte[resW * resH];
+
+        final int validPt = Math.min(Math.max(nbPointForTrue, 1), 8);
+
+        final boolean[] resMask = new boolean[resW * resH];
+
+        for (int i = 0; i < resMask.length; i++)
+            resMask[i] = (maskValues1[i] + maskValues2[i]) >= validPt;
+
+        return new BooleanMask2D(new Rectangle(bounds.x / 2, bounds.y / 2, resW, resH), resMask);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     * 
+     * @param mask
+     *        the boolean mask to download
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1 to 8 (default is 5)
+     */
+    public static BooleanMask3D downscale(BooleanMask3D mask, int nbPointForTrue)
+    {
+        final TreeMap<Integer, BooleanMask2D> srcMask = mask.mask;
+        final TreeMap<Integer, BooleanMask2D> resMask = new TreeMap<Integer, BooleanMask2D>();
+
+        synchronized (mask)
+        {
+            final int minZ = srcMask.firstKey().intValue();
+            final int maxZ = srcMask.lastKey().intValue();
+
+            // single Z --> check for special MAX_INTEGER case
+            if ((minZ == maxZ) && (mask.bounds.sizeZ == Integer.MAX_VALUE))
+                // put down scaled version for all Z
+                resMask.put(Integer.valueOf(Integer.MIN_VALUE), mergeForDownscale(srcMask, -1, nbPointForTrue));
+            else
+            {
+                for (int z = minZ; z < maxZ; z += 2)
+                {
+                    final int destZ = z / 2;
+                    resMask.put(Integer.valueOf(destZ), mergeForDownscale(srcMask, destZ, nbPointForTrue));
+                }
+            }
+        }
+
+        return new BooleanMask3D(resMask);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     */
+    public static BooleanMask3D downscale(BooleanMask3D mask)
+    {
+        return downscale(mask, 5);
+    }
+
+    /**
+     * Fast 2x up scaling (each point become 2x2 bloc points).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * This method create a new boolean mask.
+     */
+    public static BooleanMask3D upscale2D(BooleanMask3D mask)
+    {
+        final TreeMap<Integer, BooleanMask2D> srcMask = mask.mask;
+        final TreeMap<Integer, BooleanMask2D> resMask = new TreeMap<Integer, BooleanMask2D>();
+
+        synchronized (mask)
+        {
+            final int minZ = srcMask.firstKey().intValue();
+            final int maxZ = srcMask.lastKey().intValue();
+
+            // single Z --> check for special MAX_INTEGER case
+            if ((minZ == maxZ) && (mask.bounds.sizeZ == Integer.MAX_VALUE))
+            {
+                // put up scaled version for all Z
+                resMask.put(Integer.valueOf(Integer.MIN_VALUE), srcMask.firstEntry().getValue().upscale());
+            }
+            else
+            {
+                // put up scaled version for each Z
+                for (Entry<Integer, BooleanMask2D> entry : srcMask.entrySet())
+                    resMask.put(entry.getKey(), entry.getValue().upscale());
+            }
+        }
+
+        return new BooleanMask3D(resMask);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * This method create a new boolean mask.
+     * 
+     * @param mask
+     *        the boolean mask to download
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1 to 4 (default is 3)
+     */
+    public static BooleanMask3D downscale2D(BooleanMask3D mask, int nbPointForTrue)
+    {
+        final TreeMap<Integer, BooleanMask2D> srcMask = mask.mask;
+        final TreeMap<Integer, BooleanMask2D> resMask = new TreeMap<Integer, BooleanMask2D>();
+
+        synchronized (mask)
+        {
+            final int minZ = srcMask.firstKey().intValue();
+            final int maxZ = srcMask.lastKey().intValue();
+
+            // single Z --> check for special MAX_INTEGER case
+            if ((minZ == maxZ) && (mask.bounds.sizeZ == Integer.MAX_VALUE))
+            {
+                // put down scaled version for all Z
+                resMask.put(Integer.valueOf(Integer.MIN_VALUE),
+                        srcMask.firstEntry().getValue().downscale(nbPointForTrue));
+            }
+            else
+            {
+                // put down scaled version for each Z
+                for (Entry<Integer, BooleanMask2D> entry : srcMask.entrySet())
+                    resMask.put(entry.getKey(), entry.getValue().downscale(nbPointForTrue));
+            }
+        }
+
+        return new BooleanMask3D(resMask);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * This method create a new boolean mask.
+     */
+    public static BooleanMask3D downscale2D(BooleanMask3D mask)
+    {
+        return downscale2D(mask, 3);
+    }
+
+    /**
      * Region represented by the mask.
      */
     public Rectangle3D.Integer bounds;
@@ -342,6 +562,22 @@ public class BooleanMask3D implements Cloneable
      * Boolean mask 2D array.
      */
     public final TreeMap<Integer, BooleanMask2D> mask;
+
+    public BooleanMask3D(Rectangle3D.Integer bounds, TreeMap<Integer, BooleanMask2D> mask)
+    {
+        super();
+
+        this.mask = mask;
+        this.bounds = bounds;
+    }
+
+    public BooleanMask3D(TreeMap<Integer, BooleanMask2D> mask)
+    {
+        this(new Rectangle3D.Integer(), mask);
+
+        // bounds need to exist before calling getOptimizedBounds()
+        bounds = getOptimizedBounds(false);
+    }
 
     /**
      * Build a new 3D boolean mask with specified bounds and 2D mask array.<br>
@@ -694,8 +930,8 @@ public class BooleanMask3D implements Cloneable
         result.setSizeX(bounds2D.width);
         result.setSizeY(bounds2D.height);
 
-        // single Z --> check for special MAX_INTEGER case
-        if ((minZ == maxZ) && (bounds.sizeZ == Integer.MAX_VALUE))
+        // single Z --> check for special infinite Z case
+        if ((minZ == maxZ) && ((minZ == Integer.MIN_VALUE) || (bounds.sizeZ == Integer.MAX_VALUE)))
         {
             result.setZ(Integer.MIN_VALUE);
             result.setSizeZ(Integer.MAX_VALUE);
@@ -806,6 +1042,73 @@ public class BooleanMask3D implements Cloneable
 
             bounds = value;
         }
+    }
+
+    /**
+     * Fast 2x up scaling (each point become 2x2x2 bloc point).<br>
+     * This method create a new boolean mask.
+     */
+    public BooleanMask3D upscale()
+    {
+        return upscale(this);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     * 
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1-8 (default is 5).
+     */
+    public BooleanMask3D downscale(int nbPointForTrue)
+    {
+        return downscale(this, nbPointForTrue);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2x2 block points become 1 point).<br>
+     * This method create a new boolean mask.
+     */
+    public BooleanMask3D downscale()
+    {
+        return downscale(this);
+    }
+
+    /**
+     * Fast 2x up scaling (each point become 2x2 bloc point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * This method create a new boolean mask.
+     */
+    public BooleanMask3D upscale2D()
+    {
+        return upscale2D(this);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * This method create a new boolean mask.
+     * 
+     * @param nbPointForTrue
+     *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
+     *        point.<br>
+     *        Accepted value: 1-4 (default is 3).
+     */
+    public BooleanMask3D downscale2D(int nbPointForTrue)
+    {
+        return downscale2D(this, nbPointForTrue);
+    }
+
+    /**
+     * Fast 2x down scaling (each 2x2 block points become 1 point).<br>
+     * 2D version (down scale is done on XY dimension only).<br>
+     * This method create a new boolean mask.
+     */
+    public BooleanMask3D downscale2D()
+    {
+        return downscale2D(this);
     }
 
     /**
@@ -982,48 +1285,48 @@ public class BooleanMask3D implements Cloneable
 
             switch (connection)
             {
-            // case 0: // isolated point
-            // cornerEdges += 3;
-            // sideEdges++;
-            // result += 1 + Math.sqrt(2) + (2 * Math.sqrt(3));
-            // break;
-            //
-            // case 1: // filament end
-            // cornerEdges += 2;
-            // sideEdges++;
-            // result += 1 + (2 * Math.sqrt(3));
-            // break;
-            //
-            // case 2: // filament point
-            // if ((leftConnected && rightConnected) || (topConnected && bottomConnected)
-            // || (northConnected && southConnected))
-            // {
-            // // quadruple "side" edge
-            // sideEdges += 4;
-            // result += 4;
-            // }
-            // else
-            // {
-            // cornerEdges += 3;
-            // result += 3 * Math.sqrt(2);
-            // }
-            // // cornerEdges += 3;
-            // // perimeter += Math.sqrt(3);
-            // break;
-            //
-            // case 3: // "salient" point
-            // if ((leftConnected && rightConnected) || (topConnected && bottomConnected)
-            // || (northConnected && southConnected))
-            // {
-            // // triple "side" edge
-            // sideEdges += 3;
-            // result += 3;
-            // }
-            // else
-            // {
-            // cornerEdges += 2;
-            // result += 2 * Math.sqrt(2);
-            // }
+                // case 0: // isolated point
+                // cornerEdges += 3;
+                // sideEdges++;
+                // result += 1 + Math.sqrt(2) + (2 * Math.sqrt(3));
+                // break;
+                //
+                // case 1: // filament end
+                // cornerEdges += 2;
+                // sideEdges++;
+                // result += 1 + (2 * Math.sqrt(3));
+                // break;
+                //
+                // case 2: // filament point
+                // if ((leftConnected && rightConnected) || (topConnected && bottomConnected)
+                // || (northConnected && southConnected))
+                // {
+                // // quadruple "side" edge
+                // sideEdges += 4;
+                // result += 4;
+                // }
+                // else
+                // {
+                // cornerEdges += 3;
+                // result += 3 * Math.sqrt(2);
+                // }
+                // // cornerEdges += 3;
+                // // perimeter += Math.sqrt(3);
+                // break;
+                //
+                // case 3: // "salient" point
+                // if ((leftConnected && rightConnected) || (topConnected && bottomConnected)
+                // || (northConnected && southConnected))
+                // {
+                // // triple "side" edge
+                // sideEdges += 3;
+                // result += 3;
+                // }
+                // else
+                // {
+                // cornerEdges += 2;
+                // result += 2 * Math.sqrt(2);
+                // }
                 default:
                     cornerEdges++;
                     result += Math.sqrt(3);
@@ -1102,4 +1405,5 @@ public class BooleanMask3D implements Cloneable
 
         return result;
     }
+
 }
