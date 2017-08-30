@@ -21,10 +21,7 @@ package icy.action;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +38,6 @@ import icy.gui.dialog.SaveDialog;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.main.MainFrame;
 import icy.main.Icy;
-import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
@@ -1039,64 +1035,41 @@ public class RoiActions
                     return true;
                 }
 
-                // get the global result folder
-                final String dir = GeneralPreferences.getResultFolder();
-                // create it if needed
-                FileUtil.createDir(dir);
-
-                final String filename = SaveDialog.chooseFile("Export ROIs...", dir, "result", ".xls");
+                final String filename = SaveDialog.chooseFileForResult("Export ROIs...", "result", ".xls");
 
                 if (filename != null)
                 {
-                    // update result folder
-                    GeneralPreferences.setResultFolder(FileUtil.getDirectory(filename));
-
-                    // CSV format wanted ?
-                    if (FileUtil.getFileExtension(filename, false).equalsIgnoreCase("csv"))
+                    try
                     {
-                        try
+                        // CSV format wanted ?
+                        if (!FileUtil.getFileExtension(filename, false).toLowerCase().startsWith("xls"))
                         {
                             // just write CSV content
                             final PrintWriter out = new PrintWriter(filename);
                             out.println(content);
                             out.close();
                         }
-                        catch (FileNotFoundException e1)
-                        {
-                            MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
-                        }
-                    }
-                    // XLS export
-                    else
-                    {
-                        try
+                        // XLS export
+                        else
                         {
                             final WritableWorkbook workbook = XLSUtil.createWorkbook(filename);
                             final WritableSheet sheet = XLSUtil.createNewPage(workbook, "ROIS");
-                            final BufferedReader br = new BufferedReader(new StringReader(content));
 
-                            String line;
-                            int y = 0;
-                            while ((line = br.readLine()) != null)
+                            if (XLSUtil.setFromCSV(sheet, content))
+                                XLSUtil.saveAndClose(workbook);
+                            else
                             {
-                                int x = 0;
-
-                                // use tab as separator
-                                for (String col : line.split("\t"))
-                                {
-                                    XLSUtil.setCellString(sheet, x, y, col);
-                                    x++;
-                                }
-
-                                y++;
+                                MessageDialog.showDialog("Error",
+                                        "Error while exporting ROIs table content to XLS file.",
+                                        MessageDialog.ERROR_MESSAGE);
+                                return false;
                             }
-
-                            XLSUtil.saveAndClose(workbook);
                         }
-                        catch (Exception e1)
-                        {
-                            MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
-                        }
+                    }
+                    catch (Exception e1)
+                    {
+                        MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
+                        return false;
                     }
                 }
 
@@ -1438,7 +1411,7 @@ public class RoiActions
             return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
-    
+
     public static IcyAbstractAction upscaleAction = new IcyAbstractAction("Scale x2",
             new IcyIcon(ResourceUtil.ICON_ROI_UPSCALE), "Create x2 scaled version of selected ROI(s)",
             "Create x2 factor scaled version of selected ROI(s)")
@@ -1489,7 +1462,7 @@ public class RoiActions
             return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
-    
+
     public static IcyAbstractAction downscale2dAction = new IcyAbstractAction("Scale /2 (2D)",
             new IcyIcon(ResourceUtil.ICON_ROI_DOWNSCALE), "Create /2 scaled version of selected ROI(s) (2D)",
             "Create /2 factor scaled version of selected ROI(s) (2D)")
@@ -1540,7 +1513,7 @@ public class RoiActions
             return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
-    
+
     public static IcyAbstractAction downscaleAction = new IcyAbstractAction("Scale /2",
             new IcyIcon(ResourceUtil.ICON_ROI_DOWNSCALE), "Create down scaled version of selected ROI(s)",
             "Create 2x factor down scaled version of selected ROI(s)")
@@ -1591,7 +1564,6 @@ public class RoiActions
             return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
-
 
     public static IcyAbstractAction autoSplitAction = new IcyAbstractAction("Auto split",
             new IcyIcon("split_roi", true), "Automatic split selected ROI",

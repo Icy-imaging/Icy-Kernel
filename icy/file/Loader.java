@@ -3316,6 +3316,9 @@ public class Loader
             // multi series image --> adjust name to keep file name info
             if (multiSerie)
                 name += " - " + sequence.getName();
+            else
+                // just use sequence metadata name
+                name = sequence.getName();
         }
 
         // original pixel size

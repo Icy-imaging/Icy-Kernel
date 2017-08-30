@@ -18,27 +18,6 @@
  */
 package icy.gui.lut;
 
-import icy.gui.component.CheckTabbedPane;
-import icy.gui.lut.abstract_.IcyLutViewer;
-import icy.gui.util.GuiUtil;
-import icy.gui.viewer.Viewer;
-import icy.image.colormap.IcyColorMap;
-import icy.image.colormap.IcyColorMap.IcyColorMapType;
-import icy.image.colormap.IcyColorMapEvent;
-import icy.image.colormap.IcyColorMapListener;
-import icy.image.colormap.LinearColorMap;
-import icy.image.lut.LUT;
-import icy.image.lut.LUT.LUTChannel;
-import icy.math.Scaler;
-import icy.preferences.ApplicationPreferences;
-import icy.preferences.XMLPreferences;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent;
-import icy.sequence.SequenceListener;
-import icy.system.thread.ThreadUtil;
-import icy.type.DataType;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,6 +32,31 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import icy.gui.component.CheckTabbedPane;
+import icy.gui.component.button.IcyButton;
+import icy.gui.dialog.MessageDialog;
+import icy.gui.lut.abstract_.IcyLutViewer;
+import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.image.colormap.IcyColorMap;
+import icy.image.colormap.IcyColorMap.IcyColorMapType;
+import icy.image.colormap.IcyColorMapEvent;
+import icy.image.colormap.IcyColorMapListener;
+import icy.image.colormap.LinearColorMap;
+import icy.image.lut.LUT;
+import icy.image.lut.LUT.LUTChannel;
+import icy.math.Scaler;
+import icy.preferences.ApplicationPreferences;
+import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceListener;
+import icy.system.thread.ThreadUtil;
+import icy.type.DataType;
+import icy.util.StringUtil;
 
 public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, SequenceListener
 {
@@ -74,9 +78,10 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
 
     final JCheckBox autoRefreshHistoCheckBox;
     final JCheckBox autoBoundsCheckBox;
-    private final ButtonGroup scaleGroup;
-    private final JRadioButton logButton;
-    private final JRadioButton linearButton;
+    final ButtonGroup scaleGroup;
+    final JRadioButton logButton;
+    final JRadioButton linearButton;
+    final IcyButton exportXLSButton;
 
     /**
      * data
@@ -308,10 +313,32 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         else
             linearButton.setSelected(true);
 
+        exportXLSButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_XLS_EXPORT, 18));
+        exportXLSButton.setFlat(true);
+        exportXLSButton.setToolTipText("Export histogram data into an excel file");
+        exportXLSButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                try
+                {
+                    // export current visible histogram
+                    lutChannelViewers.get(bottomPane.getSelectedIndex()).getScalerPanel().getScalerViewer()
+                            .getHistogram().getHistogram().doXLSExport();
+                }
+                catch (Exception e1)
+                {
+                    MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
+                }
+            }
+        });
+
         setLayout(new BorderLayout());
 
         add(GuiUtil.createLineBoxPanel(autoRefreshHistoCheckBox, autoBoundsCheckBox, Box.createHorizontalGlue(),
-                Box.createHorizontalStrut(4), logButton, linearButton), BorderLayout.NORTH);
+                Box.createHorizontalStrut(4), logButton, linearButton, Box.createHorizontalStrut(4), exportXLSButton),
+                BorderLayout.NORTH);
         add(bottomPane, BorderLayout.CENTER);
 
         validate();

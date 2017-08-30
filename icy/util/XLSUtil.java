@@ -20,8 +20,10 @@ package icy.util;
 
 import icy.system.IcyExceptionHandler;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 
 import jxl.Workbook;
 import jxl.format.Colour;
@@ -304,5 +306,41 @@ public class XLSUtil
         }
 
         return false;
+    }
+
+    /**
+     * Fill sheet content from CSV text.
+     * 
+     *  @return <code>true</code> if the operation succeed
+     */
+    public static boolean setFromCSV(WritableSheet sheet, String csvContent)
+    {
+        final BufferedReader br = new BufferedReader(new StringReader(csvContent));
+
+        String line;
+        int y = 0;
+        try
+        {
+            while ((line = br.readLine()) != null)
+            {
+                int x = 0;
+
+                // use tab as separator
+                for (String col : line.split("\t"))
+                {
+                    XLSUtil.setCellString(sheet, x, y, col);
+                    x++;
+                }
+
+                y++;
+            }
+            
+            return true;
+        }
+        catch (IOException e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, false, true);
+            return false;
+        }
     }
 }
