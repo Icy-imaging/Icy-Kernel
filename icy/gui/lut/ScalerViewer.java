@@ -18,8 +18,38 @@
  */
 package icy.gui.lut;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.geom.Point2D;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Array;
+import java.util.EventListener;
+
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.event.EventListenerList;
+
+import icy.file.FileUtil;
 import icy.gui.component.math.HistogramPanel;
 import icy.gui.component.math.HistogramPanel.HistogramPanelListener;
+import icy.gui.dialog.MessageDialog;
+import icy.gui.dialog.SaveDialog;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
@@ -42,31 +72,10 @@ import icy.util.ColorUtil;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
-
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.awt.geom.Point2D;
-import java.lang.reflect.Array;
-import java.util.EventListener;
-
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.event.EventListenerList;
+import icy.util.XLSUtil;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 
 /**
  * @author stephane
@@ -83,8 +92,8 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         public void positionChanged(double index, int value, double normalizedValue);
     }
 
-    public class ScalerHistogramPanel extends HistogramPanel implements MouseListener, MouseMotionListener,
-            MouseWheelListener
+    public class ScalerHistogramPanel extends HistogramPanel
+            implements MouseListener, MouseMotionListener, MouseWheelListener
     {
         /**
          * 
@@ -678,7 +687,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                     }
                 }
             }
-            
+
             retry = 0;
         }
         catch (Exception e)
@@ -800,6 +809,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         }
     }
 
+
     /**
      * Should be called when histogram scaling type changed
      */
@@ -837,9 +847,26 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                 showRangeSettingDialog();
             }
         });
+        final JMenuItem exportItem = new JMenuItem("Export to excel");
+        exportItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                try
+                {
+                    getHistogram().getHistogram().doXLSExport();
+                }
+                catch (Exception e1)
+                {
+                    MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
+                }
+            }
+        });
 
         menu.add(refreshItem);
         menu.add(setBoundsItem);
+        menu.add(exportItem);
 
         menu.pack();
         menu.validate();
@@ -918,5 +945,4 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     {
         sequence.removeListener(this);
     }
-
 }

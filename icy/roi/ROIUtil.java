@@ -1973,7 +1973,7 @@ public class ROIUtil
     {
         scale(roi, scaleX, scaleY, 1d);
     }
-    
+
     /**
      * Scale the given ROI by specified scale factor.<br>
      * Only {@link ROI2DShape} and {@link ROI3DShape} are supported !

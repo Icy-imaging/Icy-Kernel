@@ -18,14 +18,15 @@
  */
 package icy.gui.dialog;
 
-import icy.file.FileUtil;
-import icy.main.Icy;
-import icy.system.thread.ThreadUtil;
-
 import java.io.File;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+
+import icy.file.FileUtil;
+import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
+import icy.system.thread.ThreadUtil;
 
 /**
  * Simple dialog to let user select a file for save operation.
@@ -85,9 +86,9 @@ public class SaveDialog
             final File f = dialog.getSelectedFile();
             if (f.exists())
             {
-                final int ret = JOptionPane.showConfirmDialog(dialog, "The file " + f.getName()
-                        + " already exists. \nWould you like to replace it ?", "Replace ?", JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
+                final int ret = JOptionPane.showConfirmDialog(dialog,
+                        "The file " + f.getName() + " already exists. \nWould you like to replace it ?", "Replace ?",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (ret != JOptionPane.OK_OPTION)
                     return;
@@ -138,4 +139,43 @@ public class SaveDialog
         return chooseFile(null, null);
     }
 
+    /**
+     * Displays a file save dialog pointing to default <i>result</i> folder, using the specified default file name and
+     * extension.<br>
+     * If filename is validated the <i>result</i> folder is updated to chosen location folder.
+     */
+    public static String chooseFileForResult(String title, String defaultName, String extension)
+    {
+        // get the global result folder
+        final String dir = GeneralPreferences.getResultFolder();
+        // create it if needed
+        FileUtil.createDir(dir);
+
+        final String result = chooseFile(title, dir, defaultName, extension);
+
+        if (result != null)
+            // update result folder
+            GeneralPreferences.setResultFolder(FileUtil.getDirectory(result));
+
+        return result;
+    }
+    
+    /**
+     * Displays a file save dialog pointing to default <i>result</i> folder, using the specified default file name and
+     * extension.<br>
+     * If filename is validated the <i>result</i> folder is updated to chosen location folder.
+     */
+    public static String chooseFileForResult(String defaultName, String extension)
+    {
+        return chooseFileForResult("Save file...", defaultName, extension);
+    }
+    
+    /**
+     * Displays a file save dialog pointing to default <i>result</i> folder, using the specified default file name.<br>
+     * If filename is validated the <i>result</i> folder is updated to chosen location folder.
+     */
+    public static String chooseFileForResult(String defaultName)
+    {
+        return chooseFileForResult("Save file...", defaultName, null);
+    }
 }

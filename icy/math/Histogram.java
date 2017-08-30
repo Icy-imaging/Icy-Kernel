@@ -18,10 +18,20 @@
  */
 package icy.math;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
+
+import icy.file.FileUtil;
+import icy.gui.dialog.MessageDialog;
+import icy.gui.dialog.SaveDialog;
 import icy.type.TypeUtil;
 import icy.type.collection.array.ArrayUtil;
-
-import java.util.Arrays;
+import icy.util.StringUtil;
+import icy.util.XLSUtil;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 
 /**
  * @author Stephane
@@ -86,6 +96,89 @@ public class Histogram
             dataToBin = (bins.length - 1) / range;
         else
             dataToBin = 0d;
+    }
+
+    /**
+     * Returns histogram data in CSV format (tab separated).
+     */
+    public String getCSVFormattedData()
+    {
+        final StringBuffer sbf = new StringBuffer();
+        final double bw = getBinWidth();
+
+        // column title
+        sbf.append("Bin range min (inclusive)");
+        sbf.append("\t");
+        sbf.append("Bin range max (exclusive)");
+        sbf.append("\t");
+        sbf.append("Pixel number");
+        sbf.append("\t");
+        sbf.append("\r\n");
+
+        double range = getMinValue();
+
+        for (int bin : getBins())
+        {
+            sbf.append(StringUtil.toString(range));
+            sbf.append("\t");
+            range += bw;
+            sbf.append(StringUtil.toString(range));
+            sbf.append("\t");
+
+            sbf.append(StringUtil.toString(bin));
+            sbf.append("\r\n");
+        }
+
+        return sbf.toString();
+    }
+
+    /**
+     * Do the XLS export (display the save dialog)
+     * 
+     * @throws IOException
+     * @throws WriteException
+     */
+    public void doXLSExport() throws IOException, WriteException
+    {
+        exportToXLS(SaveDialog.chooseFileForResult("Export histogram...", "histo", ".xls"));
+    }
+
+    /**
+     * Export the content of the histogram data inside an excel file (XLS format if file path extension is XLS, CSV
+     * otherwise)
+     * 
+     * @throws IOException
+     * @throws WriteException
+     */
+    public void exportToXLS(String path) throws IOException, WriteException
+    {
+        if (StringUtil.isEmpty(path))
+            return;
+
+        final String csvContent = getCSVFormattedData();
+
+        // CSV format wanted ?
+        if (!FileUtil.getFileExtension(path, false).toLowerCase().startsWith("xls"))
+        {
+            // just write CSV content
+            final PrintWriter out = new PrintWriter(path);
+            out.println(csvContent);
+            out.close();
+        }
+        // XLS export
+        else
+        {
+            final WritableWorkbook workbook = XLSUtil.createWorkbook(path);
+            final WritableSheet sheet = XLSUtil.createNewPage(workbook, "ROIS");
+
+            if (XLSUtil.setFromCSV(sheet, csvContent))
+                XLSUtil.saveAndClose(workbook);
+            else
+            {
+                MessageDialog.showDialog("Error", "Error while exporting ROIs table content to XLS file.",
+                        MessageDialog.ERROR_MESSAGE);
+            }
+        }
     }
 
     /**
@@ -286,7 +379,7 @@ public class Histogram
     {
         if ((index < 0) || (index >= bins.length))
             return 0;
-        
+
         return bins[index];
     }
 

@@ -314,6 +314,10 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      * internal resolution levels
      */
     protected int[] resolutions;
+    /**
+     * Internal opened path (Bio-formats does not always keep track of it)
+     */
+    protected String openedPath;
 
     public LociImporterPlugin()
     {
@@ -329,6 +333,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         originalMetadata = false;
         groupFiles = false;
         resolutions = null;
+        openedPath = null;
     }
 
     protected void setReader(String path) throws FormatException, IOException
@@ -474,10 +479,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     @Override
     public String getOpened()
     {
-        if (reader != null)
-            return FileUtil.getGenericPath(reader.getCurrentFile());
+        return openedPath;
 
-        return null;
+        // if (reader != null)
+        // return FileUtil.getGenericPath(reader.getCurrentFile());
+        //
+        // return null;
     }
 
     @Override
@@ -506,6 +513,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 readersPool.add(reader);
             }
 
+            // adjust opened path (always in 'generic format')
+            openedPath = FileUtil.getGenericPath(path);
             // need to update resolution levels
             resolutions = null;
 
@@ -523,6 +532,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         // something to close ?
         if (getOpened() != null)
         {
+            openedPath = null;
+
             synchronized (readersPool)
             {
                 // close all readers
@@ -565,12 +576,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         // create the new reader instance
         final IFormatReader result = reader.getClass().newInstance();
 
-        // get opened file (directly from reader so we have wanted format)
-        final String path = reader.getCurrentFile();
+        // get opened file
+        final String path = getOpened();
 
         if (path != null)
-            // open reader for path
-            openReader(result, path);
+            // open reader for path (adjust path format for Bio-Format)
+            openReader(result, new File(path).getAbsolutePath());
 
         return result;
     }

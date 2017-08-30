@@ -18,12 +18,12 @@
  */
 package icy.type.collection.list;
 
+import java.io.File;
+import java.util.Arrays;
+
 import icy.file.FileUtil;
 import icy.preferences.XMLPreferences;
 import icy.util.StringUtil;
-
-import java.io.File;
-import java.util.Arrays;
 
 /**
  * @author stephane
@@ -50,8 +50,10 @@ public class RecentFileList extends RecentList
         if (paths.length > NB_MAX_FILE)
             return;
 
+        final String[] adjPaths = adjust(paths);
+
         // first remove previous entry
-        final int ind = find(paths);
+        final int ind = find(adjPaths);
 
         synchronized (list)
         {
@@ -60,7 +62,17 @@ public class RecentFileList extends RecentList
         }
 
         // add the list
-        super.addEntry(paths);
+        super.addEntry(adjPaths);
+    }
+
+    private static String[] adjust(String[] paths)
+    {
+        final String[] result = new String[paths.length];
+
+        for (int i = 0; i < paths.length; i++)
+            result[i] = FileUtil.getGenericPath(paths[i]);
+
+        return result;
     }
 
     public void addEntry(File[] files)
