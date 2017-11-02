@@ -1093,7 +1093,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * @param nbPointForTrue
      *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
      *        point.<br>
-     *        Accepted value: 1 to 5 (default is 5)
+     *        Accepted value: 1 to 4
      */
     public void downscale2D(int nbPointForTrue)
     {

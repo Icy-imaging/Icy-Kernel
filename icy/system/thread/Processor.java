@@ -18,10 +18,6 @@
  */
 package icy.system.thread;
 
-import icy.main.Icy;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -36,6 +32,10 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import icy.main.Icy;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 
 /**
  * Processor class.<br>
@@ -990,10 +990,12 @@ public class Processor extends ThreadPoolExecutor
     {
         waitingExecution = null;
 
-        synchronized (getQueue())
+        final BlockingQueue<Runnable> q = getQueue();
+
+        synchronized (q)
         {
             // remove all tasks
-            getQueue().clear();
+            q.clear();
         }
     }
 

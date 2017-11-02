@@ -825,7 +825,8 @@ public class Array2DUtil
      * @param signed
      *        assume input data as signed data
      */
-    public static Object intArrayToArray(int[][] in, int inOffset, Object out, int outOffset, int length, boolean signed)
+    public static Object intArrayToArray(int[][] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
     {
         switch (ArrayUtil.getDataType(out))
         {
@@ -1348,8 +1349,8 @@ public class Array2DUtil
         final int[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil
-                    .doubleArrayToIntArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+            result[i + outOffset] = Array1DUtil.doubleArrayToIntArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1);
 
         return result;
     }
@@ -1410,8 +1411,8 @@ public class Array2DUtil
         final long[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil
-                    .floatArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+            result[i + outOffset] = Array1DUtil.floatArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1);
 
         return result;
     }
@@ -1445,8 +1446,8 @@ public class Array2DUtil
         final byte[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil
-                    .floatArrayToByteArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+            result[i + outOffset] = Array1DUtil.floatArrayToByteArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1);
 
         return result;
     }
@@ -1471,8 +1472,8 @@ public class Array2DUtil
         final float[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil.longArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0,
-                    -1, signed);
+            result[i + outOffset] = Array1DUtil.longArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
 
         return result;
     }
@@ -1505,8 +1506,8 @@ public class Array2DUtil
         final short[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil
-                    .longArrayToShortArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+            result[i + outOffset] = Array1DUtil.longArrayToShortArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1);
 
         return result;
     }
@@ -1529,8 +1530,8 @@ public class Array2DUtil
         final double[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil.intArrayToDoubleArray(in[i + inOffset], 0, result[i + outOffset], 0,
-                    -1, signed);
+            result[i + outOffset] = Array1DUtil.intArrayToDoubleArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
 
         return result;
     }
@@ -1607,8 +1608,8 @@ public class Array2DUtil
         return result;
     }
 
-    public static float[][] shortArrayToFloatArray(short[][] in, int inOffset, float[][] out, int outOffset,
-            int length, boolean signed)
+    public static float[][] shortArrayToFloatArray(short[][] in, int inOffset, float[][] out, int outOffset, int length,
+            boolean signed)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final float[][] result = allocIfNull(out, outOffset + len);
@@ -1627,8 +1628,8 @@ public class Array2DUtil
         final long[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil.shortArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0,
-                    -1, signed);
+            result[i + outOffset] = Array1DUtil.shortArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
 
         return result;
     }
@@ -1664,8 +1665,8 @@ public class Array2DUtil
         final byte[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil
-                    .shortArrayToByteArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+            result[i + outOffset] = Array1DUtil.shortArrayToByteArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1);
 
         return result;
     }
@@ -1690,8 +1691,8 @@ public class Array2DUtil
         final float[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil.byteArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0,
-                    -1, signed);
+            result[i + outOffset] = Array1DUtil.byteArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
 
         return result;
     }
@@ -1729,8 +1730,8 @@ public class Array2DUtil
         final short[][] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = Array1DUtil.byteArrayToShortArray(in[i + inOffset], 0, result[i + outOffset], 0,
-                    -1, signed);
+            result[i + outOffset] = Array1DUtil.byteArrayToShortArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
 
         return result;
     }
@@ -1923,7 +1924,8 @@ public class Array2DUtil
             case BYTE:
                 return longArrayToSafeByteArray(in, inOffset, (byte[][]) out, outOffset, length, srcSigned, dstSigned);
             case SHORT:
-                return longArrayToSafeShortArray(in, inOffset, (short[][]) out, outOffset, length, srcSigned, dstSigned);
+                return longArrayToSafeShortArray(in, inOffset, (short[][]) out, outOffset, length, srcSigned,
+                        dstSigned);
             case INT:
                 return longArrayToSafeIntArray(in, inOffset, (int[][]) out, outOffset, length, srcSigned, dstSigned);
             case LONG:
@@ -2229,7 +2231,8 @@ public class Array2DUtil
             case BYTE:
                 return byteArrayToSafeByteArray((byte[][]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case SHORT:
-                return shortArrayToSafeByteArray((short[][]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
+                return shortArrayToSafeByteArray((short[][]) in, inOffset, out, outOffset, length, srcSigned,
+                        dstSigned);
             case INT:
                 return intArrayToSafeByteArray((int[][]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case LONG:
@@ -2283,14 +2286,14 @@ public class Array2DUtil
         final long[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeLongArray(in[i + inOffset], 0, outArray[i
-                    + outOffset], 0, -1, signed);
+            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeLongArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
 
         return outArray;
     }
 
-    public static int[][] doubleArrayToSafeIntArray(double[][] in, int inOffset, int[][] out, int outOffset,
-            int length, boolean signed)
+    public static int[][] doubleArrayToSafeIntArray(double[][] in, int inOffset, int[][] out, int outOffset, int length,
+            boolean signed)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final int[][] outArray = allocIfNull(out, outOffset + len);
@@ -2309,8 +2312,8 @@ public class Array2DUtil
         final short[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeShortArray(in[i + inOffset], 0, outArray[i
-                    + outOffset], 0, -1, signed);
+            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeShortArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
 
         return outArray;
     }
@@ -2322,8 +2325,8 @@ public class Array2DUtil
         final byte[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeByteArray(in[i + inOffset], 0, outArray[i
-                    + outOffset], 0, -1, signed);
+            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeByteArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
 
         return outArray;
     }
@@ -2348,8 +2351,8 @@ public class Array2DUtil
         final int[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.floatArrayToSafeIntArray(in[i + inOffset], 0,
-                    outArray[i + outOffset], 0, -1, signed);
+            outArray[i + outOffset] = Array1DUtil.floatArrayToSafeIntArray(in[i + inOffset], 0, outArray[i + outOffset],
+                    0, -1, signed);
 
         return outArray;
     }
@@ -2361,8 +2364,8 @@ public class Array2DUtil
         final short[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.floatArrayToSafeShortArray(in[i + inOffset], 0, outArray[i
-                    + outOffset], 0, -1, signed);
+            outArray[i + outOffset] = Array1DUtil.floatArrayToSafeShortArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
 
         return outArray;
     }
@@ -2387,8 +2390,8 @@ public class Array2DUtil
         final long[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.longArrayToSafeLongArray(in[i + inOffset], 0,
-                    outArray[i + outOffset], 0, -1, srcSigned, dstSigned);
+            outArray[i + outOffset] = Array1DUtil.longArrayToSafeLongArray(in[i + inOffset], 0, outArray[i + outOffset],
+                    0, -1, srcSigned, dstSigned);
 
         return outArray;
     }
@@ -2426,8 +2429,8 @@ public class Array2DUtil
         final byte[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.longArrayToSafeByteArray(in[i + inOffset], 0,
-                    outArray[i + outOffset], 0, -1, srcSigned, dstSigned);
+            outArray[i + outOffset] = Array1DUtil.longArrayToSafeByteArray(in[i + inOffset], 0, outArray[i + outOffset],
+                    0, -1, srcSigned, dstSigned);
 
         return outArray;
     }
@@ -2476,15 +2479,15 @@ public class Array2DUtil
         return outArray;
     }
 
-    public static short[][] intArrayToSafeShortArray(int[][] in, int inOffset, short[][] out, int outOffset,
-            int length, boolean srcSigned, boolean dstSigned)
+    public static short[][] intArrayToSafeShortArray(int[][] in, int inOffset, short[][] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.intArrayToSafeShortArray(in[i + inOffset], 0,
-                    outArray[i + outOffset], 0, -1, srcSigned, dstSigned);
+            outArray[i + outOffset] = Array1DUtil.intArrayToSafeShortArray(in[i + inOffset], 0, outArray[i + outOffset],
+                    0, -1, srcSigned, dstSigned);
 
         return outArray;
     }
@@ -2506,8 +2509,8 @@ public class Array2DUtil
      * @deprecated Use {@link #intArrayToSafeShortArray(int[][], int, short[][], int, int, boolean, boolean)} instead
      */
     @Deprecated
-    public static short[][] intArrayToSafeShortArray(int[][] in, int inOffset, short[][] out, int outOffset,
-            int length, boolean signed)
+    public static short[][] intArrayToSafeShortArray(int[][] in, int inOffset, short[][] out, int outOffset, int length,
+            boolean signed)
     {
         return intArrayToSafeShortArray(in, inOffset, out, outOffset, length, signed, signed);
     }
@@ -2529,8 +2532,8 @@ public class Array2DUtil
         final short[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.shortArrayToSafeShortArray(in[i + inOffset], 0, outArray[i
-                    + outOffset], 0, -1, srcSigned, dstSigned);
+            outArray[i + outOffset] = Array1DUtil.shortArrayToSafeShortArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, srcSigned, dstSigned);
 
         return outArray;
     }
@@ -2565,8 +2568,8 @@ public class Array2DUtil
         final byte[][] outArray = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            outArray[i + outOffset] = Array1DUtil.byteArrayToSafeByteArray(in[i + inOffset], 0,
-                    outArray[i + outOffset], 0, -1, srcSigned, dstSigned);
+            outArray[i + outOffset] = Array1DUtil.byteArrayToSafeByteArray(in[i + inOffset], 0, outArray[i + outOffset],
+                    0, -1, srcSigned, dstSigned);
 
         return outArray;
     }

@@ -81,6 +81,9 @@ public class ApplicationPreferences
         preferences.put(ID_OS, value);
     }
 
+    /**
+     * Return Icy unique Id (-1 if not yet set)
+     */
     public static int getId()
     {
         return preferences.getInt(ID_ICY_ID, -1);

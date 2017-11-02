@@ -769,8 +769,7 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -847,8 +846,7 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -925,8 +923,7 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -1001,8 +998,7 @@ public class IcyBufferedImageUtil
      *        height of source image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -1065,8 +1061,7 @@ public class IcyBufferedImageUtil
      *        height of source image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      */
@@ -1131,8 +1126,7 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output buffer (single dimension array with same data type as source image data array).
      *        If set to <code>null</code> a new array is allocated.
@@ -1187,8 +1181,7 @@ public class IcyBufferedImageUtil
      *        consider input byte data as signed (only meaningful when filter is enabled)
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @return output buffer containing the down scaled version of input image data.
      */
     public static Object downscaleBy2(Object input, int sizeX, int sizeY, boolean signed, boolean filter)
@@ -1205,8 +1198,7 @@ public class IcyBufferedImageUtil
      *        input image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      * @param output
      *        output image receiving the result (should be of same type as input image with X and Y
      *        resolution divided
@@ -1243,12 +1235,36 @@ public class IcyBufferedImageUtil
      *        input image
      * @param filter
      *        enable pixel blending for better representation of the down sampled result image
-     *        (otherwise nearest
-     *        neighbor is used)
+     *        (otherwise nearest neighbor is used)
      */
     public static IcyBufferedImage downscaleBy2(IcyBufferedImage input, boolean filter)
     {
         return downscaleBy2(input, filter, null);
+    }
+
+    /**
+     * Down scale the specified image with the given down scale factor.<br>
+     * If down scale factor equals <code>0</code> then the input image is directly returned.
+     * 
+     * @param source
+     *        input image
+     * @param filter
+     *        enable pixel blending for better representation of the down sampled result image
+     *        (otherwise nearest neighbor is used)
+     * @param level
+     *        number of downscale to process: scale level = 1/2^level
+     * @return scaled image or source image is scale level equals <code>0</code>
+     */
+    public static IcyBufferedImage downscaleBy2(IcyBufferedImage source, boolean filter, int level)
+    {
+        IcyBufferedImage result = source;
+        int it = level;
+
+        // process fast down scaling
+        while (it-- > 0)
+            result = IcyBufferedImageUtil.downscaleBy2(result, true);
+
+        return result;
     }
 
     /**

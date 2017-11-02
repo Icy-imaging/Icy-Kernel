@@ -40,6 +40,7 @@ import icy.search.SearchResultProducer;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
 import plugins.kernel.searchprovider.LocalPluginSearchResultProducer.LocalPluginResult;
+import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
 
 /**
  * This class is used to provide online plugin elements to the search engine.
@@ -54,7 +55,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
     public static class OnlinePluginResult extends PluginSearchResult
     {
         public OnlinePluginResult(SearchResultProducer provider, PluginDescriptor plugin, String text,
-                String searchWords[], int priority)
+                List<SearchWord> searchWords, int priority)
         {
             super(provider, plugin, text, searchWords, priority);
         }
@@ -151,7 +152,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
     }
 
     @Override
-    public void doSearch(Document doc, String[] words, SearchResultConsumer consumer)
+    public void doSearch(Document doc, String text, SearchResultConsumer consumer)
     {
         // Online plugin loader failed --> exit
         if (!ensureOnlineLoaderLoaded())
@@ -180,6 +181,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                     lpsrp = (LocalPluginSearchResultProducer) srp;
         }
 
+        final List<SearchWord> words = PluginSearchResultProducerHelper.getSearchWords(text);
         final List<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
         for (Element plugin : XMLUtil.getElements(resultElement, ID_PLUGIN))
@@ -236,11 +238,10 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
     }
 
     private OnlinePluginResult getResult(SearchResultConsumer consumer, List<PluginDescriptor> onlinePlugins,
-            Element pluginNode, String words[], LocalPluginSearchResultProducer lpsrp)
+            Element pluginNode, List<SearchWord> words, LocalPluginSearchResultProducer lpsrp)
     {
         final String className = XMLUtil.getElementValue(pluginNode, ID_CLASSNAME, "");
         final String text = XMLUtil.getElementValue(pluginNode, ID_TEXT, "");
-        final boolean shortSearch = PluginSearchResultProducerHelper.getShortSearch(words);
         int priority;
 
         final PluginDescriptor localPlugin = PluginLoader.getPlugin(className);
@@ -268,7 +269,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                 // not already present in local result --> add it
                 if (!alreadyExists)
                 {
-                    priority = PluginSearchResultProducerHelper.searchInPlugin(localPlugin, words, shortSearch);
+                    priority = PluginSearchResultProducerHelper.searchInPlugin(localPlugin, words);
 
                     // not found in local description --> assume low priority
                     if (priority == 0)
@@ -289,7 +290,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
 
         // try to get priority on result
         onlinePlugin.loadDescriptor();
-        priority = PluginSearchResultProducerHelper.searchInPlugin(onlinePlugin, words, shortSearch);
+        priority = PluginSearchResultProducerHelper.searchInPlugin(onlinePlugin, words);
 
         // only keep high priority info from local data
         if (priority <= 5)

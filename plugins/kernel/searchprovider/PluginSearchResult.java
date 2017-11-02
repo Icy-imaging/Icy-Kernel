@@ -18,16 +18,18 @@
  */
 package plugins.kernel.searchprovider;
 
+import java.awt.Image;
+import java.util.List;
+
+import org.pushingpixels.flamingo.api.common.RichTooltip;
+
 import icy.gui.plugin.PluginRichToolTip;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.search.SearchResult;
 import icy.search.SearchResultProducer;
 import icy.util.StringUtil;
-
-import java.awt.Image;
-
-import org.pushingpixels.flamingo.api.common.RichTooltip;
+import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
 
 public abstract class PluginSearchResult extends SearchResult
 {
@@ -36,7 +38,7 @@ public abstract class PluginSearchResult extends SearchResult
     protected String description;
 
     public PluginSearchResult(SearchResultProducer provider, PluginDescriptor plugin, String text,
-            String searchWords[], int priority)
+            List<SearchWord> words, int priority)
     {
         super(provider);
 
@@ -45,10 +47,14 @@ public abstract class PluginSearchResult extends SearchResult
 
         description = "";
         int wi = 0;
-        while (StringUtil.isEmpty(description) && (wi < searchWords.length))
+        while (StringUtil.isEmpty(description) && (wi < words.size()))
         {
-            // no more than 80 characters...
-            description = StringUtil.trunc(text, searchWords[wi], 80);
+            final SearchWord sw = words.get(wi);
+
+            if (!sw.reject)
+                // no more than 80 characters...
+                description = StringUtil.trunc(text, sw.word, 80);
+
             wi++;
         }
 
@@ -57,12 +63,10 @@ public abstract class PluginSearchResult extends SearchResult
             // remove carriage return
             description = description.replace("\n", "");
 
-            // highlight search keywords (only for more than 2 characters search)
-            if ((searchWords.length > 1) || (searchWords[0].length() > 2))
-            {
-                for (String word : searchWords)
-                    description = StringUtil.htmlBoldSubstring(description, word, true);
-            }
+            for (SearchWord sw : words)
+                // highlight search keywords (only for more than 2 characters search)
+                if (!sw.reject && (sw.length() > 2))
+                    description = StringUtil.htmlBoldSubstring(description, sw.word, true);
         }
     }
 

@@ -68,18 +68,19 @@ public class Saver
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
-            DataType dataType) throws ServiceException
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ,
+            int sizeT, DataType dataType) throws ServiceException
     {
-        return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, false);
+        return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, dataType,
+                false);
     }
 
     /**
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
-            boolean signedDataType) throws ServiceException
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ,
+            int sizeT, int dataType, boolean signedDataType) throws ServiceException
     {
         return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT,
                 DataType.getDataType(dataType, signedDataType), false);
@@ -99,8 +100,8 @@ public class Saver
      * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, DataType, boolean)} instead
      */
     @Deprecated
-    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int dataType, boolean signedDataType)
-            throws ServiceException
+    public static loci.formats.ome.OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int dataType,
+            boolean signedDataType) throws ServiceException
     {
         return (loci.formats.ome.OMEXMLMetadata) OMEUtil.generateMetaData(sizeX, sizeY, sizeC,
                 DataType.getDataType(dataType, signedDataType), false);

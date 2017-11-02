@@ -2490,7 +2490,7 @@ public class ROI2DArea extends ROI2D
      * @param nbPointForTrue
      *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
      *        point.<br>
-     *        Accepted value: 1 to 4 (default is 3)
+     *        Accepted value: 1 to 4
      */
     public void downscale(int nbPointForTrue)
     {

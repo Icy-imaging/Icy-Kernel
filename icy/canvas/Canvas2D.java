@@ -146,7 +146,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
             if (g == null)
                 return;
 
-            final List<ImageCacheTile> tiles = canvasView.imageCache.getImage();
+            final List<ImageCacheTile> tiles = canvasView.imageCache.getImageAsTiles();
 
             // draw image
             for (ImageCacheTile tile : tiles)
@@ -540,7 +540,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
             if (trans != null)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
-                final List<ImageCacheTile> tiles = canvasView.imageCache.getImage();
+                final List<ImageCacheTile> tiles = canvasView.imageCache.getImageAsTiles();
                 // final BufferedImage img = canvasView.imageCache.getImage();
 
                 // draw image
@@ -693,7 +693,20 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 getViewComponent().repaint();
             }
 
-            public List<ImageCacheTile> getImage()
+            /**
+             * @deprecated Caching is done as tiles now so it's better to use {@link #getImageAsTiles()}
+             */
+            @Deprecated
+            public BufferedImage getImage()
+            {
+                // get original image
+                final IcyBufferedImage icyImage = Canvas2D.this.getImage(getPositionT(), getPositionZ(),
+                        getPositionC());
+
+                return IcyBufferedImageUtil.toBufferedImage(icyImage, null);
+            }
+
+            public List<ImageCacheTile> getImageAsTiles()
             {
                 synchronized (tiles)
                 {

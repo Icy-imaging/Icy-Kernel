@@ -28,6 +28,8 @@ import icy.plugin.PluginLoader;
 import icy.search.SearchResult;
 import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
+import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
+import sun.security.action.GetBooleanSecurityPropertyAction;
 
 /**
  * This class is used to provide installed plugin elements to the search engine.
@@ -42,9 +44,9 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
     public static class LocalPluginResult extends PluginSearchResult
     {
         public LocalPluginResult(SearchResultProducer provider, PluginDescriptor plugin, String text,
-                String searchWords[], int priority)
+                List<SearchWord> words, int priority)
         {
-            super(provider, plugin, text, searchWords, priority);
+            super(provider, plugin, text, words, priority);
         }
 
         @Override
@@ -86,9 +88,9 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
     }
 
     @Override
-    public void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(String text, SearchResultConsumer consumer)
     {
-        final boolean shortSearch = PluginSearchResultProducerHelper.getShortSearch(words);
+        final List<SearchWord> words = PluginSearchResultProducerHelper.getSearchWords(text);
         final List<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
         for (PluginDescriptor plugin : PluginLoader.getPlugins())
@@ -96,7 +98,7 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
             if (hasWaitingSearch())
                 return;
 
-            final int prio = PluginSearchResultProducerHelper.searchInPlugin(plugin, words, shortSearch);
+            final int prio = PluginSearchResultProducerHelper.searchInPlugin(plugin, words);
 
             if (prio > 0)
                 tmpResults.add(new LocalPluginResult(this, plugin, plugin.getDescription(), words, prio));

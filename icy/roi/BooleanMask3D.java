@@ -551,7 +551,7 @@ public class BooleanMask3D implements Cloneable
      */
     public static BooleanMask3D downscale2D(BooleanMask3D mask)
     {
-        return downscale2D(mask, 3);
+        return downscale2D(mask, 2);
     }
 
     /**

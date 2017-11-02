@@ -74,6 +74,20 @@ public class RoiActions
     public static final String DEFAULT_ROI_DIR = "roi";
     public static final String DEFAULT_ROI_NAME = "roi.xml";
 
+    public static class SequenceRoiList
+    {
+        public final Sequence sequence;
+        public final List<ROI> rois;
+
+        public SequenceRoiList(Sequence sequence, List<ROI> rois)
+        {
+            super();
+
+            this.sequence = sequence;
+            this.rois = rois;
+        }
+    }
+
     public static IcyAbstractAction loadAction = new IcyAbstractAction("Load ROI(s)",
             new IcyIcon(ResourceUtil.ICON_OPEN), "Load ROI(s) from file",
             "Load ROI(s) from a XML file and add them to the active sequence")
@@ -207,7 +221,7 @@ public class RoiActions
                     }
 
                     // save in the Icy clipboard
-                    Clipboard.put(Clipboard.TYPE_ROILIST, rois);
+                    Clipboard.put(Clipboard.TYPE_SEQUENCEROILIST, new SequenceRoiList(sequence, rois));
                     // clear system clipboard
                     Clipboard.clearSystem();
 
@@ -285,8 +299,9 @@ public class RoiActions
 
             if (sequence != null)
             {
-                @SuppressWarnings("unchecked")
-                final List<ROI> rois = (List<ROI>) Clipboard.get(Clipboard.TYPE_ROILIST);
+                final SequenceRoiList sequenceRoiList = (SequenceRoiList) Clipboard.get(Clipboard.TYPE_SEQUENCEROILIST);
+                final Sequence sequenceSrc = sequenceRoiList.sequence;
+                final List<ROI> rois = sequenceRoiList.rois;
 
                 if ((rois != null) && (rois.size() > 0))
                 {
@@ -300,7 +315,8 @@ public class RoiActions
                         // add copy to sequence (so we can do the paste operation severals time)
                         for (ROI roi : rois)
                         {
-                            final ROI newROI = roi.getCopy();
+                            // final ROI newROI = roi.getCopy();
+                            final ROI newROI = ROIUtil.adjustToSequence(roi, sequenceSrc, sequence, true, true);
 
                             if (newROI != null)
                             {
@@ -342,7 +358,7 @@ public class RoiActions
         public boolean isEnabled()
         {
             return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null)
-                    && Clipboard.getType().equals(Clipboard.TYPE_ROILIST);
+                    && Clipboard.getType().equals(Clipboard.TYPE_SEQUENCEROILIST);
         }
     };
 
