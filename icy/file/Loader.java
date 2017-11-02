@@ -3080,12 +3080,13 @@ public class Loader
     {
         final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
         final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
-        
+
         final Rectangle adjRegion;
-        
+
         if (region != null)
-            adjRegion = new Rectangle(0,  0,  imgSizeX, imgSizeY).intersection(region);
-        else adjRegion = null;
+            adjRegion = new Rectangle(0, 0, imgSizeX, imgSizeY).intersection(region);
+        else
+            adjRegion = null;
 
         final int sizeX = (adjRegion == null) ? imgSizeX : adjRegion.width;
         final int sizeY = (adjRegion == null) ? imgSizeY : adjRegion.height;
@@ -3395,13 +3396,29 @@ public class Loader
         {
             sequence.setOriginZMin(minZ);
             sequence.setOriginZMax(maxZ);
+
+            // adjust name
+            if (minZ == maxZ)
+                name += " - Z" + StringUtil.toString(minZ);
+            else
+                name += " - Z[" + StringUtil.toString(minZ) + "-" + StringUtil.toString(maxZ) + "]";
         }
         // adjust T Range
         if ((minT > 0) || (maxT < (sizeT - 1)))
         {
             sequence.setOriginTMin(minT);
             sequence.setOriginTMax(maxT);
+
+            // adjust name
+            if (minT == maxT)
+                name += " - T" + StringUtil.toString(minT);
+            else
+                name += " - T[" + StringUtil.toString(minT) + "-" + StringUtil.toString(maxT) + "]";
         }
+
+        // need to adjust name for channel ?
+        if (channel != -1)
+            name += " - C" + StringUtil.toString(channel);
 
         // set final name and filename
         sequence.setName(name);

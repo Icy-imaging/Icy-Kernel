@@ -897,7 +897,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // sub Z range --> add a specific extension
         if ((zMin != -1) || (zMax != -1))
-            result += "_Z(" + zMin + "-" + zMax + ")";
+        {
+            if (zMin == zMax)
+                result += "_Z" + zMin;
+            else
+                result += "_Z(" + zMin + "-" + zMax + ")";
+        }
 
         // retrieve the T range
         final int tMin = getOriginTMin();
@@ -905,7 +910,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // sub T range --> add a specific extension
         if ((tMin != -1) || (tMax != -1))
-            result += "_T(" + tMin + "-" + tMax + ")";
+        {
+            if (tMin == tMax)
+                result += "_T" + tMin;
+            else
+                result += "_T(" + tMin + "-" + tMax + ")";
+
+        }
 
         // retrieve the original channel
         final int channel = getOriginChannel();
