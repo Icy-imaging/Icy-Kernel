@@ -18,12 +18,12 @@
  */
 package icy.type.collection.list;
 
-import java.io.File;
-import java.util.Arrays;
-
 import icy.file.FileUtil;
 import icy.preferences.XMLPreferences;
 import icy.util.StringUtil;
+
+import java.io.File;
+import java.util.Arrays;
 
 /**
  * @author stephane

@@ -18,10 +18,6 @@
  */
 package icy.search;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
@@ -29,6 +25,10 @@ import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginSearchProvider;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * SearchEngine for Icy.
@@ -133,17 +133,18 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
      * Previous search is automatically canceled and replaced by the new one.
      * 
      * @param text
-     *        Text used for the search request.<br>
-     *        If the text contains severals words then search is done by searching for all words in
-     *        whatever order.
+     *        Text used for the search request, it can contains several words and use operators.<br>
+     *        Examples:<br>
+     *        <li><i>spot detector</i> : any of word should be present</li>
+     *        <li><i>+spot +detector</i> : both words should be present</li>
+     *        <li>"spot detector"</i> : the exact expression should be present</li>
+     *        <li><i>+"spot detector" -tracking</i> : <i>spot detector</i> should be present and <i>tracking</i> absent</li>
      * @see #cancelSearch()
      */
     public void search(String text)
     {
         // save search string
         lastSearch = text;
-        // separate words
-        final String[] words = (text.split(" "));
 
         // notify search started
         fireSearchStartedEvent();
@@ -152,7 +153,7 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
         synchronized (producers)
         {
             for (SearchResultProducer producer : producers)
-                producer.search(words, this);
+                producer.search(text, this);
         }
     }
 

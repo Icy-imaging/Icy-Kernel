@@ -19,10 +19,12 @@
 package icy.search;
 
 import icy.network.URLUtil;
+import icy.network.WebInterface;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import org.w3c.dom.Document;
@@ -38,103 +40,96 @@ import org.w3c.dom.Document;
  */
 public abstract class OnlineSearchResultProducer extends SearchResultProducer
 {
-    protected static final String SEARCH_URL = "http://icy.bioimageanalysis.org/search/search.php?search=";
-    protected static final long REQUEST_INTERVAL = 400;
-    protected static final long MAXIMUM_SEARCH_TIME = 10000;
+    /**
+     * @deprecated Use {@link WebInterface#doSearch(String, String)} instead
+     */
+    @Deprecated
+//    protected static final String SEARCH_URL = "http://icy.bioimageanalysis.org/search/search.php?search=";
+    public static final String SEARCH_URL = "https://icy.yhello.co/search/search.php?search=";
+    // public static final String SEARCH_URL = "https://icy.yhello.co/interface/?action=search&search=";
 
-    // we want to have only one online search shared between all online providers
-    protected static volatile boolean searchingOnline = false;
-    protected static Document document = null;
+    public static final long REQUEST_INTERVAL = 250;
+    public static final long MAXIMUM_SEARCH_TIME = 5000;
 
     @Override
-    public void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(String text, SearchResultConsumer consumer)
     {
-        if (searchingOnline)
-        {
-            // just wait while searching end
-            while (searchingOnline)
-            {
-                // abort
-                if (hasWaitingSearch())
-                    return;
-                ThreadUtil.sleep(10);
-            }
-        }
-        else
-        {
-            // do the online search
-            searchingOnline = true;
-            try
-            {
-                document = null;
-                String request = SEARCH_URL;
-
-                try
-                {
-                    if (words.length > 0)
-                        request += URLEncoder.encode(words[0], "UTF-8");
-                    for (int i = 1; i < words.length; i++)
-                        request += "%20" + URLEncoder.encode(words[i], "UTF-8");
-                }
-                catch (UnsupportedEncodingException e)
-                {
-                    // can't encode
-                    return;
-                }
-
-                final long startTime = System.currentTimeMillis();
-
-                // wait interval elapsed before sending request (avoid website request spam)
-                while ((System.currentTimeMillis() - startTime) < REQUEST_INTERVAL)
-                {
-                    ThreadUtil.sleep(10);
-                    // abort
-                    if (hasWaitingSearch())
-                        return;
-                }
-
-                int retry = 0;
-
-                // let's 5 tries to get the result
-                while (((System.currentTimeMillis() - startTime) < MAXIMUM_SEARCH_TIME) && (document == null)
-                        && (retry < 5))
-                {
-                    // we use an online request as website can search in plugin documentation
-                    document = XMLUtil.loadDocument(URLUtil.getURL(request), false);
-
-                    // abort
-                    if (hasWaitingSearch())
-                        return;
-
-                    // error ? --> wait a bit before retry
-                    if (document == null)
-                        ThreadUtil.sleep(100);
-
-                    retry++;
-                }
-
-                // can't get result from website --> exit
-                if (document == null)
-                    return;
-
-                // already have other pending search --> exit
-                if (hasWaitingSearch())
-                    return;
-            }
-            finally
-            {
-                searchingOnline = false;
-            }
-        }
-
-        final Document doc = document;
-
-        // another search waiting or error --> exit
-        if (hasWaitingSearch() || (doc == null))
+        // nothing to do here
+        if (StringUtil.isEmpty(text))
             return;
 
-        doSearch(doc, words, consumer);
+        final long startTime = System.currentTimeMillis();
+
+        // wait interval elapsed before sending request (avoid website request spam)
+        while ((System.currentTimeMillis() - startTime) < REQUEST_INTERVAL)
+        {
+            ThreadUtil.sleep(10);
+            // abort
+            if (hasWaitingSearch())
+                return;
+        }
+
+        int retry = 0;
+
+        Document document = null;
+        // let's 5 tries to get the result
+        while (((System.currentTimeMillis() - startTime) < MAXIMUM_SEARCH_TIME) && (document == null) && (retry < 5))
+        {
+            try
+            {
+                // do the search request
+                document = doSearchRequest(text);
+            }
+            catch (Exception e)
+            {
+                IcyExceptionHandler.showErrorMessage(e, false);
+            }
+
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            // error ? --> wait a bit before retry
+            if (document == null)
+                ThreadUtil.sleep(100);
+
+            retry++;
+        }
+
+        // can't get result from website or another search done --> abort
+        if (hasWaitingSearch() || (document == null))
+            return;
+
+        doSearch(document, text, consumer);
     }
 
-    public abstract void doSearch(Document doc, String[] words, SearchResultConsumer consumer);
+    /**
+     * Default implementation for the search request, override it if needed
+     * 
+     * @throws Exception
+     */
+    protected Document doSearchRequest(String text) throws Exception
+    {
+        // send request to website and get result
+        return XMLUtil.loadDocument(URLUtil.getURL(SEARCH_URL + URLEncoder.encode(text, "UTF-8")), true);
+
+        // by default we use the default WEB interface search
+        // TODO: uncomment when ready
+        // return WebInterface.doSearch(text);
+    }
+
+    /**
+     * @deprecated Use {@link #doSearch(Document, String, SearchResultConsumer)} instead
+     */
+    @Deprecated
+    public void doSearch(Document doc, String[] words, SearchResultConsumer consumer)
+    {
+        // default implementation, does nothing...
+    }
+
+    public void doSearch(Document doc, String text, SearchResultConsumer consumer)
+    {
+        // by default this implementation use separated word search for backward compatibility
+        doSearch(doc, text.split(" "), consumer);
+    }
 }

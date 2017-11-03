@@ -18,6 +18,11 @@
  */
 package icy.workspace;
 
+import icy.file.FileUtil;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -25,11 +30,6 @@ import java.util.Collections;
 import java.util.EventListener;
 
 import javax.swing.event.EventListenerList;
-
-import icy.file.FileUtil;
-import icy.system.thread.SingleProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
 
 /**
  * @author Stephane

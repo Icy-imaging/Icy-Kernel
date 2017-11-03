@@ -1,12 +1,12 @@
 package icy.roi;
 
-import java.awt.Rectangle;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 import icy.type.collection.array.DynamicArray;
 import icy.type.point.Point3D;
 import icy.type.rectangle.Rectangle3D;
+
+import java.awt.Rectangle;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * Class to define a 3D boolean mask region and make basic boolean operation between masks.<br>
@@ -551,7 +551,7 @@ public class BooleanMask3D implements Cloneable
      */
     public static BooleanMask3D downscale2D(BooleanMask3D mask)
     {
-        return downscale2D(mask, 3);
+        return downscale2D(mask, 2);
     }
 
     /**

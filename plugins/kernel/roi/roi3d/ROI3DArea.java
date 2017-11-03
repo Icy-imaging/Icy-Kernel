@@ -18,17 +18,6 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.gui.inspector.RoisPanel;
@@ -48,6 +37,18 @@ import icy.type.rectangle.Rectangle3D;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
@@ -1093,7 +1094,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      * @param nbPointForTrue
      *        the minimum number of <code>true</code>points from a 2x2 block to give a <code>true</code> resulting
      *        point.<br>
-     *        Accepted value: 1 to 5 (default is 5)
+     *        Accepted value: 1 to 4
      */
     public void downscale2D(int nbPointForTrue)
     {

@@ -18,6 +18,10 @@
  */
 package icy.gui.component.button;
 
+import icy.action.IcyAbstractAction;
+import icy.resource.icon.IcyIcon;
+import icy.util.StringUtil;
+
 import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -27,10 +31,6 @@ import javax.swing.Icon;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
-
-import icy.action.IcyAbstractAction;
-import icy.resource.icon.IcyIcon;
-import icy.util.StringUtil;
 
 /**
  * @author Stephane

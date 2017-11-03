@@ -53,10 +53,11 @@ package icy.imagej.patches;
 
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
-import ij.WindowManager;
-import ij.gui.ImageWindow;
 
 import java.awt.event.WindowEvent;
+
+import ij.WindowManager;
+import ij.gui.ImageWindow;
 
 /**
  * Overrides {@link ImageWindow} methods.

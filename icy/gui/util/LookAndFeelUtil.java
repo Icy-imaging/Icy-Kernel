@@ -27,7 +27,6 @@ import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.ReflectionUtil;
 import icy.util.StringUtil;
-import ij.util.Java2;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -66,6 +65,8 @@ import org.pushingpixels.substance.internal.ui.SubstanceInternalFrameUI;
 import org.pushingpixels.substance.internal.utils.SubstanceColorSchemeUtilities;
 import org.pushingpixels.substance.internal.utils.SubstanceInternalFrameTitlePane;
 import org.pushingpixels.substance.internal.utils.SubstanceTitlePane;
+
+import ij.util.Java2;
 
 /**
  * @author Stephane

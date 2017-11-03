@@ -3,11 +3,12 @@
  */
 package icy.sequence.edit;
 
+import icy.sequence.Sequence;
+
 import java.awt.Image;
 
 import javax.swing.undo.CannotUndoException;
 
-import icy.sequence.Sequence;
 import ome.xml.meta.OMEXMLMetadata;
 
 /**

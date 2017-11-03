@@ -18,6 +18,16 @@
  */
 package icy.network;
 
+import icy.common.listener.ProgressListener;
+import icy.common.listener.weak.WeakListener;
+import icy.file.FileUtil;
+import icy.preferences.NetworkPreferences;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
+import icy.system.audit.Audit;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.io.BufferedInputStream;
@@ -57,17 +67,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
-
-import icy.common.listener.ProgressListener;
-import icy.common.listener.weak.WeakListener;
-import icy.file.FileUtil;
-import icy.preferences.NetworkPreferences;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-import icy.system.audit.Audit;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-import sun.misc.BASE64Encoder;
 
 /**
  * @author stephane
@@ -736,7 +735,7 @@ public class NetworkUtil
         try
         {
             final byte[] result = download(ip, uc.getContentLength(), listener);
-            
+
             // we test response code for HTTP connection
             if (uc instanceof HttpURLConnection)
             {
@@ -755,7 +754,7 @@ public class NetworkUtil
                 }
             }
 
-            return result; 
+            return result;
         }
         catch (Exception e)
         {
@@ -822,7 +821,7 @@ public class NetworkUtil
             bin = (BufferedInputStream) in;
         else
             bin = new BufferedInputStream(in);
-        
+
         final ByteArrayOutputStream bout = new ByteArrayOutputStream((int) ((len > 0) ? len : READ_BLOCKSIZE));
         // read per block of 64 KB
         final byte[] data = new byte[READ_BLOCKSIZE];
@@ -1151,7 +1150,12 @@ public class NetworkUtil
     public static void setAuthentication(URLConnection uc, String login, String pass)
     {
         final String req = login + ":" + pass;
-        final String encoded = new BASE64Encoder().encode(req.getBytes());
+        final String encoded;
+
+        if (SystemUtil.getJavaVersionAsNumber() >= 1.8d)
+            encoded = java.util.Base64.getEncoder().encodeToString(req.getBytes());
+        else
+            encoded = new sun.misc.BASE64Encoder().encode(req.getBytes());
 
         uc.setRequestProperty("Authorization", "Basic " + encoded);
     }

@@ -36,8 +36,6 @@ import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import icy.util.ClassUtil;
-import ij.ImagePlus;
-import ij.WindowManager;
 
 import java.awt.Image;
 import java.awt.datatransfer.DataFlavor;
@@ -50,6 +48,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
+
+import ij.ImagePlus;
+import ij.WindowManager;
 
 /**
  * General actions.

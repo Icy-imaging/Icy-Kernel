@@ -18,13 +18,6 @@
  */
 package icy.sequence;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.image.lut.LUT;
@@ -33,6 +26,13 @@ import icy.roi.ROI;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  * @author Stephane

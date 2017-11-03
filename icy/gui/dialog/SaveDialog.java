@@ -18,15 +18,15 @@
  */
 package icy.gui.dialog;
 
-import java.io.File;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-
 import icy.file.FileUtil;
 import icy.main.Icy;
 import icy.preferences.GeneralPreferences;
 import icy.system.thread.ThreadUtil;
+
+import java.io.File;
+
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  * Simple dialog to let user select a file for save operation.

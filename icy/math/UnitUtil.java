@@ -18,9 +18,9 @@
  */
 package icy.math;
 
-import java.util.concurrent.TimeUnit;
-
 import icy.util.StringUtil;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit conversion utilities class.

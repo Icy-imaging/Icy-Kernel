@@ -25,8 +25,6 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.util.ReflectionUtil;
-import ij.ImageJ;
-import ij.gui.ImageWindow;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -43,6 +41,9 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
+import ij.ImageJ;
+import ij.gui.ImageWindow;
 
 /**
  * ImageJ Wrapper class.

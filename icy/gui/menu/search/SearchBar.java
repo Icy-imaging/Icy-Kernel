@@ -18,6 +18,14 @@
  */
 package icy.gui.menu.search;
 
+import icy.gui.component.IcyTextField;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.search.SearchEngine;
+import icy.search.SearchEngine.SearchEngineListener;
+import icy.search.SearchResult;
+import icy.util.StringUtil;
+
 import java.awt.AWTEvent;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -45,14 +53,6 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 import org.jdesktop.swingx.painter.BusyPainter;
-
-import icy.gui.component.IcyTextField;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.search.SearchEngine;
-import icy.search.SearchEngine.SearchEngineListener;
-import icy.search.SearchResult;
-import icy.util.StringUtil;
 
 /**
  * @author Thomas Provoost & Stephane.

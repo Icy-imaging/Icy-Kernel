@@ -18,6 +18,19 @@
  */
 package icy.gui.dialog;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.Loader;
+import icy.file.SequenceFileImporter;
+import icy.gui.component.RangeComponent;
+import icy.gui.component.Region2DComponent;
+import icy.gui.component.SpecialValueSpinner;
+import icy.gui.component.ThumbnailComponent;
+import icy.gui.component.model.SpecialValueSpinnerModel;
+import icy.resource.ResourceUtil;
+import icy.sequence.MetaDataUtil;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -40,18 +53,6 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.file.Loader;
-import icy.file.SequenceFileImporter;
-import icy.gui.component.RangeComponent;
-import icy.gui.component.Region2DComponent;
-import icy.gui.component.SpecialValueSpinner;
-import icy.gui.component.ThumbnailComponent;
-import icy.gui.component.model.SpecialValueSpinnerModel;
-import icy.resource.ResourceUtil;
-import icy.sequence.MetaDataUtil;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 

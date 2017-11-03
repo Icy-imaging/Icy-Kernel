@@ -18,6 +18,11 @@
  */
 package icy.util;
 
+import icy.file.FileUtil;
+import icy.plugin.PluginLoader;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -36,11 +41,6 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
-import icy.file.FileUtil;
-import icy.plugin.PluginLoader;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
 
 /**
  * @author stephane

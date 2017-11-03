@@ -43,6 +43,7 @@ public class Clipboard
             .getSystemClipboard();
     private final static List<ClipboardListener> listeners = new ArrayList<Clipboard.ClipboardListener>();
 
+    public static final String TYPE_SEQUENCEROILIST = "SequenceRoiList";
     public static final String TYPE_ROILIST = "RoiList";
     public static final String TYPE_ROILINKLIST = "RoiLinkList";
     public static final String TYPE_SEQUENCE = "Sequence";

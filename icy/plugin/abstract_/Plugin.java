@@ -18,17 +18,6 @@
  */
 package icy.plugin.abstract_;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-
-import javax.swing.ImageIcon;
-
 import icy.file.FileUtil;
 import icy.gui.frame.IcyFrame;
 import icy.gui.viewer.Viewer;
@@ -49,6 +38,17 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.audit.Audit;
 import icy.util.ClassUtil;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+import javax.swing.ImageIcon;
 
 /**
  * Base class for Plugin, provide some helper methods.<br>

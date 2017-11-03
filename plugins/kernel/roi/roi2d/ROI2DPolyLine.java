@@ -18,6 +18,15 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import icy.painter.Anchor2D;
+import icy.painter.LineAnchor2D;
+import icy.resource.ResourceUtil;
+import icy.roi.ROI;
+import icy.type.geom.Polyline2D;
+import icy.type.point.Point2DUtil;
+import icy.type.point.Point5D;
+import icy.util.XMLUtil;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
@@ -31,15 +40,6 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import icy.painter.Anchor2D;
-import icy.painter.LineAnchor2D;
-import icy.resource.ResourceUtil;
-import icy.roi.ROI;
-import icy.type.geom.Polyline2D;
-import icy.type.point.Point2DUtil;
-import icy.type.point.Point5D;
-import icy.util.XMLUtil;
 
 /**
  * @author Stephane

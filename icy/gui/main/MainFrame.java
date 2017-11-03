@@ -47,7 +47,6 @@ import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
-import ij.IJ;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -80,6 +79,8 @@ import javax.swing.JSplitPane;
 
 import org.pushingpixels.flamingo.api.ribbon.JRibbon;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
+
+import ij.IJ;
 
 /**
  * @author fab & Stephane

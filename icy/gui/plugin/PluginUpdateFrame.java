@@ -18,6 +18,13 @@
  */
 package icy.gui.plugin;
 
+import icy.gui.frame.ActionFrame;
+import icy.gui.util.GuiUtil;
+import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginUpdater;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -37,13 +44,6 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import icy.gui.frame.ActionFrame;
-import icy.gui.util.GuiUtil;
-import icy.plugin.PluginDescriptor;
-import icy.plugin.PluginUpdater;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
 
 /**
  * @author Stephane

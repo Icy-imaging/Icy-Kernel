@@ -18,10 +18,6 @@
  */
 package icy.vtk;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-
 import icy.canvas.Layer;
 import icy.common.exception.TooLargeArrayException;
 import icy.image.colormap.IcyColorMap;
@@ -35,6 +31,11 @@ import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
 import icy.type.rectangle.Rectangle5D;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkActor2D;

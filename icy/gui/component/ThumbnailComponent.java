@@ -18,6 +18,10 @@
  */
 package icy.gui.component;
 
+import icy.gui.util.ComponentUtil;
+import icy.image.ImageUtil;
+import icy.resource.ResourceUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -29,10 +33,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
-
-import icy.gui.util.ComponentUtil;
-import icy.image.ImageUtil;
-import icy.resource.ResourceUtil;
 
 public class ThumbnailComponent extends JToggleButton
 {

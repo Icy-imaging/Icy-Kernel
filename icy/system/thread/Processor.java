@@ -990,10 +990,12 @@ public class Processor extends ThreadPoolExecutor
     {
         waitingExecution = null;
 
-        synchronized (getQueue())
+        final BlockingQueue<Runnable> q = getQueue();
+
+        synchronized (q)
         {
             // remove all tasks
-            getQueue().clear();
+            q.clear();
         }
     }
 

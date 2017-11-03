@@ -3,17 +3,18 @@
  */
 package icy.image;
 
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.io.IOException;
-import java.util.List;
-
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.sequence.MetaDataUtil;
 import icy.system.SystemUtil;
 import icy.system.thread.Processor;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.io.IOException;
+import java.util.List;
+
 import ome.xml.meta.OMEXMLMetadata;
 
 /**
@@ -32,7 +33,7 @@ public abstract class AbstractImageProvider implements ImageProvider
      */
     class TileImageReader implements Runnable
     {
-        final int serie;
+        final int series;
         final int resolution;
         final Rectangle region;
         final int z;
@@ -42,12 +43,12 @@ public abstract class AbstractImageProvider implements ImageProvider
         boolean done;
         boolean failed;
 
-        public TileImageReader(int serie, int resolution, Rectangle region, int z, int t, int c,
+        public TileImageReader(int series, int resolution, Rectangle region, int z, int t, int c,
                 IcyBufferedImage result)
         {
             super();
 
-            this.serie = serie;
+            this.series = series;
             this.resolution = resolution;
             this.region = region;
             this.z = z;
@@ -58,9 +59,9 @@ public abstract class AbstractImageProvider implements ImageProvider
             failed = false;
         }
 
-        public TileImageReader(int serie, int resolution, Rectangle region, int z, int t, IcyBufferedImage result)
+        public TileImageReader(int series, int resolution, Rectangle region, int z, int t, IcyBufferedImage result)
         {
-            this(serie, resolution, region, z, t, -1, result);
+            this(series, resolution, region, z, t, -1, result);
         }
 
         @Override
@@ -75,7 +76,7 @@ public abstract class AbstractImageProvider implements ImageProvider
             try
             {
                 // get image tile
-                final IcyBufferedImage img = getImage(serie, resolution, region, z, t, c);
+                final IcyBufferedImage img = getImage(series, resolution, region, z, t, c);
                 // compute resolution divider
                 final int divider = (int) Math.pow(2, resolution);
                 // copy tile to image result
@@ -102,37 +103,45 @@ public abstract class AbstractImageProvider implements ImageProvider
 
     // default implementation, override it if you need specific value for faster tile access
     @Override
-    public int getTileWidth(int serie) throws UnsupportedFormatException, IOException
+    public int getTileWidth(int series) throws UnsupportedFormatException, IOException
     {
-        return MetaDataUtil.getSizeX(getOMEXMLMetaData(), serie);
+        return MetaDataUtil.getSizeX(getOMEXMLMetaData(), series);
     }
 
     // default implementation, override it if you need specific value for faster tile access
     @Override
-    public int getTileHeight(int serie) throws UnsupportedFormatException, IOException
+    public int getTileHeight(int series) throws UnsupportedFormatException, IOException
     {
         final OMEXMLMetadata meta = getOMEXMLMetaData();
-        final int sx = MetaDataUtil.getSizeX(meta, serie);
+        final int sx = MetaDataUtil.getSizeX(meta, series);
 
         if (sx == 0)
             return 0;
 
         // default implementation
         final int maxHeight = (1024 * 1024) / sx;
-        final int sy = MetaDataUtil.getSizeY(meta, serie);
+        final int sy = MetaDataUtil.getSizeY(meta, series);
 
         return Math.min(maxHeight, sy);
     }
 
+    // default implementation, override it if sub resolution is supported
+    @Override
+    public boolean isResolutionAvailable(int series, int resolution) throws UnsupportedFormatException, IOException
+    {
+        // by default we have only the original resolution
+        return resolution == 0;
+    }
+
     // default implementation which use the getImage(..) method, override it for better support / performance
     @Override
-    public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getThumbnail(int series) throws UnsupportedFormatException, IOException
     {
         final OMEXMLMetadata meta = getOMEXMLMetaData();
-        int sx = MetaDataUtil.getSizeX(meta, serie);
-        int sy = MetaDataUtil.getSizeY(meta, serie);
-        final int sz = MetaDataUtil.getSizeZ(meta, serie);
-        final int st = MetaDataUtil.getSizeT(meta, serie);
+        int sx = MetaDataUtil.getSizeX(meta, series);
+        int sy = MetaDataUtil.getSizeY(meta, series);
+        final int sz = MetaDataUtil.getSizeZ(meta, series);
+        final int st = MetaDataUtil.getSizeT(meta, series);
 
         // empty size --> return null
         if ((sx == 0) || (sy == 0) || (sz == 0) || (st == 0))
@@ -144,15 +153,15 @@ public abstract class AbstractImageProvider implements ImageProvider
         // final thumbnail size
         final int tnx = (int) Math.round(sx * ratio);
         final int tny = (int) Math.round(sy * ratio);
-        int resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
+        final int resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
 
         // take middle image for thumbnail
-        IcyBufferedImage result = getImage(serie, resolution, sz / 2, st / 2);
+        final IcyBufferedImage result = getImage(series, resolution, sz / 2, st / 2);
 
-        sx = result.getSizeX();
-        sy = result.getSizeY();
-        // wanted sub resolution of the image (
-        resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
+        // sx = result.getSizeX();
+        // sy = result.getSizeY();
+        // // wanted sub resolution of the image
+        // resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
 
         // scale it to desired dimension (fast enough as here we have a small image)
         return IcyBufferedImageUtil.scale(result, tnx, tny, FilterType.BILINEAR);
@@ -161,38 +170,38 @@ public abstract class AbstractImageProvider implements ImageProvider
     // default implementation: use the getImage(..) method then return data.
     // It should be the opposite side for performance reason, override this method if possible
     @Override
-    public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int series, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        return getImage(serie, resolution, rectangle, z, t, c).getDataXY(0);
+        return getImage(series, resolution, rectangle, z, t, c).getDataXY(0);
     }
 
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t)
+    public IcyBufferedImage getImage(int series, int resolution, Rectangle rectangle, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        return getImage(serie, resolution, rectangle, z, t, -1);
+        return getImage(series, resolution, rectangle, z, t, -1);
     }
 
     // default implementation using the region getImage(..) method, better to override
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c)
+    public IcyBufferedImage getImage(int series, int resolution, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        return getImage(serie, resolution, null, z, t, c);
+        return getImage(series, resolution, null, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, int z, int t)
+    public IcyBufferedImage getImage(int series, int resolution, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        return getImage(serie, resolution, null, z, t, -1);
+        return getImage(series, resolution, null, z, t, -1);
     }
 
     @Override
-    public IcyBufferedImage getImage(int serie, int z, int t) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int series, int z, int t) throws UnsupportedFormatException, IOException
     {
-        return getImage(serie, 0, null, z, t, -1);
+        return getImage(series, 0, null, z, t, -1);
     }
 
     @Override
@@ -206,8 +215,8 @@ public abstract class AbstractImageProvider implements ImageProvider
      * This method is useful to read a sub resolution of a very large image which cannot fit in memory and also to take
      * advantage of multi threading.
      * 
-     * @param serie
-     *        Serie index for multi serie image (use 0 if unsure).
+     * @param series
+     *        Series index for multi series image (use 0 if unsure).
      * @param resolution
      *        Wanted resolution level for the image (use 0 if unsure).<br>
      *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
@@ -227,18 +236,18 @@ public abstract class AbstractImageProvider implements ImageProvider
      * @param listener
      *        Progression listener
      */
-    public IcyBufferedImage getImageByTile(int serie, int resolution, int z, int t, int c, int tileW, int tileH,
+    public IcyBufferedImage getImageByTile(int series, int resolution, int z, int t, int c, int tileW, int tileH,
             ProgressListener listener) throws UnsupportedFormatException, IOException
     {
         final OMEXMLMetadata meta = getOMEXMLMetaData();
-        final int sizeX = MetaDataUtil.getSizeX(meta, serie);
-        final int sizeY = MetaDataUtil.getSizeY(meta, serie);
+        final int sizeX = MetaDataUtil.getSizeX(meta, series);
+        final int sizeY = MetaDataUtil.getSizeY(meta, series);
 
         // resolution divider
         final int divider = (int) Math.pow(2, resolution);
         // allocate result
         final IcyBufferedImage result = new IcyBufferedImage(sizeX / divider, sizeY / divider,
-                MetaDataUtil.getSizeC(meta, serie), MetaDataUtil.getDataType(meta, serie));
+                MetaDataUtil.getSizeC(meta, series), MetaDataUtil.getDataType(meta, series));
         // create processor
         final Processor readerProcessor = new Processor(Math.max(1, SystemUtil.getNumberOfCPUs() - 1));
 
@@ -268,7 +277,7 @@ public abstract class AbstractImageProvider implements ImageProvider
                 }
 
                 // submit next task
-                readerProcessor.submit(new TileImageReader(serie, resolution, tile, z, t, c, result));
+                readerProcessor.submit(new TileImageReader(series, resolution, tile, z, t, c, result));
 
                 // display progression
                 if (listener != null)
@@ -363,8 +372,8 @@ public abstract class AbstractImageProvider implements ImageProvider
     /**
      * Returns the image resolution that best suit to the size resolution.
      * 
-     * @param serie
-     *        Serie index for multi serie image (use 0 if unsure).
+     * @param series
+     *        Series index for multi series image (use 0 if unsure).
      * @param wantedSize
      *        wanted size (for the maximum dimension)
      * @return resolution ratio<br>
@@ -374,9 +383,10 @@ public abstract class AbstractImageProvider implements ImageProvider
      * @throws IOException
      * @throws UnsupportedFormatException
      */
-    public int getResolutionFactor(int serie, int wantedSize) throws UnsupportedFormatException, IOException
+    public int getResolutionFactor(int series, int wantedSize) throws UnsupportedFormatException, IOException
     {
         final OMEXMLMetadata meta = getOMEXMLMetaData();
-        return getResolutionFactor(MetaDataUtil.getSizeX(meta, serie), MetaDataUtil.getSizeY(meta, serie), wantedSize);
+        return getResolutionFactor(MetaDataUtil.getSizeX(meta, series), MetaDataUtil.getSizeY(meta, series),
+                wantedSize);
     }
 }

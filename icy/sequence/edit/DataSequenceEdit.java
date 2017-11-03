@@ -3,11 +3,11 @@
  */
 package icy.sequence.edit;
 
+import icy.sequence.Sequence;
+
 import java.awt.Image;
 
 import javax.swing.undo.CannotUndoException;
-
-import icy.sequence.Sequence;
 
 /**
  * Default lazy sequence data undoable edit (do a complete sequence data copy to restore previous

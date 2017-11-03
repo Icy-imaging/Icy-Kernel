@@ -18,15 +18,6 @@
  */
 package icy.action;
 
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.main.MainFrame;
@@ -51,6 +42,15 @@ import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 import icy.undo.IcyUndoManager;
 import icy.util.ClassUtil;
+
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Actions for "Sequence Operation" tab.

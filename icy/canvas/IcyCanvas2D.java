@@ -24,7 +24,6 @@ import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
-import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Component;
 import java.awt.Dimension;

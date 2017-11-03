@@ -1,13 +1,13 @@
 package icy.type.rectangle;
 
+import icy.type.geom.Line2DUtil;
+import icy.util.ShapeUtil;
+
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
-
-import icy.type.geom.Line2DUtil;
-import icy.util.ShapeUtil;
 
 public class Rectangle2DUtil
 {

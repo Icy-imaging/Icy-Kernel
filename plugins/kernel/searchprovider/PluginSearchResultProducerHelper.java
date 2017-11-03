@@ -19,38 +19,108 @@
 package plugins.kernel.searchprovider;
 
 import icy.plugin.PluginDescriptor;
+import icy.util.StringUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Stephane
  */
 public class PluginSearchResultProducerHelper
 {
-    static boolean getShortSearch(String[] words)
+    public static class SearchWord
     {
-        return (words.length == 1) && (words[0].length() <= 2);
+        public final String word;
+        public final boolean mandatory;
+        public final boolean reject;
+
+        public SearchWord(String word)
+        {
+            super();
+
+            if (word.startsWith("+"))
+            {
+                mandatory = true;
+                reject = false;
+                if (word.length() > 1)
+                    this.word = word.substring(1);
+                else
+                    this.word = "";
+            }
+            else if (word.startsWith("+"))
+            {
+                mandatory = false;
+                reject = true;
+                if (word.length() > 1)
+                    this.word = word.substring(1);
+                else
+                    this.word = "";
+            }
+            else
+            {
+                mandatory = false;
+                reject = false;
+                this.word = word;
+            }
+        }
+
+        public boolean isEmpty()
+        {
+            return StringUtil.isEmpty(word);
+        }
+
+        public int length()
+        {
+            return word.length();
+        }
     }
 
-    static int searchInPlugin(PluginDescriptor plugin, String[] words, boolean startWithOnly)
+    public static List<SearchWord> getSearchWords(String text)
     {
+        final List<String> words = StringUtil.split(text);
+        final List<SearchWord> result = new ArrayList<SearchWord>();
+
+        for (String w : words)
+        {
+            final SearchWord sw = new SearchWord(w);
+            if (!sw.isEmpty())
+                result.add(sw);
+        }
+
+        return result;
+    }
+
+    public static boolean getShortSearch(List<SearchWord> words)
+    {
+        return (words.size() == 1) && (words.get(0).length() <= 2);
+    }
+
+    public static int searchInPlugin(PluginDescriptor plugin, List<SearchWord> words)
+    {
+        final boolean startWithOnly = PluginSearchResultProducerHelper.getShortSearch(words);
         int result = 0;
 
         // search for all word
-        for (String word : words)
+        for (SearchWord sw : words)
         {
-            final int r = searchInPlugin(plugin, word, startWithOnly);
+            final int r = searchInPlugin(plugin, sw.word, startWithOnly);
 
-            // word not found ? --> reject
-            if (r == 0)
+            // mandatory word not found ? --> reject
+            if ((r == 0) && sw.mandatory)
+                return 0;
+            // reject word found ? --> reject
+            else if ((r > 0) && sw.reject)
                 return 0;
 
             result += r;
         }
 
-        // return mean score
-        return result / words.length;
+        // return score
+        return result;
     }
 
-    static int searchInPlugin(PluginDescriptor plugin, String word, boolean startWithOnly)
+    public static int searchInPlugin(PluginDescriptor plugin, String word, boolean startWithOnly)
     {
         if (plugin.getPluginClass() != null)
         {
@@ -61,38 +131,43 @@ public class PluginSearchResultProducerHelper
 
         final String wordlc = word.toLowerCase();
         final String name = plugin.getName().toLowerCase();
-        final String description = plugin.getDescription().toLowerCase();
+        int ind;
 
-        // search in every word of the name
-        final String nameWords[] = name.split(" ");
-
-        if ((nameWords.length > 0) && nameWords[0].startsWith(wordlc))
+        ind = name.indexOf(wordlc);
+        if (ind >= 0)
+        {
             // plugin name start with keyword --> highest priority result
-            return 10;
-
-        for (int i = 1; i < nameWords.length; i++)
+            if (ind == 0)
+                return 10;
             // plugin name has a word starting by keyword --> high priority result
-            if (nameWords[i].startsWith(wordlc))
+            else if (name.charAt(ind - 1) == ' ')
                 return 9;
+            // don't allow partial match for short search
+            else if (startWithOnly)
+                return 0;
+            // name contains keyword --> high/medium priority result
+            else
+                return 8;
+        }
 
         // more search...
         if (!startWithOnly)
         {
-            // name contains keyword --> medium priority
-            if (name.contains(wordlc))
-                return 8;
+            final String description = plugin.getDescription().toLowerCase();
 
-            // search in every word of the description
-            final String descWords[] = description.split(" ");
-
-            for (int i = 0; i < descWords.length; i++)
-                // plugin description has a word starting by keyword --> medium/low priority result
-                if (descWords[i].startsWith(wordlc))
+            ind = description.indexOf(wordlc);
+            if (ind >= 0)
+            {
+                // plugin description start with keyword --> medium
+                if (ind == 0)
                     return 5;
-
-            // description contains keyword --> lowest priority
-            if (description.contains(wordlc))
-                return 1;
+                // plugin description has a word starting by keyword --> medium/low priority result
+                else if (description.charAt(ind - 1) == ' ')
+                    return 4;
+                // description contains keyword --> lowest priority
+                else
+                    return 1;
+            }
         }
 
         // not found

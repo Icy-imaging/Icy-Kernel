@@ -20,7 +20,11 @@ package icy.util;
 
 import icy.math.MathUtil;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author stephane
@@ -55,7 +59,7 @@ public class StringUtil
     public static class AlphanumComparator implements Comparator<String>
     {
         /** Length of string is passed in for improved efficiency (only need to calculate it once) **/
-        private final String getChunk(String s, int slength, int index)
+        private final static String getChunk(String s, int slength, int index)
         {
             int marker = index;
             StringBuilder chunk = new StringBuilder();
@@ -882,6 +886,32 @@ public class StringUtil
         }
 
         return text;
+    }
+
+    /**
+     * Split a text into word based on space character while preserving quoted sentences.
+     * 
+     * @param text
+     *        text to split into word.<br>
+     *        Example:<br>
+     *        <i>this book is named "the red cat"</i> --> <br>
+     *        <li>this</li>
+     *        <li>book</li>
+     *        <li>is</li>
+     *        <li>named</li>
+     *        <li>the red cat</li>
+     * @return String array representing words
+     */
+    public static List<String> split(String text)
+    {
+        // want to preserve quoted string as single words
+        final List<String> result = new ArrayList<String>();
+        final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(text);
+
+        while (m.find())
+            result.add(m.group(1).replace("\"", ""));
+
+        return result;
     }
 
     /**

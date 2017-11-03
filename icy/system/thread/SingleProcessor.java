@@ -59,8 +59,14 @@ public class SingleProcessor extends Processor
     protected synchronized <T> FutureTask<T> submit(FutureTaskAdapter<T> task)
     {
         // add task only if not already processing or queue empty
-        if ((getActiveCount() == 0) || (queueEnabled && !hasWaitingTasks()))
+        if (getActiveCount() == 0)
             return super.submit(task);
+
+        if (queueEnabled)
+        {
+            removeAllWaitingTasks();
+            return super.submit(task);
+        }
 
         // return null mean the task was ignored
         return null;

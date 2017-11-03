@@ -18,9 +18,6 @@
  */
 package plugins.kernel.roi.roi4d;
 
-import java.awt.geom.Point2D;
-import java.util.Map.Entry;
-
 import icy.roi.BooleanMask3D;
 import icy.roi.BooleanMask4D;
 import icy.roi.ROI;
@@ -28,6 +25,10 @@ import icy.roi.ROI3D;
 import icy.type.point.Point4D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle4D;
+
+import java.awt.geom.Point2D;
+import java.util.Map.Entry;
+
 import plugins.kernel.roi.roi3d.ROI3DArea;
 
 /**

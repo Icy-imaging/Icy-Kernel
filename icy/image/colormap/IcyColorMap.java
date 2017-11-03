@@ -18,15 +18,6 @@
  */
 package icy.image.colormap;
 
-import java.awt.Color;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.event.EventListenerList;
-
-import org.w3c.dom.Node;
-
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
@@ -36,6 +27,15 @@ import icy.file.xml.XMLPersistentHelper;
 import icy.image.colormap.IcyColorMapEvent.IcyColorMapEventType;
 import icy.util.ColorUtil;
 import icy.util.XMLUtil;
+
+import java.awt.Color;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
+
+import org.w3c.dom.Node;
 
 /**
  * @author stephane

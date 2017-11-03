@@ -3,19 +3,6 @@
  */
 package plugins.kernel.importer;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.channels.ClosedByInterruptException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-
-import javax.swing.filechooser.FileFilter;
-
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.file.FileUtil;
@@ -37,6 +24,20 @@ import icy.type.collection.array.ByteArrayConvert;
 import icy.type.rectangle.Rectangle2DUtil;
 import icy.util.ColorUtil;
 import icy.util.StringUtil;
+
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+import javax.swing.filechooser.FileFilter;
+
 import jxl.biff.drawing.PNGReader;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
@@ -145,7 +146,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                         }
 
                         // downscale image if needed
-                        img = downScale(img, downScaleLevel);
+                        img = IcyBufferedImageUtil.downscaleBy2(img, true, downScaleLevel);
                         // copy tile to image result
                         result.copyData(img, null, new Point(region.x / resDivider, region.y / resDivider));
                     }
@@ -174,7 +175,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final IcyBufferedImage result;
         final Stack<WorkBuffer> buffers;
 
-        public LociTileImageReader(int serie, int resolution, int z, int t, int c, int tileW, int tileH,
+        public LociTileImageReader(int series, int resolution, int z, int t, int c, int tileW, int tileH,
                 ProgressListener listener) throws IOException, UnsupportedFormatException
         {
             super();
@@ -184,22 +185,22 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             this.c = c;
 
             final OMEXMLMetadata meta = getOMEXMLMetaData();
-            final int sizeX = MetaDataUtil.getSizeX(meta, serie);
-            final int sizeY = MetaDataUtil.getSizeY(meta, serie);
+            final int sizeX = MetaDataUtil.getSizeX(meta, series);
+            final int sizeY = MetaDataUtil.getSizeY(meta, series);
             final int numThread = Math.max(1, SystemUtil.getNumberOfCPUs() - 1);
 
             // prepare main reader and get needed downScale
-            downScaleLevel = prepareReader(serie, resolution);
+            downScaleLevel = prepareReader(series, resolution);
             // resolution divider
             resDivider = (int) Math.pow(2, resolution);
             // allocate result
-            result = new IcyBufferedImage(sizeX / resDivider, sizeY / resDivider, MetaDataUtil.getSizeC(meta, serie),
-                    MetaDataUtil.getDataType(meta, serie));
+            result = new IcyBufferedImage(sizeX / resDivider, sizeY / resDivider, MetaDataUtil.getSizeC(meta, series),
+                    MetaDataUtil.getDataType(meta, series));
 
             // allocate working buffers
-            final int sizeC = MetaDataUtil.getSizeC(meta, serie);
+            final int sizeC = MetaDataUtil.getSizeC(meta, series);
             final int rgbChannelCount = reader.getRGBChannelCount();
-            final DataType dataType = MetaDataUtil.getDataType(meta, serie);
+            final DataType dataType = MetaDataUtil.getDataType(meta, series);
 
             buffers = new Stack<WorkBuffer>();
             for (int i = 0; i < numThread; i++)
@@ -643,19 +644,17 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     /**
-     * Prepare the reader to read data from specified series and at specified resolution.<br>
+     * Prepare the reader to read data from specified series but keep the current / default resolution level.<br>
      * WARNING: this method should not be called while image reading operation are still occurring (multi threaded
      * read).
-     * 
-     * @return the image divisor factor to match the wanted resolution if needed
      */
-    protected int prepareReader(int serie, int resolution)
+    protected void prepareReader(int series)
     {
         // series changed ?
-        if (reader.getSeries() != serie)
+        if (reader.getSeries() != series)
         {
-            // set wanted serie
-            reader.setSeries(serie);
+            // set wanted series
+            reader.setSeries(series);
             // reset resolution level
             resolutions = null;
         }
@@ -668,7 +667,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
             // get default sizeX
             final double sizeX = reader.getSizeX();
-            // get resolution count for this serie
+            // get resolution count for this series
             final int resCount = reader.getResolutionCount();
 
             // init resolution levels
@@ -696,6 +695,18 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             for (int i = 0; i < resolutions.length; i++)
                 resolutions[i] = validResolutions.get(i).intValue();
         }
+    }
+
+    /**
+     * Prepare the reader to read data from specified series and at specified resolution.<br>
+     * WARNING: this method should not be called while image reading operation are still occurring (multi threaded
+     * read).
+     * 
+     * @return the image divisor factor to match the wanted resolution if needed
+     */
+    protected int prepareReader(int series, int resolution)
+    {
+        prepareReader(series);
 
         if (resolution > 0)
         {
@@ -754,14 +765,14 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     @Override
-    public int getTileWidth(int serie) throws UnsupportedFormatException, IOException
+    public int getTileWidth(int series) throws UnsupportedFormatException, IOException
     {
         // no image currently opened
         if (getOpened() == null)
             return 0;
 
         // prepare reader
-        prepareReader(serie, 0);
+        prepareReader(series);
 
         // don't need thread safe reader for this
         int result = reader.getOptimalTileWidth();
@@ -774,14 +785,14 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     @Override
-    public int getTileHeight(int serie) throws UnsupportedFormatException, IOException
+    public int getTileHeight(int series) throws UnsupportedFormatException, IOException
     {
         // no image currently opened
         if (getOpened() == null)
             return 0;
 
         // prepare reader
-        prepareReader(serie, 0);
+        prepareReader(series);
 
         // don't need thread safe reader for this
         int result = reader.getOptimalTileHeight();
@@ -793,9 +804,30 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         return (int) Math.pow(2, Math.floor(Math.log(result) / Math.log(2d)));
     }
 
+    @Override
+    public boolean isResolutionAvailable(int series, int resolution) throws UnsupportedFormatException, IOException
+    {
+        // no image currently opened
+        if (getOpened() == null)
+            return resolution == 0;
+
+        // prepare reader
+        prepareReader(series);
+
+        if (resolution > 0)
+        {
+            // try to find wanted resolution
+            for (int r : resolutions)
+                if (r == resolution)
+                    return true;
+        }
+
+        return resolution == 0;
+    }
+
     @SuppressWarnings("resource")
     @Override
-    public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getThumbnail(int series) throws UnsupportedFormatException, IOException
     {
         // no image currently opened
         if (getOpened() == null)
@@ -804,7 +836,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         try
         {
             // prepare reader (no down scaling here)
-            prepareReader(serie, 0);
+            prepareReader(series, 0);
 
             final IFormatReader r = getReader();
             try
@@ -824,13 +856,13 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         catch (Throwable t)
         {
             // can happen if we don't have enough memory --> try default implementation
-            return super.getThumbnail(serie);
+            return super.getThumbnail(series);
         }
     }
 
     @SuppressWarnings("resource")
     @Override
-    public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int series, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
         // no image currently opened
@@ -840,7 +872,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         try
         {
             // prepare reader and get down scale factor
-            final int downScaleLevel = prepareReader(serie, resolution);
+            final int downScaleLevel = prepareReader(series, resolution);
 
             // no need to rescale ? --> directly return the pixels
             if (downScaleLevel == 0)
@@ -870,7 +902,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             }
 
             // use classic getImage method when we need rescaling
-            return getImage(serie, resolution, rectangle, z, t, c).getDataXY(0);
+            return getImage(series, resolution, rectangle, z, t, c).getDataXY(0);
         }
         catch (FormatException e)
         {
@@ -880,7 +912,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
     @SuppressWarnings("resource")
     @Override
-    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public IcyBufferedImage getImage(int series, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
         // no image currently opened
@@ -890,7 +922,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         try
         {
             // prepare reader and get down scale factor if wanted resolution is not available
-            final int downScaleLevel = prepareReader(serie, resolution);
+            final int downScaleLevel = prepareReader(series, resolution);
 
             final IFormatReader r = getReader();
             final Rectangle adjRect;
@@ -907,7 +939,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 // get image
                 final IcyBufferedImage result = getImage(r, adjRect, z, t, c);
                 // return down scaled version if needed
-                return downScale(result, downScaleLevel);
+                return IcyBufferedImageUtil.downscaleBy2(result, true, downScaleLevel);
             }
             catch (IOException e)
             {
@@ -918,7 +950,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             {
                 // need rescaling --> try tiling read
                 if (downScaleLevel > 0)
-                    return getImageByTile(serie, resolution, z, t, c, getTileWidth(serie), getTileHeight(serie), null);
+                    return getImageByTile(series, resolution, z, t, c, getTileWidth(series), getTileHeight(series),
+                            null);
 
                 throw e;
             }
@@ -927,7 +960,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             {
                 // need rescaling --> try tiling read
                 if (downScaleLevel > 0)
-                    return getImageByTile(serie, resolution, z, t, c, getTileWidth(serie), getTileHeight(serie), null);
+                    return getImageByTile(series, resolution, z, t, c, getTileWidth(series), getTileHeight(series),
+                            null);
 
                 throw e;
             }
@@ -936,7 +970,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 // we can have here a "Image plane too large. Only 2GB of data can be extracted at
                 // one time." error here --> so can try to use tile loading when we need rescaling
                 if (downScaleLevel > 0)
-                    return getImageByTile(serie, resolution, z, t, c, getTileWidth(serie), getTileHeight(serie), null);
+                    return getImageByTile(series, resolution, z, t, c, getTileWidth(series), getTileHeight(series),
+                            null);
 
                 throw e;
             }
@@ -945,7 +980,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 // we can have NegativeArraySizeException here for instance
                 // try to use tile loading when we need rescaling
                 if (downScaleLevel > 0)
-                    return getImageByTile(serie, resolution, z, t, c, getTileWidth(serie), getTileHeight(serie), null);
+                    return getImageByTile(series, resolution, z, t, c, getTileWidth(series), getTileHeight(series),
+                            null);
 
                 throw new UnsupportedOperationException(e);
             }
@@ -962,10 +998,10 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     @Override
-    public IcyBufferedImage getImageByTile(int serie, int resolution, int z, int t, int c, int tileW, int tileH,
+    public IcyBufferedImage getImageByTile(int series, int resolution, int z, int t, int c, int tileW, int tileH,
             ProgressListener listener) throws UnsupportedFormatException, IOException
     {
-        return new LociTileImageReader(serie, resolution, z, t, c, tileW, tileH, listener).result;
+        return new LociTileImageReader(series, resolution, z, t, c, tileW, tileH, listener).result;
     }
 
     /**
@@ -1628,39 +1664,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
         // return region
         return reader.openBytes(index, buffer, rect.x, rect.y, rect.width, rect.height);
-    }
-
-    /**
-     * Down scale the specified image with the given down scale factor.<br>
-     * If down scale factor equals <code>0</code> then the input image is directly returned.
-     * 
-     * @param source
-     *        input image
-     * @param scale
-     *        scale factor
-     * @return scaled image or source image is scale factor equals <code>0</code>
-     */
-    protected static IcyBufferedImage downScale(IcyBufferedImage source, int downScaleLevel)
-    {
-        IcyBufferedImage result = source;
-        int it = downScaleLevel;
-
-        // process fast down scaling
-        while (it-- > 0)
-            result = IcyBufferedImageUtil.downscaleBy2(result, true);
-
-        return result;
-
-        // final double scale = Math.pow(2, downScaleLevel);
-        // if (scale > 1d)
-        // {
-        // final int sizeX = (int) (Math.round(source.getSizeX() / scale));
-        // final int sizeY = (int) (Math.round(source.getSizeY() / scale));
-        // // down scale
-        // return IcyBufferedImageUtil.scale(source, sizeX, sizeY, FilterType.BILINEAR);
-        // }
-        //
-        // return source;
     }
 
     protected static UnsupportedFormatException translateException(String path, FormatException exception)

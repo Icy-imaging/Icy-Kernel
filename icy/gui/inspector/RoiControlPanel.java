@@ -18,6 +18,30 @@
  */
 package icy.gui.inspector;
 
+import icy.clipboard.Clipboard;
+import icy.clipboard.Clipboard.ClipboardListener;
+import icy.gui.component.AbstractRoisPanel;
+import icy.gui.component.IcyTextField;
+import icy.gui.component.IcyTextField.TextChangeListener;
+import icy.gui.component.SpecialValueSpinner;
+import icy.gui.component.button.ColorChooserButton;
+import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
+import icy.gui.component.model.SpecialValueSpinnerModel;
+import icy.main.Icy;
+import icy.math.MathUtil;
+import icy.roi.ROI;
+import icy.roi.ROIEvent;
+import icy.roi.edit.BoundsROIEdit;
+import icy.roi.edit.BoundsROIsEdit;
+import icy.roi.edit.PositionROIEdit;
+import icy.roi.edit.PositionROIsEdit;
+import icy.roi.edit.PropertyROIsEdit;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.StringUtil;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -39,36 +63,10 @@ import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import icy.action.RoiActions;
-import icy.clipboard.Clipboard;
-import icy.clipboard.Clipboard.ClipboardListener;
-import icy.gui.component.AbstractRoisPanel;
-import icy.gui.component.IcyTextField;
-import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.component.SpecialValueSpinner;
-import icy.gui.component.button.ColorChooserButton;
-import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.model.SpecialValueSpinnerModel;
-import icy.main.Icy;
-import icy.math.MathUtil;
-import icy.roi.ROI;
-import icy.roi.ROIEvent;
-import icy.roi.edit.BoundsROIEdit;
-import icy.roi.edit.BoundsROIsEdit;
-import icy.roi.edit.PositionROIEdit;
-import icy.roi.edit.PositionROIsEdit;
-import icy.roi.edit.PropertyROIsEdit;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.StringUtil;
-import javax.swing.UIManager;
 
 /**
  * @author Stephane

@@ -19,7 +19,6 @@
 package icy.math;
 
 import icy.common.CollapsibleEvent;
-import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;

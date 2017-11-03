@@ -32,10 +32,6 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.BasicResizableIcon;
 import icy.resource.icon.IcyIcon;
 import icy.system.SystemUtil;
-import ij.Executer;
-import ij.ImageJ;
-import ij.WindowManager;
-import ij.gui.ImageWindow;
 
 import java.awt.Image;
 import java.beans.PropertyChangeEvent;
@@ -47,6 +43,11 @@ import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonComponent;
 import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
 import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
+
+import ij.Executer;
+import ij.ImageJ;
+import ij.WindowManager;
+import ij.gui.ImageWindow;
 
 /**
  * @author Stephane

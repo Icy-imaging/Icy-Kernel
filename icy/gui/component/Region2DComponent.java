@@ -1,5 +1,7 @@
 package icy.gui.component;
 
+import icy.gui.component.NumberTextField.ValueChangeListener;
+
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -10,8 +12,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import icy.gui.component.NumberTextField.ValueChangeListener;
 
 /**
  * Component letting user to define a range (RangeSlider + 2 inputs fields)

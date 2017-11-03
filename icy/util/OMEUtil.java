@@ -18,16 +18,17 @@
  */
 package icy.util;
 
-import java.awt.Color;
-
-import org.w3c.dom.Document;
-
 import icy.image.IcyBufferedImage;
 import icy.sequence.MetaDataUtil;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.type.TypeUtil;
+
+import java.awt.Color;
+
+import org.w3c.dom.Document;
+
 import loci.common.services.ServiceException;
 import loci.formats.MetadataTools;
 import loci.formats.ome.OMEXMLMetadataImpl;

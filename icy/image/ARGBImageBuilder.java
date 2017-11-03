@@ -18,18 +18,18 @@
  */
 package icy.image;
 
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.system.SystemUtil;
+import icy.system.thread.Processor;
+import icy.system.thread.ThreadUtil;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.system.SystemUtil;
-import icy.system.thread.Processor;
-import icy.system.thread.ThreadUtil;
 
 /**
  * @author Stephane

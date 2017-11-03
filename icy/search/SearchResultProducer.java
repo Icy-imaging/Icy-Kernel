@@ -30,32 +30,32 @@ import java.util.List;
  * The SearchResultProducer create {@link SearchResult} objects from given search keywords.<br>
  * These {@link SearchResult} are then consumed by a {@link SearchResultConsumer}.
  * 
- * @author Thomas Provoost & Stephane Dallongeville
+ * @author Stephane Dallongeville
  */
 public abstract class SearchResultProducer implements Comparable<SearchResultProducer>
 {
     private class SearchRunner implements Runnable
     {
-        private final String[] words;
+        private final String text;
         private final SearchResultConsumer consumer;
 
-        public SearchRunner(String[] words, SearchResultConsumer consumer)
+        public SearchRunner(String text, SearchResultConsumer consumer)
         {
             super();
 
-            this.words = words;
+            this.text = text;
             this.consumer = consumer;
         }
 
         @Override
         public void run()
         {
-            // perform search if we have at least one not empty keyword
-            if ((words.length > 1) || !StringUtil.isEmpty(words[0]))
+            // perform search if text is not empty
+            if (!StringUtil.isEmpty(text))
             {
                 try
                 {
-                    doSearch(words, consumer);
+                    doSearch(text, consumer);
                 }
                 catch (Throwable t)
                 {
@@ -124,20 +124,53 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
     }
 
     /**
+     * @deprecated Use {@link #search(String, SearchResultConsumer)} instead.
+     */
+    @Deprecated
+    public void search(String[] words, SearchResultConsumer consumer)
+    {
+        if (words.length > 0)
+        {
+            String t = words[0];
+
+            for (int i = 1; i < words.length; i++)
+                t += " " + words[i];
+
+            processor.submit(new SearchRunner(t, consumer));
+        }
+        else
+            processor.submit(new SearchRunner("", consumer));
+    }
+
+    /**
      * Performs the search request (asynchronous), mostly build the search result list.<br>
      * Only one search request should be processed at one time so take care of waiting for previous
-     * search request completion.<br>
+     * search request completion.
      * 
-     * @param words
-     *        Search keywords
+     * @param text
+     *        Search text, it can contains several words and use operators.<br>
+     *        Examples:<br>
+     *        <li><i>spot detector</i> : any of word should be present</li>
+     *        <li><i>+spot +detector</i> : both words should be present</li>
+     *        <li>"spot detector"</i> : the exact expression should be present</li>
+     *        <li><i>+"spot detector" -tracking</i> : <i>spot detector</i> should be present and <i>tracking</i> absent</li>
      * @param consumer
      *        Search result consumer for this search request.<br>
      *        The consumer should be notified of new results by using the
      *        {@link SearchResultConsumer#resultsChanged(SearchResultProducer)} method.
      */
-    public void search(String[] words, SearchResultConsumer consumer)
+    public void search(String text, SearchResultConsumer consumer)
     {
-        processor.submit(new SearchRunner(words, consumer));
+        processor.submit(new SearchRunner(text, consumer));
+    }
+
+    /**
+     * @deprecated Use {@link #doSearch(String, SearchResultConsumer)} instead
+     */
+    @Deprecated
+    public void doSearch(String[] words, SearchResultConsumer consumer)
+    {
+        // default implementation, does nothing...
     }
 
     /**
@@ -145,19 +178,28 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
      * The method is responsible for filling the <code>results</code> list :<br>
      * - If no result correspond to the requested search then <code>results</code> should be
      * cleared.<br>
-     * - Else it should contains the founds results.<br>
+     * - otherwise it should contains the founds results.<br>
      * <code>results</code> variable access should be synchronized as it can be externally accessed.<br>
      * The method could return earlier if {@link #hasWaitingSearch()} returns true.
      * 
-     * @param words
-     *        Search keywords
+     * @param text
+     *        Search text, it can contains several words and use operators.<br>
+     *        Examples:<br>
+     *        <li><i>spot detector</i> : any of word should be present</li>
+     *        <li><i>+spot +detector</i> : both words should be present</li>
+     *        <li>"spot detector"</i> : the exact expression should be present</li>
+     *        <li><i>+"spot detector" -tracking</i> : <i>spot detector</i> should be present and <i>tracking</i> absent</li>
      * @param consumer
      *        Search result consumer for this search request.<br>
      *        The consumer should be notified of new results by using the
      *        {@link SearchResultConsumer#resultsChanged(SearchResultProducer)} method.
      * @see #hasWaitingSearch()
      */
-    public abstract void doSearch(String[] words, SearchResultConsumer consumer);
+    public void doSearch(String text, SearchResultConsumer consumer)
+    {
+        // by default this implementation use separated word search for backward compatibility
+        doSearch(text.split(" "), consumer);
+    }
 
     /**
      * Wait for the search request to complete.

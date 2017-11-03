@@ -18,6 +18,11 @@
  */
 package icy.gui.sequence;
 
+import icy.gui.component.model.XMLTreeModel;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.util.OMEUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
@@ -25,11 +30,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-
-import icy.gui.component.model.XMLTreeModel;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.util.OMEUtil;
 
 /**
  * @author Stephane
