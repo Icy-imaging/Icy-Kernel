@@ -54,7 +54,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -68,8 +67,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
-
-import sun.misc.BASE64Encoder;
 
 /**
  * @author stephane
@@ -1156,9 +1153,9 @@ public class NetworkUtil
         final String encoded;
 
         if (SystemUtil.getJavaVersionAsNumber() >= 1.8d)
-            encoded = Base64.getEncoder().encodeToString(req.getBytes());
+            encoded = java.util.Base64.getEncoder().encodeToString(req.getBytes());
         else
-            encoded = new BASE64Encoder().encode(req.getBytes());
+            encoded = new sun.misc.BASE64Encoder().encode(req.getBytes());
 
         uc.setRequestProperty("Authorization", "Basic " + encoded);
     }
