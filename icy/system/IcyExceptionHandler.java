@@ -18,14 +18,6 @@
  */
 package icy.system;
 
-import java.io.File;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.plugin.PluginErrorReport;
@@ -39,6 +31,14 @@ import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginBundled;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
+
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Stephane

@@ -61,7 +61,6 @@ import icy.update.IcyUpdater;
 import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
-import ij.ImageJ;
 
 import java.awt.EventQueue;
 import java.beans.PropertyVetoException;
@@ -76,6 +75,7 @@ import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
+import ij.ImageJ;
 import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
 

@@ -18,21 +18,6 @@
  */
 package icy.file;
 
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
 import icy.common.exception.UnsupportedFormatException;
 import icy.gui.dialog.ImporterSelectionDialog;
 import icy.gui.dialog.SeriesSelectionDialog;
@@ -64,6 +49,22 @@ import icy.util.OMEUtil;
 import icy.util.StringUtil;
 import icy.util.StringUtil.AlphanumComparator;
 import icy.util.XMLUtil;
+
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;

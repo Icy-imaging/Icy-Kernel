@@ -8,6 +8,7 @@ import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.type.DataType;
+
 import vtk.vtkColorTransferFunction;
 import vtk.vtkFixedPointVolumeRayCastMapper;
 import vtk.vtkGPUVolumeRayCastMapper;

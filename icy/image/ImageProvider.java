@@ -3,10 +3,11 @@
  */
 package icy.image;
 
+import icy.common.exception.UnsupportedFormatException;
+
 import java.awt.Rectangle;
 import java.io.IOException;
 
-import icy.common.exception.UnsupportedFormatException;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 

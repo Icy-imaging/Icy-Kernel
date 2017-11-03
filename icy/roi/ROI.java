@@ -18,25 +18,6 @@
  */
 package icy.roi;
 
-import java.awt.Color;
-import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 import icy.canvas.IcyCanvas;
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
@@ -61,6 +42,26 @@ import icy.util.EventUtil;
 import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+
+import java.awt.Color;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi3d.ROI3DArea;
 import plugins.kernel.roi.roi4d.ROI4DArea;

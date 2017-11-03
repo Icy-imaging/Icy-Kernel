@@ -18,13 +18,6 @@
  */
 package icy.gui.sequence.tools;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-
-import javax.swing.BorderFactory;
-
 import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.ComponentUtil;
@@ -38,6 +31,13 @@ import icy.sequence.SequenceUtil.MergeCHelper;
 import icy.sequence.SequenceUtil.MergeTHelper;
 import icy.sequence.SequenceUtil.MergeZHelper;
 import icy.system.thread.ThreadUtil;
+
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+
+import javax.swing.BorderFactory;
 
 /**
  * @author Stephane

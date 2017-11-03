@@ -3,19 +3,6 @@
  */
 package plugins.kernel.importer;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.channels.ClosedByInterruptException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-
-import javax.swing.filechooser.FileFilter;
-
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.file.FileUtil;
@@ -37,6 +24,20 @@ import icy.type.collection.array.ByteArrayConvert;
 import icy.type.rectangle.Rectangle2DUtil;
 import icy.util.ColorUtil;
 import icy.util.StringUtil;
+
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+import javax.swing.filechooser.FileFilter;
+
 import jxl.biff.drawing.PNGReader;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;

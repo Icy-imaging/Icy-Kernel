@@ -18,17 +18,6 @@
  */
 package icy.action;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.io.PrintWriter;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.w3c.dom.Document;
-
 import icy.clipboard.Clipboard;
 import icy.file.FileUtil;
 import icy.gui.dialog.IdConfirmDialog;
@@ -57,6 +46,18 @@ import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
 import icy.util.XMLUtil;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.w3c.dom.Document;
+
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import plugins.kernel.roi.roi2d.ROI2DRectangle;

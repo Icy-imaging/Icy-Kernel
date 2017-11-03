@@ -18,15 +18,6 @@
  */
 package icy.action;
 
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import icy.file.Saver;
 import icy.gui.dialog.LoaderDialog;
 import icy.gui.dialog.MessageDialog;
@@ -46,6 +37,15 @@ import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
+
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * File actions (open / save / close...)

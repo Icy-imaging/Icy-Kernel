@@ -18,11 +18,11 @@
  */
 package icy.gui.dialog;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
 import icy.main.Icy;
 import icy.system.thread.ThreadUtil;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 /**
  * @author stephane

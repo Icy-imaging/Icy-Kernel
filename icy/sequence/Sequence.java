@@ -18,23 +18,6 @@
  */
 package icy.sequence;
 
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.swing.undo.UndoManager;
-
-import org.w3c.dom.Node;
-
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.exception.TooLargeArrayException;
@@ -88,6 +71,24 @@ import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
+
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.swing.undo.UndoManager;
+
+import org.w3c.dom.Node;
+
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 
@@ -915,7 +916,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 result += "_T" + tMin;
             else
                 result += "_T(" + tMin + "-" + tMax + ")";
-
         }
 
         // retrieve the original channel

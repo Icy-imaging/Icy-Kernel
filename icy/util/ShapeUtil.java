@@ -18,6 +18,9 @@
  */
 package icy.util;
 
+import icy.painter.Anchor2D;
+import icy.painter.PathAnchor2D;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -33,9 +36,6 @@ import java.awt.geom.RectangularShape;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import icy.painter.Anchor2D;
-import icy.painter.PathAnchor2D;
 
 /**
  * @author Stephane

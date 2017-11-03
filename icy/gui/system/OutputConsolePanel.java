@@ -18,6 +18,17 @@
  */
 package icy.gui.system;
 
+import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.GuiUtil;
+import icy.preferences.GeneralPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.system.IcyExceptionHandler;
+import icy.util.EventUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -49,17 +60,6 @@ import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-
-import icy.gui.component.ExternalizablePanel;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.frame.progress.ProgressFrame;
-import icy.gui.util.GuiUtil;
-import icy.preferences.GeneralPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.system.IcyExceptionHandler;
-import icy.util.EventUtil;
 
 /**
  * @author Stephane

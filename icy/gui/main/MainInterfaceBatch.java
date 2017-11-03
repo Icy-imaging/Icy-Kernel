@@ -19,12 +19,6 @@
 
 package icy.gui.main;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.LayersPanel;
@@ -47,6 +41,12 @@ import icy.swimmingPool.SwimmingPool;
 import icy.type.collection.CollectionUtil;
 import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 
 /**
  * MainInterfaceBatch

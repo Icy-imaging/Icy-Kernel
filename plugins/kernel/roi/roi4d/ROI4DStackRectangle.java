@@ -2,6 +2,7 @@ package plugins.kernel.roi.roi4d;
 
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
+
 import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
 
 public class ROI4DStackRectangle extends ROI4DStack<ROI3DStackRectangle>

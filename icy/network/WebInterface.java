@@ -1,13 +1,13 @@
 package icy.network;
 
+import icy.preferences.ApplicationPreferences;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import org.w3c.dom.Document;
-
-import icy.preferences.ApplicationPreferences;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
 
 public class WebInterface
 {

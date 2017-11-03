@@ -18,18 +18,6 @@
  */
 package icy.roi;
 
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import icy.image.IcyBufferedImage;
 import icy.image.IntensityInfo;
 import icy.math.DataIteratorMath;
@@ -53,6 +41,19 @@ import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import plugins.kernel.roi.descriptor.intensity.ROIIntensityDescriptorsPlugin;
 import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
 import plugins.kernel.roi.descriptor.intensity.ROIMeanIntensityDescriptor;

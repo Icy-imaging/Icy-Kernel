@@ -18,6 +18,38 @@
  */
 package icy.gui.inspector;
 
+import icy.gui.component.CloseableTabbedPane;
+import icy.gui.component.CloseableTabbedPane.CloseableTabbedPaneListener;
+import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.IcyTextField;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.frame.progress.AnnounceFrame;
+import icy.gui.frame.progress.ToolTipFrame;
+import icy.gui.main.IcyDesktopPane;
+import icy.gui.main.IcyDesktopPane.AbstractDesktopOverlay;
+import icy.gui.main.MainFrame;
+import icy.gui.preferences.ChatPreferencePanel;
+import icy.gui.preferences.PreferenceFrame;
+import icy.gui.util.ComponentUtil;
+import icy.gui.util.FontUtil;
+import icy.gui.util.GuiUtil;
+import icy.main.Icy;
+import icy.network.IRCClient;
+import icy.network.IRCEventListenerImpl;
+import icy.network.IRCUtil;
+import icy.network.NetworkUtil;
+import icy.network.NetworkUtil.InternetAccessListener;
+import icy.preferences.ChatPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.system.IcyExceptionHandler;
+import icy.system.thread.ThreadUtil;
+import icy.type.collection.CollectionUtil;
+import icy.util.DateUtil;
+import icy.util.GraphicsUtil;
+import icy.util.StringUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -59,38 +91,6 @@ import javax.swing.text.StyledDocument;
 
 import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
-
-import icy.gui.component.CloseableTabbedPane;
-import icy.gui.component.CloseableTabbedPane.CloseableTabbedPaneListener;
-import icy.gui.component.ExternalizablePanel;
-import icy.gui.component.IcyTextField;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.frame.progress.AnnounceFrame;
-import icy.gui.frame.progress.ToolTipFrame;
-import icy.gui.main.IcyDesktopPane;
-import icy.gui.main.IcyDesktopPane.AbstractDesktopOverlay;
-import icy.gui.main.MainFrame;
-import icy.gui.preferences.ChatPreferencePanel;
-import icy.gui.preferences.PreferenceFrame;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.FontUtil;
-import icy.gui.util.GuiUtil;
-import icy.main.Icy;
-import icy.network.IRCClient;
-import icy.network.IRCEventListenerImpl;
-import icy.network.IRCUtil;
-import icy.network.NetworkUtil;
-import icy.network.NetworkUtil.InternetAccessListener;
-import icy.preferences.ChatPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.system.IcyExceptionHandler;
-import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
-import icy.util.DateUtil;
-import icy.util.GraphicsUtil;
-import icy.util.StringUtil;
 
 public class ChatPanel extends ExternalizablePanel implements InternetAccessListener
 {

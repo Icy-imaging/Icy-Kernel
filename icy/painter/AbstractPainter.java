@@ -18,17 +18,17 @@
  */
 package icy.painter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.event.EventListenerList;
-
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.main.Icy;
 import icy.painter.PainterEvent.PainterEventType;
 import icy.sequence.Sequence;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
 
 /**
  * AbstractPainter class.<br>

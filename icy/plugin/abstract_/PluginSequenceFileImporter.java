@@ -3,15 +3,16 @@
  */
 package icy.plugin.abstract_;
 
-import java.awt.Rectangle;
-import java.io.IOException;
-
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
 import icy.plugin.interface_.PluginNoEDTConstructor;
+
+import java.awt.Rectangle;
+import java.io.IOException;
+
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 

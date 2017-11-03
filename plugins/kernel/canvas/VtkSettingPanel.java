@@ -22,11 +22,11 @@ import java.beans.PropertyChangeEvent;
 import java.util.EventListener;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.JCheckBox;
 
 public class VtkSettingPanel extends JPanel implements ActionListener, TextChangeListener, ColorChangeListener
 

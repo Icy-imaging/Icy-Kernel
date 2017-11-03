@@ -18,11 +18,11 @@
  */
 package plugins.kernel.searchprovider;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import icy.plugin.PluginDescriptor;
 import icy.util.StringUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Stephane

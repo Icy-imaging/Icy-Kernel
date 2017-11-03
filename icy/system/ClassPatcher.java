@@ -51,10 +51,11 @@
 
 package icy.system;
 
+import icy.util.StringUtil;
+
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 
-import icy.util.StringUtil;
 import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassPool;

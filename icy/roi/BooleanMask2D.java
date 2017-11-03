@@ -18,6 +18,10 @@
  */
 package icy.roi;
 
+import icy.type.TypeUtil;
+import icy.type.collection.array.DynamicArray;
+import icy.type.point.Point2DUtil;
+
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -26,10 +30,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import icy.type.TypeUtil;
-import icy.type.collection.array.DynamicArray;
-import icy.type.point.Point2DUtil;
 
 /**
  * Class to define a 2D boolean mask region and make basic boolean operation between masks.<br>

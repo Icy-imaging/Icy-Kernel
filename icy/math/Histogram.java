@@ -18,10 +18,6 @@
  */
 package icy.math;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Arrays;
-
 import icy.file.FileUtil;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.dialog.SaveDialog;
@@ -29,6 +25,11 @@ import icy.type.TypeUtil;
 import icy.type.collection.array.ArrayUtil;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
+
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;

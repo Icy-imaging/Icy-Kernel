@@ -1,7 +1,6 @@
 package icy.vtk;
 
 import icy.gui.dialog.IdConfirmDialog;
-import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.system.IcyExceptionHandler;
 import icy.system.IcyHandledException;

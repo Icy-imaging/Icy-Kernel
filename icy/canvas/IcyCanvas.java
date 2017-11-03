@@ -18,29 +18,6 @@
  */
 package icy.canvas;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JPanel;
-import javax.swing.JToolBar;
-import javax.swing.event.ChangeEvent;
-
 import icy.action.CanvasActions;
 import icy.action.GeneralActions;
 import icy.action.RoiActions;
@@ -84,6 +61,30 @@ import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
 import icy.util.OMEUtil;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
+import javax.swing.event.ChangeEvent;
+
 import plugins.kernel.canvas.Canvas2DPlugin;
 import plugins.kernel.canvas.VtkCanvasPlugin;
 

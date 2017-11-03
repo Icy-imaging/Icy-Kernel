@@ -18,12 +18,6 @@
  */
 package plugins.kernel.searchprovider;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import icy.gui.plugin.PluginDetailPanel;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
@@ -39,6 +33,13 @@ import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import plugins.kernel.searchprovider.LocalPluginSearchResultProducer.LocalPluginResult;
 import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
 

@@ -18,6 +18,18 @@
  */
 package icy.gui.dialog;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.Loader;
+import icy.file.SequenceFileImporter;
+import icy.gui.component.ThumbnailComponent;
+import icy.gui.util.ComponentUtil;
+import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.main.Icy;
+import icy.resource.ResourceUtil;
+import icy.sequence.MetaDataUtil;
+import icy.util.OMEUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -38,17 +50,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.file.Loader;
-import icy.file.SequenceFileImporter;
-import icy.gui.component.ThumbnailComponent;
-import icy.gui.util.ComponentUtil;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
-import icy.main.Icy;
-import icy.resource.ResourceUtil;
-import icy.sequence.MetaDataUtil;
-import icy.util.OMEUtil;
 import loci.formats.IFormatReader;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.MetadataRetrieve;

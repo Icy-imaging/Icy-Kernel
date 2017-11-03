@@ -3,8 +3,6 @@
  */
 package icy.util;
 
-import icy.gui.dialog.IdConfirmDialog;
-
 import javax.media.opengl.GLProfile;
 
 /**

@@ -18,6 +18,13 @@
  */
 package icy.image;
 
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayType;
+import icy.type.collection.array.ArrayUtil;
+
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -33,13 +40,6 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.RotateDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.swing.SwingConstants;
-
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.type.DataType;
-import icy.type.collection.array.Array1DUtil;
-import icy.type.collection.array.ArrayType;
-import icy.type.collection.array.ArrayUtil;
 
 /**
  * {@link IcyBufferedImage} utilities class.<br>

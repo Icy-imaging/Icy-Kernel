@@ -18,16 +18,16 @@
  */
 package icy.search;
 
-import java.net.URLEncoder;
-
-import org.w3c.dom.Document;
-
 import icy.network.URLUtil;
 import icy.network.WebInterface;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+
+import java.net.URLEncoder;
+
+import org.w3c.dom.Document;
 
 /**
  * The OnlineSearchResultProducer is the basic class for {@link SearchResult} producer from online

@@ -19,13 +19,6 @@
 
 package icy.gui.main;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.undo.UndoManager;
-
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.LayersPanel;
@@ -46,6 +39,13 @@ import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 import icy.undo.IcyUndoManager;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.undo.UndoManager;
 
 /**
  * MainInterface

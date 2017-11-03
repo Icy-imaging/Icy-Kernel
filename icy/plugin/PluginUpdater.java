@@ -25,7 +25,6 @@ import icy.gui.plugin.PluginUpdateFrame;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.system.thread.ThreadUtil;
-import icy.util.Random;
 
 import java.util.ArrayList;
 import java.util.List;

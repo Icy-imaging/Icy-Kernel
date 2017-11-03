@@ -18,13 +18,13 @@
  */
 package icy.common;
 
+import icy.common.listener.ChangeListener;
+import icy.system.thread.ThreadUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import icy.common.listener.ChangeListener;
-import icy.system.thread.ThreadUtil;
 
 /**
  * Utility class to handle <code>Update</code> type event.

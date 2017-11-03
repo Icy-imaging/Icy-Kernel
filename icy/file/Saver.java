@@ -18,11 +18,6 @@
  */
 package icy.file;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
 import icy.gui.menu.ApplicationMenu;
@@ -40,6 +35,12 @@ import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.IFormatWriter;

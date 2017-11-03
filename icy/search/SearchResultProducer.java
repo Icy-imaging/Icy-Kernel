@@ -18,13 +18,13 @@
  */
 package icy.search;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The SearchResultProducer create {@link SearchResult} objects from given search keywords.<br>

@@ -1,10 +1,5 @@
 package plugins.kernel.roi.descriptor.measure;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.roi.ROI;
@@ -13,6 +8,11 @@ import icy.roi.ROIIterator;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This {@link PluginROIDescriptor} implements the mass center ROI descriptors:<br/>

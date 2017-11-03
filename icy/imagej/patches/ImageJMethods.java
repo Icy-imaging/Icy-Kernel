@@ -53,6 +53,7 @@ package icy.imagej.patches;
 
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
+
 import ij.ImageJ;
 
 /**

@@ -18,15 +18,16 @@
  */
 package icy.sequence;
 
-import java.awt.Color;
-import java.util.HashSet;
-import java.util.Set;
-
 import icy.image.IcyBufferedImage;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+
+import java.awt.Color;
+import java.util.HashSet;
+import java.util.Set;
+
 import loci.common.services.ServiceException;
 import loci.formats.FormatTools;
 import loci.formats.MetadataTools;

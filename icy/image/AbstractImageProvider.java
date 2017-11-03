@@ -3,17 +3,18 @@
  */
 package icy.image;
 
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.io.IOException;
-import java.util.List;
-
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.sequence.MetaDataUtil;
 import icy.system.SystemUtil;
 import icy.system.thread.Processor;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.io.IOException;
+import java.util.List;
+
 import ome.xml.meta.OMEXMLMetadata;
 
 /**

@@ -24,9 +24,6 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.util.ColorUtil;
 import icy.util.ReflectionUtil;
-import ij.IJ;
-import ij.gui.Toolbar;
-import ij.plugin.MacroInstaller;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -41,6 +38,10 @@ import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
 import org.pushingpixels.substance.api.skin.SkinChangeListener;
+
+import ij.IJ;
+import ij.gui.Toolbar;
+import ij.plugin.MacroInstaller;
 
 /**
  * ImageJ ToolBar Wrapper class.

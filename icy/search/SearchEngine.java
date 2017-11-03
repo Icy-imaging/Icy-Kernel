@@ -18,10 +18,6 @@
  */
 package icy.search;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
@@ -29,6 +25,10 @@ import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginSearchProvider;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * SearchEngine for Icy.

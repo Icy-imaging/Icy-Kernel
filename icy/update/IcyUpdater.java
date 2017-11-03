@@ -18,6 +18,23 @@
  */
 package icy.update;
 
+import icy.file.FileUtil;
+import icy.gui.frame.ActionFrame;
+import icy.gui.frame.progress.AnnounceFrame;
+import icy.gui.frame.progress.CancelableProgressFrame;
+import icy.gui.frame.progress.DownloadFrame;
+import icy.gui.frame.progress.FailedAnnounceFrame;
+import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.GuiUtil;
+import icy.main.Icy;
+import icy.network.NetworkUtil;
+import icy.network.URLUtil;
+import icy.preferences.ApplicationPreferences;
+import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
+import icy.update.ElementDescriptor.ElementFile;
+import icy.util.StringUtil;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -35,23 +52,6 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import icy.file.FileUtil;
-import icy.gui.frame.ActionFrame;
-import icy.gui.frame.progress.AnnounceFrame;
-import icy.gui.frame.progress.CancelableProgressFrame;
-import icy.gui.frame.progress.DownloadFrame;
-import icy.gui.frame.progress.FailedAnnounceFrame;
-import icy.gui.frame.progress.ProgressFrame;
-import icy.gui.util.GuiUtil;
-import icy.main.Icy;
-import icy.network.NetworkUtil;
-import icy.network.URLUtil;
-import icy.preferences.ApplicationPreferences;
-import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
-import icy.update.ElementDescriptor.ElementFile;
-import icy.util.StringUtil;
 
 /**
  * @author stephane

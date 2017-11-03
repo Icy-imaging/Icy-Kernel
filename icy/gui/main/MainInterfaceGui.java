@@ -18,20 +18,6 @@
  */
 package icy.gui.main;
 
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyVetoException;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLayeredPane;
-import javax.swing.event.EventListenerList;
-
 import icy.common.listener.AcceptListener;
 import icy.common.listener.weak.WeakListener;
 import icy.gui.frame.IcyFrame;
@@ -67,6 +53,20 @@ import icy.swimmingPool.SwimmingPool;
 import icy.system.thread.ThreadUtil;
 import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
+
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyVetoException;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.event.EventListenerList;
 
 /**
  * MainInterfaceGui

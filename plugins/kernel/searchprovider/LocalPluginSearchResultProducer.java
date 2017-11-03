@@ -18,9 +18,6 @@
  */
 package plugins.kernel.searchprovider;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import icy.gui.plugin.PluginDetailPanel;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
@@ -28,8 +25,11 @@ import icy.plugin.PluginLoader;
 import icy.search.SearchResult;
 import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
-import sun.security.action.GetBooleanSecurityPropertyAction;
 
 /**
  * This class is used to provide installed plugin elements to the search engine.

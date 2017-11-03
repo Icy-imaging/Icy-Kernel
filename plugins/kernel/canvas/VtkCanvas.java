@@ -1,31 +1,5 @@
 package plugins.kernel.canvas;
 
-import java.awt.AWTException;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.JToolBar;
-
 import icy.canvas.Canvas3D;
 import icy.canvas.CanvasLayerEvent;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
@@ -62,6 +36,33 @@ import icy.vtk.VtkImageVolume;
 import icy.vtk.VtkImageVolume.VtkVolumeBlendType;
 import icy.vtk.VtkImageVolume.VtkVolumeMapperType;
 import icy.vtk.VtkUtil;
+
+import java.awt.AWTException;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.swing.JToolBar;
+
 import plugins.kernel.canvas.VtkSettingPanel.SettingChangeListener;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
