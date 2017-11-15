@@ -617,11 +617,11 @@ public class PluginLoader
 
     /**
      * Return the list of "actionable" plugins (mean we can launch them from GUI).<br>
-     * By default plugin implementing the {@link PluginBundled} interface are not returned.
+     * By default plugin implementing the {@link PluginBundled} interface are also returned.
      */
     public static ArrayList<PluginDescriptor> getActionablePlugins()
     {
-        return getActionablePlugins(false);
+        return getActionablePlugins(true);
     }
 
     /**
