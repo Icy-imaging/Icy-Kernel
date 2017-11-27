@@ -34,6 +34,7 @@ import java.awt.Point;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
@@ -78,7 +79,7 @@ public class ImageJWrapper extends ImageJ
     /**
      * internal
      */
-    final ArrayList<ImageJActiveImageListener> listeners;
+    final List<ImageJActiveImageListener> listeners;
     MenuBar menuBarSave;
 
     public ImageJWrapper()

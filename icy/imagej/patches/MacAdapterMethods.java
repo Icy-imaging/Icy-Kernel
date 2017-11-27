@@ -29,6 +29,12 @@ public class MacAdapterMethods
         // prevent instantiation of utility class
     }
 
+    /** Replaces {@link MacAdapter#run(java.lang.String)}. */
+    public static void run(final Object obj, Object event)
+    {
+        // do nothing
+    }
+
     /** Replaces {@link MacAdapter#handleAbout(com.apple.eawt.ApplicationEvent)}. */
     public static void handleAbout(final Object obj, Object event)
     {

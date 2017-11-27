@@ -37,6 +37,8 @@ import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import javax.swing.JPanel;
+
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
@@ -66,7 +68,7 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         public static final String NAME = "ImageJ";
 
         // ImageJ instance
-        final ImageJWrapper imageJ;
+        ImageJWrapper imageJ;
 
         // internal
         final JRibbonComponent imageJComp;
@@ -82,9 +84,22 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
             // background color
             ImageJ.backgroundColor = LookAndFeelUtil.getBackground(this);
 
-            // create ImageJ wrapper
-            imageJ = new ImageJWrapper();
-            imageJComp = new JRibbonComponent(imageJ.getSwingPanel());
+            try
+            {
+                // create ImageJ wrapper
+                imageJ = new ImageJWrapper();
+            }
+            catch (Throwable t)
+            {
+                // ImageJ can't initialize --> just display an error message
+                System.err.println(t.getMessage());
+                imageJ = null;
+            }
+
+            if (imageJ != null)
+                imageJComp = new JRibbonComponent(imageJ.getSwingPanel());
+            else
+                imageJComp = new JRibbonComponent(new JPanel());
 
             // add ImageJ GUI wrapper to ribbon
             addRibbonComponent(imageJComp, 3);
@@ -124,8 +139,8 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
             final RichTooltip richToolTip = new RichTooltip("Detached windows",
                     "Icy need to be set in detached mode to use ImageJ efficiently and enable image conversion.");
             richToolTip.setMainImage(detachForIJ);
-            richToolTip
-                    .addDescriptionSection("This button has the same effect as the detached mode button in the top toolbar.");
+            richToolTip.addDescriptionSection(
+                    "This button has the same effect as the detached mode button in the top toolbar.");
             detachedBtn.setActionRichTooltip(richToolTip);
 
             detachedGrp = new CommandToggleButtonGroup();

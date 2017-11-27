@@ -361,7 +361,7 @@ public class MetaDataUtil
             return false;
 
         final int numPlane = pix.sizeOfPlaneList();
-        
+
         // single plane information or no plane here --> return false
         if ((numPlane <= 1) || (index >= numPlane))
             return false;
@@ -1688,6 +1688,10 @@ public class MetaDataUtil
         final OME ome = getOME(metaData);
         final int numSeries = ome.sizeOfImageList();
         final Image img = getSeries(metaData, num);
+
+        // nothing to do
+        if (img == null)
+            return;
 
         // keep only the desired image
         for (int i = numSeries - 1; i >= 0; i--)

@@ -44,8 +44,8 @@ public abstract class OnlineSearchResultProducer extends SearchResultProducer
      * @deprecated Use {@link WebInterface#doSearch(String, String)} instead
      */
     @Deprecated
-//    protected static final String SEARCH_URL = "http://icy.bioimageanalysis.org/search/search.php?search=";
-    public static final String SEARCH_URL = "https://icy.yhello.co/search/search.php?search=";
+    protected static final String SEARCH_URL = "http://icy.bioimageanalysis.org/search/search.php?search=";
+    // public static final String SEARCH_URL = "https://icy.yhello.co/search/search.php?search=";
     // public static final String SEARCH_URL = "https://icy.yhello.co/interface/?action=search&search=";
 
     public static final long REQUEST_INTERVAL = 250;
