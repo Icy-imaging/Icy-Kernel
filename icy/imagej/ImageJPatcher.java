@@ -114,6 +114,7 @@ public class ImageJPatcher
         // override behavior of MacAdapter
         if (SystemUtil.isMac())
         {
+            hacker.replaceMethod("MacAdapter", "public void run(java.lang.String arg)");
             hacker.replaceMethod("MacAdapter", "public void handleAbout(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handleOpenApplication(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handleOpenFile(com.apple.eawt.ApplicationEvent e)");

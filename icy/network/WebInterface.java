@@ -11,7 +11,10 @@ import org.w3c.dom.Document;
 
 public class WebInterface
 {
-    public static final String BASE_URL = "https://icy.yhello.co/interface/?";
+    // beta test
+    //public static final String BASE_URL = "https://icy.yhello.co/interface/?";
+    // official
+    public static final String BASE_URL = "https://icy.bioimageanalysis.org/interface/?";
 
     public static final String PARAM_ACTION = "action";
     public static final String PARAM_CLIENT_ID = "clientId";
@@ -56,7 +59,7 @@ public class WebInterface
 //        request += "&" + PARAM_CLIENT_ID + "=2532495";
         request += "&" + PARAM_CLIENT_ID + "=" + ApplicationPreferences.getId();
 
-        // send request to website and get result
+        // send request to web site and get result
         return XMLUtil.loadDocument(URLUtil.getURL(request), true);
     }
 

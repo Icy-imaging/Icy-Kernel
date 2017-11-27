@@ -2073,9 +2073,32 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns ROIs of specified class attached to this sequence
      */
+    @SuppressWarnings("unchecked")
+    public <T extends ROI> List<T> getROIs(Class<T> roiClass, boolean sorted)
+    {
+        final List<T> result = new ArrayList<T>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roiClass.isInstance(roi))
+                    result.add((T) roi);
+        }
+
+        // sort it if required
+        if (sorted)
+            Collections.sort(result, ROI.idComparator);
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getROIs(Class, boolean)} instead
+     */
+    @Deprecated
     public List<ROI> getROIs(Class<? extends ROI> roiClass)
     {
-        final ArrayList<ROI> result = new ArrayList<ROI>(rois.size());
+        final List<ROI> result = new ArrayList<ROI>(rois.size());
 
         synchronized (rois)
         {

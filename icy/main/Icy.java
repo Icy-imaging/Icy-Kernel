@@ -105,7 +105,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("1.9.5.1");
+    public static Version version = new Version("1.9.6.0");
 
     /**
      * Main interface
@@ -236,7 +236,7 @@ public class Icy
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reloadAsynch();
 
-            // patches ImageJ classes
+            // patches ImageJ classes (need to be done before instancing ImageJ)
             ImageJPatcher.applyPatches();
 
             // build main interface
