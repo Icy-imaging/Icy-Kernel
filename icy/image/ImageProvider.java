@@ -4,6 +4,7 @@
 package icy.image;
 
 import icy.common.exception.UnsupportedFormatException;
+import icy.sequence.MetaDataUtil;
 
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -28,19 +29,23 @@ import ome.xml.meta.OMEXMLMetadata;
 public interface ImageProvider
 {
     /**
-     * Returns the image metadata in OME format.<br>
-     * Metadata give many informations about the image.<br>
+     * Returns the image metadata in OME format (metadata provides many informations about the image).<br>
      * <br>
      * Number of series (mandatory field) :<br>
-     * {@link OMEXMLMetadataImpl#getImageCount()}<br>
+     * {@link MetaDataUtil#getNumSeries(OMEXMLMetadata)}<br>
      * Dimension (mandatory fields) :<br>
-     * {@link OMEXMLMetadataImpl#getPixelsSizeX(int)}<br>
-     * {@link OMEXMLMetadataImpl#getPixelsSizeY(int)}<br>
-     * {@link OMEXMLMetadataImpl#getPixelsSizeZ(int)}<br>
-     * {@link OMEXMLMetadataImpl#getPixelsSizeT(int)}<br>
-     * {@link OMEXMLMetadataImpl#getPixelsSizeC(int)}<br>
+     * {@link MetaDataUtil#getSizeX(OMEXMLMetadata, int)}<br>
+     * {@link MetaDataUtil#getSizeY(OMEXMLMetadata, int)}<br>
+     * {@link MetaDataUtil#getSizeZ(OMEXMLMetadata, int)}<br>
+     * {@link MetaDataUtil#getSizeT(OMEXMLMetadata, int)}<br>
+     * {@link MetaDataUtil#getSizeC(OMEXMLMetadata, int)}<br>
      * Internal data type (mandatory field) :<br>
-     * {@link OMEXMLMetadataImpl#getPixelsType(int)}<br>
+     * {@link MetaDataUtil#getDataType(OMEXMLMetadata, int)}<br>
+     * Physical and time position (mandatory fields) :<br>
+     * {@link MetaDataUtil#getPositionX(OMEXMLMetadata, int, int, int, int, double)}<br>
+     * {@link MetaDataUtil#getPositionY(OMEXMLMetadata, int, int, int, int, double)}<br>
+     * {@link MetaDataUtil#getPositionZ(OMEXMLMetadata, int, int, int, int, double)}<br>
+     * {@link MetaDataUtil#getTimePosition(OMEXMLMetadata, int, int, int, int, double)}<br>
      * <br>
      * and many others informations depending the available metadata in the image format.
      */
@@ -118,7 +123,7 @@ public interface ImageProvider
      *        The retrieved image resolution is equal to <code>image.originalResolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
-     * @param rectangle
+     * @param region
      *        The 2D region we want to retrieve (considering the original image resolution).<br>
      *        If set to <code>null</code> then the whole image is returned.
      * @param z
@@ -128,9 +133,9 @@ public interface ImageProvider
      * @param c
      *        C position of the image (channel) we want retrieve (-1 is not accepted here).
      * @return native type array containing image pixel data.<br>
-     * @see #isResolutionAvailable(int)
+     * @see #isResolutionAvailable(int, int)
      */
-    public Object getPixels(int series, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int series, int resolution, Rectangle region, int z, int t, int c)
             throws UnsupportedFormatException, IOException;
 
     /**
@@ -143,7 +148,7 @@ public interface ImageProvider
      *        The retrieved image resolution is equal to <code>image.originalResolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
-     * @param rectangle
+     * @param region
      *        The 2D region we want to retrieve (considering the original image resolution).<br>
      *        If set to <code>null</code> then the whole image is returned.
      * @param z
@@ -153,9 +158,9 @@ public interface ImageProvider
      * @param c
      *        C position of the image (channel) we want retrieve (-1 means all channel).
      * @return image
-     * @see #isResolutionAvailable(int)
+     * @see #isResolutionAvailable(int, int)
      */
-    public IcyBufferedImage getImage(int series, int resolution, Rectangle rectangle, int z, int t, int c)
+    public IcyBufferedImage getImage(int series, int resolution, Rectangle region, int z, int t, int c)
             throws UnsupportedFormatException, IOException;
 
     /**
@@ -168,7 +173,7 @@ public interface ImageProvider
      *        The retrieved image resolution is equal to <code>image.originalResolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
-     * @param rectangle
+     * @param region
      *        The 2D region we want to retrieve (considering the original image resolution).<br>
      *        If set to <code>null</code> then the whole image is returned.
      * @param z
@@ -176,9 +181,9 @@ public interface ImageProvider
      * @param t
      *        T position of the image (frame) we want retrieve
      * @return image
-     * @see #isResolutionAvailable(int)
+     * @see #isResolutionAvailable(int, int)
      */
-    public IcyBufferedImage getImage(int series, int resolution, Rectangle rectangle, int z, int t)
+    public IcyBufferedImage getImage(int series, int resolution, Rectangle region, int z, int t)
             throws UnsupportedFormatException, IOException;
 
     /**
@@ -198,7 +203,7 @@ public interface ImageProvider
      * @param c
      *        C position of the image (channel) we want retrieve (-1 means all channel).
      * @return image
-     * @see #isResolutionAvailable(int)
+     * @see #isResolutionAvailable(int, int)
      */
     public IcyBufferedImage getImage(int series, int resolution, int z, int t, int c)
             throws UnsupportedFormatException, IOException;
@@ -218,7 +223,7 @@ public interface ImageProvider
      * @param t
      *        T position of the image (frame) we want retrieve
      * @return image
-     * @see #isResolutionAvailable(int)
+     * @see #isResolutionAvailable(int, int)
      */
     public IcyBufferedImage getImage(int series, int resolution, int z, int t)
             throws UnsupportedFormatException, IOException;

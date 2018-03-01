@@ -29,6 +29,7 @@ import icy.gui.component.model.SpecialValueSpinnerModel;
 import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
 import icy.system.thread.ThreadUtil;
+import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -53,7 +54,6 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 
 public class LoaderOptionPanel extends JPanel
@@ -100,8 +100,6 @@ public class LoaderOptionPanel extends JPanel
             // only need to update image
             if (imageRefreshOnly)
             {
-                preview.setImage(ResourceUtil.ICON_WAIT);
-
                 try
                 {
                     // use last - 1 resolution
@@ -176,11 +174,13 @@ public class LoaderOptionPanel extends JPanel
                 // cannot get thumbnail
                 if (!thumbnailDone)
                 {
-                    // no other process --> failed
-                    if ((previewThread == Thread.currentThread()) || (previewThread == null)
-                            || !previewThread.isAlive())
-                        preview.setImage(ResourceUtil.ICON_DELETE);
-
+                    if (!isInterrupted())
+                    {
+                        // no other process --> failed
+                        if ((previewThread == Thread.currentThread()) || (previewThread == null)
+                                || !previewThread.isAlive())
+                            preview.setImage(ResourceUtil.ICON_DELETE);
+                    }
                 }
 
                 // image updated
@@ -195,7 +195,7 @@ public class LoaderOptionPanel extends JPanel
                 preview.setImage(null);
                 preview.setInfos("");
 
-                metadata = new OMEXMLMetadataImpl();
+                metadata = OMEUtil.createOMEXMLMetadata();
 
                 metaDataDone = true;
                 thumbnailDone = true;
@@ -349,11 +349,13 @@ public class LoaderOptionPanel extends JPanel
                 // cannot get thumbnail
                 if (!thumbnailDone)
                 {
-                    // no other process --> failed
-                    if ((previewThread == Thread.currentThread()) || (previewThread == null)
-                            || !previewThread.isAlive())
-                        preview.setImage(ResourceUtil.ICON_DELETE);
-
+                    if (!isInterrupted())
+                    {
+                        // no other process --> failed
+                        if ((previewThread == Thread.currentThread()) || (previewThread == null)
+                                || !previewThread.isAlive())
+                            preview.setImage(ResourceUtil.ICON_DELETE);
+                    }
                 }
             }
             catch (Throwable t)

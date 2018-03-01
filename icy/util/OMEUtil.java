@@ -29,7 +29,9 @@ import java.awt.Color;
 
 import org.w3c.dom.Document;
 
+import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import loci.formats.services.OMEXMLService;
@@ -51,7 +53,25 @@ import ome.xml.model.primitives.PositiveInteger;
  */
 public class OMEUtil
 {
-    private static final OMEXMLService OMEService = new OMEXMLServiceImpl();
+    private static ServiceFactory factory;
+    private static OMEXMLService OMEService;
+
+    static
+    {
+        try
+        {
+            factory = new ServiceFactory();
+            OMEService = factory.getInstance(OMEXMLService.class);
+        }
+        catch (DependencyException e)
+        {
+            System.err.println("Error create OME Service:" + e.getMessage());
+            System.err.println("Using default service implementation...");
+
+            factory = null;
+            OMEService = new OMEXMLServiceImpl();
+        }
+    }
 
     /**
      * Safe integer evaluation from PositiveInteger object.<br>
@@ -145,6 +165,14 @@ public class OMEUtil
     public static PositiveInteger getPositiveInteger(int value)
     {
         return new PositiveInteger(Integer.valueOf(value));
+    }
+
+    /**
+     * Return a NonNegativeInteger object representing the specified value
+     */
+    public static NonNegativeInteger getNonNegativeInteger(int value)
+    {
+        return new NonNegativeInteger(Integer.valueOf(value));
     }
 
     /**
@@ -333,7 +361,7 @@ public class OMEUtil
      */
     @Deprecated
     public static OMEXMLMetadataImpl generateMetaData(OMEXMLMetadataImpl metadata, int sizeX, int sizeY, int sizeC,
-            int sizeZ, int sizeT, DataType dataType, boolean separateChannel) throws ServiceException
+            int sizeZ, int sizeT, DataType dataType, boolean separateChannel)
     {
         final OMEXMLMetadata result;
 
@@ -382,7 +410,7 @@ public class OMEUtil
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT,
-            boolean separateChannel) throws ServiceException
+            boolean separateChannel)
     {
         return MetaDataUtil.generateMetaData(sequence, separateChannel);
     }
@@ -392,7 +420,6 @@ public class OMEUtil
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT, boolean separateChannel)
-            throws ServiceException
     {
         return MetaDataUtil.generateMetaData(sequence, separateChannel);
     }
@@ -401,7 +428,7 @@ public class OMEUtil
      * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean)} instead.
      */
     @Deprecated
-    public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel) throws ServiceException
+    public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel)
     {
         return MetaDataUtil.generateMetaData(sequence, separateChannel);
     }

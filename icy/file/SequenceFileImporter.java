@@ -43,6 +43,11 @@ import javax.swing.filechooser.FileFilter;
 public interface SequenceFileImporter extends SequenceIdImporter
 {
     /**
+     * Return <code>true</code> if the specified file can be opened by the importer
+     */
+    public boolean acceptFile(String path);
+
+    /**
      * @return The path of the image file of the image currently opened or <code>null</code>
      *         otherwise.<br>
      *         Note that path is always returned in generic java path style (see
@@ -62,16 +67,13 @@ public interface SequenceFileImporter extends SequenceIdImporter
      * @param path
      *        Path of the image file to open.
      * @param flags
-     *        operation flag (not used yet, keep it to 0)
+     *        operation flag:<br>
+     *        <li>{@link #FLAG_METADATA_MINIMUM} = load minimum metadata informations</li>
+     *        <li>{@link #FLAG_METADATA_ALL} = load all metadata informations</li>
      * @return <code>true</code> if the operation has succeeded and <code>false</code> otherwise.
      */
     @Override
     public boolean open(String path, int flags) throws UnsupportedFormatException, IOException;
-
-    /**
-     * Return <code>true</code> if the specified file can be opened by the importer.
-     */
-    public boolean acceptFile(String path);
 
     /**
      * Return the supported FileFilter for this importer.

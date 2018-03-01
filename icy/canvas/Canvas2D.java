@@ -739,6 +739,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                     try
                     {
                         {
+                            final Rectangle imgRect = icyImage.getBounds();
                             // get tiles list
                             final List<Rectangle> newTiles = ImageUtil.getTileList(icyImage.getSizeX(),
                                     icyImage.getSizeY(), ImageCacheTile.TILE_SIZE, ImageCacheTile.TILE_SIZE);
@@ -751,11 +752,10 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                                 if (indNewTiles < len)
                                 {
                                     final Rectangle oldRect = tile.rect;
-                                    final Rectangle newRect = newTiles.get(indNewTiles);
+                                    final Rectangle newRect = newTiles.get(indNewTiles).intersection(imgRect);
 
                                     // size changed ? --> re alloc image
                                     if ((oldRect.width != newRect.width) || (oldRect.height != newRect.height))
-                                        // re alloc image
                                         tile.image = new BufferedImage(newRect.width, newRect.height,
                                                 BufferedImage.TYPE_INT_ARGB);
                                     // adjust rect (position) if needed

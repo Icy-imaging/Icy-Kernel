@@ -102,9 +102,6 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
         listeners = new ArrayList<IcyColorSpaceListener>();
         updater = new UpdateEventHandler(this, false);
 
-        // // alpha is enabled by default
-        // alphaEnabled = true;
-
         beginUpdate();
         try
         {
@@ -164,23 +161,6 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
 
         return false;
     }
-
-    // /**
-    // * @return the alphaEnabled
-    // */
-    // public boolean isAlphaEnabled()
-    // {
-    // return alphaEnabled;
-    // }
-    //
-    // /**
-    // * @param alphaEnabled
-    // * the alphaEnabled to set
-    // */
-    // public void setAlphaEnabled(boolean alphaEnabled)
-    // {
-    // this.alphaEnabled = alphaEnabled;
-    // }
 
     /**
      * Generate FromRGB colormaps from ToRGB ones

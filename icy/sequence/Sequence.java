@@ -183,6 +183,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     protected IcyColorModel colorModel;
     /**
+     * default lut for this sequence
+     */
+    protected LUT defaultLut;
+    /**
      * user lut for this sequence (saved in metadata)
      */
     protected LUT userLut;
@@ -338,6 +342,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // no colorModel yet
         colorModel = null;
+        defaultLut = null;
         userLut = null;
         channelBoundsInvalid = false;
         // automatic update of channel bounds
@@ -1928,15 +1933,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns overlays of specified class attached to this sequence
      */
-    public List<Overlay> getOverlays(Class<? extends Overlay> overlayClass)
+    @SuppressWarnings("unchecked")
+    public <T extends Overlay> List<T> getOverlays(Class<T> overlayClass)
     {
-        final List<Overlay> result = new ArrayList<Overlay>(overlays.size());
+        final List<T> result = new ArrayList<T>(overlays.size());
 
         synchronized (overlays)
         {
             for (Overlay overlay : overlays)
                 if (overlayClass.isInstance(overlay))
-                    result.add(overlay);
+                    result.add((T) overlay);
         }
 
         return result;
@@ -2204,6 +2210,27 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns all selected ROI of given class (Set format).
+     * 
+     * @param roiClass
+     *        ROI class restriction
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends ROI> Set<T> getSelectedROISet(Class<T> roiClass)
+    {
+        final Set<T> result = new HashSet<T>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected() && roiClass.isInstance(roi))
+                    result.add((T) roi);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns all selected ROI (Set format).
      */
     public Set<ROI> getSelectedROISet()
@@ -2216,6 +2243,35 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 if (roi.isSelected())
                     result.add(roi);
         }
+
+        return result;
+    }
+
+    /**
+     * Returns all selected ROI of given class.
+     * 
+     * @param roiClass
+     *        ROI class restriction
+     * @param sorted
+     *        If true the returned list is ordered by the ROI id (creation order)
+     * @param wantReadOnly
+     *        also return ROI with read only state
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends ROI> List<T> getSelectedROIs(Class<T> roiClass, boolean sorted, boolean wantReadOnly)
+    {
+        final List<T> result = new ArrayList<T>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected() && roiClass.isInstance(roi))
+                    result.add((T) roi);
+        }
+
+        // sort it if required
+        if (sorted)
+            Collections.sort(result, ROI.idComparator);
 
         return result;
     }
@@ -2458,7 +2514,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * @return <code>true</code> if the operation succeed or <code>false</code> if some ROIs could
      *         not be added (already present)
      */
-    public boolean addROIs(Collection<ROI> rois, boolean canUndo)
+    public boolean addROIs(Collection<? extends ROI> rois, boolean canUndo)
     {
         if (!rois.isEmpty())
         {
@@ -2579,7 +2635,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      *        If true the action can be canceled by the undo manager.
      * @return <code>true</code> if all ROI from the collection has been correctly removed.
      */
-    public boolean removeROIs(Collection<ROI> rois, boolean canUndo)
+    public boolean removeROIs(Collection<? extends ROI> rois, boolean canUndo)
     {
         if (!rois.isEmpty())
         {
@@ -3598,7 +3654,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public LUT getDefaultLUT()
     {
-        return createCompatibleLUT();
+        // color model not anymore compatible with user LUT --> reset it
+        if ((defaultLut == null) || ((colorModel != null) && !defaultLut.isCompatible(colorModel)))
+            defaultLut = createCompatibleLUT();
+
+        return defaultLut;
     }
 
     /**
@@ -3617,12 +3677,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public LUT getUserLUT()
     {
-        // color model not anymore compatible with user LUT --> reset user LUT
-        if ((userLut != null) && (colorModel != null) && !userLut.isCompatible(colorModel))
-            userLut = null;
-
-        if (userLut == null)
-            return getDefaultLUT();
+        // color model not anymore compatible with user LUT --> reset it
+        if ((userLut == null) || ((colorModel != null) && !userLut.isCompatible(colorModel)))
+            userLut = getDefaultLUT();
 
         return userLut;
     }

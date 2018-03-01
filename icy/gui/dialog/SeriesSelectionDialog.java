@@ -28,6 +28,7 @@ import icy.image.IcyBufferedImageUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
+import icy.sequence.SequenceIdImporter;
 import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
@@ -80,7 +81,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
     // internal
     protected IFormatReader reader;
-    protected SequenceFileImporter importer;
+    protected SequenceIdImporter importer;
     protected String id;
     protected OMEXMLMetadata metadata;
     protected boolean singleSelection;
@@ -237,7 +238,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         setVisible(true);
     }
 
-    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadata metadata,
+    public SeriesSelectionDialog(SequenceIdImporter importer, String id, OMEXMLMetadata metadata,
             boolean singleSelection)
     {
         super("Series selection", null, Icy.getMainInterface().getMainFrame());
@@ -389,6 +390,12 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         setVisible(true);
     }
 
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadata metadata,
+            boolean singleSelection)
+    {
+        this((SequenceIdImporter) importer, id, metadata, singleSelection);
+    }
+
     /**
      * Create a new dialog to select the series to open from an image.
      * 
@@ -441,7 +448,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         if (singleSelection)
             lblSelect = new JLabel("Select the series and click 'Ok' or directly double click on it to open it.");
         else
-            lblSelect = new JLabel("Click on a serie to select / unselect it and click 'Ok' or double click to directly open it.");
+            lblSelect = new JLabel(
+                    "Click on a serie to select / unselect it and click 'Ok' or double click to directly open it.");
         ComponentUtil.setFontBold(lblSelect);
         ComponentUtil.setFontSize(lblSelect, 12);
         panel.add(lblSelect);

@@ -468,7 +468,7 @@ public class Icy
         // we are using java 6 on OSX --> warn the user
         final double javaVersion = SystemUtil.getJavaVersionAsNumber();
 
-        if ((javaVersion > 0) && (javaVersion < 1.7d) && SystemUtil.isMac())
+        if ((javaVersion > 0) && (javaVersion < 7d) && SystemUtil.isMac())
         {
             final String text = "It looks like you're using a old version of Java (1.6)<br>"
                     + "It's recommended to use last JDK 8 for OSX for a better user experience.<br>See the <a href=\"http://icy.bioimageanalysis.org/faq#35\">FAQ</a> to get information about how to update java.";

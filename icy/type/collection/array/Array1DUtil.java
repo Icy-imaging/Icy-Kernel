@@ -23,6 +23,9 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.util.StringUtil;
 
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
@@ -891,6 +894,83 @@ public class Array1DUtil
         return Arrays.equals(array1, array2);
     }
 
+    //
+    //
+    //
+
+    /**
+     * Copy a region of data from <code>src</code> to <code>dst</code>.<br>
+     * Both array are 1D but represents 2D data as we have in an image plane.
+     * 
+     * @param src
+     *        source data array (should be same type than destination data array)
+     * @param srcDim
+     *        source rectangular data dimension (array length should be >= (Dimension.width * Dimension.heigth))
+     * @param srcRegion
+     *        source rectangular region to copy (assume the whole data based on srcDim if null)
+     * @param dst
+     *        destination data array (should be same type than source data array)
+     * @param dstDim
+     *        destination rectangular data dimension (array length should be >= (Dimension.width * Dimension.heigth))
+     * @param dstPt
+     *        destination X,Y position (assume [0,0] if null)
+     * @param signed
+     *        if the source data array should be considered as signed data (meaningful for integer data type only)
+     */
+    public static void copyRect(Object src, Dimension srcDim, Rectangle srcRegion, Object dst, Dimension dstDim,
+            Point dstPt, boolean signed)
+    {
+        if ((src == null) || (srcDim == null) || (dst == null) || (dstDim == null))
+            return;
+
+        // source image region
+        Rectangle adjSrcRegion = (srcRegion != null) ? srcRegion : new Rectangle(srcDim);
+
+        // negative destination x position ?
+        if ((dstPt != null) && (dstPt.x < 0))
+        {
+            // adjust source rect and width
+            adjSrcRegion.x += -dstPt.x;
+            adjSrcRegion.width -= -dstPt.x;
+        }
+        // negative destination y position ?
+        if ((dstPt != null) && (dstPt.y < 0))
+        {
+            // adjust source rect and height
+            adjSrcRegion.y += -dstPt.y;
+            adjSrcRegion.height -= -dstPt.y;
+        }
+
+        // limit to source image size
+        adjSrcRegion = adjSrcRegion.intersection(new Rectangle(srcDim));
+
+        // destination image region
+        Rectangle adjDstRegion = new Rectangle((dstPt != null) ? dstPt : new Point(), adjSrcRegion.getSize());
+        // limit to destination image size
+        adjDstRegion = adjDstRegion.intersection(new Rectangle(dstDim));
+
+        final int w = Math.min(adjSrcRegion.width, adjDstRegion.width);
+        final int h = Math.min(adjSrcRegion.height, adjDstRegion.height);
+
+        // nothing to copy
+        if ((w <= 0) || (h <= 0))
+            return;
+
+        final int srcSizeX = srcDim.width;
+        final int dstSizeX = dstDim.width;
+
+        int srcOffset = adjSrcRegion.x + (adjSrcRegion.y * srcSizeX);
+        int dstOffset = adjDstRegion.x + (adjDstRegion.y * dstSizeX);
+
+        for (int y = 0; y < h; y++)
+        {
+            // do data copy (and conversion if needed)
+            Array1DUtil.arrayToArray(src, srcOffset, dst, dstOffset, w, signed);
+            srcOffset += srcSizeX;
+            dstOffset += dstSizeX;
+        }
+    }
+
     /**
      * Same as Arrays.fill() but applied to Object array from a double value
      */
@@ -1608,7 +1688,8 @@ public class Array1DUtil
      * @param signed
      *        assume input data as signed data
      */
-    public static Object longArrayToArray(long[] in, int inOffset, Object out, int outOffset, int length, boolean signed)
+    public static Object longArrayToArray(long[] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
     {
         switch (ArrayUtil.getDataType(out))
         {
@@ -1765,7 +1846,8 @@ public class Array1DUtil
      * @param signed
      *        assume input data as signed data
      */
-    public static Object byteArrayToArray(byte[] in, int inOffset, Object out, int outOffset, int length, boolean signed)
+    public static Object byteArrayToArray(byte[] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
     {
         switch (ArrayUtil.getDataType(out))
         {
@@ -3301,8 +3383,8 @@ public class Array1DUtil
         return outArray;
     }
 
-    public static short[] doubleArrayToSafeShortArray(double[] in, int inOffset, short[] out, int outOffset,
-            int length, boolean signed)
+    public static short[] doubleArrayToSafeShortArray(double[] in, int inOffset, short[] out, int outOffset, int length,
+            boolean signed)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);

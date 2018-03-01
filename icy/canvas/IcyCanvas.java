@@ -595,11 +595,20 @@ public abstract class IcyCanvas extends JPanel
         }
 
         // release layers
-        orderedLayers.clear();
+        synchronized (orderedLayers)
+        {
+            orderedLayers.clear();
+        }
 
         // remove all IcyCanvas & Layer listeners
-        listeners.clear();
-        layerListeners.clear();
+        synchronized (listeners)
+        {
+            listeners.clear();
+        }
+        synchronized (layerListeners)
+        {
+            layerListeners.clear();
+        }
     }
 
     /**

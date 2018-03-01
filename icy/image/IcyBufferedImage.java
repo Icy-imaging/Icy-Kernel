@@ -364,14 +364,14 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)}
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int, int)}
      *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int z, int t, int c)
             throws FormatException, IOException
     {
-        return LociImporterPlugin.getImage(reader, new Rectangle(x, y, w, h), z, t, c);
+        return LociImporterPlugin.getImage(reader, new Rectangle(x, y, w, h), z, t, c, 0);
     }
 
     /**
@@ -3583,6 +3583,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public void setColorMap(int channel, IcyColorMap map, boolean setAlpha)
     {
         getIcyColorModel().setColorMap(channel, map, setAlpha);
+    }
+
+    /**
+     * Set the colormap for the specified channel.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colorspace to copy
+     */
+    public void setColorMap(int channel, IcyColorMap map)
+    {
+        getIcyColorModel().setColorMap(channel, map, map.isAlpha());
     }
 
     /**

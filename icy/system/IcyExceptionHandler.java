@@ -22,22 +22,16 @@ import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.plugin.PluginErrorReport;
 import icy.main.Icy;
-import icy.math.UnitUtil;
-import icy.network.NetworkUtil;
+import icy.network.WebInterface;
 import icy.plugin.PluginDescriptor;
-import icy.plugin.PluginDescriptor.PluginIdent;
-import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
-import icy.plugin.interface_.PluginBundled;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,7 +42,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     private static final double ERROR_ANTISPAM_TIME = 15 * 1000;
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
     private static long lastErrorDialog = 0;
-    private static long lastReport = 0;
+    private static long lastErrorReport = 0;
     private static Set<String> reportedPlugins = new HashSet<String>();
 
     public static void init()
@@ -413,104 +407,114 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final long current = System.currentTimeMillis();
 
         // avoid report spam
-        if ((current - lastReport) < ERROR_ANTISPAM_TIME)
+        if ((current - lastErrorReport) < ERROR_ANTISPAM_TIME)
+            return;
+        // we already reported error for this plugin --> avoid spaming
+        if ((plugin != null) && reportedPlugins.contains(plugin.getClassName()))
             return;
 
-        final String icyId;
-        final String javaId;
-        final String osId;
-        final String memory;
-        String pluginId;
-        String pluginDepsId;
-        final Map<String, String> values = new HashMap<String, String>();
-
-        values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
-        values.put(NetworkUtil.ID_JAVANAME, SystemUtil.getJavaName());
-        values.put(NetworkUtil.ID_JAVAVERSION, SystemUtil.getJavaVersion());
-        values.put(NetworkUtil.ID_JAVABITS, Integer.toString(SystemUtil.getJavaArchDataModel()));
-        values.put(NetworkUtil.ID_OSNAME, SystemUtil.getOSName());
-        values.put(NetworkUtil.ID_OSVERSION, SystemUtil.getOSVersion());
-        values.put(NetworkUtil.ID_OSARCH, SystemUtil.getOSArch());
-
-        icyId = "Icy Version " + Icy.version + "\n";
-        javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " ("
-                + SystemUtil.getJavaArchDataModel() + " bit)\n";
-        osId = "Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " (" + SystemUtil.getOSArch()
-                + ")\n";
-        memory = "Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + "\n";
-
-        if (plugin != null)
-        {
-            final String className = plugin.getClassName();
-
-            // we already reported error for this plugin --> avoid spaming
-            if (reportedPlugins.contains(className))
-                return;
-
-            reportedPlugins.add(className);
-
-            values.put(NetworkUtil.ID_PLUGINCLASSNAME, className);
-            values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
-            pluginId = "Plugin " + plugin.toString();
-
-            // determine origin plugin
-            PluginDescriptor originPlugin = plugin;
-
-            // bundled plugin ?
-            if (plugin.isBundled())
-            {
-                try
-                {
-                    // get original plugin
-                    originPlugin = PluginLoader.getPlugin(((PluginBundled) PluginLauncher.create(plugin))
-                            .getMainPluginClassName());
-                    // add bundle info
-                    pluginId = "Bundled in " + originPlugin.toString();
-                }
-                catch (Throwable t)
-                {
-                    // miss bundle info
-                    pluginId = "Bundled plugin (could not retrieve origin plugin)";
-                }
-            }
-
-            pluginId += "\n\n";
-
-            if (originPlugin.getRequired().size() > 0)
-            {
-                pluginDepsId = "Dependances:\n";
-                for (PluginIdent ident : originPlugin.getRequired())
-                {
-                    final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
-
-                    if (installed == null)
-                        pluginDepsId += "Class " + ident.getClassName() + " not found !\n";
-                    else
-                        pluginDepsId += "Plugin " + installed.toString() + " is correctly installed\n";
-                }
-                pluginDepsId += "\n";
-            }
-            else
-                pluginDepsId = "";
-        }
-        else
-        {
-            values.put(NetworkUtil.ID_PLUGINCLASSNAME, "");
-            values.put(NetworkUtil.ID_PLUGINVERSION, "");
-            pluginId = "";
-            pluginDepsId = "";
-        }
-
-        if (StringUtil.isEmpty(devId))
-            values.put(NetworkUtil.ID_DEVELOPERID, devId);
-        else
-            values.put(NetworkUtil.ID_DEVELOPERID, "");
-
-        values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
+        // store last send time
+        lastErrorReport = current;
 
         // send report
-        lastReport = current;
-        NetworkUtil.report(values);
+        WebInterface.reportError(plugin, devId, errorLog);
+
+        //
+        // final String icyId;
+        // final String javaId;
+        // final String osId;
+        // final String memory;
+        // String pluginId;
+        // String pluginDepsId;
+        // final Map<String, String> values = new HashMap<String, String>();
+        //
+        // values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
+        // values.put(NetworkUtil.ID_JAVANAME, SystemUtil.getJavaName());
+        // values.put(NetworkUtil.ID_JAVAVERSION, SystemUtil.getJavaVersion());
+        // values.put(NetworkUtil.ID_JAVABITS, Integer.toString(SystemUtil.getJavaArchDataModel()));
+        // values.put(NetworkUtil.ID_OSNAME, SystemUtil.getOSName());
+        // values.put(NetworkUtil.ID_OSVERSION, SystemUtil.getOSVersion());
+        // values.put(NetworkUtil.ID_OSARCH, SystemUtil.getOSArch());
+        //
+        // icyId = "Icy Version " + Icy.version + "\n";
+        // javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " ("
+        // + SystemUtil.getJavaArchDataModel() + " bit)\n";
+        // osId = "Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " (" + SystemUtil.getOSArch()
+        // + ")\n";
+        // memory = "Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + "\n";
+        //
+        // if (plugin != null)
+        // {
+        // final String className = plugin.getClassName();
+        //
+        // // we already reported error for this plugin --> avoid spaming
+        // if (reportedPlugins.contains(className))
+        // return;
+        //
+        // reportedPlugins.add(className);
+        //
+        // values.put(NetworkUtil.ID_PLUGINCLASSNAME, className);
+        // values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
+        // pluginId = "Plugin " + plugin.toString();
+        //
+        // // determine origin plugin
+        // PluginDescriptor originPlugin = plugin;
+        //
+        // // bundled plugin ?
+        // if (plugin.isBundled())
+        // {
+        // try
+        // {
+        // // get original plugin
+        // originPlugin = PluginLoader.getPlugin(((PluginBundled) PluginLauncher.create(plugin))
+        // .getMainPluginClassName());
+        // // add bundle info
+        // pluginId = "Bundled in " + originPlugin.toString();
+        // }
+        // catch (Throwable t)
+        // {
+        // // miss bundle info
+        // pluginId = "Bundled plugin (could not retrieve origin plugin)";
+        // }
+        // }
+        //
+        // pluginId += "\n\n";
+        //
+        // if (originPlugin.getRequired().size() > 0)
+        // {
+        // pluginDepsId = "Dependances:\n";
+        // for (PluginIdent ident : originPlugin.getRequired())
+        // {
+        // final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
+        //
+        // if (installed == null)
+        // pluginDepsId += "Class " + ident.getClassName() + " not found !\n";
+        // else
+        // pluginDepsId += "Plugin " + installed.toString() + " is correctly installed\n";
+        // }
+        // pluginDepsId += "\n";
+        // }
+        // else
+        // pluginDepsId = "";
+        // }
+        // else
+        // {
+        // values.put(NetworkUtil.ID_PLUGINCLASSNAME, "");
+        // values.put(NetworkUtil.ID_PLUGINVERSION, "");
+        // pluginId = "";
+        // pluginDepsId = "";
+        // }
+        //
+        // if (StringUtil.isEmpty(devId))
+        // values.put(NetworkUtil.ID_DEVELOPERID, devId);
+        // else
+        // values.put(NetworkUtil.ID_DEVELOPERID, "");
+        //
+        // values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
+        //
+        // // send report
+        // lastErrorReport = current;
+        // NetworkUtil.report(values);
     }
 
     /**

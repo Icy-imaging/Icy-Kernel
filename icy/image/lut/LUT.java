@@ -314,8 +314,8 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
 
         if (scalers.length != numChannel)
         {
-            throw new IllegalArgumentException("Incorrect size for scalers : " + scalers.length + ".  Expected : "
-                    + numChannel);
+            throw new IllegalArgumentException(
+                    "Incorrect size for scalers : " + scalers.length + ".  Expected : " + numChannel);
         }
 
         final DataType dataType = cm.getDataType_();
@@ -514,7 +514,8 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         try
         {
             for (LUTChannel lutChannel : getLutChannels())
-                lutChannel.getColorMap().setAlphaToOpaque();
+                if (!lutChannel.getColorMap().isAlpha())
+                    lutChannel.getColorMap().setAlphaToOpaque();
         }
         finally
         {
@@ -631,7 +632,8 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
 
         // propagate event to LUTChannel
         final int channel = event.getComponent();
-        final LUTChannelEventType type = (event.getType() == LUTEventType.COLORMAP_CHANGED) ? LUTChannelEventType.COLORMAP_CHANGED
+        final LUTChannelEventType type = (event.getType() == LUTEventType.COLORMAP_CHANGED)
+                ? LUTChannelEventType.COLORMAP_CHANGED
                 : LUTChannelEventType.SCALER_CHANGED;
 
         if (channel == -1)
