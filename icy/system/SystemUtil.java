@@ -821,15 +821,19 @@ public class SystemUtil
     {
         // remove all unwanted characters
         String version = getJavaVersion().replaceAll("[^\\d.]", "");
-
-        // get real version number
-        final int firstSepInd = version.indexOf('.');
+        // find first digit separator
+        int firstSepInd = version.indexOf('.');
 
         if (firstSepInd >= 0)
         {
-            // version 1.xxx ? --> remove "1."
+            // version 1.xxx ?
             if (version.substring(0, firstSepInd).equals("1"))
+            {
+                // remove "1."
                 version = version.substring(firstSepInd + 1);
+                // get first "." index
+                firstSepInd = version.indexOf('.');
+            }
 
             int lastSepInd = version.lastIndexOf('.');
             while (lastSepInd != firstSepInd)
