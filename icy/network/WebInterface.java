@@ -26,7 +26,7 @@ public class WebInterface
 {
     // beta test
     public static final String BASE_URL_BETA = "https://icy.yhello.co/interface/";
-    // official
+    // new official
     public static final String BASE_URL = "https://icy.bioimageanalysis.org/interface/";
 
     public static final String PARAM_ACTION = "action";
@@ -136,7 +136,7 @@ public class WebInterface
         final String memory;
         String pluginId;
         String pluginDepsId;
-        final Map<String, String> values = new HashMap<String, String>();
+        final Map<String, String> values = new HashMap<>();
 
         // bug report action
         values.put(PARAM_ACTION, ACTION_TYPE_BUGREPORT);
@@ -228,8 +228,8 @@ public class WebInterface
         // and finally the error log itself
         values.put(PARAM_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
 
-        // TODO : change when ready !
-        // NetworkUtil.report(values);
+        // TODO: change when ready !
+//        NetworkUtil.report(values);
 
         // send report in background task (we don't want to wait for response from server)
         ThreadUtil.bgRun(new Runnable()

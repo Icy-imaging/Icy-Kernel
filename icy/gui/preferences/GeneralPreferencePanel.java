@@ -95,10 +95,11 @@ public class GeneralPreferencePanel extends PreferencePanel
 
         cacheMemoryPercent = new JSpinner(new SpinnerNumberModel(40, 10, 80, 5));
         cacheMemoryPercent.setToolTipText(
-                "Change the memory portion allocated for image data caching (higher value allow faster image processing but less memory for other taks)");
+                "Change the memory portion allocated for image data caching (higher value allow faster image processing but less memory for others taks)");
 
         cachePath = new IcyTextField();
-        cachePath.setToolTipText("Folder used to store cache data (better to use fast SSD storage location)");
+        cachePath.setToolTipText(
+                "Folder used to store cache data (it's recommended to use fast storage location as SSD disk)");
         cachePath.setColumns(10);
 
         setCachePathButton = new JButton("...");
@@ -172,6 +173,10 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(GuiUtil.createLineBoxPanel(usageStatistics, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(18));
 
+        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size   "), uiFontSizeSpinner,
+                Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(8));
+
         maxMemoryMess = " MB  (max = " + maxMemLimit + " MB";
         if (SystemUtil.is32bits() && ((SystemUtil.getTotalMemory() / (1024 * 1024)) >= 1500))
             maxMemoryMess += " - use 64bit JVM to allow more)";
@@ -179,14 +184,12 @@ public class GeneralPreferencePanel extends PreferencePanel
             maxMemoryMess += ")";
 
         topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner,
-                new JLabel(maxMemoryMess), Box.createHorizontalStrut(16), Box.createHorizontalGlue(),
-                new JLabel(" Cache reserved  "), cacheMemoryPercent, new JLabel("%"), Box.createHorizontalStrut(4)));
-        topPanel.add(Box.createVerticalStrut(2));
-        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Cache path     "), cachePath, Box.createHorizontalStrut(4), setCachePathButton,
-                Box.createHorizontalStrut(4)));
-        topPanel.add(Box.createVerticalStrut(12));
-        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
-                Box.createHorizontalGlue()));
+                new JLabel(maxMemoryMess), Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+        // TODO: uncomment when ready
+//        topPanel.add(Box.createVerticalStrut(2));
+//        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Cache ratio     "), cacheMemoryPercent,
+//                new JLabel("%    Path  "), cachePath, Box.createHorizontalStrut(4), setCachePathButton,
+//                Box.createHorizontalStrut(4)));
         topPanel.add(Box.createVerticalStrut(6));
 
         final JPanel bottomPanel = new JPanel();
