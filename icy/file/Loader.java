@@ -172,12 +172,12 @@ public class Loader
     /**
      * XML, XLS and TXT file can be image metadata files used to open the whole image, accept it !
      */
-    private final static Set<String> nonImageExtensions = new HashSet<String>(
+    private final static Set<String> nonImageExtensions = new HashSet<>(
             CollectionUtil.asList(new String[] {"pdf", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
 
     // keep trace of reported / warned plugin
-    private static Set<String> reportedImporterPlugins = new HashSet<String>();
-    private static Set<String> warnedImporterPlugins = new HashSet<String>();
+    private static Set<String> reportedImporterPlugins = new HashSet<>();
+    private static Set<String> warnedImporterPlugins = new HashSet<>();
 
     private static void handleImporterError(PluginDescriptor plugin, Throwable t)
     {
@@ -217,7 +217,7 @@ public class Loader
     public static List<Importer> getImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(Importer.class);
-        final List<Importer> result = new ArrayList<Importer>();
+        final List<Importer> result = new ArrayList<>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -241,7 +241,7 @@ public class Loader
     public static List<FileImporter> getFileImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(FileImporter.class);
-        final List<FileImporter> result = new ArrayList<FileImporter>();
+        final List<FileImporter> result = new ArrayList<>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -275,8 +275,8 @@ public class Loader
     public static Map<FileImporter, List<String>> getFileImporters(List<FileImporter> importers, List<String> paths,
             boolean useFirstFound)
     {
-        final Map<FileImporter, List<String>> result = new HashMap<FileImporter, List<String>>(importers.size());
-        final Map<String, FileImporter> extensionImporters = new HashMap<String, FileImporter>(importers.size());
+        final Map<FileImporter, List<String>> result = new HashMap<>(importers.size());
+        final Map<String, FileImporter> extensionImporters = new HashMap<>(importers.size());
 
         for (String path : paths)
         {
@@ -305,7 +305,7 @@ public class Loader
                 // do not exist yet --> create it
                 if (list == null)
                 {
-                    list = new ArrayList<String>();
+                    list = new ArrayList<>();
                     // set the list for this importer
                     result.put(imp, list);
                 }
@@ -339,7 +339,7 @@ public class Loader
      */
     public static List<FileImporter> getFileImporters(List<FileImporter> importers, String path)
     {
-        final List<FileImporter> result = new ArrayList<FileImporter>(importers.size());
+        final List<FileImporter> result = new ArrayList<>(importers.size());
 
         for (FileImporter importer : importers)
             if (importer.acceptFile(path))
@@ -372,7 +372,7 @@ public class Loader
      */
     public static FileImporter getFileImporter(List<FileImporter> importers, String path, boolean useFirstFound)
     {
-        final List<FileImporter> result = new ArrayList<FileImporter>(importers.size());
+        final List<FileImporter> result = new ArrayList<>(importers.size());
 
         for (FileImporter importer : importers)
         {
@@ -441,7 +441,7 @@ public class Loader
     public static List<SequenceImporter> getSequenceImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceImporter.class);
-        final List<SequenceImporter> result = new ArrayList<SequenceImporter>();
+        final List<SequenceImporter> result = new ArrayList<>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -468,7 +468,7 @@ public class Loader
     public static List<SequenceIdImporter> getSequenceIdImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceIdImporter.class);
-        final List<SequenceIdImporter> result = new ArrayList<SequenceIdImporter>();
+        final List<SequenceIdImporter> result = new ArrayList<>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -494,7 +494,7 @@ public class Loader
     public static List<SequenceFileImporter> getSequenceFileImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceFileImporter.class);
-        final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>();
+        final List<SequenceFileImporter> result = new ArrayList<>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -529,8 +529,8 @@ public class Loader
     public static <T extends SequenceFileImporter> Map<T, List<String>> getSequenceFileImporters(List<T> importers,
             List<String> paths, boolean useFirstFound)
     {
-        final Map<T, List<String>> result = new HashMap<T, List<String>>(importers.size());
-        final Map<String, T> extensionImporters = new HashMap<String, T>(importers.size());
+        final Map<T, List<String>> result = new HashMap<>(importers.size());
+        final Map<String, T> extensionImporters = new HashMap<>(importers.size());
         T imp = null;
 
         for (String path : paths)
@@ -565,7 +565,7 @@ public class Loader
                 // do not exist yet --> create it
                 if (list == null)
                 {
-                    list = new ArrayList<String>();
+                    list = new ArrayList<>();
                     // set the list for this importer
                     result.put(imp, list);
                 }
@@ -596,14 +596,14 @@ public class Loader
             List<String> paths, boolean grouped, boolean useFirstFound)
     {
         if (paths.isEmpty())
-            return new HashMap<SequenceFileImporter, List<String>>();
+            return new HashMap<>();
 
         final Map<SequenceFileImporter, List<String>> result;
 
         // have a default importer specified ? --> use it for all files
         if (defaultImporter != null)
         {
-            result = new HashMap<SequenceFileImporter, List<String>>();
+            result = new HashMap<>();
             result.put(defaultImporter, paths);
             return result;
         }
@@ -611,7 +611,7 @@ public class Loader
         // grouped ? --> find the first valid importer
         if (grouped)
         {
-            result = new HashMap<SequenceFileImporter, List<String>>();
+            result = new HashMap<>();
 
             for (String path : paths)
             {
@@ -654,7 +654,7 @@ public class Loader
      */
     public static <T extends SequenceFileImporter> List<T> getSequenceFileImporters(List<T> importers, String path)
     {
-        final List<T> result = new ArrayList<T>(importers.size());
+        final List<T> result = new ArrayList<>(importers.size());
 
         for (T importer : importers)
             if (importer.acceptFile(path))
@@ -690,7 +690,7 @@ public class Loader
     public static <T extends SequenceFileImporter> T getSequenceFileImporter(List<T> importers, String path,
             boolean useFirstFound)
     {
-        final List<T> result = new ArrayList<T>(importers.size());
+        final List<T> result = new ArrayList<>(importers.size());
 
         for (T importer : importers)
         {
@@ -817,7 +817,7 @@ public class Loader
      */
     public static List<String> getSupportedFiles(SequenceFileImporter importer, List<String> paths)
     {
-        final List<String> result = new ArrayList<String>();
+        final List<String> result = new ArrayList<>();
 
         for (String path : paths)
         {
@@ -1405,7 +1405,7 @@ public class Loader
     public static Sequence[] loadSequences(File[] files, int[] series, boolean separate, boolean autoOrder,
             boolean showProgress)
     {
-        final List<Sequence> result = new ArrayList<Sequence>();
+        final List<Sequence> result = new ArrayList<>();
         final List<String> paths = FileUtil.toPaths(CollectionUtil.asList(files));
 
         if (series == null)
@@ -1644,7 +1644,7 @@ public class Loader
     public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
             boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
     {
-        final List<Sequence> result = new ArrayList<Sequence>();
+        final List<Sequence> result = new ArrayList<>();
 
         // detect if this is a complete folder load
         final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
@@ -2045,8 +2045,8 @@ public class Loader
                         fileImporters = getFileImporters(singlePaths, false);
                     else
                     {
-                        fileImporters = new HashMap<FileImporter, List<String>>(1);
-                        fileImporters.put(importer, new ArrayList<String>(singlePaths));
+                        fileImporters = new HashMap<>(1);
+                        fileImporters.put(importer, new ArrayList<>(singlePaths));
                     }
 
                     for (Entry<FileImporter, List<String>> entry : fileImporters.entrySet())
@@ -2233,6 +2233,192 @@ public class Loader
     }
 
     /**
+     * Load the specified image file list (try to group them as much as possible).<br>
+     * The loading process is asynchronous.<br>
+     * The resulting sequence is automatically displayed when the process complete.
+     * 
+     * @param paths
+     *        list of file we want to group to build a to load
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base
+     *        image
+     *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve.<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(final List<String> paths, final int resolution, final Rectangle region, final int minZ,
+            final int maxZ, final int minT, final int maxT, final int channel, final boolean directory,
+            final boolean addToRecent, final boolean showProgress)
+    {
+        // asynchronous call
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final ApplicationMenu mainMenu;
+                final FileFrame loadingFrame;
+
+                if (addToRecent)
+                    mainMenu = Icy.getMainInterface().getApplicationMenu();
+                else
+                    mainMenu = null;
+                if (showProgress && !Icy.getMainInterface().isHeadLess())
+                    loadingFrame = new FileFrame("Loading", null);
+                else
+                    loadingFrame = null;
+
+                try
+                {
+                    // load sequence from group with advanced options
+                    for (SequenceFileGroup group : SequenceFileSticher.groupAllFiles(null, cleanNonImageFile(paths),
+                            true, loadingFrame))
+                    {
+                        final Sequence sequence = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT,
+                                channel, directory, mainMenu, loadingFrame);
+
+                        if (sequence != null)
+                        {
+                            // load sequence XML data
+                            if (GeneralPreferences.getSequencePersistence())
+                                sequence.loadXMLData();
+                            // and display it
+                            Icy.getMainInterface().addSequence(sequence);
+                        }
+                    }
+                }
+                catch (Throwable t)
+                {
+                    // just show the error
+                    IcyExceptionHandler.showErrorMessage(t, true);
+
+                    if (loadingFrame != null)
+                        new FailedAnnounceFrame((t instanceof OutOfMemoryError) ? t.getMessage()
+                                : "Failed to open file(s), see the console output for more details.");
+                }
+                finally
+                {
+                    if (loadingFrame != null)
+                        loadingFrame.close();
+                }
+            }
+        });
+    }
+
+    /**
+     * Load the specified image file group (built using SequenceFileSticher class).<br>
+     * The loading process is asynchronous.<br>
+     * The resulting sequence is automatically displayed when the process complete.
+     * 
+     * @param group
+     *        Sequence file group built using {@link SequenceFileSticher}.
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base
+     *        image
+     *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve.<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(final SequenceFileGroup group, final int resolution, final Rectangle region, final int minZ,
+            final int maxZ, final int minT, final int maxT, final int channel, final boolean directory,
+            final boolean addToRecent, final boolean showProgress)
+    {
+        // asynchronous call
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final ApplicationMenu mainMenu;
+                final FileFrame loadingFrame;
+
+                if (addToRecent)
+                    mainMenu = Icy.getMainInterface().getApplicationMenu();
+                else
+                    mainMenu = null;
+                if (showProgress && !Icy.getMainInterface().isHeadLess())
+                    loadingFrame = new FileFrame("Loading", null);
+                else
+                    loadingFrame = null;
+
+                try
+                {
+                    // load sequence from group with advanced options
+                    final Sequence sequence = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT,
+                            channel, directory, mainMenu, loadingFrame);
+
+                    if (sequence != null)
+                    {
+                        // load sequence XML data
+                        if (GeneralPreferences.getSequencePersistence())
+                            sequence.loadXMLData();
+                        // and display it
+                        Icy.getMainInterface().addSequence(sequence);
+                    }
+                }
+                catch (Throwable t)
+                {
+                    // just show the error
+                    IcyExceptionHandler.showErrorMessage(t, true);
+
+                    if (loadingFrame != null)
+                        new FailedAnnounceFrame((t instanceof OutOfMemoryError) ? t.getMessage()
+                                : "Failed to open file(s), see the console output for more details.");
+                }
+                finally
+                {
+                    if (loadingFrame != null)
+                        loadingFrame.close();
+                }
+            }
+        });
+    }
+
+    /**
      * Load the specified image files with the given {@link SequenceFileImporter}.<br>
      * The loading process is asynchronous.<br>
      * If <i>separate</i> is false the loader try to set image in the same sequence.<br>
@@ -2397,7 +2583,7 @@ public class Loader
     static Sequence[] loadSequences(SequenceFileImporter importer, File[] files, int series, boolean separate,
             boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
-        final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
+        final List<String> paths = cleanNonImageFile(CollectionUtil.asList(FileUtil.toPaths(files)));
         final List<Sequence> result = loadSequences(importer, paths, series, separate, autoOrder, directory,
                 addToRecent, showProgress);
         return result.toArray(new Sequence[result.size()]);
@@ -2507,6 +2693,10 @@ public class Loader
             result = internalLoadSingle(imp, meta, selectedSerie, resolution, region, minZ, maxZ, minT, maxT, channel,
                     loadingFrame);
 
+            // Don't close importer on success ! we want to keep it inside the sequence.
+            // We will close it when finalizing the sequence...
+            // imp.close();
+
             // add as separate item to recent file list
             if (mainMenu != null)
                 mainMenu.addRecentLoadedFile(new File(FileUtil.getGenericPath(path)));
@@ -2519,6 +2709,16 @@ public class Loader
         }
         catch (Throwable t)
         {
+            try
+            {
+                // close importer when error happen (not stored in Sequence so we need to close it manually)
+                imp.close();
+            }
+            catch (Exception e)
+            {
+                // ignore
+            }
+
             // just show the error
             IcyExceptionHandler.showErrorMessage(t, true);
 
@@ -2532,15 +2732,88 @@ public class Loader
         }
         finally
         {
-            try
-            {
-                imp.close();
-            }
-            catch (Exception e)
-            {
-                // ignore
-            }
+            if (loadingFrame != null)
+                loadingFrame.close();
+        }
 
+        return result;
+    }
+
+    /**
+     * Load a sequence from the specified list of file and returns it.<br>
+     * The function try to guess image ordering from file name and metadata.<br>
+     * 
+     * @param paths
+     *        list of file where to load image from
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base
+     *        image
+     *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve.<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     * @see #getSequenceFileImporter(String, boolean)
+     */
+    public static Sequence loadSequence(List<String> paths, int resolution, Rectangle region, int minZ, int maxZ,
+            int minT, int maxT, int channel, boolean directory, boolean addToRecent, boolean showProgress)
+    {
+        final ApplicationMenu mainMenu;
+        final FileFrame loadingFrame;
+        Sequence result = null;
+
+        if (addToRecent)
+            mainMenu = Icy.getMainInterface().getApplicationMenu();
+        else
+            mainMenu = null;
+        if (showProgress && !Icy.getMainInterface().isHeadLess())
+            loadingFrame = new FileFrame("Loading", null);
+        else
+            loadingFrame = null;
+
+        try
+        {
+            // we want only one group
+            final SequenceFileGroup group = SequenceFileSticher.groupFiles(null, cleanNonImageFile(paths), true,
+                    loadingFrame);
+            // do group loading
+            result = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT, channel, directory, mainMenu,
+                    loadingFrame);
+            // load sequence XML data
+            if (GeneralPreferences.getSequencePersistence())
+                result.loadXMLData();
+        }
+        catch (Throwable t)
+        {
+            // just show the error
+            IcyExceptionHandler.showErrorMessage(t, true);
+
+            if (loadingFrame != null)
+                new FailedAnnounceFrame((t instanceof OutOfMemoryError) ? t.getMessage()
+                        : "Failed to open file(s), see the console output for more details.");
+        }
+        finally
+        {
             if (loadingFrame != null)
                 loadingFrame.close();
         }
@@ -2576,7 +2849,7 @@ public class Loader
     static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series, boolean separate,
             boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
-        final List<Sequence> result = new ArrayList<Sequence>();
+        final List<Sequence> result = new ArrayList<>();
 
         // nothing to load
         if (paths.size() <= 0)
@@ -2596,7 +2869,7 @@ public class Loader
 
         try
         {
-            final List<String> remainingFiles = new ArrayList<String>(paths);
+            final List<String> remainingFiles = new ArrayList<>(paths);
 
             // load each file in a separate sequence
             if (separate || (paths.size() <= 1))
@@ -2944,9 +3217,9 @@ public class Loader
      *        Caller should allocate 100 positions for the internal single load process.
      * @return the Sequence object or <code>null</code>
      */
-    public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series,
-            int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
-            FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
+    public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series, int resolution,
+            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, FileFrame loadingFrame)
+            throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
         final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
@@ -2993,8 +3266,8 @@ public class Loader
         final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(metadata, series));
 
         // setup sequence properties and metadata from the opening setting
-        setupSequence(result, FileUtil.getGenericPath(importer.getOpened()), MetaDataUtil.getNumSeries(metadata) > 1,
-                series, adjRegion, resolution, sizeZ, sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
+        setupSequence(result, importer, MetaDataUtil.getNumSeries(metadata) > 1, series, adjRegion, resolution, sizeZ,
+                sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
 
         // number of image to process
         final int numImage = ((adjMaxZ - adjMinZ) + 1) * ((adjMaxT - adjMinT) + 1);
@@ -3070,7 +3343,7 @@ public class Loader
      *        the loading frame used to display progress of the operation (can be null)
      * @throws IOException
      */
-    public static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int series,
+    static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int series,
             FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final double endStep;
@@ -3084,7 +3357,7 @@ public class Loader
         else
             endStep = 0d;
 
-        final List<Sequence> result = new ArrayList<Sequence>();
+        final List<Sequence> result = new ArrayList<>();
 
         try
         {
@@ -3126,18 +3399,22 @@ public class Loader
             // add sequence to result
             for (int s : selectedSeries)
                 result.add(internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, loadingFrame));
+
+            // Don't close importer on success ! we want to keep it inside the sequence.
+            // We will close it when finalizing the sequence...
+            // importer.close();
         }
         catch (UnsupportedFormatException e)
         {
-            // the importer should support this file --> re throw the exception
+            // close importer when error happen (not stored in Sequence so we need to close it manually)
+            importer.close();
+
+            // the importer is supposed to support this file --> re throw the exception
             if (importer.acceptFile(path))
                 throw e;
         }
         finally
         {
-            // close importer
-            importer.close();
-
             if (loadingFrame != null)
                 loadingFrame.setPosition(endStep);
         }
@@ -3152,6 +3429,28 @@ public class Loader
      * 
      * @param group
      *        image path group we want to load
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base image resolution / 2
+     *        and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve (in full image resolution).<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
      * @param directory
      *        specify is the source is a single complete directory
      * @param mainMenu
@@ -3160,8 +3459,9 @@ public class Loader
      *        the loading frame used to cancel / display progress of the operation (can be null)
      * @Return the loaded Sequence (or <code>null<code> if loading was canceled)
      */
-    static Sequence internalLoadGroup(SequenceFileGroup group, boolean directory, ApplicationMenu mainMenu,
-            FileFrame loadingFrame) throws UnsupportedFormatException, IOException
+    static Sequence internalLoadGroup(SequenceFileGroup group, int resolution, Rectangle region, int minZ, int maxZ,
+            int minT, int maxT, int channel, boolean directory, ApplicationMenu mainMenu, FileFrame loadingFrame)
+            throws UnsupportedFormatException, IOException
     {
         final double endStep;
         Sequence result;
@@ -3189,7 +3489,8 @@ public class Loader
             // clean the metadata
             MetaDataUtil.clean(meta);
 
-            result = internalLoadSingle(groupImporter, meta, 0, 0, null, -1, -1, -1, -1, -1, loadingFrame);
+            result = internalLoadSingle(groupImporter, meta, 0, resolution, region, minZ, maxZ, minT, maxT, channel,
+                    loadingFrame);
 
             // directory load ?
             if (directory)
@@ -3211,12 +3512,29 @@ public class Loader
                 if (mainMenu != null)
                     mainMenu.addRecentFile(group.getPaths());
             }
+
+            // Don't close importer on success ! we want to keep it inside the sequence.
+            // We will close it when finalizing the sequence...
+            // groupImporter.close();
+        }
+        catch (UnsupportedFormatException e)
+        {
+            // close importer when error happen (not stored in Sequence so we need to close it manually)
+            groupImporter.close();
+
+            // re throw
+            throw e;
+        }
+        catch (IOException e)
+        {
+            // close importer when error happen (not stored in Sequence so we need to close it manually)
+            groupImporter.close();
+
+            // re throw
+            throw e;
         }
         finally
         {
-            // close importer
-            groupImporter.close();
-
             if (loadingFrame != null)
                 loadingFrame.setPosition(endStep);
         }
@@ -3225,11 +3543,32 @@ public class Loader
     }
 
     /**
+     * <b>Internal use only !</b><br>
+     * Load the specified image file group and return a single Sequence from it.<br>
+     * As this method can take sometime, you should not call it from the EDT.<br>
+     * 
+     * @param group
+     *        image path group we want to load
+     * @param directory
+     *        specify is the source is a single complete directory
+     * @param mainMenu
+     *        menu object used to store recent file (can be null)
+     * @param loadingFrame
+     *        the loading frame used to cancel / display progress of the operation (can be null)
+     * @Return the loaded Sequence (or <code>null<code> if loading was canceled)
+     */
+    static Sequence internalLoadGroup(SequenceFileGroup group, boolean directory, ApplicationMenu mainMenu,
+            FileFrame loadingFrame) throws UnsupportedFormatException, IOException
+    {
+        return internalLoadGroup(group, 0, null, -1, -1, -1, -1, -1, directory, mainMenu, loadingFrame);
+    }
+
+    /**
      * Setup the specified sequence object given the different opening informations
      * 
      * @param sequence
      *        sequence to adjust properties
-     * @param path
+     * @param importer
      *        image path
      * @param multiSerie
      *        <code>true</code> if this Sequence comes from a multi series dataset
@@ -3256,9 +3595,11 @@ public class Loader
      * @param channel
      *        channel we want to load (-1 for all)
      */
-    public static void setupSequence(Sequence sequence, String path, boolean multiSerie, int series, Rectangle region,
-            int resolution, int sizeZ, int sizeT, int sizeC, int minZ, int maxZ, int minT, int maxT, int channel)
+    public static void setupSequence(Sequence sequence, SequenceIdImporter importer, boolean multiSerie, int series,
+            Rectangle region, int resolution, int sizeZ, int sizeT, int sizeC, int minZ, int maxZ, int minT, int maxT,
+            int channel)
     {
+        final String path = FileUtil.getGenericPath(importer.getOpened());
         // default name
         String name = FileUtil.getFileName(path, false);
 
@@ -3380,6 +3721,9 @@ public class Loader
         // set final name and filename
         sequence.setName(name);
         sequence.setFilename(path);
+
+        // set importer (for caching / delayed loading...)
+        sequence.setImageProvider(importer);
     }
 
     /**
@@ -3500,9 +3844,12 @@ public class Loader
         return FileUtil.toPaths(FileUtil.explode(FileUtil.toFiles(paths), null, true, false));
     }
 
-    static List<String> cleanNonImageFile(List<String> paths)
+    /**
+     * Remove invalid image files from the list of files
+     */
+    public static List<String> cleanNonImageFile(List<String> paths)
     {
-        final List<String> result = new ArrayList<String>();
+        final List<String> result = new ArrayList<>();
 
         // extensions based exclusion
         for (String path : paths)
@@ -3531,7 +3878,7 @@ public class Loader
     @Deprecated
     public static List<FilePosition> getFilePositions(List<String> paths, boolean dimOrder, FileFrame loadingFrame)
     {
-        final List<FilePosition> result = new ArrayList<FilePosition>(paths.size());
+        final List<FilePosition> result = new ArrayList<>(paths.size());
 
         // use new path grouper method
         final Collection<SequenceFileGroup> groups = SequenceFileSticher.groupAllFiles(null, paths, dimOrder,

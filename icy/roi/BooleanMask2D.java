@@ -2073,98 +2073,20 @@ public class BooleanMask2D implements Cloneable
         int offset = 0;
         int pt = 0;
 
-        // special case
-        if ((w == 1) && (h == 1))
+        // special case where width <= 2 or height <= 2 in which case all pixels count as border
+        if ((w <= 2) || (h <= 2))
         {
-            if (mask[0])
+            for (int y = bounds.y; y <= maxy; y++)
             {
-                points[pt++] = bounds.x;
-                points[pt++] = bounds.y;
-            }
-        }
-        else if (w == 1)
-        {
-            // first pixel of row
-            top = false;
-            current = mask[offset];
-            bottom = mask[++offset];
-
-            // current pixel is a border ?
-            if (current && !(top && bottom))
-            {
-                points[pt++] = bounds.x;
-                points[pt++] = bounds.y;
-            }
-
-            // row
-            for (int y = bounds.y + 1; y < maxy; y++)
-            {
-                // cache
-                top = current;
-                current = bottom;
-                bottom = mask[++offset];
-
-                // current pixel is a border ?
-                if (current && !(top && bottom))
+                for (int x = bounds.x; x <= maxx; x++)
                 {
-                    points[pt++] = bounds.x;
-                    points[pt++] = y;
+                    // current pixel is a border ?
+                    if (mask[offset++])
+                    {
+                        points[pt++] = x;
+                        points[pt++] = y;
+                    }
                 }
-            }
-
-            // cache
-            top = current;
-            current = bottom;
-            bottom = false;
-
-            // current pixel is a border ?
-            if (current && !(top && bottom))
-            {
-                points[pt++] = bounds.x;
-                points[pt++] = maxy;
-            }
-        }
-        // special case
-        else if (h == 1)
-        {
-            // first pixel of line
-            left = false;
-            current = mask[offset];
-            right = mask[++offset];
-
-            // current pixel is a border ?
-            if (current && !(left && right))
-            {
-                points[pt++] = bounds.x;
-                points[pt++] = bounds.y;
-            }
-
-            // line
-            for (int x = bounds.x + 1; x < maxx; x++)
-            {
-                // cache
-                left = current;
-                current = right;
-                right = mask[++offset];
-
-                // current pixel is a border ?
-                if (current && !(left && right))
-                {
-                    points[pt++] = x;
-                    points[pt++] = bounds.y;
-                }
-            }
-
-            // last pixel of first line
-            left = current;
-            current = right;
-            right = false;
-
-            // current pixel is a border ?
-            if (current && !(left && right))
-            {
-                points[pt++] = maxx;
-                points[pt++] = bounds.y;
             }
         }
         else

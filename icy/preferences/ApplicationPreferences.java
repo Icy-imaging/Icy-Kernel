@@ -20,7 +20,6 @@ package icy.preferences;
 
 import icy.common.Version;
 import icy.math.MathUtil;
-import icy.network.NetworkUtil;
 import icy.system.SystemUtil;
 
 /**
@@ -39,6 +38,8 @@ public class ApplicationPreferences
     public static final String ID_UPDATE_REPOSITORY_FILE = "updateRepositoryFile";
     public static final String ID_MAX_MEMORY = "maxMemory";
     public static final String ID_STACK_SIZE = "stackSize";
+    public static final String ID_CACHE_MEMORY_PERCENT = "cacheMemoryPercent";
+    public static final String ID_CACHE_PATH = "cacheMemoryPath";
     public static final String ID_EXTRA_VMPARAMS = "extraVMParams";
     public static final String ID_OS_EXTRA_VMPARAMS = "osExtraVMParams";
     public static final String ID_APP_FOLDER = "appFolder";
@@ -46,7 +47,8 @@ public class ApplicationPreferences
     public static final String ID_VERSION = "version";
     public static final String ID_SINGLE_INSTANCE = "singleInstance";
 
-    private final static String DEFAULT_UPDATE_REPOSITORY_BASE = NetworkUtil.WEBSITE_URL + "update/";
+    // private final static String DEFAULT_UPDATE_REPOSITORY_BASE = NetworkUtil.WEBSITE_URL + "update/";
+    private final static String DEFAULT_UPDATE_REPOSITORY_BASE = "https://icy.yhello.co/update/";
     private final static String DEFAULT_UPDATE_REPOSITORY_FILE = "update.php";
 
     /**
@@ -153,12 +155,12 @@ public class ApplicationPreferences
             calculatedMaxMem -= (calculatedMaxMem - freeMemory) / 2;
 
         // get max memory in MB
-        return checkMem((int) (calculatedMaxMem / (1024 * 1024)));
+        return checkMem((int) (calculatedMaxMem / (1024 * 1000)));
     }
 
     public static int getMaxMemoryMBLimit()
     {
-        int result = (int) (SystemUtil.getTotalMemory() / (1024 * 1024));
+        int result = (int) (SystemUtil.getTotalMemory() / (1024 * 1000));
 
         // limit maximum memory to 1024 MB for 32 bits system
         if (SystemUtil.is32bits() && (result > 1024))
@@ -177,15 +179,37 @@ public class ApplicationPreferences
     }
 
     /**
+     * Get cache reserved memory (in % of max memory)
+     */
+    public static int getCacheMemoryPercent()
+    {
+        return preferences.getInt(ID_CACHE_MEMORY_PERCENT, 40);
+    }
+
+    /**
+     * Get cache reserved memory (in MB)
+     */
+    public static int getCacheMaxMemoryMB()
+    {
+        return (getMaxMemoryMB() * getCacheMemoryPercent()) / 100;
+    }
+
+    /**
+     * Get cache path (folder where to create cache data, better to use fast storage)
+     */
+    public static String getCachePath()
+    {
+        return preferences.get(ID_CACHE_PATH, SystemUtil.getTempDirectory());
+    }
+
+    /**
      * Get extra JVM parameters string
      */
     public static String getExtraVMParams()
     {
-        // we want a big permgen space for the class loader
+        // we want a big perm gen space for the class loader
         return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImage "
-                        + "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporterPlugin.getImageInternal "
-                        + "-XX:MaxPermSize=128M");
+                "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:MaxPermSize=128M");
     }
 
     /**
@@ -244,6 +268,23 @@ public class ApplicationPreferences
     public static void setStackSizeKB(int value)
     {
         preferences.putInt(ID_STACK_SIZE, value);
+    }
+
+    /**
+     * Set cache reserved memory (in % of max memory)
+     */
+    public static void setCacheMemoryPercent(int value)
+    {
+        // 10 <= value <= 80
+        preferences.putInt(ID_CACHE_MEMORY_PERCENT, Math.min(80, Math.max(10, value)));
+    }
+
+    /**
+     * Set cache path (folder where to create cache data, better to use fast storage)
+     */
+    public static void setCachePath(String value)
+    {
+        preferences.put(ID_CACHE_PATH, value);
     }
 
     /**

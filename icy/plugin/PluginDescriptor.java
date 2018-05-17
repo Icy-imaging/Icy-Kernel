@@ -355,7 +355,7 @@ public class PluginDescriptor implements XMLPersistent
         if (bundled)
         {
             // find original JAR file
-            final String jarPath = ClassUtil.getJarPath(pluginClass);
+            final String jarPath = getPluginJarPath();
 
             // get base resource and local name from it
             baseResourceName = FileUtil.getFileName(jarPath, false);
@@ -867,6 +867,17 @@ public class PluginDescriptor implements XMLPersistent
     public Class<? extends Plugin> getPluginClass()
     {
         return pluginClass;
+    }
+
+    /**
+     * @return the JAR file hosting this plugin (returns <code>null</code> if the plugin is not installed).<br>
+     */
+    public String getPluginJarPath()
+    {
+        if (pluginClass != null)
+            return ClassUtil.getJarPath(pluginClass);
+
+        return null;
     }
 
     /**

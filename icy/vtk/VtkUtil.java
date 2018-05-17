@@ -30,10 +30,13 @@ import icy.sequence.Sequence;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
+import icy.type.geom.GeomUtil;
 import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Color;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import plugins.kernel.canvas.VtkCanvas;
@@ -51,20 +54,26 @@ import vtk.vtkFloatArray;
 import vtk.vtkIdTypeArray;
 import vtk.vtkImageConstantPad;
 import vtk.vtkImageData;
+import vtk.vtkImageStencil;
 import vtk.vtkIntArray;
 import vtk.vtkLongArray;
+import vtk.vtkOBJReader;
 import vtk.vtkObject;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkPoints;
 import vtk.vtkPolyData;
+import vtk.vtkPolyDataToImageStencil;
 import vtk.vtkProp;
 import vtk.vtkPropCollection;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
+import vtk.vtkTransform;
+import vtk.vtkTransformPolyDataFilter;
 import vtk.vtkUnsignedCharArray;
 import vtk.vtkUnsignedIntArray;
 import vtk.vtkUnsignedLongArray;
 import vtk.vtkUnsignedShortArray;
+import vtk.vtkVertexGlyphFilter;
 
 /**
  * @author Stephane
@@ -363,6 +372,25 @@ public class VtkUtil
     }
 
     /**
+     * Returns a simple cell {@link vtkPolyData} from {@link vtkPoints}
+     */
+    public static vtkPolyData getPolyDataFromPoints(vtkPoints points)
+    {
+        final vtkPolyData tmpPolyData = new vtkPolyData();
+        final vtkVertexGlyphFilter vertexFilter = new vtkVertexGlyphFilter();
+
+        tmpPolyData.SetPoints(points);
+        vertexFilter.SetInputData(tmpPolyData);
+        vertexFilter.Update();
+
+        final vtkPolyData result = vertexFilter.GetOutput();
+
+        vertexFilter.Delete();
+
+        return result;
+    }
+
+    /**
      * Returns the <i>vtkProp</i> from the specified <i>Layer</i> object.<br>
      * Returns a 0 sized array if the specified layer is <code>null</code> or does not contains any vtkProp.
      */
@@ -386,7 +414,7 @@ public class VtkUtil
      */
     public static vtkProp[] getLayersProps(List<Layer> layers)
     {
-        final List<vtkProp[]> layersProps = new ArrayList<vtkProp[]>();
+        final List<vtkProp[]> layersProps = new ArrayList<>();
         int totalSize = 0;
 
         for (Layer layer : layers)
@@ -814,8 +842,7 @@ public class VtkUtil
      */
     public static vtkPolyData getSurfaceFromImage(vtkImageData imageData, double threshold)
     {
-        vtkImageData out;
-        vtkPolyData result;
+        // TODO: try vtkImageDataGeometryFilter
 
         final int[] extent = imageData.GetExtent();
         extent[0]--; // min X
@@ -832,7 +859,7 @@ public class VtkUtil
         pad.SetInputData(imageData);
         pad.Update();
 
-        out = pad.GetOutput();
+        final vtkImageData out = pad.GetOutput();
         // do not delete input image
         pad.Delete();
 
@@ -840,63 +867,192 @@ public class VtkUtil
         contourFilter.SetInputData(out);
         contourFilter.SetValue(0, threshold);
         contourFilter.Update();
-        result = contourFilter.GetOutput();
+
+        final vtkPolyData result = contourFilter.GetOutput();
         contourFilter.GetInput().Delete();
         contourFilter.Delete();
 
-        // final vtkMarchingCubes marchingCubes = new vtkMarchingCubes();
-        //
-        // marchingCubes.SetInputData(out);
-        // marchingCubes.SetValue(0, threshold);
-        // marchingCubes.Update();
-        //
-        // // get the poly data result
-        // result = marchingCubes.GetOutput();
-        // marchingCubes.GetInput().Delete();
-        // marchingCubes.Delete();
+        return result;
+    }
 
-        // if (keepLargest)
-        // {
-        // final vtkPolyDataConnectivityFilter cc = new vtkPolyDataConnectivityFilter();
-        //
-        // cc.SetInputData(result);
-        // cc.SetExtractionModeToLargestRegion();
-        // cc.Update();
-        //
-        // result = cc.GetOutput();
-        // cc.GetInput().Delete();
-        // cc.Delete();
-        // }
-        //
-        // if (simplifyMesh)
-        // {
-        // final vtkDecimatePro dec = new vtkDecimatePro();
-        //
-        // dec.SetInputData(result);
-        // dec.PreserveTopologyOn();
-        // dec.SetTargetReduction(0.9);
-        // dec.Update();
-        //
-        // result = dec.GetOutput();
-        // dec.GetInput().Delete();
-        // dec.Delete();
-        // }
-        //
-        // if (smoothness > 0)
-        // {
-        // final vtkSmoothPolyDataFilter smoother = new vtkSmoothPolyDataFilter();
-        //
-        // smoother.SetInputData(result);
-        // smoother.SetRelaxationFactor(0.3);
-        // smoother.FeatureEdgeSmoothingOff();
-        // smoother.BoundarySmoothingOn();
-        // smoother.SetNumberOfIterations(smoothness);
-        // smoother.Update();
-        //
-        // result = smoother.GetOutput();
-        // smoother.GetInput().Delete();
-        // smoother.Delete();
-        // }
+    /**
+     * Transform a {@link vtkPolyData} object to {@link vtkImageData} (0/255 intensity value)
+     * 
+     * @param space
+     *        spacing between each image point
+     */
+    public static vtkImageData polyDataToImageData(vtkPolyData polyData, double space[])
+    {
+        final vtkImageData whiteImage = new vtkImageData();
+
+        // get poly data bounds
+        final double[] bounds = polyData.GetBounds();
+        // define spacing
+        final double[] spacing = (space == null) ? new double[] {1d, 1d, 1d} : space;
+        // define dimensions & origin
+        final int[] dim = new int[3];
+        final double origin[] = new double[3];
+
+        // compute dimensions
+        for (int i = 0; i < dim.length; i++)
+            dim[i] = (int) Math.ceil((bounds[(i * 2) + 1] - bounds[(i * 2) + 0]) / spacing[i]);
+
+        long size = dim[0];
+        size *= dim[1];
+        size *= dim[2];
+
+        // negative value --> empty poly data
+        if (size < 0)
+            throw new RuntimeException("Empty object ! OBJ file could not be correctly read.");
+        // can't allocate more than Integer.MAX_VALUE
+        if (size > Integer.MAX_VALUE)
+            throw new RuntimeException(
+                    "Image grid resolution is too high ! Try to increase laser resolution or decreasing scaling.");
+
+        // compute origin
+        origin[0] = bounds[0];
+        origin[1] = bounds[2];
+        origin[2] = bounds[4];
+
+        whiteImage.SetSpacing(spacing);
+        whiteImage.SetDimensions(dim);
+        whiteImage.SetExtent(0, dim[0] - 1, 0, dim[1] - 1, 0, dim[2] - 1);
+        whiteImage.SetOrigin(origin);
+
+        // allocate data
+        whiteImage.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, 1);
+
+        // fill the image with foreground voxels
+        final int len = whiteImage.GetNumberOfPoints();
+        // allocate java array
+        final byte[] javaArray = new byte[len];
+        // get VTK array
+        final vtkUnsignedCharArray vtkArray = (vtkUnsignedCharArray) whiteImage.GetPointData().GetScalars();
+
+        // build the java array 255 filled (-1 = 255)
+        Arrays.fill(javaArray, (byte) -1);
+        // set to VTK array
+        vtkArray.SetJavaArray(javaArray);
+
+        // polygonal data --> image stencil:
+        final vtkPolyDataToImageStencil polyToImgStencil = new vtkPolyDataToImageStencil();
+
+        polyToImgStencil.SetInputData(polyData);
+        polyToImgStencil.SetOutputOrigin(origin);
+        polyToImgStencil.SetOutputSpacing(spacing);
+        polyToImgStencil.SetOutputWholeExtent(whiteImage.GetExtent());
+        polyToImgStencil.Update();
+
+        // cut the corresponding white image and set the background:
+        final vtkImageStencil imageStencil = new vtkImageStencil();
+        imageStencil.SetInputData(whiteImage);
+        imageStencil.SetStencilConnection(polyToImgStencil.GetOutputPort());
+        imageStencil.ReverseStencilOff();
+        imageStencil.SetBackgroundValue(0d);
+        imageStencil.Update();
+
+        final vtkImageData result = imageStencil.GetOutput();
+
+        // release VTK objects
+        imageStencil.Delete();
+        polyToImgStencil.Delete();
+        whiteImage.GetPointData().GetScalars().Delete();
+        whiteImage.GetPointData().Delete();
+        whiteImage.Delete();
+
+        return result;
+    }
+
+    /**
+     * Transform a polyData using specified rotation, scaling and offset informations (3D)
+     */
+    public static vtkPolyData transformPolyData(vtkPolyData polyData, double off[], double scale[], double rot[])
+    {
+        final double[] offset = (off == null) ? new double[] {0d, 0d, 0d} : off;
+        final double[] scaling = (scale == null) ? new double[] {1d, 1d, 1d} : scale;
+        final double[] rotation = (rot == null) ? new double[] {0d, 0d, 0d} : rot;
+
+        final vtkTransform transform = new vtkTransform();
+
+        transform.Translate(offset);
+        transform.Scale(scaling);
+        transform.RotateX(rotation[0]);
+        transform.RotateY(rotation[1]);
+        transform.RotateZ(rotation[2]);
+        transform.Update();
+
+        final vtkTransformPolyDataFilter transformFilter = new vtkTransformPolyDataFilter();
+        transformFilter.SetInputData(polyData);
+        transformFilter.SetTransform(transform);
+        transformFilter.Update();
+
+        final vtkPolyData result = transformFilter.GetOutput();
+
+        transformFilter.Delete();
+        transform.Delete();
+
+        return result;
+    }
+
+    /**
+     * Transform a polyData using java AffineTransform
+     */
+    public static vtkPolyData transformPolyData(vtkPolyData polyData, AffineTransform transform, double scaleZ)
+    {
+        final double[] offset = new double[3];
+        final double[] scale = new double[3];
+        final double[] rotation = new double[3];
+
+        offset[0] = transform.getTranslateX();
+        offset[1] = transform.getTranslateY();
+        offset[2] = 0d;
+
+        scale[0] = GeomUtil.getScaleX(transform);
+        scale[1] = GeomUtil.getScaleY(transform);
+        scale[2] = scaleZ;
+
+        rotation[0] = 0d;
+        rotation[1] = 0d;
+        rotation[2] = Math.toDegrees(GeomUtil.getRotation(transform));
+
+        return transformPolyData(polyData, offset, scale, rotation);
+    }
+
+    /**
+     * Read a OBJ 3D model file and returns it in VTK mesh format ({@link vtkPolyData})
+     */
+    public static vtkPolyData objToMesh(String objPath)
+    {
+        final vtkOBJReader reader = new vtkOBJReader();
+
+        reader.SetFileName(objPath);
+        reader.Update();
+
+        final vtkPolyData result = reader.GetOutput();
+
+        reader.Delete();
+
+        return result;
+    }
+
+    /**
+     * Read a OBJ 3D model file and returns it in VTK image data format ({@link vtkImageData})
+     * 
+     * @param scaleZ
+     * @param transform
+     */
+    public static vtkImageData objToImageData(String objPath, AffineTransform transform, double scaleZ, double space[])
+    {
+        final vtkPolyData polyData = objToMesh(objPath);
+        final vtkPolyData transformedPolyData = transformPolyData(polyData, transform, scaleZ);
+        final vtkImageData result = polyDataToImageData(transformedPolyData, space);
+
+        transformedPolyData.GetPolys().Delete();
+        transformedPolyData.GetPoints().Delete();
+        transformedPolyData.Delete();
+        polyData.GetPolys().Delete();
+        polyData.GetPoints().Delete();
+        polyData.Delete();
 
         return result;
     }

@@ -105,7 +105,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("1.9.5.1");
+    public static Version version = new Version("1.9.6.0");
 
     /**
      * Main interface
@@ -236,8 +236,16 @@ public class Icy
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reloadAsynch();
 
-            // patches ImageJ classes (need to be done before instancing ImageJ)
-            ImageJPatcher.applyPatches();
+            try
+            {
+                // patches ImageJ classes (need to be done before instancing ImageJ)
+                ImageJPatcher.applyPatches();
+            }
+            catch (Throwable t)
+            {
+                System.err.println("Error while patching ImageJ classes:");
+                IcyExceptionHandler.showErrorMessage(t, false);
+            }
 
             // build main interface
             if (headless)
@@ -411,7 +419,7 @@ public class Icy
 
     private static boolean handleAppArgs(String[] args)
     {
-        final List<String> pluginArgsList = new ArrayList<String>();
+        final List<String> pluginArgsList = new ArrayList<>();
 
         startupImage = null;
         startupPluginName = null;
@@ -502,9 +510,10 @@ public class Icy
         if (!Icy.getMainInterface().isHeadLess())
         {
             // welcome tip !
-            final ToolTipFrame tooltip = new ToolTipFrame("<html>Access the main menu by clicking on top left icon<br>"
-                    + "<img src=\"" + Icy.class.getResource("/res/image/help/main_menu.png").toString()
-                    + "\" /></html>", 30, "mainMenuTip");
+            final ToolTipFrame tooltip = new ToolTipFrame(
+                    "<html>Access the main menu by clicking on top left icon<br>" + "<img src=\""
+                            + Icy.class.getResource("/res/image/help/main_menu.png").toString() + "\" /></html>",
+                    30, "mainMenuTip");
             tooltip.setSize(456, 240);
         }
     }
@@ -963,7 +972,7 @@ public class Icy
 
         // get all files in local native library path
         final File[] files = FileUtil.getFiles(libFile, null, true, true, false);
-        final ArrayList<String> directories = new ArrayList<String>();
+        final ArrayList<String> directories = new ArrayList<>();
 
         // add base local native library path to user library paths
         directories.add(libFile.getAbsolutePath());
@@ -1285,9 +1294,29 @@ public class Icy
             // redirect vtk error log to file
             vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
         }
-        catch (Throwable e)
+        catch (Throwable e1)
         {
-            IcyExceptionHandler.showErrorMessage(e, false, false);
+            IcyExceptionHandler.showErrorMessage(e1, false, false);
+
+            // try to load the VTK way
+            try
+            {
+                System.out.print("Try to load VTK library using VTK method... ");
+
+                vtkLibraryLoaded = vtkNativeLibrary.LoadAllNativeLibraries();
+
+                if (vtkLibraryLoaded)
+                    System.out.println("success !");
+                else
+                    System.out.println("failed !");
+
+                // redirect vtk error log to file
+                vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
+            }
+            catch (Throwable e2)
+            {
+                IcyExceptionHandler.showErrorMessage(e2, false, false);
+            }
         }
 
         if (vtkLibraryLoaded)
@@ -1314,8 +1343,8 @@ public class Icy
                 final String osVer = SystemUtil.getOSVersion();
 
                 if (osVer.startsWith("10.6") || osVer.startsWith("10.5"))
-                    System.out.println("VTK 6.3 is not supported on OSX " + osVer
-                            + ", version 10.7 or above is required.");
+                    System.out.println(
+                            "VTK 6.3 is not supported on OSX " + osVer + ", version 10.7 or above is required.");
             }
         }
     }

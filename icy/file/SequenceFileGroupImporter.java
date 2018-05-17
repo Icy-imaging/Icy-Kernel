@@ -450,6 +450,21 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         return x + (y * indYMul) + (z * indZMul) + (t * indTMul) + (c * indCMul);
     }
 
+    /**
+     * Close all opened internals importer without closing the Group Importer itself (importer remaing active)
+     */
+    public void closeInternalsImporters() throws IOException
+    {
+        synchronized (importersPool)
+        {
+            // close all importers
+            for (SequenceFileImporter imp : importersPool.values())
+                imp.close();
+
+            importersPool.clear();
+        }
+    }
+
     @Override
     public void close() throws IOException
     {
@@ -799,6 +814,8 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         final SequenceFileGroup group = currentGroup;
         final SequenceIdent ident = group.ident;
         final SequenceType baseType = ident.baseType;
+        final int sizeX = ((rectangle != null) ? rectangle.width : group.totalSizeX) >> resolution;
+        final int sizeY = ((rectangle != null) ? rectangle.height : group.totalSizeY) >> resolution;
         final int sizeC = group.totalSizeC;
 
         // multi channel ?
@@ -811,14 +828,9 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
             {
                 IcyBufferedImage img = getImage(series, resolution, rectangle, z, t, ch);
 
-                // no image at this position ? --< use empty image then
+                // no image at this position ? --> use empty image then
                 if (img == null)
-                {
-                    final int sx = ((rectangle != null) ? rectangle.width : group.totalSizeX) >> resolution;
-                    final int sy = ((rectangle != null) ? rectangle.height : group.totalSizeY) >> resolution;
-
-                    img = new IcyBufferedImage(sx, sy, 1, baseType.dataType);
-                }
+                    img = new IcyBufferedImage(sizeX, sizeY, 1, baseType.dataType);
 
                 result.add(img);
             }
@@ -828,8 +840,8 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         }
 
         // create result image
-        return new IcyBufferedImage(group.totalSizeX >> resolution, group.totalSizeY >> resolution,
-                getPixels(series, resolution, rectangle, z, t, c), baseType.dataType.isSigned());
+        return new IcyBufferedImage(sizeX, sizeY, getPixels(series, resolution, rectangle, z, t, (c == -1) ? 0 : c),
+                baseType.dataType.isSigned());
     }
 
     @SuppressWarnings("resource")
@@ -850,7 +862,7 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         final int sizeT = MetaDataUtil.getSizeT(meta, series);
 
         // get cursor for image at middle position
-        final FileCursor cursor = getCursor((sizeZ + 1) / 2, (sizeT + 1) / 2, 0);
+        final FileCursor cursor = getCursor(sizeZ / 2, sizeT / 2, 0);
         final String path;
 
         if (cursor.position != null)

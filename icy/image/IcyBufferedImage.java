@@ -3715,4 +3715,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 break;
         }
     }
+
+    @Override
+    public String toString()
+    {
+        return "IcyBufferedImage: " + getSizeX() + " x " + getSizeY() + " - " + getSizeC() + " ch (" + getDataType_()
+                + ")";
+    }
 }

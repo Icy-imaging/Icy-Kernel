@@ -84,13 +84,14 @@ public class ImageJPatcher
         hacker.loadClass("ij.ImageJ");
 
         // override behavior of ij.Menus
-        hacker.insertAfterMethod("ij.Menus", "public void installUserPlugin(java.lang.String className, boolean force)");
+        hacker.insertAfterMethod("ij.Menus",
+                "public void installUserPlugin(java.lang.String className, boolean force)");
         hacker.insertAfterMethod("ij.Menus", "public static void updateMenus()");
         hacker.insertAfterMethod("ij.Menus",
                 "public static synchronized void updateWindowMenuItem(java.lang.String oldLabel, java.lang.String newLabel)");
-        hacker.insertAfterMethod("ij.Menus", "public static synchronized void addOpenRecentItem(java.lang.String path)");
-        hacker.insertAfterMethod(
-                "ij.Menus",
+        hacker.insertAfterMethod("ij.Menus",
+                "public static synchronized void addOpenRecentItem(java.lang.String path)");
+        hacker.insertAfterMethod("ij.Menus",
                 "public static int installPlugin(java.lang.String plugin, char menuCode, java.lang.String command, java.lang.String shortcut, ij.ImageJ ij, int result)");
         hacker.loadClass("ij.Menus");
 
@@ -115,12 +116,13 @@ public class ImageJPatcher
         if (SystemUtil.isMac())
         {
             hacker.replaceMethod("MacAdapter", "public void run(java.lang.String arg)");
-            hacker.replaceMethod("MacAdapter", "public void handleAbout(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public voi  d handleAbout(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handleOpenApplication(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handleOpenFile(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handlePreferences(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handlePrintFile(com.apple.eawt.ApplicationEvent e)");
-            hacker.replaceMethod("MacAdapter", "public void handleReOpenApplication(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter",
+                    "public void handleReOpenApplication(com.apple.eawt.ApplicationEvent e)");
             hacker.replaceMethod("MacAdapter", "public void handleQuit(com.apple.eawt.ApplicationEvent e)");
             hacker.loadClass("MacAdapter");
         }

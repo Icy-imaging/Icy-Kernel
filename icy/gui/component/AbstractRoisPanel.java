@@ -49,6 +49,7 @@ import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.InstanceProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle5D;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
@@ -136,8 +137,8 @@ import plugins.kernel.roi.descriptor.property.ROISizeZDescriptor;
 /**
  * Abstract ROI panel component
  */
-public abstract class AbstractRoisPanel extends ExternalizablePanel implements ActiveSequenceListener,
-        TextChangeListener, ListSelectionListener, PluginLoaderListener
+public abstract class AbstractRoisPanel extends ExternalizablePanel
+        implements ActiveSequenceListener, TextChangeListener, ListSelectionListener, PluginLoaderListener
 {
     /**
      * 
@@ -446,14 +447,15 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         final IcyButton settingButton = new IcyButton(RoiActions.settingAction);
         settingButton.setHideActionText(true);
         settingButton.setFlat(true);
-        
+
         final IcyButton xlsExportButton = new IcyButton(RoiActions.xlsExportAction);
         xlsExportButton.setHideActionText(true);
         xlsExportButton.setFlat(true);
 
         setLayout(new BorderLayout());
-        add(GuiUtil.createLineBoxPanel(nameFilter, Box.createHorizontalStrut(8), selectedRoiNumberLabel, new JLabel(
-                " / "), roiNumberLabel, Box.createHorizontalStrut(4), settingButton, xlsExportButton), BorderLayout.NORTH);
+        add(GuiUtil.createLineBoxPanel(nameFilter, Box.createHorizontalStrut(8), selectedRoiNumberLabel,
+                new JLabel(" / "), roiNumberLabel, Box.createHorizontalStrut(4), settingButton, xlsExportButton),
+                BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
 
         validate();
@@ -638,8 +640,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
                         final ROI roi = roiResults.getRoiForChannel(columnInfo.channel);
 
                         if (roi == null)
-                            throw new UnsupportedOperationException("Can't retrieve sub ROI for channel "
-                                    + columnInfo.channel);
+                            throw new UnsupportedOperationException(
+                                    "Can't retrieve sub ROI for channel " + columnInfo.channel);
 
                         newResults = plugin.compute(roi, seq);
                     }
@@ -790,7 +792,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         {
             if (!roiSelectionModel.isSelectionEmpty())
             {
-                for (int i = roiSelectionModel.getMinSelectionIndex(); i <= roiSelectionModel.getMaxSelectionIndex(); i++)
+                for (int i = roiSelectionModel.getMinSelectionIndex(); i <= roiSelectionModel
+                        .getMaxSelectionIndex(); i++)
                     if (roiSelectionModel.isSelectedIndex(i))
                         result++;
             }
@@ -811,7 +814,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         {
             if (!roiSelectionModel.isSelectionEmpty())
             {
-                for (int i = roiSelectionModel.getMinSelectionIndex(); i <= roiSelectionModel.getMaxSelectionIndex(); i++)
+                for (int i = roiSelectionModel.getMinSelectionIndex(); i <= roiSelectionModel
+                        .getMaxSelectionIndex(); i++)
                 {
                     if (roiSelectionModel.isSelectedIndex(i))
                     {
@@ -1329,8 +1333,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
         {
             for (int j = 1; j < numcols; j++)
             {
-                final Object value = roiTable.getModel()
-                        .getValueAt(roiTable.convertRowIndexToModel(rowsselected[i]), j);
+                final Object value = roiTable.getModel().getValueAt(roiTable.convertRowIndexToModel(rowsselected[i]),
+                        j);
 
                 // special case of double array
                 if (value instanceof double[])
@@ -1515,18 +1519,28 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             if ((v != null) && (selected != null))
             {
                 // get canvas
-                final IcyCanvas c = v.getCanvas();
+                final IcyCanvas canvas = v.getCanvas();
 
-                if (c instanceof IcyCanvas2D)
+                if (canvas instanceof IcyCanvas2D)
                 {
                     // center view on selected ROI
-                    ((IcyCanvas2D) c).centerOn(selected.getBounds5D().toRectangle2D().getBounds());
+                    ((IcyCanvas2D) canvas).centerOn(selected.getBounds5D().toRectangle2D().getBounds());
                 }
-                else if (c instanceof IcyCanvas3D)
+                else if (canvas instanceof IcyCanvas3D)
                 {
                     // center view on selected ROI
-                    ((IcyCanvas3D) c).centerOn(selected.getBounds5D().toRectangle3D().toInteger());
+                    ((IcyCanvas3D) canvas).centerOn(selected.getBounds5D().toRectangle3D().toInteger());
                 }
+
+                final Rectangle5D bnd = selected.getBounds5D();
+                final int t = (int) (bnd.isInfiniteT() ? -1 : bnd.getCenterT());
+                final int z = (int) (bnd.isInfiniteZ() ? -1 : bnd.getCenterZ());
+
+                // change position if needed
+                if (t != -1)
+                    v.setPositionT(t);
+                if (z != -1)
+                    v.setPositionZ(z);
             }
         }
     }
@@ -2432,8 +2446,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel implements A
             final String id = descriptor.getId();
 
             return (StringUtil.equals(id, ROIIconDescriptor.ID)) || (StringUtil.equals(id, ROIColorDescriptor.ID))
-                    || (StringUtil.equals(id, ROINameDescriptor.ID))
-                    || (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+                    || (StringUtil.equals(id, ROINameDescriptor.ID)) || (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionXDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionYDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionZDescriptor.ID))

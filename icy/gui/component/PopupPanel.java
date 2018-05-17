@@ -156,19 +156,19 @@ public class PopupPanel extends JPanel
      * 
      * @param title
      *        Panel title
+     * @panel panel internal panel
      * @param subPanel
      *        Determine if this is an embedded popup panel or a normal one.
      */
-    public PopupPanel(String title, boolean subPanel)
+    public PopupPanel(String title, JPanel panel, boolean subPanel)
     {
         super();
 
-        subPopupPanel = subPanel;
-
         topPanel = new PopupTitlePanel(title, ResourceUtil.ICON_PANEL_COLLAPSE);
-        mainPanel = new JPanel();
+        mainPanel = panel;
         // if (panelHeight != -1)
         // ComponentUtil.setFixedHeight(mainPanel, panelHeight);
+        subPopupPanel = subPanel;
 
         setBorder(BorderFactory.createRaisedBevelBorder());
         setLayout(new BorderLayout());
@@ -177,6 +177,31 @@ public class PopupPanel extends JPanel
         add(mainPanel, BorderLayout.CENTER);
 
         refresh();
+    }
+
+    /**
+     * Create a new popup panel with specified title.
+     * 
+     * @param title
+     *        Panel title
+     * @panel panel internal panel
+     */
+    public PopupPanel(String title, JPanel panel)
+    {
+        this(title, panel, false);
+    }
+
+    /**
+     * Create a new popup panel with specified title.
+     * 
+     * @param title
+     *        Panel title
+     * @param subPanel
+     *        Determine if this is an embedded popup panel or a normal one.
+     */
+    public PopupPanel(String title, boolean subPanel)
+    {
+        this(title, new JPanel(), subPanel);
     }
 
     /**

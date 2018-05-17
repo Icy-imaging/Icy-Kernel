@@ -28,6 +28,7 @@ import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageEvent;
 import icy.image.IcyBufferedImageListener;
 import icy.image.IcyBufferedImageUtil;
+import icy.image.ImageProvider;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
@@ -75,6 +76,8 @@ import icy.util.StringUtil;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -197,6 +200,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * image file --> single file attachment
      */
     protected String filename;
+    /**
+     * Returns the {@link ImageProvider} used to load the sequence data.<br>
+     * It can return <code>null</code> if the Sequence was not loaded from a specific resource or if it was saved in between.
+     */
+    protected ImageProvider imageProvider;
 
     /**
      * Resolution level from the original image<br>
@@ -311,6 +319,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 MetaDataUtil.setName(metaData, 0, DEFAULT_NAME + StringUtil.toString(id, 3));
         }
         filename = null;
+        imageProvider = null;
 
         originResolution = 0;
         originXYRegion = null;
@@ -430,6 +439,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     protected void finalize() throws Throwable
     {
+        try
+        {
+            // close image provider if needed
+            if ((imageProvider != null) && (imageProvider instanceof Closeable))
+                ((Closeable) imageProvider).close();
+        }
+        catch (IOException e)
+        {
+            // ignore
+        }
 
         super.finalize();
     }
@@ -835,6 +854,39 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             this.filename = filename;
         }
+    }
+
+    /**
+     * Returns the {@link ImageProvider} used to load the sequence data.<br>
+     * It can return <code>null</code> if the Sequence was not loaded from a specific resource or if it was saved in between.<br>
+     * 
+     * @return the {@link ImageProvider} used to load the Sequence
+     */
+    public ImageProvider getImageProvider()
+    {
+        return imageProvider;
+    }
+
+    /**
+     * Set the {@link ImageProvider} used to load the sequence data.<br>
+     * When you set the <i>ImageProvider</i> you need to ensure we can use it (should be opened for {@link SequenceIdImporter}).<br>
+     * Also "sub part" informations has to be correctly set (setOriginXXX(...) methods) as we may use it to retrieve sequence data from the
+     * {@link ImageProvider}.
+     */
+    public void setImageProvider(ImageProvider value)
+    {
+        try
+        {
+            // close previous
+            if ((imageProvider != null) && (imageProvider instanceof Closeable))
+                ((Closeable) imageProvider).close();
+        }
+        catch (IOException e)
+        {
+            // ignore
+        }
+
+        imageProvider = value;
     }
 
     /**
@@ -6581,7 +6633,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public String toString()
     {
-        return getName();
+        return "Sequence: " + getName() + " - " + getSizeX() + " x " + getSizeY() + " x " + getSizeZ() + " x "
+                + getSizeT() + " - " + getSizeC() + " ch (" + getDataType_() + ")";
     }
 
     /**

@@ -1061,6 +1061,9 @@ public class SequenceFileSticher
         public int totalSizeT;
         public int totalSizeC;
 
+        /**
+         * Internal use only, use {@link SequenceFileSticher#groupFiles(SequenceFileImporter, Collection, boolean, FileFrame)} instead.
+         */
         public SequenceFileGroup(SequenceIdent ident)
         {
             super();
@@ -1386,10 +1389,11 @@ public class SequenceFileSticher
     public static Collection<SequenceFileGroup> groupAllFiles(SequenceFileImporter importer, Collection<String> paths,
             boolean findPosition, FileFrame loadingFrame)
     {
-        if (paths.isEmpty())
+        final List<String> sortedPaths = Loader.cleanNonImageFile(new ArrayList<String>(paths));
+
+        if (sortedPaths.isEmpty())
             return new ArrayList<SequenceFileGroup>();
 
-        final List<String> sortedPaths = new ArrayList<String>(paths);
         // final List<FilePosition> filePositions = new ArrayList<FilePosition>();
 
         if (loadingFrame != null)

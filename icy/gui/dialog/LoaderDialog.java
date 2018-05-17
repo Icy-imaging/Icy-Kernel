@@ -4,6 +4,8 @@ import icy.file.FileImporter;
 import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.file.SequenceFileImporter;
+import icy.file.SequenceFileSticher;
+import icy.file.SequenceFileSticher.SequenceFileGroup;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
@@ -16,6 +18,7 @@ import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.JFileChooser;
@@ -178,8 +181,8 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         if (defaultPath != null)
         {
             // refresh preview
-            optionPanel.updatePreview(defaultPath, series);
-            updateOptionPanel();
+            optionPanel.updatePreview(new String[] {defaultPath}, series);
+            // updateOptionPanel();
             // have a default XY region ?
             if (region != null)
                 optionPanel.setXYRegion(region);
@@ -218,17 +221,29 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
                         // load selected non image file(s)
                         Loader.load((FileImporter) importer, paths, true);
                     }
-                    else if (importer instanceof SequenceFileImporter)
-                    {
-
-                        // load selected image file(s)
-                        Loader.load((SequenceFileImporter) importer, paths, isSeparateSequenceSelected(),
-                                isAutoOrderSelected(), true);
-                    }
                     else
                     {
-                        // load selected file(s)
-                        Loader.load(paths, isSeparateSequenceSelected(), isAutoOrderSelected(), true);
+                        if (isSeparateSequenceSelected())
+                            // load selected image file(s) separately
+                            Loader.load((SequenceFileImporter) importer, paths, true, false, true);
+                        else
+                        {
+                            // build groups
+                            final Collection<SequenceFileGroup> groups = SequenceFileSticher
+                                    .groupAllFiles((SequenceFileImporter) importer, paths, isAutoOrderSelected(), null);
+
+                            // then load them
+                            for (SequenceFileGroup group : groups)
+                            {
+                                // we don't have series for image grouped loading
+                                Loader.load(group, optionPanel.getResolutionLevel(), optionPanel.getXYRegion(),
+                                        optionPanel.getFullZRange() ? -1 : optionPanel.getZMin(),
+                                        optionPanel.getFullZRange() ? -1 : optionPanel.getZMax(),
+                                        optionPanel.getFullTRange() ? -1 : optionPanel.getTMin(),
+                                        optionPanel.getFullTRange() ? -1 : optionPanel.getTMax(),
+                                        optionPanel.getChannel(), false, true, true);
+                            }
+                        }
                     }
                 }
                 else
@@ -239,23 +254,12 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
                         // load selected non image file
                         Loader.load((FileImporter) importer, paths, true);
                     }
-                    else if (importer instanceof SequenceFileImporter)
+                    else
                     {
-
                         // load selected image file with advanced option
                         Loader.load((SequenceFileImporter) importer, firstPath, optionPanel.getSeries(),
                                 optionPanel.getResolutionLevel(), optionPanel.getXYRegion(),
                                 optionPanel.getFullZRange() ? -1 : optionPanel.getZMin(),
-                                optionPanel.getFullZRange() ? -1 : optionPanel.getZMax(),
-                                optionPanel.getFullTRange() ? -1 : optionPanel.getTMin(),
-                                optionPanel.getFullTRange() ? -1 : optionPanel.getTMax(), optionPanel.getChannel(),
-                                true, true);
-                    }
-                    else
-                    {
-                        // load selected file
-                        Loader.load(null, firstPath, optionPanel.getSeries(), optionPanel.getResolutionLevel(),
-                                optionPanel.getXYRegion(), optionPanel.getFullZRange() ? -1 : optionPanel.getZMin(),
                                 optionPanel.getFullZRange() ? -1 : optionPanel.getZMax(),
                                 optionPanel.getFullTRange() ? -1 : optionPanel.getTMin(),
                                 optionPanel.getFullTRange() ? -1 : optionPanel.getTMax(), optionPanel.getChannel(),
@@ -472,28 +476,52 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
     {
         final String prop = evt.getPropertyName();
 
+        // filter change ?
         if (prop.equals(JFileChooser.FILE_FILTER_CHANGED_PROPERTY))
             updateGUI();
-        else if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY))
+        // single selection change ?
+        // else if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY))
+        // {
+        // // multiple selection --> ignore this event
+        // if (getSelectedFiles().length > 1)
+        // return;
+        //
+        // final File f = getSelectedFile();
+        //
+        // // folder or file don't exist ?
+        // if ((f == null) || f.isDirectory() || !f.exists())
+        // optionPanel.updatePreview(new String[0]);
+        // else
+        // // refresh preview
+        // optionPanel.updatePreview(new String[] {f.getAbsolutePath()});
+        //
+        // // updateOptionPanel();
+        // }
+        // multi selection change ?
+        else if (prop.equals(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY))
         {
-            File f = (File) evt.getNewValue();
+            final File[] files = getSelectedFiles();
 
-            if ((f != null) && (f.isDirectory() || !f.exists()))
-                f = null;
+            // single selection
+            if (files.length < 2)
+            {
+                final File f = getSelectedFile();
 
-            // refresh preview
-            if (f != null)
-                optionPanel.updatePreview(f.getAbsolutePath());
+                // folder or file don't exist ?
+                if ((f == null) || f.isDirectory() || !f.exists())
+                    optionPanel.updatePreview(new String[0]);
+                else
+                    // refresh preview
+                    optionPanel.updatePreview(new String[] {f.getAbsolutePath()});
+            }
             else
-                optionPanel.updatePreview("");
-
-            updateOptionPanel();
+                optionPanel.updatePreview(FileUtil.toPaths(files));
         }
         // closing ? --> do some final operation on option panel
         else if (prop.equals("JFileChooserDialogIsClosingProperty"))
             optionPanel.closingFromEDT();
-        else
-            updateOptionPanel();
+        // else
+        // updateOptionPanel();
     }
 
     protected void updateGUI()
@@ -502,7 +530,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         {
             setDialogTitle("Load image file(s)");
             setAccessory(optionPanel);
-            updateOptionPanel();
+            // updateOptionPanel();
             revalidate();
         }
         else
@@ -513,19 +541,19 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         }
     }
 
-    protected void updateOptionPanel()
-    {
-        final int numFile = getSelectedFiles().length;
-        final boolean multi;
-
-        if (numFile > 1)
-            multi = true;
-        else
-        {
-            final File file = getSelectedFile();
-            multi = (file != null) && file.isDirectory();
-        }
-
-        optionPanel.setMultiFile(multi);
-    }
+    // protected void updateOptionPanel()
+    // {
+    // final int numFile = getSelectedFiles().length;
+    // final boolean multi;
+    //
+    // if (numFile > 1)
+    // multi = true;
+    // else
+    // {
+    // final File file = getSelectedFile();
+    // multi = (file != null) && file.isDirectory();
+    // }
+    //
+    // optionPanel.setMultiFile(multi);
+    // }
 }

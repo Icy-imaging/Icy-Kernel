@@ -58,6 +58,7 @@ public class GeneralPreferences
     public static final String ID_USER_EMAIL = "userEmail";
     public static final String ID_HISTORY_SIZE = "historySize";
     public static final String ID_OUTPUT_LOG_SIZE = "outputLogSize";
+    public static final String ID_OUTPUT_LOG_FILE = "outputLogFile";
 
     /**
      * id confirm
@@ -217,6 +218,11 @@ public class GeneralPreferences
         return prefGeneral.getInt(ID_OUTPUT_LOG_SIZE, 10000);
     }
 
+    public static boolean getOutputLogToFile()
+    {
+        return prefGeneral.getBoolean(ID_OUTPUT_LOG_FILE, false);
+    }
+
     public static void setExitConfirm(boolean value)
     {
         prefConfirms.putBoolean(ID_CONFIRM_EXIT, value);
@@ -312,4 +318,8 @@ public class GeneralPreferences
         prefGeneral.putInt(ID_OUTPUT_LOG_SIZE, value);
     }
 
+    public static void setOutputLogFile(boolean value)
+    {
+        prefGeneral.putBoolean(ID_OUTPUT_LOG_FILE, value);
+    }
 }

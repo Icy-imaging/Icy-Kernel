@@ -69,7 +69,8 @@ public class UnitUtil
     /**
      * Return the specified value as "bytes" string :<br>
      * 1024 --> "1 KB"<br>
-     * 1048576 --> "1 MB"<br>
+     * 1024*1000 --> "1 MB"<br>
+     * 1024*1000*1000 --> "1 GB"<br>
      * ...<br>
      */
     public static String getBytesString(double value)
@@ -77,14 +78,14 @@ public class UnitUtil
         final double absValue = Math.abs(value);
 
         // TB
-        if (absValue > 549755813888d)
-            return Double.toString(MathUtil.round(value / 1099511627776d, 1)) + " TB";
+        if (absValue > (512d * 1024d * 1000d * 1000d))
+            return Double.toString(MathUtil.round(value / (1024d * 1000d * 1000d * 1000d), 1)) + " TB";
         // GB
-        else if (absValue > 536870912d)
-            return Double.toString(MathUtil.round(value / 1073741824d, 1)) + " GB";
+        else if (absValue > (512d * 1024d * 1000d))
+            return Double.toString(MathUtil.round(value / (1024d * 1000d * 1000d), 1)) + " GB";
         // MB
-        else if (absValue > 524288d)
-            return Double.toString(MathUtil.round(value / 1048576d, 1)) + " MB";
+        else if (absValue > (512d * 1024d))
+            return Double.toString(MathUtil.round(value / (1024d * 1000d), 1)) + " MB";
         // KB
         else if (absValue > 512d)
             return Double.toString(MathUtil.round(value / 1024d, 1)) + " KB";

@@ -18,6 +18,7 @@
  */
 package icy.gui.system;
 
+import icy.file.FileUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
@@ -42,7 +43,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
 import java.util.EventListener;
 
 import javax.swing.Box;
@@ -91,6 +95,13 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
 
                 final String text = new String(buf, off, len);
                 addText(text, isStdErr);
+                // want file log as well ?
+                if (fileLogButton.isSelected() && (logWriter != null))
+                {
+                    // write and save to file immediately
+                    logWriter.write(text);
+                    logWriter.flush();
+                }
             }
             catch (Throwable t)
             {
@@ -115,9 +126,11 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
     final public IcyButton copyLogButton;
     final public IcyButton reportLogButton;
     final public IcyToggleButton scrollLockButton;
+    final public IcyToggleButton fileLogButton;
     final public JPanel bottomPanel;
 
     int nbUpdate;
+    Writer logWriter;
 
     public OutputConsolePanel()
     {
@@ -145,6 +158,8 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         copyLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC_COPY));
         reportLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC_EXPORT));
         scrollLockButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LOCK_OPEN));
+        fileLogButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_SAVE));
+        fileLogButton.setSelected(GeneralPreferences.getOutputLogToFile());
 
         // ComponentUtil.setFontSize(textPane, 10);
         textPane.setEditable(false);
@@ -153,6 +168,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         copyLogButton.setFlat(true);
         reportLogButton.setFlat(true);
         scrollLockButton.setFlat(true);
+        fileLogButton.setFlat(true);
 
         logMaxLineField.setPreferredSize(new Dimension(80, 24));
         // no focusable
@@ -218,6 +234,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         copyLogButton.setToolTipText("Copy to clipboard");
         reportLogButton.setToolTipText("Report content to dev team");
         scrollLockButton.setToolTipText("Scroll Lock");
+        fileLogButton.setToolTipText("Enabled log file saving (log.txt)");
 
         clearLogButton.addActionListener(new ActionListener()
         {
@@ -266,12 +283,21 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                     scrollLockButton.setIconImage(ResourceUtil.ICON_LOCK_OPEN);
             }
         });
+        fileLogButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                GeneralPreferences.setOutputLogFile(fileLogButton.isSelected());
+            }
+        });
 
         bottomPanel = GuiUtil.createPageBoxPanel(Box.createVerticalStrut(4),
                 GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
                         Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
                         Box.createHorizontalStrut(4), new JLabel("Limit"), Box.createHorizontalStrut(4),
-                        logMaxLineField, Box.createHorizontalStrut(4), scrollLockButton));
+                        logMaxLineField, Box.createHorizontalStrut(4), scrollLockButton, Box.createHorizontalStrut(4),
+                        fileLogButton));
 
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -289,6 +315,16 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         // redirect standard output
         System.setOut(new WindowsOutPrintStream(System.out, false));
         System.setErr(new WindowsOutPrintStream(System.err, true));
+
+        try
+        {
+            // define log file writer (always clear log.txt file if present)
+            logWriter = new FileWriter(FileUtil.getApplicationDirectory() + "/icy.log", false);
+        }
+        catch (IOException e1)
+        {
+            logWriter = null;
+        }
     }
 
     public void addText(String text, boolean isError)

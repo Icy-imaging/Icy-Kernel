@@ -25,7 +25,6 @@ import javax.swing.JTable;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-import jxl.Cell;
 import jxl.Sheet;
 import jxl.write.WritableSheet;
 
@@ -45,14 +44,19 @@ public class ExcelTable extends JScrollPane
 
     }
 
-    public ExcelTable(WritableSheet page)
+    public ExcelTable(Sheet page)
     {
         updateSheet(page);
-        this.setViewportView(table);
-        this.setAutoscrolls(true);
+        setViewportView(table);
+        setAutoscrolls(true);
     }
 
-    public synchronized void updateSheet(final WritableSheet page)
+    public ExcelTable(WritableSheet page)
+    {
+        this((Sheet) page);
+    }
+
+    public synchronized void updateSheet(final Sheet page)
     {
         ThreadUtil.invokeLater(new Runnable()
         {
@@ -62,11 +66,14 @@ public class ExcelTable extends JScrollPane
                 table = new JTable();
                 setViewportView(table);
                 if (page != null)
-                {
                     table.setModel(new SheetTableModel(page));
-                }
             }
         });
+    }
+
+    public synchronized void updateSheet(final WritableSheet page)
+    {
+        updateSheet((Sheet) page);
     }
 
     private class SheetTableModel implements TableModel
@@ -124,29 +131,30 @@ public class ExcelTable extends JScrollPane
 
             try
             {
-                Cell cell = sheet.getCell(columnIndex, rowIndex);
-                return cell.getContents();
+                return sheet.getCell(columnIndex, rowIndex).getContents();
             }
             catch (Exception e)
             {
-                //
+                return null;
             }
-            return null;
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex)
         {
+
         }
 
         @Override
         public void addTableModelListener(TableModelListener l)
         {
+
         }
 
         @Override
         public void removeTableModelListener(TableModelListener l)
         {
+
         }
     }
 }
