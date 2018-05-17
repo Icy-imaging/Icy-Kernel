@@ -1010,9 +1010,9 @@ public class ROIUtil
         Rectangle5D.union(bounds1, bounds2, bounds1);
 
         // init infinite dim infos on result
-        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
-        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
-        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
+        final boolean ic = bounds1.isInfiniteC(); // || (bounds1.getSizeC() <= 1d);
+        final boolean it = bounds1.isInfiniteT(); // || (bounds1.getSizeT() <= 1d);
+        final boolean iz = bounds1.isInfiniteZ(); // || (bounds1.getSizeZ() <= 1d);
 
         // cannot process union if C dimension is finite but T or Z is infinite
         if (!ic && (it || iz))
@@ -1043,9 +1043,9 @@ public class ROIUtil
         Rectangle5D.intersect(bounds1, bounds2, bounds1);
 
         // init infinite dim infos
-        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
-        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
-        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
+        final boolean ic = bounds1.isInfiniteC();// || (bounds1.getSizeC() <= 1d);
+        final boolean it = bounds1.isInfiniteT();// || (bounds1.getSizeT() <= 1d);
+        final boolean iz = bounds1.isInfiniteZ();// || (bounds1.getSizeZ() <= 1d);
 
         // cannot process intersection if C dimension is finite but T or Z is infinite
         if (!ic && (it || iz))
