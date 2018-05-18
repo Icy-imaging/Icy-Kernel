@@ -28,8 +28,26 @@ import ome.xml.meta.OMEXMLMetadata;
 public abstract class PluginSequenceIdImporter extends Plugin implements SequenceIdImporter, PluginNoEDTConstructor
 {
     // default helper
-    protected class InternalImageProviderHelper extends AbstractImageProvider
+    protected class InternalSequenceIdImporterHelper extends AbstractImageProvider implements SequenceIdImporter
     {
+        @Override
+        public String getOpened()
+        {
+            return PluginSequenceIdImporter.this.getOpened();
+        }
+
+        @Override
+        public boolean open(String id, int flags) throws UnsupportedFormatException, IOException
+        {
+            return PluginSequenceIdImporter.this.open(id, flags);
+        }
+
+        @Override
+        public void close() throws IOException
+        {
+            PluginSequenceIdImporter.this.close();
+        }
+
         @Deprecated
         @Override
         public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
@@ -45,13 +63,13 @@ public abstract class PluginSequenceIdImporter extends Plugin implements Sequenc
         }
     }
 
-    protected final InternalImageProviderHelper interfaceHelper;
+    protected final InternalSequenceIdImporterHelper interfaceHelper;
 
     public PluginSequenceIdImporter()
     {
         super();
 
-        interfaceHelper = new InternalImageProviderHelper();
+        interfaceHelper = new InternalSequenceIdImporterHelper();
     }
 
     // default implementation as ImageProvider interface changed
@@ -133,12 +151,12 @@ public abstract class PluginSequenceIdImporter extends Plugin implements Sequenc
     }
 
     /**
-     * See {@link AbstractImageProvider#getImageByTile(int, int, int, int, int, int, int,ProgressListener)}
+     * See {@link AbstractImageProvider#getPixelsByTile(int, int, Rectangle, int, int, int, int, int,ProgressListener)}
      */
-    public IcyBufferedImage getImageByTile(int series, int resolution, int z, int t, int c, int tileW, int tileH,
-            ProgressListener listener) throws UnsupportedFormatException, IOException
+    public Object getPixelsByTile(int series, int resolution, Rectangle region, int z, int t, int c, int tileW,
+            int tileH, ProgressListener listener) throws UnsupportedFormatException, IOException
     {
-        return interfaceHelper.getImageByTile(series, resolution, z, t, c, tileW, tileH, listener);
+        return interfaceHelper.getPixelsByTile(series, resolution, region, z, t, c, tileW, tileH, listener);
     }
 
     /**

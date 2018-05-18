@@ -48,8 +48,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     private static final double ERROR_ANTISPAM_TIME = 15 * 1000;
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
     private static long lastErrorDialog = 0;
-    private static long lastReport = 0;
-    private static Set<String> reportedPlugins = new HashSet<String>();
+    private static long lastErrorReport = 0;
+    private static Set<String> reportedPlugins = new HashSet<>();
 
     public static void init()
     {
@@ -413,8 +413,17 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final long current = System.currentTimeMillis();
 
         // avoid report spam
-        if ((current - lastReport) < ERROR_ANTISPAM_TIME)
+        if ((current - lastErrorReport) < ERROR_ANTISPAM_TIME)
             return;
+        // we already reported error for this plugin --> avoid spaming
+        if ((plugin != null) && reportedPlugins.contains(plugin.getClassName()))
+            return;
+
+        // store last send time
+        lastErrorReport = current;
+
+        // TODO: switch to it when ready !
+        // WebInterface.reportError(plugin, devId, errorLog);
 
         final String icyId;
         final String javaId;
@@ -422,7 +431,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final String memory;
         String pluginId;
         String pluginDepsId;
-        final Map<String, String> values = new HashMap<String, String>();
+        final Map<String, String> values = new HashMap<>();
 
         values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
         values.put(NetworkUtil.ID_JAVANAME, SystemUtil.getJavaName());
@@ -433,8 +442,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         values.put(NetworkUtil.ID_OSARCH, SystemUtil.getOSArch());
 
         icyId = "Icy Version " + Icy.version + "\n";
-        javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " ("
-                + SystemUtil.getJavaArchDataModel() + " bit)\n";
+        javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " (" + SystemUtil.getJavaArchDataModel()
+                + " bit)\n";
         osId = "Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " (" + SystemUtil.getOSArch()
                 + ")\n";
         memory = "Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + "\n";
@@ -462,8 +471,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 try
                 {
                     // get original plugin
-                    originPlugin = PluginLoader.getPlugin(((PluginBundled) PluginLauncher.create(plugin))
-                            .getMainPluginClassName());
+                    originPlugin = PluginLoader
+                            .getPlugin(((PluginBundled) PluginLauncher.create(plugin)).getMainPluginClassName());
                     // add bundle info
                     pluginId = "Bundled in " + originPlugin.toString();
                 }
@@ -509,7 +518,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
 
         // send report
-        lastReport = current;
+        lastErrorReport = current;
         NetworkUtil.report(values);
     }
 

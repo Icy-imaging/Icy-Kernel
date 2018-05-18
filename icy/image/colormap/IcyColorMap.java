@@ -1029,7 +1029,8 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
             green.copyFrom(srcColorMap.green);
             blue.copyFrom(srcColorMap.blue);
             gray.copyFrom(srcColorMap.gray);
-            if (copyAlpha)
+            // copy alpha information for alpha type colormap
+            if (copyAlpha || isAlpha())
                 alpha.copyFrom(srcColorMap.alpha);
             // copy type
             setType(srcColorMap.type);

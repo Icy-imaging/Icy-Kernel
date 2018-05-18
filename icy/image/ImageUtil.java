@@ -560,8 +560,8 @@ public class ImageUtil
         {
             // be sure image data are ready
             waitImageReady(image);
-            return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
-                    BufferedImage.TYPE_BYTE_GRAY));
+            return convert(image,
+                    new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_BYTE_GRAY));
         }
 
         return null;
@@ -576,8 +576,8 @@ public class ImageUtil
         {
             // be sure image data are ready
             waitImageReady(image);
-            return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
-                    BufferedImage.TYPE_INT_RGB));
+            return convert(image,
+                    new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB));
         }
 
         return null;
@@ -592,8 +592,8 @@ public class ImageUtil
         {
             // be sure image data are ready
             waitImageReady(image);
-            return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
-                    BufferedImage.TYPE_INT_ARGB));
+            return convert(image,
+                    new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB));
         }
 
         return null;
@@ -651,9 +651,43 @@ public class ImageUtil
     {
         return (im1.getWidth() == im2.getWidth()) && (im1.getHeight() == im2.getHeight());
     }
-    
+
     /**
-     * Get the list of tiles to fill the given XY plan size.
+     * Get the list of tiles to cover the given XY region.<br>
+     * Note that the resulting tiles surface may be larger than input region as we enforce using specified tile size / position to cover the whole region.
+     * 
+     * @param region
+     *        the XY region to cover
+     * @param tileW
+     *        tile width
+     * @param tileH
+     *        tile height
+     */
+    public static List<Rectangle> getTileList(Rectangle region, int tileW, int tileH)
+    {
+        final List<Rectangle> result = new ArrayList<Rectangle>();
+
+        if ((tileW <= 0) || (tileH <= 0) || region.isEmpty())
+            return result;
+
+        int startX, startY;
+        int endX, endY;
+
+        startX = (region.x / tileW) * tileW;
+        startY = (region.y / tileH) * tileH;
+        endX = ((region.x + (region.width - 1)) / tileW) * tileW;
+        endY = ((region.y + (region.height - 1)) / tileH) * tileH;
+
+        for (int y = startY; y <= endY; y += tileH)
+            for (int x = startX; x <= endX; x += tileW)
+                result.add(new Rectangle(x, y, tileW, tileH));
+
+        return result;
+    }
+
+    /**
+     * Get the list of tiles to fill the given XY plan size.<br>
+     * Note that the resulting tiles surface may be larger than input region as we enforce using specified tile size / position to cover the whole region.
      * 
      * @param sizeX
      *        plan sizeX
@@ -666,24 +700,7 @@ public class ImageUtil
      */
     public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
     {
-        final List<Rectangle> result = new ArrayList<Rectangle>();
-        int x, y;
-
-        for (y = 0; y < (sizeY - tileH); y += tileH)
-        {
-            for (x = 0; x < (sizeX - tileW); x += tileW)
-                result.add(new Rectangle(x, y, tileW, tileH));
-            // last tile column
-            result.add(new Rectangle(x, y, sizeX - x, tileH));
-        }
-
-        // last tiles row
-        for (x = 0; x < (sizeX - tileW); x += tileW)
-            result.add(new Rectangle(x, y, tileW, sizeY - y));
-        // last column/row tile
-        result.add(new Rectangle(x, y, sizeX - x, sizeY - y));
-
-        return result;
+        return getTileList(new Rectangle(0, 0, sizeX, sizeY), tileW, tileH);
     }
 
     /**

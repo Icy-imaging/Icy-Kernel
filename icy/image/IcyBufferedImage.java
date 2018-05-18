@@ -364,14 +364,14 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)}
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int, int)}
      *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int z, int t, int c)
             throws FormatException, IOException
     {
-        return LociImporterPlugin.getImage(reader, new Rectangle(x, y, w, h), z, t, c);
+        return LociImporterPlugin.getImage(reader, new Rectangle(x, y, w, h), z, t, c, 0);
     }
 
     /**
@@ -3586,6 +3586,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Set the colormap for the specified channel.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colorspace to copy
+     */
+    public void setColorMap(int channel, IcyColorMap map)
+    {
+        getIcyColorModel().setColorMap(channel, map, map.isAlpha());
+    }
+
+    /**
      * @deprecated Use {@link #setColorMap(int, IcyColorMap, boolean)} instead.
      */
     @Deprecated
@@ -3701,5 +3714,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 channelBoundsChanged(e.getComponent());
                 break;
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return "IcyBufferedImage: " + getSizeX() + " x " + getSizeY() + " - " + getSizeC() + " ch (" + getDataType_()
+                + ")";
     }
 }

@@ -95,6 +95,7 @@ public class PluginDescriptor implements XMLPersistent
 
     protected String name;
     protected PluginIdent ident;
+    protected String localXmlUrl;
     protected String xmlUrl;
     protected String jarUrl;
     protected String imageUrl;
@@ -313,6 +314,7 @@ public class PluginDescriptor implements XMLPersistent
         icon = DEFAULT_ICON;
         image = DEFAULT_IMAGE;
 
+        localXmlUrl = "";
         xmlUrl = "";
         name = "";
         ident = new PluginIdent();
@@ -345,8 +347,25 @@ public class PluginDescriptor implements XMLPersistent
 
         this.pluginClass = clazz;
 
-        final String baseResourceName = clazz.getSimpleName();
-        final String baseLocalName = ClassUtil.getPathFromQualifiedName(clazz.getName());
+        final String baseResourceName;
+        final String baseLocalName;
+        final boolean bundled = isBundled();
+
+        // bundled plugin ?
+        if (bundled)
+        {
+            // find original JAR file
+            final String jarPath = getPluginJarPath();
+
+            // get base resource and local name from it
+            baseResourceName = FileUtil.getFileName(jarPath, false);
+            baseLocalName = FileUtil.setExtension(jarPath, "");
+        }
+        else
+        {
+            baseResourceName = clazz.getSimpleName();
+            baseLocalName = ClassUtil.getPathFromQualifiedName(clazz.getName());
+        }
 
         // load icon
         URL iconUrl = clazz.getResource(baseResourceName + getIconExtension());
@@ -365,18 +384,26 @@ public class PluginDescriptor implements XMLPersistent
         if (xmlUrl == null)
             xmlUrl = URLUtil.getURL(baseLocalName + getXMLExtension());
 
-        // can't load XML from specified URL ?
-        if (!loadFromXML(xmlUrl))
+        // can't load details from XML file or bundled plugin
+        if (!loadFromXML(xmlUrl) || bundled)
         {
-            // xml is absent or incorrect, we set default informations
-            ident.setClassName(pluginClass.getName());
+            // set default informations
             name = pluginClass.getSimpleName();
-            desc = name + " plugin";
+
+            if (bundled)
+                desc = name + " plugin (Bundled)" + (!StringUtil.isEmpty(desc) ? "\n" + desc : "");
+            else
+                desc = name + " plugin";
         }
 
-        // overwrite image and icon url with their local equivalent (keep online for XML url)
+        // always overwrite class name from class object (more as bundled plugin may have incorrect one from XML file
+        ident.setClassName(pluginClass.getName());
+
+        // overwrite image, icon url with their local equivalent
         this.iconUrl = iconUrl.toString();
         this.imageUrl = imageUrl.toString();
+        // store local XML URL
+        this.localXmlUrl = xmlUrl.toString();
 
         // only descriptor is loaded here
         descriptorLoaded = true;
@@ -464,8 +491,8 @@ public class PluginDescriptor implements XMLPersistent
 
         // display error only for first load
         if (!reload)
-            System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName()
-                    + "'");
+            System.err.println(
+                    "Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
 
         return false;
     }
@@ -496,8 +523,8 @@ public class PluginDescriptor implements XMLPersistent
                 return true;
             }
 
-            System.err.println("Can't find valid XML file from '" + xmlUrl + "' for plugin class '"
-                    + ident.getClassName() + "'");
+            System.err.println(
+                    "Can't find valid XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
         }
 
         System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
@@ -628,10 +655,8 @@ public class PluginDescriptor implements XMLPersistent
     {
         // load icon
         if (url != null)
-            icon = ResourceUtil.getImageIcon(
-                    ImageUtil.load(NetworkUtil.getInputStream(url,
-                            (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
-                    ICON_SIZE);
+            icon = ResourceUtil.getImageIcon(ImageUtil.load(NetworkUtil.getInputStream(url,
+                    (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false), ICON_SIZE);
 
         // get default icon
         if (icon == null)
@@ -647,10 +672,11 @@ public class PluginDescriptor implements XMLPersistent
     {
         // load image
         if (url != null)
-            image = ImageUtil.scale(
-                    ImageUtil.load(NetworkUtil.getInputStream(url,
-                            (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
-                    IMAGE_SIZE, IMAGE_SIZE);
+            image = ImageUtil
+                    .scale(ImageUtil.load(
+                            NetworkUtil.getInputStream(url,
+                                    (repository != null) ? repository.getAuthenticationInfo() : null, true, false),
+                            false), IMAGE_SIZE, IMAGE_SIZE);
 
         // get default image
         if (image == null)
@@ -844,6 +870,17 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
+     * @return the JAR file hosting this plugin (returns <code>null</code> if the plugin is not installed).<br>
+     */
+    public String getPluginJarPath()
+    {
+        if (pluginClass != null)
+            return ClassUtil.getJarPath(pluginClass);
+
+        return null;
+    }
+
+    /**
      * return associated filename
      */
     public String getFilename()
@@ -860,10 +897,13 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * return xml filename
+     * return xml filename (local XML file)
      */
     public String getXMLFilename()
     {
+        if (!StringUtil.isEmpty(localXmlUrl))
+            return localXmlUrl;
+
         return getFilename() + getXMLExtension();
     }
 

@@ -422,9 +422,8 @@ public class SystemUtil
             if (!intersection.isEmpty())
             {
                 // bigger intersection ?
-                if ((largest == null)
-                        || ((intersection.getWidth() * intersection.getHeight()) > (largest.getWidth() * largest
-                                .getHeight())))
+                if ((largest == null) || ((intersection.getWidth() * intersection.getHeight()) > (largest.getWidth()
+                        * largest.getHeight())))
                 {
                     largest = intersection;
                     result = gd;
@@ -816,15 +815,26 @@ public class SystemUtil
     }
 
     /**
-     * Returns the JVM version in number format (ex: 1.6091)
+     * Returns the JVM integer version in number format (ex: 6.091, 7.071, 8.151..)
      */
     public static double getJavaVersionAsNumber()
     {
+        // remove all unwanted characters
         String version = getJavaVersion().replaceAll("[^\\d.]", "");
-        final int firstSepInd = version.indexOf('.');
+        // find first digit separator
+        int firstSepInd = version.indexOf('.');
 
         if (firstSepInd >= 0)
         {
+            // version 1.xxx ?
+            if (version.substring(0, firstSepInd).equals("1"))
+            {
+                // remove "1."
+                version = version.substring(firstSepInd + 1);
+                // get first "." index
+                firstSepInd = version.indexOf('.');
+            }
+
             int lastSepInd = version.lastIndexOf('.');
             while (lastSepInd != firstSepInd)
             {

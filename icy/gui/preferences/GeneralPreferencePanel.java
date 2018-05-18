@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.component.IcyTextField;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.util.GuiUtil;
 import icy.gui.util.LookAndFeelUtil;
@@ -28,13 +29,16 @@ import icy.preferences.GeneralPreferences;
 import icy.system.SystemUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -60,6 +64,9 @@ public class GeneralPreferencePanel extends PreferencePanel
     private final JCheckBox usageStatistics;
     private final JSpinner maxMemoryMBSpinner;
     private final JSpinner uiFontSizeSpinner;
+    private final JSpinner cacheMemoryPercent;
+    final IcyTextField cachePath;
+    private final JButton setCachePathButton;
     private final JButton reenableAllToolTipButton;
     private final JButton reenableAllConfirmButton;
 
@@ -72,19 +79,46 @@ public class GeneralPreferencePanel extends PreferencePanel
 
         exitConfirm = new JCheckBox("Show confirmation when exiting application");
         sequencePersistence = new JCheckBox("Enable sequence persistence");
-        sequencePersistence
-                .setToolTipText("Enable the XML persistence for sequence (file is automatically loaded/saved when sequence is opened/closed)");
+        sequencePersistence.setToolTipText(
+                "Enable the XML persistence for sequence (file is automatically loaded/saved when sequence is opened/closed)");
         saveNewSequence = new JCheckBox("Ask to save new sequence when closing them");
         autoUpdateCheckBox = new JCheckBox("Enable application update");
         autoUpdateCheckBox.setToolTipText("Enable automatic update for application as soon a new version is available");
         alwaysOnTopCheckBox = new JCheckBox("Application window always on top");
         usageStatistics = new JCheckBox("Usage statistics report");
-        usageStatistics
-                .setToolTipText("Report is 100% anonymous, very light on network trafic and help developers so keep it enabled please :)");
+        usageStatistics.setToolTipText(
+                "Report is 100% anonymous, very light on network trafic and help developers so keep it enabled please :)");
 
         final int maxMemLimit = (int) MathUtil.prevMultiple(ApplicationPreferences.getMaxMemoryMBLimit(), 32);
         maxMemoryMBSpinner = new JSpinner(new SpinnerNumberModel(128, 64, maxMemLimit, 32));
         maxMemoryMBSpinner.setToolTipText("Change the maximum memory available for application");
+
+        cacheMemoryPercent = new JSpinner(new SpinnerNumberModel(40, 10, 80, 5));
+        cacheMemoryPercent.setToolTipText(
+                "Change the memory portion allocated for image data caching (higher value allow faster image processing but less memory for others taks)");
+
+        cachePath = new IcyTextField();
+        cachePath.setToolTipText(
+                "Folder used to store cache data (it's recommended to use fast storage location as SSD disk)");
+        cachePath.setColumns(10);
+
+        setCachePathButton = new JButton("...");
+        setCachePathButton.setPreferredSize(new Dimension(32, 20));
+        setCachePathButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final JFileChooser fc = new JFileChooser();
+
+                // start at application current directory
+                fc.setCurrentDirectory(new File(cachePath.getText()));
+                fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+                if (fc.showSaveDialog(GeneralPreferencePanel.this) == JFileChooser.APPROVE_OPTION)
+                    cachePath.setText(fc.getSelectedFile().getAbsolutePath());
+            }
+        });
 
         uiFontSizeSpinner = new JSpinner(new SpinnerNumberModel(7, 7, 24, 1));
         uiFontSizeSpinner.setToolTipText("");
@@ -138,17 +172,24 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(Box.createVerticalStrut(6));
         topPanel.add(GuiUtil.createLineBoxPanel(usageStatistics, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(18));
-        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
+
+        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size   "), uiFontSizeSpinner,
                 Box.createHorizontalGlue()));
-        topPanel.add(Box.createVerticalStrut(12));
+        topPanel.add(Box.createVerticalStrut(8));
 
         maxMemoryMess = " MB  (max = " + maxMemLimit + " MB";
         if (SystemUtil.is32bits() && ((SystemUtil.getTotalMemory() / (1024 * 1024)) >= 1500))
             maxMemoryMess += " - use 64bit JVM to allow more)";
         else
             maxMemoryMess += ")";
-        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner, new JLabel(
-                maxMemoryMess), Box.createHorizontalGlue()));
+
+        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner,
+                new JLabel(maxMemoryMess), Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+        // TODO: uncomment when ready
+//        topPanel.add(Box.createVerticalStrut(2));
+//        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Cache ratio     "), cacheMemoryPercent,
+//                new JLabel("%    Path  "), cachePath, Box.createHorizontalStrut(4), setCachePathButton,
+//                Box.createHorizontalStrut(4)));
         topPanel.add(Box.createVerticalStrut(6));
 
         final JPanel bottomPanel = new JPanel();
@@ -171,6 +212,8 @@ public class GeneralPreferencePanel extends PreferencePanel
     protected void load()
     {
         maxMemoryMBSpinner.setValue(Integer.valueOf(ApplicationPreferences.getMaxMemoryMB()));
+        cacheMemoryPercent.setValue(Integer.valueOf(ApplicationPreferences.getCacheMemoryPercent()));
+        cachePath.setText(ApplicationPreferences.getCachePath());
         uiFontSizeSpinner.setValue(Integer.valueOf(GeneralPreferences.getGuiFontSize()));
         exitConfirm.setSelected(GeneralPreferences.getExitConfirm());
         sequencePersistence.setSelected(GeneralPreferences.getSequencePersistence());
@@ -185,12 +228,24 @@ public class GeneralPreferencePanel extends PreferencePanel
     {
         int intValue;
         boolean booleanValue;
+        String stringValue;
 
         intValue = ((Integer) maxMemoryMBSpinner.getValue()).intValue();
         // launcher setting modified, restart needed
         if (ApplicationPreferences.getMaxMemoryMB() != intValue)
             getPreferenceFrame().setNeedRestart();
         ApplicationPreferences.setMaxMemoryMB(intValue);
+
+        intValue = ((Integer) cacheMemoryPercent.getValue()).intValue();
+        // launcher setting modified, restart needed
+        if (ApplicationPreferences.getCacheMemoryPercent() != intValue)
+            getPreferenceFrame().setNeedRestart();
+        ApplicationPreferences.setCacheMemoryPercent(intValue);
+
+        stringValue = cachePath.getText();
+        if (ApplicationPreferences.getCachePath() != stringValue)
+            getPreferenceFrame().setNeedRestart();
+        ApplicationPreferences.setCachePath(stringValue);
 
         intValue = ((Integer) uiFontSizeSpinner.getValue()).intValue();
         LookAndFeelUtil.setFontSize(intValue);

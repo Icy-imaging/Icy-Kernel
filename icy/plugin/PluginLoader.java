@@ -18,6 +18,7 @@
  */
 package icy.plugin;
 
+import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.main.Icy;
@@ -60,7 +61,7 @@ public class PluginLoader
     public final static String PLUGIN_PACKAGE = "plugins";
     public final static String PLUGIN_KERNEL_PACKAGE = "plugins.kernel";
     public final static String PLUGIN_PATH = "plugins";
-    
+
     // used to identify java version problem
     public final static String NEWER_JAVA_REQUIRED = "Newer java version required";
 
@@ -254,7 +255,7 @@ public class PluginLoader
             {
                 // try to load class and check we have a Plugin class at same time
                 final Class<? extends Plugin> pluginClass = newLoader.loadClass(className).asSubclass(Plugin.class);
-
+                // add to list
                 newPlugins.add(new PluginDescriptor(pluginClass));
             }
             catch (NoClassDefFoundError e)

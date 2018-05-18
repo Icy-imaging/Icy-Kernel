@@ -741,6 +741,8 @@ public class Saver
                 sequence.setFilename(fileBaseDirectory);
                 // reset origin informations as now we are saved
                 sequence.resetOriginInformation();
+                // reset image provider
+                sequence.setImageProvider(null);
 
                 // assume that is the saved sequence (used for metadata)
                 savedSequence = sequence;

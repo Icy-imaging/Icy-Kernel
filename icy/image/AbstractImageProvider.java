@@ -9,7 +9,10 @@ import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.sequence.MetaDataUtil;
 import icy.system.SystemUtil;
 import icy.system.thread.Processor;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -31,7 +34,7 @@ public abstract class AbstractImageProvider implements ImageProvider
      * 
      * @author Stephane
      */
-    class TileImageReader implements Runnable
+    class TilePixelsReader implements Runnable
     {
         final int series;
         final int resolution;
@@ -39,12 +42,15 @@ public abstract class AbstractImageProvider implements ImageProvider
         final int z;
         final int t;
         final int c;
-        final IcyBufferedImage result;
+        final Object result;
+        final Dimension resDim;
+        final boolean signed;
+
         boolean done;
         boolean failed;
 
-        public TileImageReader(int series, int resolution, Rectangle region, int z, int t, int c,
-                IcyBufferedImage result)
+        public TilePixelsReader(int series, int resolution, Rectangle region, int z, int t, int c, Object result,
+                Dimension resDim, boolean signed)
         {
             super();
 
@@ -55,13 +61,10 @@ public abstract class AbstractImageProvider implements ImageProvider
             this.t = t;
             this.c = c;
             this.result = result;
+            this.resDim = resDim;
+            this.signed = signed;
             done = false;
             failed = false;
-        }
-
-        public TileImageReader(int series, int resolution, Rectangle region, int z, int t, IcyBufferedImage result)
-        {
-            this(series, resolution, region, z, t, -1, result);
         }
 
         @Override
@@ -76,11 +79,12 @@ public abstract class AbstractImageProvider implements ImageProvider
             try
             {
                 // get image tile
-                final IcyBufferedImage img = getImage(series, resolution, region, z, t, c);
+                final Object obj = getPixels(series, resolution, region, z, t, c);
                 // compute resolution divider
                 final int divider = (int) Math.pow(2, resolution);
                 // copy tile to image result
-                result.copyData(img, null, new Point(region.x / divider, region.y / divider));
+                Array1DUtil.copyRect(obj, region.getSize(), null, result, resDim,
+                        new Point(region.x / divider, region.y / divider), signed);
             }
             catch (Exception e)
             {
@@ -156,7 +160,7 @@ public abstract class AbstractImageProvider implements ImageProvider
         final int resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
 
         // take middle image for thumbnail
-        final IcyBufferedImage result = getImage(series, resolution, sz / 2, st / 2);
+        final IcyBufferedImage image = getImage(series, resolution, sz / 2, st / 2);
 
         // sx = result.getSizeX();
         // sy = result.getSizeY();
@@ -164,7 +168,12 @@ public abstract class AbstractImageProvider implements ImageProvider
         // resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
 
         // scale it to desired dimension (fast enough as here we have a small image)
-        return IcyBufferedImageUtil.scale(result, tnx, tny, FilterType.BILINEAR);
+        final IcyBufferedImage thumbnail = IcyBufferedImageUtil.scale(image, tnx, tny, FilterType.BILINEAR);
+
+        // preserve colormaps
+        thumbnail.setColorMaps(image);
+
+        return thumbnail;
     }
 
     // default implementation: use the getImage(..) method then return data.
@@ -211,7 +220,7 @@ public abstract class AbstractImageProvider implements ImageProvider
     }
 
     /**
-     * Returns the image located at specified position using tile by tile reading (if supported by the importer).<br>
+     * Returns the pixels located at specified position using tile by tile reading (if supported by the importer).<br>
      * This method is useful to read a sub resolution of a very large image which cannot fit in memory and also to take
      * advantage of multi threading.
      * 
@@ -222,82 +231,71 @@ public abstract class AbstractImageProvider implements ImageProvider
      *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
      *        So for instance level 0 is the default image resolution while level 1 is base image
      *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region we want to retrieve (considering the original image resolution).<br>
+     *        If set to <code>null</code> then the whole image is returned.
      * @param z
      *        Z position of the image (slice) we want retrieve
      * @param t
      *        T position of the image (frame) we want retrieve
      * @param c
-     *        C position of the image (channel) we want retrieve.<br>
-     *        -1 is a special value meaning we want all channel.
+     *        C position of the image (channel) we want retrieve (-1 not accepted here).<br>
      * @param tileW
-     *        width of the tile (better to use a multiple of 2)
+     *        width of the tile (better to use a multiple of 2).<br>
+     *        If <= 0 then tile width is automatically determined
      * @param tileH
-     *        height of the tile (better to use a multiple of 2)
+     *        height of the tile (better to use a multiple of 2).<br>
+     *        If <= 0 then tile height is automatically determined
      * @param listener
      *        Progression listener
+     * @see #getPixels(int, int, Rectangle, int, int, int)
      */
-    public IcyBufferedImage getImageByTile(int series, int resolution, int z, int t, int c, int tileW, int tileH,
-            ProgressListener listener) throws UnsupportedFormatException, IOException
+    public Object getPixelsByTile(int series, int resolution, Rectangle region, int z, int t, int c, int tileW,
+            int tileH, ProgressListener listener) throws UnsupportedFormatException, IOException
     {
         final OMEXMLMetadata meta = getOMEXMLMetaData();
         final int sizeX = MetaDataUtil.getSizeX(meta, series);
         final int sizeY = MetaDataUtil.getSizeY(meta, series);
+        final DataType type = MetaDataUtil.getDataType(meta, series);
+        final boolean signed = type.isSigned();
 
-        // resolution divider
-        final int divider = (int) Math.pow(2, resolution);
+        // define XY region to load
+        Rectangle adjRegion = new Rectangle(sizeX, sizeY);
+        if (region != null)
+            adjRegion = adjRegion.intersection(region);
+
         // allocate result
-        final IcyBufferedImage result = new IcyBufferedImage(sizeX / divider, sizeY / divider,
-                MetaDataUtil.getSizeC(meta, series), MetaDataUtil.getDataType(meta, series));
+        final Dimension resDim = new Dimension(adjRegion.width >> resolution, adjRegion.height >> resolution);
+        final Object result = Array1DUtil.createArray(type, resDim.width * resDim.height);
+
         // create processor
         final Processor readerProcessor = new Processor(Math.max(1, SystemUtil.getNumberOfCPUs() - 1));
-
         readerProcessor.setThreadName("Image tile reader");
-        result.beginUpdate();
 
-        try
+        int tw = tileW;
+        int th = tileH;
+
+        // adjust tile size if needed
+        if (tw <= 0)
+            tw = getTileWidth(series);
+        if (tw <= 0)
+            tw = 512;
+        if (th <= 0)
+            th = getTileHeight(series);
+        if (th <= 0)
+            th = 512;
+
+        final List<Rectangle> tiles = ImageUtil.getTileList(adjRegion, tw, th);
+
+        // submit all tasks
+        for (Rectangle tile : tiles)
         {
-            final List<Rectangle> tiles = ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
-
-            // submit all tasks
-            for (Rectangle tile : tiles)
-            {
-                // wait a bit if the process queue is full
-                while (readerProcessor.isFull())
-                {
-                    try
-                    {
-                        Thread.sleep(0);
-                    }
-                    catch (InterruptedException e)
-                    {
-                        // interrupt all processes
-                        readerProcessor.shutdownNow();
-                        break;
-                    }
-                }
-
-                // submit next task
-                readerProcessor.submit(new TileImageReader(series, resolution, tile, z, t, c, result));
-
-                // display progression
-                if (listener != null)
-                {
-                    // process cancel requested ?
-                    if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
-                    {
-                        // interrupt processes
-                        readerProcessor.shutdownNow();
-                        break;
-                    }
-                }
-            }
-
-            // wait for completion
-            while (readerProcessor.isProcessing())
+            // wait a bit if the process queue is full
+            while (readerProcessor.isFull())
             {
                 try
                 {
-                    Thread.sleep(1);
+                    Thread.sleep(0);
                 }
                 catch (InterruptedException e)
                 {
@@ -305,39 +303,202 @@ public abstract class AbstractImageProvider implements ImageProvider
                     readerProcessor.shutdownNow();
                     break;
                 }
-
-                // display progression
-                if (listener != null)
-                {
-                    // process cancel requested ?
-                    if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
-                    {
-                        // interrupt processes
-                        readerProcessor.shutdownNow();
-                        break;
-                    }
-                }
             }
 
-            // last wait for completion just in case we were interrupted
-            readerProcessor.waitAll();
+            // submit next task
+            readerProcessor.submit(new TilePixelsReader(series, resolution, tile.intersection(adjRegion), z, t, c,
+                    result, resDim, signed));
+
+            // display progression
+            if (listener != null)
+            {
+                // process cancel requested ?
+                if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
+                {
+                    // interrupt processes
+                    readerProcessor.shutdownNow();
+                    break;
+                }
+            }
         }
-        finally
+
+        // wait for completion
+        while (readerProcessor.isProcessing())
         {
-            result.endUpdate();
+            try
+            {
+                Thread.sleep(1);
+            }
+            catch (InterruptedException e)
+            {
+                // interrupt all processes
+                readerProcessor.shutdownNow();
+                break;
+            }
+
+            // display progression
+            if (listener != null)
+            {
+                // process cancel requested ?
+                if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
+                {
+                    // interrupt processes
+                    readerProcessor.shutdownNow();
+                    break;
+                }
+            }
         }
+
+        // last wait for completion just in case we were interrupted
+        readerProcessor.waitAll();
 
         return result;
     }
 
-    /**
-     * @deprecated USe {@link ImageUtil#getTileList(int, int, int, int)} instead
-     */
-    @Deprecated
-    public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
-    {
-        return ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
-    }
+    // /**
+    // * Returns the image located at specified position using tile by tile reading (if supported by the importer).<br>
+    // * This method is useful to read a sub resolution of a very large image which cannot fit in memory and also to take
+    // * advantage of multi threading.
+    // *
+    // * @param series
+    // * Series index for multi series image (use 0 if unsure).
+    // * @param resolution
+    // * Wanted resolution level for the image (use 0 if unsure).<br>
+    // * The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+    // * So for instance level 0 is the default image resolution while level 1 is base image
+    // * resolution / 2 and so on...
+    // * @param region
+    // * The 2D region we want to retrieve (considering the original image resolution).<br>
+    // * If set to <code>null</code> then the whole image is returned.
+    // * @param z
+    // * Z position of the image (slice) we want retrieve
+    // * @param t
+    // * T position of the image (frame) we want retrieve
+    // * @param c
+    // * C position of the image (channel) we want retrieve.<br>
+    // * -1 is a special value meaning we want all channel.
+    // * @param tileW
+    // * width of the tile (better to use a multiple of 2)
+    // * @param tileH
+    // * height of the tile (better to use a multiple of 2)
+    // * @param listener
+    // * Progression listener
+    // * @see #getImage(int, int, Rectangle, int, int, int)
+    // */
+    // public IcyBufferedImage getImageByTile(int series, int resolution, Rectangle region, int z, int t, int c, int tileW,
+    // int tileH, ProgressListener listener) throws UnsupportedFormatException, IOException
+    // {
+    // final OMEXMLMetadata meta = getOMEXMLMetaData();
+    // final int sizeX = MetaDataUtil.getSizeX(meta, series);
+    // final int sizeY = MetaDataUtil.getSizeY(meta, series);
+    //
+    // // TODO: handle rect
+    //
+    // // resolution divider
+    // final int divider = (int) Math.pow(2, resolution);
+    // // allocate result
+    // final IcyBufferedImage result = new IcyBufferedImage(sizeX / divider, sizeY / divider,
+    // MetaDataUtil.getSizeC(meta, series), MetaDataUtil.getDataType(meta, series));
+    // // create processor
+    // final Processor readerProcessor = new Processor(Math.max(1, SystemUtil.getNumberOfCPUs() - 1));
+    //
+    // readerProcessor.setThreadName("Image tile reader");
+    // result.beginUpdate();
+    //
+    // try
+    // {
+    // final List<Rectangle> tiles = ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
+    //
+    // // submit all tasks
+    // for (Rectangle tile : tiles)
+    // {
+    // // wait a bit if the process queue is full
+    // while (readerProcessor.isFull())
+    // {
+    // try
+    // {
+    // Thread.sleep(0);
+    // }
+    // catch (InterruptedException e)
+    // {
+    // // interrupt all processes
+    // readerProcessor.shutdownNow();
+    // break;
+    // }
+    // }
+    //
+    // // submit next task
+    // readerProcessor.submit(new TileImageReader(series, resolution, tile, z, t, c, result));
+    //
+    // // display progression
+    // if (listener != null)
+    // {
+    // // process cancel requested ?
+    // if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
+    // {
+    // // interrupt processes
+    // readerProcessor.shutdownNow();
+    // break;
+    // }
+    // }
+    // }
+    //
+    // // wait for completion
+    // while (readerProcessor.isProcessing())
+    // {
+    // try
+    // {
+    // Thread.sleep(1);
+    // }
+    // catch (InterruptedException e)
+    // {
+    // // interrupt all processes
+    // readerProcessor.shutdownNow();
+    // break;
+    // }
+    //
+    // // display progression
+    // if (listener != null)
+    // {
+    // // process cancel requested ?
+    // if (!listener.notifyProgress(readerProcessor.getCompletedTaskCount(), tiles.size()))
+    // {
+    // // interrupt processes
+    // readerProcessor.shutdownNow();
+    // break;
+    // }
+    // }
+    // }
+    //
+    // // last wait for completion just in case we were interrupted
+    // readerProcessor.waitAll();
+    // }
+    // finally
+    // {
+    // result.endUpdate();
+    // }
+    //
+    // return result;
+    // }
+
+    // /**
+    // * @deprecated Use {@link #getImageByTile(int, int, Rectangle, int, int, int, int, int, ProgressListener)} instead.
+    // */
+    // @Deprecated
+    // public IcyBufferedImage getImageByTile(int series, int resolution, int z, int t, int c, int tileW, int tileH,
+    // ProgressListener listener) throws UnsupportedFormatException, IOException
+    // {
+    // return getImageByTile(series, resolution, null, z, t, c, tileW, tileH, listener);
+    // }
+    //
+    // /**
+    // * @deprecated USe {@link ImageUtil#getTileList(int, int, int, int)} instead
+    // */
+    // @Deprecated
+    // public static List<Rectangle> getTileList(int sizeX, int sizeY, int tileW, int tileH)
+    // {
+    // return ImageUtil.getTileList(sizeX, sizeY, tileW, tileH);
+    // }
 
     /**
      * Returns the sub image resolution which best suit to the desired size.

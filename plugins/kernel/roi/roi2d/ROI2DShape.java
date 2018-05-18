@@ -1657,7 +1657,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     {
         if ((width <= 0) || (height <= 0))
             return new boolean[0];
-        
+
         // special case
         if (inclusive && (width == 1) && (height == 1) && getPosition().equals(new Point(x, y)))
             return new boolean[] {true};
@@ -1670,7 +1670,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
         // translate back to origin and pixel center
-        g.translate(-x, -y);
+        g.translate(-(x - 0.5d), -(y - 0.5d));
 
         // fill content
         g.setColor(Color.white);
@@ -1742,7 +1742,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
         // shape shouldn't be empty (even for single Point) --> always use a minimal bounds
         if (result.isEmpty())
-            result.setFrame(result.getX(), result.getY(), 0.001d, 0.001d);
+        {
+            result.setFrame(result.getX(), result.getY(), Math.max(result.getWidth(), 0.001d),
+                    Math.max(result.getHeight(), 0.001d));
+        }
 
         return result;
     }

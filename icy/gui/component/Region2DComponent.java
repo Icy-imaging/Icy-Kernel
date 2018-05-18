@@ -74,7 +74,7 @@ public class Region2DComponent extends JPanel implements ValueChangeListener
         xStartField.addValueListener(this);
         GridBagConstraints gbc_xStartField = new GridBagConstraints();
         gbc_xStartField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_xStartField.insets = new Insets(0, 0, 0, 5);
+        gbc_xStartField.insets = new Insets(0, 0, 0, 2);
         gbc_xStartField.gridx = 0;
         gbc_xStartField.gridy = 0;
         add(xStartField, gbc_xStartField);
@@ -83,7 +83,7 @@ public class Region2DComponent extends JPanel implements ValueChangeListener
         yStartField.addValueListener(this);
         GridBagConstraints gbc_yStartField = new GridBagConstraints();
         gbc_yStartField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_yStartField.insets = new Insets(0, 0, 0, 5);
+        gbc_yStartField.insets = new Insets(0, 0, 0, 2);
         gbc_yStartField.gridx = 1;
         gbc_yStartField.gridy = 0;
         add(yStartField, gbc_yStartField);
@@ -96,13 +96,13 @@ public class Region2DComponent extends JPanel implements ValueChangeListener
         JLabel sepLabel = new JLabel("-");
         GridBagConstraints gbc_sepLabel = new GridBagConstraints();
         gbc_sepLabel.fill = GridBagConstraints.VERTICAL;
-        gbc_sepLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_sepLabel.insets = new Insets(0, 0, 0, 2);
         gbc_sepLabel.gridx = 2;
         gbc_sepLabel.gridy = 0;
         add(sepLabel, gbc_sepLabel);
         GridBagConstraints gbc_widthField = new GridBagConstraints();
         gbc_widthField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_widthField.insets = new Insets(0, 0, 0, 5);
+        gbc_widthField.insets = new Insets(0, 0, 0, 2);
         gbc_widthField.gridx = 3;
         gbc_widthField.gridy = 0;
         add(widthField, gbc_widthField);

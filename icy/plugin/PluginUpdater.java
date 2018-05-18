@@ -90,8 +90,9 @@ public class PluginUpdater
     public static PluginDescriptor getUpdate(PluginDescriptor plugin)
     {
         // don't check update for kernel plugin
-        if (plugin.isKernelPlugin()) return null;
-        
+        if (plugin.isKernelPlugin())
+            return null;
+
         // find equivalent online plugins
         final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
         final PluginDescriptor onlinePlugin;
@@ -115,9 +116,9 @@ public class PluginUpdater
         if ((onlinePlugin != null) && onlinePlugin.getVersion().isGreater(plugin.getVersion()))
             return onlinePlugin;
 
-// random forced update
-//if (Random.nextBoolean())
-//    return onlinePlugin;
+        // random forced update
+        // if (Random.nextBoolean())
+        // return onlinePlugin;
 
         return null;
     }
@@ -169,7 +170,8 @@ public class PluginUpdater
                         if (!NetworkUtil.hasInternetAccess())
                             new AnnounceFrame("You are not connected to internet.", 10);
                         else
-                            new AnnounceFrame("Can't access the repositories... You should verify your connection.", 10);
+                            new AnnounceFrame("Can't access the repositories... You should verify your connection.",
+                                    10);
                     }
 
                     return;
@@ -189,6 +191,7 @@ public class PluginUpdater
                     }
                 }
 
+                // TODO: incorrect java version cannot be fixed with plugin udpate !
                 final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins();
 
                 for (PluginDescriptor onlinePlugin : onlinePlugins)

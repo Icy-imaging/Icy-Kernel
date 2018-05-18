@@ -1090,6 +1090,14 @@ public class MetaDataUtil
     }
 
     /**
+     * Same as {@link #getTimePosition(OMEXMLMetadata, int, int, int, int, double)}
+     */
+    public static double getPositionT(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
+    {
+        return getTimePosition(metaData, series, t, z, c, defaultValue);
+    }
+
+    /**
      * Returns the time position (in second) for the Pixels object at the specified Z, T, C
      * position.
      */
@@ -1499,10 +1507,9 @@ public class MetaDataUtil
      *        data type.
      * @param separateChannel
      *        true if we want channel data to be separated.
-     * @throws ServiceException
      */
     public static void setMetaData(OMEXMLMetadata metadata, int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
-            DataType dataType, boolean separateChannel) throws ServiceException
+            DataType dataType, boolean separateChannel)
     {
         OME ome = (OME) metadata.getRoot();
 
@@ -1513,7 +1520,7 @@ public class MetaDataUtil
         }
 
         // keep only one image
-        setNumSerie(metadata, 1);
+        setNumSeries(metadata, 1);
         // clean TiffData metadata (can produce error on reloading)
         cleanTiffData(ome.getImage(0));
         // clean binData metadata (can produce error on reloading)
@@ -1586,7 +1593,7 @@ public class MetaDataUtil
      */
     @Deprecated
     public static void setMetaData(OMEXMLMetadataImpl metadata, int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
-            DataType dataType, boolean separateChannel) throws ServiceException
+            DataType dataType, boolean separateChannel)
     {
         setMetaData((OMEXMLMetadata) metadata, sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, separateChannel);
     }
@@ -1649,7 +1656,7 @@ public class MetaDataUtil
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT,
-            boolean separateChannel) throws ServiceException
+            boolean separateChannel)
     {
         return generateMetaData(sequence, separateChannel);
     }
@@ -1659,7 +1666,6 @@ public class MetaDataUtil
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT, boolean separateChannel)
-            throws ServiceException
     {
         return generateMetaData(sequence, separateChannel);
     }
@@ -1669,7 +1675,7 @@ public class MetaDataUtil
      * 
      * @see #setMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)
      */
-    public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel) throws ServiceException
+    public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel)
     {
         // do a copy as we mean use several time the same source sequence metadata
         final OMEXMLMetadata result = OMEUtil.createOMEXMLMetadata(sequence.getOMEXMLMetadata());

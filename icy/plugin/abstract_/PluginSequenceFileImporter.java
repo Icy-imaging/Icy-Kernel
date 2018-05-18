@@ -9,6 +9,7 @@ import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
 import icy.plugin.interface_.PluginNoEDTConstructor;
+import icy.sequence.SequenceIdImporter;
 
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -28,8 +29,26 @@ import ome.xml.meta.OMEXMLMetadata;
 public abstract class PluginSequenceFileImporter extends Plugin implements SequenceFileImporter, PluginNoEDTConstructor
 {
     // default helper
-    protected class InternalImageProviderHelper extends AbstractImageProvider
+    protected class InternalSequenceIdImporterHelper extends AbstractImageProvider implements SequenceIdImporter
     {
+        @Override
+        public String getOpened()
+        {
+            return PluginSequenceFileImporter.this.getOpened();
+        }
+
+        @Override
+        public boolean open(String id, int flags) throws UnsupportedFormatException, IOException
+        {
+            return PluginSequenceFileImporter.this.open(id, flags);
+        }
+
+        @Override
+        public void close() throws IOException
+        {
+            PluginSequenceFileImporter.this.close();
+        }
+
         @Deprecated
         @Override
         public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
@@ -45,13 +64,13 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
         }
     }
 
-    protected final InternalImageProviderHelper interfaceHelper;
+    protected final InternalSequenceIdImporterHelper interfaceHelper;
 
     public PluginSequenceFileImporter()
     {
         super();
 
-        interfaceHelper = new InternalImageProviderHelper();
+        interfaceHelper = new InternalSequenceIdImporterHelper();
     }
 
     // default implementation as ImageProvider interface changed
@@ -133,12 +152,12 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
     }
 
     /**
-     * See {@link AbstractImageProvider#getImageByTile(int, int, int, int, int, int, int, ProgressListener)}
+     * See {@link AbstractImageProvider#getPixelsByTile(int, int, Rectangle, int, int, int, int, int, ProgressListener)}
      */
-    public IcyBufferedImage getImageByTile(int series, int resolution, int z, int t, int c, int tileW, int tileH,
-            ProgressListener listener) throws UnsupportedFormatException, IOException
+    public Object getPixelsByTile(int series, int resolution, Rectangle region, int z, int t, int c, int tileW,
+            int tileH, ProgressListener listener) throws UnsupportedFormatException, IOException
     {
-        return interfaceHelper.getImageByTile(series, resolution, z, t, c, tileW, tileH, listener);
+        return interfaceHelper.getPixelsByTile(series, resolution, region, z, t, c, tileW, tileH, listener);
     }
 
     /**

@@ -240,7 +240,7 @@ public class SequencePersistent implements XMLPersistent
             return true;
 
         // use the default LUT by default
-        final LUT result = sequence.getDefaultLUT();
+        final LUT result = sequence.createCompatibleLUT();
 
         if (result.loadFromXML(nodeLut))
             sequence.setUserLUT(result);

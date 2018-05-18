@@ -1152,7 +1152,7 @@ public class NetworkUtil
         final String req = login + ":" + pass;
         final String encoded;
 
-        if (SystemUtil.getJavaVersionAsNumber() >= 1.8d)
+        if (SystemUtil.getJavaVersionAsNumber() >= 8d)
             encoded = java.util.Base64.getEncoder().encodeToString(req.getBytes());
         else
             encoded = new sun.misc.BASE64Encoder().encode(req.getBytes());

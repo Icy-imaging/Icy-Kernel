@@ -40,6 +40,16 @@ import java.io.IOException;
  */
 public interface SequenceIdImporter extends ImageProvider, Closeable
 {
+    public static final int FLAG_METADATA_MASK = 0x0003;
+    /**
+     * Flag to indicate we want to load only mandatory metadata informations (faster metadata loading)
+     */
+    public static final int FLAG_METADATA_MINIMUM = 0x0001;
+    /**
+     * Flag to indicate we want to load all possible metadata
+     */
+    public static final int FLAG_METADATA_ALL = 0x0002;
+
     /**
      * @return The <code>id</code> of the image currently opened or <code>null</code> otherwise.
      * @see #open(String, int)
@@ -57,7 +67,9 @@ public interface SequenceIdImporter extends ImageProvider, Closeable
      *        Image id, it can be a file path or URL or whatever depending the internal
      *        import method.
      * @param flags
-     *        operation flag (not used yet, keep it to 0)
+     *        operation flag:<br>
+     *        <li>{@link #FLAG_METADATA_MINIMUM} = load minimum metadata informations</li>
+     *        <li>{@link #FLAG_METADATA_ALL} = load all metadata informations</li>
      * @return <code>true</code> if the operation has succeeded and <code>false</code> otherwise.
      */
     public boolean open(String id, int flags) throws UnsupportedFormatException, IOException;

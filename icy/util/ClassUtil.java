@@ -19,6 +19,7 @@
 package icy.util;
 
 import icy.file.FileUtil;
+import icy.network.URLUtil;
 import icy.plugin.PluginLoader;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
@@ -242,6 +243,34 @@ public class ClassUtil
             return className.substring(index + 1);
 
         return className;
+    }
+
+    /**
+     * Returns the source JAR file (if any) from where the specified class has been loaded from
+     */
+    public static String getJarPath(Class<?> c)
+    {
+        final URL url = c.getResource('/' + c.getName().replace('.', '/') + ".class");
+
+        // JAR url ?
+        if ((url != null) && url.getProtocol().equalsIgnoreCase("jar"))
+        {
+            String result;
+            int ind;
+            
+            // extract 
+            result = url.getPath();
+            
+            ind = result.indexOf(':');
+            if (ind != -1) result= result.substring(ind+1);
+            
+            ind = result.indexOf('!');
+            if (ind != -1) result = result.substring(0, ind);
+            
+            return new File(result).getAbsolutePath();
+        }
+
+        return "";
     }
 
     /**
