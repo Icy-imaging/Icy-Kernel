@@ -20,6 +20,7 @@ package icy.preferences;
 
 import icy.common.Version;
 import icy.math.MathUtil;
+import icy.network.NetworkUtil;
 import icy.system.SystemUtil;
 
 /**
@@ -47,8 +48,8 @@ public class ApplicationPreferences
     public static final String ID_VERSION = "version";
     public static final String ID_SINGLE_INSTANCE = "singleInstance";
 
-    // private final static String DEFAULT_UPDATE_REPOSITORY_BASE = NetworkUtil.WEBSITE_URL + "update/";
-    private final static String DEFAULT_UPDATE_REPOSITORY_BASE = "https://icy.yhello.co/update/";
+    private final static String DEFAULT_UPDATE_REPOSITORY_BASE = NetworkUtil.WEBSITE_URL + "update/";
+    // private final static String DEFAULT_UPDATE_REPOSITORY_BASE = "https://icy.yhello.co/update/";
     private final static String DEFAULT_UPDATE_REPOSITORY_FILE = "update.php";
 
     /**

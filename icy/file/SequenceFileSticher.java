@@ -1683,6 +1683,9 @@ public class SequenceFileSticher
                 // can't be opened... try with an other importer
                 if (tryAnotherImporter)
                     return tryOpen(null, path);
+                
+                // can't open importer
+                return null;
             }
         }
 

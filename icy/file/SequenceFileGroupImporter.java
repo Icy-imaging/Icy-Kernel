@@ -196,6 +196,9 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         open(SequenceFileSticher.groupFiles(null, ids, true, null), flags);
     }
 
+    /**
+     * Open a SequenceFileGroup
+     */
     public void open(SequenceFileGroup group, int flags)
     {
         try
@@ -207,6 +210,10 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
             // should not prevent from opening
             IcyExceptionHandler.showErrorMessage(e, true, true);
         }
+
+        // can't open null group
+        if (group == null)
+            return;
 
         currentGroup = group;
         // we need to rebuild metadata
@@ -468,14 +475,7 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
     @Override
     public void close() throws IOException
     {
-        synchronized (importersPool)
-        {
-            // close all importers
-            for (SequenceFileImporter imp : importersPool.values())
-                imp.close();
-
-            importersPool.clear();
-        }
+        closeInternalsImporters();
 
         // release position indexes array
         positions = null;

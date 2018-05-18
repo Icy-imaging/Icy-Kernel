@@ -20,6 +20,8 @@ package icy.gui.dialog;
 
 import icy.file.Loader;
 import icy.file.SequenceFileGroupImporter;
+import icy.file.SequenceFileImporter;
+import icy.file.SequenceFileSticher.SequenceFileGroup;
 import icy.gui.component.PopupPanel;
 import icy.gui.component.RangeComponent;
 import icy.gui.component.Region2DComponent;
@@ -92,13 +94,13 @@ public class LoaderOptionPanel extends JPanel
 
     private class PreviewUpdater extends Thread
     {
-        SequenceFileGroupImporter importer;
+        SequenceFileImporter importer;
         List<String> files;
         int z;
         int t;
         boolean imageRefreshOnly;
 
-        PreviewUpdater(SequenceFileGroupImporter importer, List<String> files, int z, int t, boolean imageRefreshOnly)
+        PreviewUpdater(SequenceFileImporter importer, List<String> files, int z, int t, boolean imageRefreshOnly)
         {
             super("Image preview");
 
@@ -109,12 +111,12 @@ public class LoaderOptionPanel extends JPanel
             this.imageRefreshOnly = imageRefreshOnly;
         }
 
-        PreviewUpdater(SequenceFileGroupImporter importer, String[] files, int z, int t, boolean imageRefreshOnly)
+        PreviewUpdater(SequenceFileImporter importer, String[] files, int z, int t, boolean imageRefreshOnly)
         {
             this(importer, Loader.cleanNonImageFile(CollectionUtil.asList(files)), z, t, imageRefreshOnly);
         }
 
-        public PreviewUpdater(SequenceFileGroupImporter importer, int z, int t)
+        public PreviewUpdater(SequenceFileImporter importer, int z, int t)
         {
             this(importer, new String[0], -1, -1, true);
         }
@@ -142,6 +144,10 @@ public class LoaderOptionPanel extends JPanel
             // only need to update image
             if (imageRefreshOnly)
             {
+                // can't re open importer ? --> nothing to do here
+                if ((importer == null) && (files.size() == 0))
+                    return;
+
                 try
                 {
                     // use last - 1 resolution
@@ -154,18 +160,34 @@ public class LoaderOptionPanel extends JPanel
                     if (t == -1)
                         t = MetaDataUtil.getSizeT(metadata, s) / 2;
 
-                    // always use the group importer for preview
+                    // always use the group importer first for preview
                     if (importer == null)
                         importer = new SequenceFileGroupImporter();
 
                     try
                     {
                         // open file(s) if needed...
-                        if (!importer.isOpen())
-                            importer.open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                        if (importer.getOpened() == null)
+                        {
+                            if (importer instanceof SequenceFileGroupImporter)
+                            {
+                                ((SequenceFileGroupImporter) importer).open(files,
+                                        SequenceIdImporter.FLAG_METADATA_MINIMUM);
 
-                        // interrupted ? --> stop here
-                        if (isInterrupted())
+                                // open failed ? --> use classic importer
+                                if (importer.getOpened() == null)
+                                {
+                                    final String path = files.get(0);
+
+                                    // get importer and open image
+                                    importer = Loader.getSequenceFileImporter(path, true);
+                                    importer.open(path, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                                }
+                            }
+                        }
+
+                        // still not open or process interrupted ? --> stop here
+                        if ((importer.getOpened() == null) || isInterrupted())
                             return;
 
                         // default position --> use thumbnail
@@ -181,7 +203,8 @@ public class LoaderOptionPanel extends JPanel
                     finally
                     {
                         // just close internals importers
-                        importer.closeInternalsImporters();
+                        if (importer instanceof SequenceFileGroupImporter)
+                            ((SequenceFileGroupImporter) importer).closeInternalsImporters();
                     }
                 }
                 catch (ClosedByInterruptException e)
@@ -198,40 +221,42 @@ public class LoaderOptionPanel extends JPanel
                 return;
             }
 
-            metadata = null;
-
-            // no files ?
-            if ((files.size() == 0) && (importer == null))
-            {
-                preview.setImage(null);
-                preview.setInfos("");
-                metadata = OMEUtil.createOMEXMLMetadata();
-
-                // use Callable as we can get interrupted here...
-                ThreadUtil.invokeNow(new Runnable()
-                {
-
-                    @Override
-                    public void run()
-                    {
-                        // disable panel while we are loading metadata
-                        disablePanel();
-                    }
-                });
-
-                // nothing more to do
-                return;
-            }
-
-            // loading...
-            preview.setImage(ResourceUtil.ICON_WAIT);
-            preview.setInfos("loading...");
-
             try
             {
+                metadata = null;
+
+                // no files ?
+                if (files.size() == 0)
+                {
+                    preview.setImage(null);
+                    preview.setInfos("");
+                    metadata = OMEUtil.createOMEXMLMetadata();
+
+                    // use Callable as we can get interrupted here...
+                    ThreadUtil.invokeNow(new Callable<Boolean>()
+                    {
+                        @Override
+                        public Boolean call() throws Exception
+                        {
+                            // disable panel while we are loading metadata
+                            disablePanel();
+
+                            return Boolean.TRUE;
+                        }
+                    });
+
+                    // nothing more to do
+                    return;
+                }
+
+                // loading...
+                preview.setImage(ResourceUtil.ICON_WAIT);
+                preview.setInfos("loading...");
+
                 // use Callable as we can get interrupted here...
                 ThreadUtil.invokeNow(new Callable<Boolean>()
                 {
+
                     @Override
                     public Boolean call() throws Exception
                     {
@@ -248,7 +273,21 @@ public class LoaderOptionPanel extends JPanel
 
                 importer = new SequenceFileGroupImporter();
                 // open file(s)...
-                importer.open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                ((SequenceFileGroupImporter) importer).open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+
+                // open failed ? --> use classic importer
+                if (importer.getOpened() == null)
+                {
+                    final String path = files.get(0);
+
+                    // get importer and open image
+                    importer = Loader.getSequenceFileImporter(path, true);
+                    importer.open(path, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                }
+
+                // still not open ? --> throw error
+                if (importer.getOpened() == null)
+                    throw new Exception("Can't open '" + files.get(0) + "' image file..");
 
                 try
                 {
@@ -261,6 +300,7 @@ public class LoaderOptionPanel extends JPanel
                     // update it as soon as possible (use Callable as we can get interrupted here...)
                     ThreadUtil.invokeNow(new Callable<Boolean>()
                     {
+
                         @Override
                         public Boolean call() throws Exception
                         {
@@ -298,7 +338,8 @@ public class LoaderOptionPanel extends JPanel
                 finally
                 {
                     // just close internals importers
-                    importer.closeInternalsImporters();
+                    if (importer instanceof SequenceFileGroupImporter)
+                        ((SequenceFileGroupImporter) importer).closeInternalsImporters();
                 }
             }
             catch (ClosedByInterruptException e)
@@ -311,8 +352,8 @@ public class LoaderOptionPanel extends JPanel
             }
             catch (Throwable t1)
             {
-                System.out.println("Preview: can't load all image information.");
-                IcyExceptionHandler.showErrorMessage(t1, false);
+//                System.out.println("Preview: can't load all image information.");
+//                IcyExceptionHandler.showErrorMessage(t1, false);
 
                 // fatal error --> failed image
                 preview.setImage(ResourceUtil.ICON_DELETE);
@@ -953,8 +994,19 @@ public class LoaderOptionPanel extends JPanel
         {
             // return true if we have multiple file selection
             if (previewThread != null)
-                return (previewThread.files.size() > 1)
-                        || (previewThread.importer.getOpenedGroup().positions.size() > 1);
+            {
+                if (previewThread.files.size() > 1)
+                    return true;
+
+                if (previewThread.importer instanceof SequenceFileGroupImporter)
+                {
+                    final SequenceFileGroup group = ((SequenceFileGroupImporter) previewThread.importer)
+                            .getOpenedGroup();
+
+                    if (group != null)
+                        return (group.positions.size() > 1);
+                }
+            }
         }
         catch (Throwable t)
         {
@@ -1171,13 +1223,23 @@ public class LoaderOptionPanel extends JPanel
         if (!metadataFieldsOk)
         {
             // get importer
-            final SequenceFileGroupImporter importer = previewThread.importer;
+            SequenceFileImporter importer = previewThread.importer;
 
             try
             {
                 // open file(s) if needed...
-                if (!importer.isOpen())
-                    importer.open(previewThread.files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                if (importer.getOpened() == null)
+                {
+                    if (importer instanceof SequenceFileGroupImporter)
+                        ((SequenceFileGroupImporter) importer).open(previewThread.files,
+                                SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                    else
+                        importer.open(previewThread.files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                }
+
+                // still not open or process interrupted ? --> stop here
+                if (importer.getOpened() != null)
+                    return;
 
                 try
                 {
@@ -1185,9 +1247,6 @@ public class LoaderOptionPanel extends JPanel
 
                     // update panel (we are on EDT)
                     updatePanel();
-
-                    // done
-                    return;
                 }
                 finally
                 {

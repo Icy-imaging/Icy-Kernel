@@ -1298,25 +1298,25 @@ public class Icy
         {
             IcyExceptionHandler.showErrorMessage(e1, false, false);
 
-            // try to load the VTK way
-            try
-            {
-                System.out.print("Try to load VTK library using VTK method... ");
-
-                vtkLibraryLoaded = vtkNativeLibrary.LoadAllNativeLibraries();
-
-                if (vtkLibraryLoaded)
-                    System.out.println("success !");
-                else
-                    System.out.println("failed !");
-
-                // redirect vtk error log to file
-                vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
-            }
-            catch (Throwable e2)
-            {
-                IcyExceptionHandler.showErrorMessage(e2, false, false);
-            }
+//            // try to load the VTK way
+//            try
+//            {
+//                System.out.print("Try to load VTK library using VTK method... ");
+//
+//                vtkLibraryLoaded = vtkNativeLibrary.LoadAllNativeLibraries();
+//
+//                if (vtkLibraryLoaded)
+//                    System.out.println("success !");
+//                else
+//                    System.out.println("failed !");
+//
+//                // redirect vtk error log to file
+//                vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
+//            }
+//            catch (Throwable e2)
+//            {
+//                IcyExceptionHandler.showErrorMessage(e2, false, false);
+//            }
         }
 
         if (vtkLibraryLoaded)
