@@ -92,7 +92,7 @@ public class LoaderOptionPanel extends JPanel
         }
     }
 
-    private class PreviewUpdater extends Thread
+    private class PreviewSingleUpdate extends Thread
     {
         SequenceFileImporter importer;
         List<String> files;
@@ -100,36 +100,36 @@ public class LoaderOptionPanel extends JPanel
         int t;
         boolean imageRefreshOnly;
 
-        PreviewUpdater(SequenceFileImporter importer, List<String> files, int z, int t, boolean imageRefreshOnly)
+        PreviewSingleUpdate(SequenceFileImporter importer, List<String> files, int z, int t, boolean imageRefreshOnly)
         {
-            super("Image preview");
+            super("Preview single update");
 
             this.importer = importer;
-            this.files = files;
+            this.files = Loader.cleanNonImageFile(files);
             this.z = z;
             this.t = t;
             this.imageRefreshOnly = imageRefreshOnly;
         }
 
-        PreviewUpdater(SequenceFileImporter importer, String[] files, int z, int t, boolean imageRefreshOnly)
-        {
-            this(importer, Loader.cleanNonImageFile(CollectionUtil.asList(files)), z, t, imageRefreshOnly);
-        }
-
-        public PreviewUpdater(SequenceFileImporter importer, int z, int t)
-        {
-            this(importer, new String[0], -1, -1, true);
-        }
-
-        public PreviewUpdater(String[] files)
-        {
-            this(null, files, -1, -1, false);
-        }
-
-        public PreviewUpdater(List<String> files)
-        {
-            this(null, files, -1, -1, false);
-        }
+        // PreviewSingleUpdate(SequenceFileImporter importer, String[] files, int z, int t, boolean imageRefreshOnly)
+        // {
+        // this(importer, CollectionUtil.asList(files), z, t, imageRefreshOnly);
+        // }
+        //
+        // PreviewSingleUpdate(SequenceFileImporter importer, int z, int t)
+        // {
+        // this(importer, new String[0], z, t, true);
+        // }
+        //
+        // PreviewSingleUpdate(String[] files)
+        // {
+        // this(null, files, -1, -1, false);
+        // }
+        //
+        // PreviewSingleUpdate(List<String> files)
+        // {
+        // this(null, files, -1, -1, false);
+        // }
 
         @Override
         public void run()
@@ -153,14 +153,7 @@ public class LoaderOptionPanel extends JPanel
                     // use last - 1 resolution
                     final int res = Math.max(0, resolutionSlider.getMaximum() - 1);
 
-                    // not defined --> use middle
-                    if (z == -1)
-                        z = MetaDataUtil.getSizeZ(metadata, s) / 2;
-                    // not defined --> use middle
-                    if (t == -1)
-                        t = MetaDataUtil.getSizeT(metadata, s) / 2;
-
-                    // always use the group importer first for preview
+                    // always try to use the group importer first for preview
                     if (importer == null)
                         importer = new SequenceFileGroupImporter();
 
@@ -190,6 +183,13 @@ public class LoaderOptionPanel extends JPanel
                         if ((importer.getOpened() == null) || isInterrupted())
                             return;
 
+                        // not defined --> use first
+                        if (z == -1)
+                            z = 0;
+                        // not defined --> use first
+                        if (t == -1)
+                            t = 0;
+
                         // default position --> use thumbnail
                         if ((z == 0) && (t == 0) && (pCh == -1))
                             preview.setImage(importer.getThumbnail(s));
@@ -213,8 +213,9 @@ public class LoaderOptionPanel extends JPanel
                 }
                 catch (Throwable t)
                 {
-                    // fatal error --> cancel image update
-                    preview.setImage(ResourceUtil.ICON_DELETE);
+                    // no more update ? --> show that an error happened
+                    if (!previewUpdater.getNeedUpdate())
+                        preview.setImage(ResourceUtil.ICON_DELETE);
                 }
 
                 // image updated
@@ -352,39 +353,315 @@ public class LoaderOptionPanel extends JPanel
             }
             catch (Throwable t1)
             {
-//                System.out.println("Preview: can't load all image information.");
-//                IcyExceptionHandler.showErrorMessage(t1, false);
+                // System.out.println("Preview: can't load all image information.");
+                // IcyExceptionHandler.showErrorMessage(t1, false);
 
-                // fatal error --> failed image
-                preview.setImage(ResourceUtil.ICON_DELETE);
+                // no more update ? --> show that an error happened
+                if (!previewUpdater.getNeedUpdate())
+                {
+                    // fatal error --> failed image
+                    preview.setImage(ResourceUtil.ICON_DELETE);
 
-                // cannot even read metadata
+                    // cannot even read metadata
+                    if (!metadataFieldsOk)
+                    {
+                        preview.setInfos("Cannot read file");
+
+                        try
+                        {
+                            // use Callable as we can get interrupted here...
+                            ThreadUtil.invokeNow(new Callable<Boolean>()
+                            {
+
+                                @Override
+                                public Boolean call() throws Exception
+                                {
+                                    // update panel
+                                    updatePanel();
+
+                                    return Boolean.TRUE;
+                                }
+                            });
+                        }
+                        catch (Throwable t2)
+                        {
+                            // probably interrupted...
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private class PreviewUpdater extends Thread
+    {
+        private SequenceFileImporter newImporter;
+        private List<String> newFiles;
+        private int newZ;
+        private int newT;
+        private boolean newImageRefreshOnly;
+
+        private boolean needUpdate;
+
+        PreviewSingleUpdate singleUpdater;
+
+        PreviewUpdater()
+        {
+            super("Preview updater");
+
+            singleUpdater = null;
+            needUpdate = false;
+        }
+
+        public boolean getNeedUpdate()
+        {
+            return needUpdate;
+        }
+
+        public boolean isUpdating()
+        {
+            return getNeedUpdate() || ((singleUpdater != null) && singleUpdater.isAlive());
+        }
+
+        public boolean isMultiFile()
+        {
+            if (singleUpdater == null)
+                return false;
+
+            try
+            {
+                // return true if we have multiple file selection
+                if (singleUpdater.files.size() > 1)
+                    return true;
+
+                if (singleUpdater.importer instanceof SequenceFileGroupImporter)
+                {
+                    final SequenceFileGroup group = ((SequenceFileGroupImporter) singleUpdater.importer)
+                            .getOpenedGroup();
+
+                    if (group != null)
+                        return (group.positions.size() > 1);
+                }
+            }
+            catch (Throwable t)
+            {
+                // ignore
+            }
+
+            return false;
+        }
+
+        /**
+         * previous preview canceled ?
+         */
+        public boolean isPreviewCanceled()
+        {
+            if (singleUpdater == null)
+                return true;
+
+            return !singleUpdater.isAlive();
+        }
+
+        /**
+         * Cancel preview refresh
+         */
+        public void cancelPreview()
+        {
+            // interrupt current preview update
+            if (singleUpdater != null)
+                singleUpdater.interrupt();
+        }
+
+        /**
+         * Asynchronous image preview refresh only.<br>
+         * ({@link #updatePreview(String)} should have be called once before to give the fileId)
+         */
+        protected synchronized void updatePreview(int z, int t)
+        {
+            // nothing to do
+            if (singleUpdater == null)
+                return;
+
+            // interrupt previous preview refresh
+            cancelPreview();
+
+            // prepare params
+            newImporter = singleUpdater.importer;
+            newFiles = singleUpdater.files;
+            newZ = z;
+            newT = t;
+            newImageRefreshOnly = true;
+
+            // request preview update
+            needUpdate = true;
+        }
+
+        /**
+         * Asynchronous preview refresh.<br>
+         * ({@link #updatePreview(List, int)} should have be called once before to give the fileId)
+         */
+        public synchronized void updatePreview(int s)
+        {
+            // nothing to do
+            if (singleUpdater == null)
+                return;
+
+            updatePreview(singleUpdater.files, s);
+        }
+
+        /**
+         * Asynchronous preview refresh
+         */
+        public synchronized void updatePreview(String[] files, int s)
+        {
+            // interrupt previous preview refresh
+            cancelPreview();
+
+            // reset metadata and series index
+            metadata = null;
+            metadataFieldsOk = false;
+            series = s;
+
+            // prepare params
+            newImporter = null;
+            newFiles = CollectionUtil.asList(files);
+            newZ = -1;
+            newT = -1;
+            newImageRefreshOnly = false;
+
+            // request preview update
+            needUpdate = true;
+        }
+
+        /**
+         * Asynchronous preview refresh
+         */
+        public synchronized void updatePreview(List<String> files, int s)
+        {
+            // interrupt previous preview refresh
+            cancelPreview();
+
+            // reset metadata and series index
+            metadata = null;
+            metadataFieldsOk = false;
+            series = s;
+
+            // prepare params
+            newImporter = null;
+            newFiles = files;
+            newZ = -1;
+            newT = -1;
+            newImageRefreshOnly = false;
+
+            // request preview update
+            needUpdate = true;
+        }
+
+        // /**
+        // * Asynchronous preview refresh
+        // */
+        // public synchronized void updatePreview(String[] files)
+        // {
+        // updatePreview(files, -1);
+        // }
+
+        /**
+         * We are closing the Open Dialog.
+         * Ensure metadata are correctly loaded (it's important that this method is called from EDT)
+         */
+        public synchronized void close()
+        {
+            // interrupt preview
+            cancelPreview();
+
+            if (singleUpdater != null)
+            {
+                // need update metadata fields
                 if (!metadataFieldsOk)
                 {
-                    preview.setInfos("Cannot read file");
+                    // get importer
+                    final SequenceFileImporter importer = singleUpdater.importer;
 
                     try
                     {
-                        // use Callable as we can get interrupted here...
-                        ThreadUtil.invokeNow(new Callable<Boolean>()
+                        // open file(s) if needed...
+                        if (importer.getOpened() == null)
                         {
+                            if (importer instanceof SequenceFileGroupImporter)
+                                ((SequenceFileGroupImporter) importer).open(singleUpdater.files,
+                                        SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                            else
+                                importer.open(singleUpdater.files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                        }
 
-                            @Override
-                            public Boolean call() throws Exception
-                            {
-                                // update panel
-                                updatePanel();
+                        // still not open or process interrupted ? --> stop here
+                        if (importer.getOpened() != null)
+                            return;
 
-                                return Boolean.TRUE;
-                            }
-                        });
+                        try
+                        {
+                            metadata = importer.getOMEXMLMetaData();
+
+                            // update panel (we are on EDT)
+                            updatePanel();
+                        }
+                        finally
+                        {
+                            importer.close();
+                        }
                     }
-                    catch (Throwable t2)
+                    catch (Throwable t)
                     {
-                        // probably interrupted...
-
+                        // we tried...
                     }
                 }
+            }
+
+            // finally interrupt the updater thread
+            interrupt();
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                // interrupt process
+                while (!isInterrupted())
+                {
+                    // sleep a bit
+                    Thread.sleep(10);
+
+                    // need to be synchronized
+                    synchronized (this)
+                    {
+                        // previous preview done ?
+                        if (isPreviewCanceled())
+                        {
+                            // need preview update ?
+                            if (needUpdate)
+                            {
+                                // create new single updater and start it
+                                singleUpdater = new PreviewSingleUpdate(newImporter, newFiles, newZ, newT,
+                                        newImageRefreshOnly);
+                                singleUpdater.start();
+
+                                // done
+                                needUpdate = false;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (InterruptedException t)
+            {
+                // no need to do more here...
+            }
+            catch (Throwable t)
+            {
+                System.out.println("Preview updater interrupted !");
+                IcyExceptionHandler.showErrorMessage(t, false);
             }
         }
     }
@@ -400,6 +677,7 @@ public class LoaderOptionPanel extends JPanel
     protected ThumbnailComponent preview;
     protected JPanel optionsPanel;
     protected PopupPanel popupPanel;
+    protected JComboBox<LoaderLoadingType> loadingTypeCombo;
     protected JLabel loadInSeparatedLabel;
     protected JSlider resolutionSlider;
     protected JLabel resolutionLevelLabel;
@@ -418,7 +696,7 @@ public class LoaderOptionPanel extends JPanel
     // internals
     protected boolean autoOrderEnable;
     protected boolean metadataFieldsOk;
-    protected PreviewUpdater previewThread;
+    protected PreviewUpdater previewUpdater;
     protected OMEXMLMetadata metadata;
     protected int series;
     protected int pZMin;
@@ -428,7 +706,6 @@ public class LoaderOptionPanel extends JPanel
     protected int pCh;
     // protected boolean multiFile;
     protected boolean updatingPanel;
-    private JComboBox<LoaderLoadingType> loadingTypeCombo;
 
     /**
      * Create the panel.
@@ -438,7 +715,6 @@ public class LoaderOptionPanel extends JPanel
         super();
 
         autoOrderEnable = true;
-        previewThread = null;
         metadataFieldsOk = false;
         metadata = null;
         series = -1;
@@ -452,6 +728,9 @@ public class LoaderOptionPanel extends JPanel
         initialize(separate, autoOrder);
 
         updatePanel();
+
+        previewUpdater = new PreviewUpdater();
+        previewUpdater.start();
     }
 
     private void initialize(boolean separate, boolean autoOrder)
@@ -770,8 +1049,7 @@ public class LoaderOptionPanel extends JPanel
     protected void seriesChanged()
     {
         // update preview series index
-        if (previewThread != null)
-            updatePreview(previewThread.files, ((Integer) seriesSpinner.getValue()).intValue());
+        previewUpdater.updatePreview(((Integer) seriesSpinner.getValue()).intValue());
     }
 
     void updateLoadingType()
@@ -990,30 +1268,7 @@ public class LoaderOptionPanel extends JPanel
 
     public boolean isMultiFile()
     {
-        try
-        {
-            // return true if we have multiple file selection
-            if (previewThread != null)
-            {
-                if (previewThread.files.size() > 1)
-                    return true;
-
-                if (previewThread.importer instanceof SequenceFileGroupImporter)
-                {
-                    final SequenceFileGroup group = ((SequenceFileGroupImporter) previewThread.importer)
-                            .getOpenedGroup();
-
-                    if (group != null)
-                        return (group.positions.size() > 1);
-                }
-            }
-        }
-        catch (Throwable t)
-        {
-            // ignore
-        }
-
-        return false;
+        return previewUpdater.isMultiFile();
     }
 
     public boolean canUseAdvancedSetting()
@@ -1139,20 +1394,20 @@ public class LoaderOptionPanel extends JPanel
     }
 
     /**
+     * Cancel preview refresh
+     */
+    public void cancelPreview()
+    {
+        previewUpdater.cancelPreview();
+    }
+
+    /**
      * Asynchronous image preview refresh only ({@link #updatePreview(String)} should have be called once before to give
      * the fileId)
      */
     protected void updatePreview(int z, int t)
     {
-        // interrupt previous preview refresh
-        cancelPreview();
-
-        // only if we had a previous load
-        if (previewThread != null)
-        {
-            previewThread = new PreviewUpdater(previewThread.importer, z, t);
-            previewThread.start();
-        }
+        previewUpdater.updatePreview(z, t);
     }
 
     /**
@@ -1160,16 +1415,7 @@ public class LoaderOptionPanel extends JPanel
      */
     public void updatePreview(String[] files, int s)
     {
-        // interrupt previous preview refresh
-        cancelPreview();
-
-        // reset metadata and series index
-        metadata = null;
-        metadataFieldsOk = false;
-        series = s;
-
-        previewThread = new PreviewUpdater(files);
-        previewThread.start();
+        previewUpdater.updatePreview(files, s);
     }
 
     /**
@@ -1177,16 +1423,7 @@ public class LoaderOptionPanel extends JPanel
      */
     public void updatePreview(List<String> files, int s)
     {
-        // interrupt previous preview refresh
-        cancelPreview();
-
-        // reset metadata and series index
-        metadata = null;
-        metadataFieldsOk = false;
-        series = s;
-
-        previewThread = new PreviewUpdater(files);
-        previewThread.start();
+        previewUpdater.updatePreview(files, s);
     }
 
     /**
@@ -1194,17 +1431,7 @@ public class LoaderOptionPanel extends JPanel
      */
     public void updatePreview(String[] files)
     {
-        updatePreview(files, -1);
-    }
-
-    /**
-     * Cancel preview refresh
-     */
-    public void cancelPreview()
-    {
-        // brutal interruption of previous execution
-        if (previewThread != null)
-            previewThread.interrupt();
+        previewUpdater.updatePreview(files, -1);
     }
 
     /**
@@ -1213,50 +1440,6 @@ public class LoaderOptionPanel extends JPanel
      */
     public void closingFromEDT()
     {
-        if (previewThread == null)
-            return;
-
-        // interrupt process from thread
-        previewThread.interrupt();
-
-        // need update metadata fields
-        if (!metadataFieldsOk)
-        {
-            // get importer
-            SequenceFileImporter importer = previewThread.importer;
-
-            try
-            {
-                // open file(s) if needed...
-                if (importer.getOpened() == null)
-                {
-                    if (importer instanceof SequenceFileGroupImporter)
-                        ((SequenceFileGroupImporter) importer).open(previewThread.files,
-                                SequenceIdImporter.FLAG_METADATA_MINIMUM);
-                    else
-                        importer.open(previewThread.files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
-                }
-
-                // still not open or process interrupted ? --> stop here
-                if (importer.getOpened() != null)
-                    return;
-
-                try
-                {
-                    metadata = importer.getOMEXMLMetaData();
-
-                    // update panel (we are on EDT)
-                    updatePanel();
-                }
-                finally
-                {
-                    importer.close();
-                }
-            }
-            catch (Throwable t)
-            {
-                // we tried...
-            }
-        }
+        previewUpdater.close();
     }
 }
