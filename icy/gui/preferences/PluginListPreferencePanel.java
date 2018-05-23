@@ -61,8 +61,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public abstract class PluginListPreferencePanel extends PreferencePanel implements TextChangeListener,
-        ListSelectionListener
+public abstract class PluginListPreferencePanel extends PreferencePanel
+        implements TextChangeListener, ListSelectionListener
 {
     /**
      * 
@@ -737,9 +737,17 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     {
         final List<PluginDescriptor> plugins = getSelectedPlugins();
 
-        tableModel.fireTableDataChanged();
+        try
+        {
+            tableModel.fireTableDataChanged();
+        }
+        catch (Throwable t)
+        {
+            // sometime sorting can throw exception, ignore them...
+        }
+
         // restore previous selected plugins if possible
-        setSelectedPlugins(new HashSet<PluginDescriptor>(plugins));
+        setSelectedPlugins(new HashSet<>(plugins));
         // update button state
         buttonsStateUpdater.run();
     }

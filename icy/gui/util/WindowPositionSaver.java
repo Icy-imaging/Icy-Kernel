@@ -196,6 +196,8 @@ public class WindowPositionSaver
         {
             component.addComponentListener(new WeakComponentListener(componentAdapter));
         }
+
+        checkVisibility();
     }
 
     public WindowPositionSaver(MainFrame frame, String key, Point defLoc, Dimension defDim)
@@ -503,6 +505,49 @@ public class WindowPositionSaver
         else if (jFrame != null)
         {
             ComponentUtil.setMaximized(jFrame, maximizedE);
+        }
+    }
+
+    public void checkVisibility()
+    {
+        if (!hasLoc)
+            return;
+
+        if (icyFrame != null)
+        {
+            // not visible ?
+            if (icyFrame.getVisibleRect().isEmpty())
+            {
+                final Point location = icyFrame.getLocation();
+
+                // potentially outside visible area ? --> reset its position
+                if ((location.x < 0) || (location.x > 700) || (location.y < 0) || (location.y > 500))
+                    icyFrame.setLocation(100, 100);
+            }
+        }
+        else if (extPanel != null)
+        {
+            // not visible ? reset its position
+            if (extPanel.getVisibleRect().isEmpty())
+            {
+                final Point location = extPanel.getLocation();
+
+                // potentially outside visible area ? --> reset its position
+                if ((location.x < 0) || (location.x > 500) || (location.y < 0) || (location.y > 300))
+                    extPanel.setLocation(100, 100);
+            }
+        }
+        else if (component != null)
+        {
+            // not visible ? reset its position
+            if (component.getVisibleRect().isEmpty())
+            {
+                final Point location = component.getLocation();
+
+                // potentially outside visible area ? --> reset its position
+                if ((location.x < 0) || (location.x > 500) || (location.y < 0) || (location.y > 300))
+                    component.setLocation(100, 100);
+            }
         }
     }
 
