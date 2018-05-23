@@ -210,7 +210,7 @@ public class ApplicationPreferences
     {
         // we want a big perm gen space for the class loader
         return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:MaxPermSize=128M");
+                "-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:MaxPermSize=128M");
     }
 
     /**
