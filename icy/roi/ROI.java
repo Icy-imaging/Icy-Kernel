@@ -3315,7 +3315,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void addListener(ROIListener listener)
     {
-        listeners.add(listener);
+        if (listener != null)
+            listeners.add(listener);
     }
 
     /**
@@ -3325,7 +3326,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void removeListener(ROIListener listener)
     {
-        listeners.remove(listener);
+        if (listener != null)
+            listeners.remove(listener);
     }
 
     private void fireChangedEvent(ROIEvent event)

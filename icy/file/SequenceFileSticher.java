@@ -21,6 +21,7 @@ package icy.file;
 import icy.gui.frame.progress.FileFrame;
 import icy.sequence.DimensionId;
 import icy.sequence.MetaDataUtil;
+import icy.sequence.SequenceIdImporter;
 import icy.type.DataType;
 import icy.util.StringUtil;
 import icy.util.StringUtil.AlphanumComparator;
@@ -1675,7 +1676,7 @@ public class SequenceFileSticher
 
             try
             {
-                // try to open it
+                // try to open it (require default metadata otherwise pixel size may miss)
                 imp.open(path, 0);
             }
             catch (Throwable t)
