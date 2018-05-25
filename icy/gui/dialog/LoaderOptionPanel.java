@@ -702,7 +702,6 @@ public class LoaderOptionPanel extends JPanel
     protected Region2DComponent xyRegionComp;
 
     // internals
-    protected boolean autoOrderEnable;
     protected boolean metadataFieldsOk;
     protected PreviewUpdater previewUpdater;
     protected OMEXMLMetadata metadata;
@@ -722,7 +721,6 @@ public class LoaderOptionPanel extends JPanel
     {
         super();
 
-        autoOrderEnable = true;
         metadataFieldsOk = false;
         metadata = null;
         series = -1;
@@ -771,7 +769,7 @@ public class LoaderOptionPanel extends JPanel
         gbc_loadInSeparatedLabel.gridy = 0;
         loadInSeparatedLabel = new JLabel("Load type");
         loadInSeparatedLabel.setToolTipText(
-                "Define if we try to group files or not (and eventually automatic set Z, T, C ordering from file name)");
+                "Define if we try to group files / series or not (and eventually automatic set Z, T, C ordering from file name)");
         optionsPanel.add(loadInSeparatedLabel, gbc_loadInSeparatedLabel);
 
         loadingTypeCombo = new JComboBox();
@@ -1058,11 +1056,6 @@ public class LoaderOptionPanel extends JPanel
     {
         // update preview series index
         previewUpdater.updatePreview(((Integer) seriesSpinner.getValue()).intValue());
-    }
-
-    void updateLoadingType()
-    {
-        loadingTypeCombo.setEnabled(autoOrderEnable && !isSeparateSequenceSelected());
     }
 
     void updateXYRegion()

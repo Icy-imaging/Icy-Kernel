@@ -76,11 +76,6 @@ public class WindowActions
         {
             new SwimmingPoolViewer();
             
-            MainFrame frame = Icy.getMainInterface().getMainFrame();
-            
-            Rectangle bnd = SystemUtil.getScreenBounds(SystemUtil.getDefaultScreenDevice(), true);
-            frame.setSize(bnd.getSize());
-
             return true;
         }
     };
