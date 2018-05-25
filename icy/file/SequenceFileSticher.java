@@ -21,7 +21,6 @@ package icy.file;
 import icy.gui.frame.progress.FileFrame;
 import icy.sequence.DimensionId;
 import icy.sequence.MetaDataUtil;
-import icy.sequence.SequenceIdImporter;
 import icy.type.DataType;
 import icy.util.StringUtil;
 import icy.util.StringUtil.AlphanumComparator;
@@ -1245,12 +1244,14 @@ public class SequenceFileSticher
             for (int i = 1; i < size; i++)
             {
                 final SequencePosition current = positions.get(i);
-                final DimensionId diff;
+                DimensionId diff = null;
 
                 // if we don't want real position we just use T ordering
                 if (findPosition)
                     diff = previous.getDifference(current);
-                else
+
+                // default = T dimension
+                if (diff == null)
                     diff = DimensionId.T;
 
                 // base path changed
@@ -1684,7 +1685,7 @@ public class SequenceFileSticher
                 // can't be opened... try with an other importer
                 if (tryAnotherImporter)
                     return tryOpen(null, path);
-                
+
                 // can't open importer
                 return null;
             }

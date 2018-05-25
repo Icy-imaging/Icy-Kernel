@@ -419,7 +419,7 @@ public class Icy
 
     private static boolean handleAppArgs(String[] args)
     {
-        final List<String> pluginArgsList = new ArrayList<>();
+        final List<String> pluginArgsList = new ArrayList<String>();
 
         startupImage = null;
         startupPluginName = null;
@@ -972,7 +972,7 @@ public class Icy
 
         // get all files in local native library path
         final File[] files = FileUtil.getFiles(libFile, null, true, true, false);
-        final ArrayList<String> directories = new ArrayList<>();
+        final ArrayList<String> directories = new ArrayList<String>();
 
         // add base local native library path to user library paths
         directories.add(libFile.getAbsolutePath());
@@ -1298,25 +1298,25 @@ public class Icy
         {
             IcyExceptionHandler.showErrorMessage(e1, false, false);
 
-//            // try to load the VTK way
-//            try
-//            {
-//                System.out.print("Try to load VTK library using VTK method... ");
-//
-//                vtkLibraryLoaded = vtkNativeLibrary.LoadAllNativeLibraries();
-//
-//                if (vtkLibraryLoaded)
-//                    System.out.println("success !");
-//                else
-//                    System.out.println("failed !");
-//
-//                // redirect vtk error log to file
-//                vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
-//            }
-//            catch (Throwable e2)
-//            {
-//                IcyExceptionHandler.showErrorMessage(e2, false, false);
-//            }
+            // // try to load the VTK way
+            // try
+            // {
+            // System.out.print("Try to load VTK library using VTK method... ");
+            //
+            // vtkLibraryLoaded = vtkNativeLibrary.LoadAllNativeLibraries();
+            //
+            // if (vtkLibraryLoaded)
+            // System.out.println("success !");
+            // else
+            // System.out.println("failed !");
+            //
+            // // redirect vtk error log to file
+            // vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
+            // }
+            // catch (Throwable e2)
+            // {
+            // IcyExceptionHandler.showErrorMessage(e2, false, false);
+            // }
         }
 
         if (vtkLibraryLoaded)

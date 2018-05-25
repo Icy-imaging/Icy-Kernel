@@ -136,7 +136,7 @@ public class WebInterface
         final String memory;
         String pluginId;
         String pluginDepsId;
-        final Map<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<String, String>();
 
         // bug report action
         values.put(PARAM_ACTION, ACTION_TYPE_BUGREPORT);

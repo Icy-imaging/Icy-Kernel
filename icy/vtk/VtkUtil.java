@@ -414,7 +414,7 @@ public class VtkUtil
      */
     public static vtkProp[] getLayersProps(List<Layer> layers)
     {
-        final List<vtkProp[]> layersProps = new ArrayList<>();
+        final List<vtkProp[]> layersProps = new ArrayList<vtkProp[]>();
         int totalSize = 0;
 
         for (Layer layer : layers)

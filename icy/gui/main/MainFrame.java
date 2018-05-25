@@ -316,7 +316,7 @@ public class MainFrame extends JRibbonFrame
                 if (detachedMode)
                     pack();
 
-                // save state in preferene
+                // save state in preference
                 GeneralPreferences.setRibbonMinimized(value);
             }
         });

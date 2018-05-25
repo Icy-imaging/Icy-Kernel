@@ -66,7 +66,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509ExtendedTrustManager;
 
 /**
  * @author stephane
@@ -188,63 +187,7 @@ public class NetworkUtil
         }
     };
 
-    /**
-     * 'Accept all certificates' trust manager
-     */
-    private static class AcceptAllX509TrustManager extends X509ExtendedTrustManager
-    {
-        public AcceptAllX509TrustManager()
-        {
-            super();
-        }
-
-        @Override
-        public java.security.cert.X509Certificate[] getAcceptedIssuers()
-        {
-            return null;
-        }
-
-        @Override
-        public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType)
-        {
-            // ignore
-        }
-
-        @Override
-        public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType)
-        {
-            // ignore
-        }
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket)
-                throws CertificateException
-        {
-            // ignore
-        }
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-                throws CertificateException
-        {
-            // ignore
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket)
-                throws CertificateException
-        {
-            // ignore
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-                throws CertificateException
-        {
-            // ignore
-        }
-    };
-
+    
     /**
      * 'Accept all' host name verifier
      */
@@ -321,8 +264,55 @@ public class NetworkUtil
             // install the accept all host name verifier
             HttpsURLConnection.setDefaultHostnameVerifier(new FakeHostnameVerifier());
 
-            // create a trust manager that does not validate certificate chains
-            final TrustManager[] trustAllCerts = new TrustManager[] {new AcceptAllX509TrustManager()};
+            // create a trust manager that does not validate certificate chains (Accept all certificates)
+            final TrustManager[] trustAllCerts = new TrustManager[] {new javax.net.ssl.X509ExtendedTrustManager()
+            {
+                @Override
+                public java.security.cert.X509Certificate[] getAcceptedIssuers()
+                {
+                    return null;
+                }
+
+                @Override
+                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType)
+                {
+                    // ignore
+                }
+
+                @Override
+                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType)
+                {
+                    // ignore
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket)
+                        throws CertificateException
+                {
+                    // ignore
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
+                        throws CertificateException
+                {
+                    // ignore
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket)
+                        throws CertificateException
+                {
+                    // ignore
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
+                        throws CertificateException
+                {
+                    // ignore
+                }
+            }};
 
             // install the all-trusting trust manager
             final SSLContext sc = SSLContext.getInstance("SSL");

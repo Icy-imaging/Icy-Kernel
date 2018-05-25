@@ -49,7 +49,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
     private static long lastErrorDialog = 0;
     private static long lastErrorReport = 0;
-    private static Set<String> reportedPlugins = new HashSet<>();
+    private static Set<String> reportedPlugins = new HashSet<String>();
 
     public static void init()
     {
@@ -431,7 +431,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final String memory;
         String pluginId;
         String pluginDepsId;
-        final Map<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<String, String>();
 
         values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
         values.put(NetworkUtil.ID_JAVANAME, SystemUtil.getJavaName());

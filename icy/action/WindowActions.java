@@ -24,8 +24,10 @@ import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.swimmingPool.SwimmingPoolViewer;
+import icy.system.SystemUtil;
 import icy.util.ClassUtil;
 
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -73,6 +75,11 @@ public class WindowActions
         public boolean doAction(ActionEvent e)
         {
             new SwimmingPoolViewer();
+            
+            MainFrame frame = Icy.getMainInterface().getMainFrame();
+            
+            Rectangle bnd = SystemUtil.getScreenBounds(SystemUtil.getDefaultScreenDevice(), true);
+            frame.setSize(bnd.getSize());
 
             return true;
         }

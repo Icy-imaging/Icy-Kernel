@@ -489,8 +489,16 @@ public class LoaderOptionPanel extends JPanel
             // prepare params
             newImporter = singleUpdater.importer;
             newFiles = singleUpdater.files;
-            newZ = z;
-            newT = t;
+            // use previous value
+            if (z == -1)
+                newZ = singleUpdater.z;
+            else
+                newZ = z;
+            // use previous value
+            if (t == -1)
+                newT = singleUpdater.t;
+            else
+                newT = t;
             newImageRefreshOnly = true;
 
             // request preview update
@@ -677,7 +685,7 @@ public class LoaderOptionPanel extends JPanel
     protected ThumbnailComponent preview;
     protected JPanel optionsPanel;
     protected PopupPanel popupPanel;
-    protected JComboBox<LoaderLoadingType> loadingTypeCombo;
+    protected JComboBox loadingTypeCombo;
     protected JLabel loadInSeparatedLabel;
     protected JSlider resolutionSlider;
     protected JLabel resolutionLevelLabel;
@@ -766,7 +774,7 @@ public class LoaderOptionPanel extends JPanel
                 "Define if we try to group files or not (and eventually automatic set Z, T, C ordering from file name)");
         optionsPanel.add(loadInSeparatedLabel, gbc_loadInSeparatedLabel);
 
-        loadingTypeCombo = new JComboBox<LoaderLoadingType>();
+        loadingTypeCombo = new JComboBox();
         loadingTypeCombo.setToolTipText(
                 "Define if we try to group files or not (and eventually automatic set Z, T, C ordering from file name)");
         loadingTypeCombo.setModel(new DefaultComboBoxModel(LoaderLoadingType.values()));

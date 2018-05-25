@@ -747,7 +747,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel
         }
 
         // restore previous selected plugins if possible
-        setSelectedPlugins(new HashSet<>(plugins));
+        setSelectedPlugins(new HashSet<PluginDescriptor>(plugins));
         // update button state
         buttonsStateUpdater.run();
     }
