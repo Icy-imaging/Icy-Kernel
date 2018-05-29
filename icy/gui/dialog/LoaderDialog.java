@@ -6,6 +6,7 @@ import icy.file.Loader;
 import icy.file.SequenceFileImporter;
 import icy.file.SequenceFileSticher;
 import icy.file.SequenceFileSticher.SequenceFileGroup;
+import icy.gui.dialog.LoaderOptionPanel.LoaderLoadingType;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
@@ -78,8 +79,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
     private static final String ID_WIDTH = "width";
     private static final String ID_HEIGTH = "heigth";
-    private static final String ID_SEPARATE = "separate";
-    private static final String ID_AUTOORDER = "autoOrder";
+    private static final String ID_LOADTYPE = "loadtype";
     private static final String ID_EXTENSION = "extension";
 
     // GUI
@@ -117,8 +117,8 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         fileImporters = Loader.getFileImporters();
 
         // create option panel
-        optionPanel = new LoaderOptionPanel(preferences.getBoolean(ID_SEPARATE, false),
-                preferences.getBoolean(ID_AUTOORDER, true));
+        optionPanel = new LoaderOptionPanel(
+                LoaderLoadingType.values()[preferences.getInt(ID_LOADTYPE, LoaderLoadingType.GROUP.ordinal())]);
 
         // we can only store dimension for JFileChooser
         setPreferredSize(new Dimension(preferences.getInt(ID_WIDTH, 600), preferences.getInt(ID_HEIGTH, 400)));
@@ -199,8 +199,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         {
             // store current path
             GeneralPreferences.setLoaderFolder(getCurrentDirectory().getAbsolutePath());
-            preferences.putBoolean(ID_SEPARATE, isSeparateSequenceSelected());
-            preferences.putBoolean(ID_AUTOORDER, isAutoOrderSelected());
+            preferences.putInt(ID_LOADTYPE, optionPanel.getLoadingType().ordinal());
             preferences.put(ID_EXTENSION, getFileFilter().getDescription());
 
             // load if requested
@@ -263,7 +262,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
                                 optionPanel.getFullZRange() ? -1 : optionPanel.getZMax(),
                                 optionPanel.getFullTRange() ? -1 : optionPanel.getTMin(),
                                 optionPanel.getFullTRange() ? -1 : optionPanel.getTMax(), optionPanel.getChannel(),
-                                true, true);
+                                isSeparateSequenceSelected(), true, true);
                     }
                 }
             }
@@ -404,7 +403,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
      */
     public boolean isAutoOrderSelected()
     {
-        return optionPanel.isAutoOrderSelected();
+        return optionPanel.getLoadingType() == LoaderLoadingType.GROUP;
     }
 
     /**

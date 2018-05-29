@@ -18,6 +18,7 @@
  */
 package icy.gui.dialog;
 
+import icy.common.exception.UnsupportedFormatException;
 import icy.file.Loader;
 import icy.file.SequenceFileGroupImporter;
 import icy.file.SequenceFileImporter;
@@ -45,7 +46,9 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -61,17 +64,18 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ome.xml.meta.OMEXMLMetadata;
+import plugins.kernel.importer.LociImporterPlugin;
 
 public class LoaderOptionPanel extends JPanel
 {
-    private enum LoaderLoadingType
+    public enum LoaderLoadingType
     {
-        GROUP_ORDERING
+        GROUP
         {
             @Override
             public String toString()
             {
-                return "Group files - ordering";
+                return "Group files";
             }
         },
         GROUP_NO_ORDERING
@@ -79,7 +83,7 @@ public class LoaderOptionPanel extends JPanel
             @Override
             public String toString()
             {
-                return "Group files - no ordering";
+                return "Group files (no ordering)";
             }
         },
         NO_GROUP
@@ -109,6 +113,63 @@ public class LoaderOptionPanel extends JPanel
             this.z = z;
             this.t = t;
             this.imageRefreshOnly = imageRefreshOnly;
+        }
+
+        public SequenceFileImporter createSingleFileImporter()
+        {
+            // get importer and open image
+            final SequenceFileImporter result = Loader.getSequenceFileImporter(files.get(0), true);
+
+            if (result instanceof LociImporterPlugin)
+            {
+                // separate loading wanted ? --> disable grouping in LOCI importer
+                if (isSeparateSequenceSelected())
+                    ((LociImporterPlugin) result).setGroupFiles(false);
+            }
+
+            return result;
+        }
+
+        public SequenceFileImporter createImporter()
+        {
+            // need to open a single file ?
+            if (isSeparateSequenceSelected() || !isMultiFile())
+                // get importer and open image
+                return createSingleFileImporter();
+
+            return new SequenceFileGroupImporter();
+        }
+
+        public void openImporter(SequenceFileImporter importer) throws IOException, UnsupportedFormatException
+        {
+            if (importer instanceof SequenceFileGroupImporter)
+                ((SequenceFileGroupImporter) importer).open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+            else
+                importer.open(files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
+        }
+
+        public boolean isMultiFile()
+        {
+            try
+            {
+                // return true if we have multiple file selection
+                if (files.size() > 1)
+                    return true;
+
+                if (importer instanceof SequenceFileGroupImporter)
+                {
+                    final SequenceFileGroup group = ((SequenceFileGroupImporter) importer).getOpenedGroup();
+
+                    if (group != null)
+                        return (group.positions.size() > 1);
+                }
+            }
+            catch (Throwable t)
+            {
+                // ignore
+            }
+
+            return false;
         }
 
         // PreviewSingleUpdate(SequenceFileImporter importer, String[] files, int z, int t, boolean imageRefreshOnly)
@@ -153,34 +214,33 @@ public class LoaderOptionPanel extends JPanel
                     // use last - 1 resolution
                     final int res = Math.max(0, resolutionSlider.getMaximum() - 1);
 
-                    // always try to use the group importer first for preview
+                    // need to create the importer ?
                     if (importer == null)
-                        importer = new SequenceFileGroupImporter();
+                        importer = createImporter();
 
                     try
                     {
-                        // open file(s) if needed...
+                        // open importer if needed
                         if (importer.getOpened() == null)
                         {
-                            if (importer instanceof SequenceFileGroupImporter)
+                            openImporter(importer);
+
+                            // open failed while we were using group importer ? --> try to use the classic importer
+                            if ((importer.getOpened() == null) && (importer instanceof SequenceFileGroupImporter))
                             {
-                                ((SequenceFileGroupImporter) importer).open(files,
-                                        SequenceIdImporter.FLAG_METADATA_MINIMUM);
-
-                                // open failed ? --> use classic importer
-                                if (importer.getOpened() == null)
-                                {
-                                    final String path = files.get(0);
-
-                                    // get importer and open image
-                                    importer = Loader.getSequenceFileImporter(path, true);
-                                    importer.open(path, SequenceIdImporter.FLAG_METADATA_MINIMUM);
-                                }
+                                // get single file importer
+                                importer = createSingleFileImporter();
+                                // and try to open it
+                                openImporter(importer);
                             }
                         }
 
-                        // still not open or process interrupted ? --> stop here
-                        if ((importer.getOpened() == null) || isInterrupted())
+                        // still not open ? --> error
+                        if (importer.getOpened() == null)
+                            throw new Exception("Can't open '" + files.get(0) + "' image file..");
+
+                        // interrupted ? --> stop here
+                        if (isInterrupted())
                             return;
 
                         // not defined --> use first
@@ -272,18 +332,18 @@ public class LoaderOptionPanel extends JPanel
                 if (importer != null)
                     importer.close();
 
-                importer = new SequenceFileGroupImporter();
+                // create the importer
+                importer = createImporter();
                 // open file(s)...
-                ((SequenceFileGroupImporter) importer).open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                openImporter(importer);
 
-                // open failed ? --> use classic importer
-                if (importer.getOpened() == null)
+                // open failed while we were using group importer ? --> try to use the classic importer
+                if ((importer.getOpened() == null) && (importer instanceof SequenceFileGroupImporter))
                 {
-                    final String path = files.get(0);
-
-                    // get importer and open image
-                    importer = Loader.getSequenceFileImporter(path, true);
-                    importer.open(path, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                    // get single file importer
+                    importer = createSingleFileImporter();
+                    // and try to open it
+                    openImporter(importer);
                 }
 
                 // still not open ? --> throw error
@@ -396,13 +456,13 @@ public class LoaderOptionPanel extends JPanel
 
     private class PreviewUpdater extends Thread
     {
-        private SequenceFileImporter newImporter;
-        private List<String> newFiles;
-        private int newZ;
-        private int newT;
-        private boolean newImageRefreshOnly;
+        SequenceFileImporter newImporter;
+        List<String> newFiles;
+        int newZ;
+        int newT;
+        boolean newImageRefreshOnly;
 
-        private boolean needUpdate;
+        boolean needUpdate;
 
         PreviewSingleUpdate singleUpdater;
 
@@ -429,27 +489,7 @@ public class LoaderOptionPanel extends JPanel
             if (singleUpdater == null)
                 return false;
 
-            try
-            {
-                // return true if we have multiple file selection
-                if (singleUpdater.files.size() > 1)
-                    return true;
-
-                if (singleUpdater.importer instanceof SequenceFileGroupImporter)
-                {
-                    final SequenceFileGroup group = ((SequenceFileGroupImporter) singleUpdater.importer)
-                            .getOpenedGroup();
-
-                    if (group != null)
-                        return (group.positions.size() > 1);
-                }
-            }
-            catch (Throwable t)
-            {
-                // ignore
-            }
-
-            return false;
+            return singleUpdater.isMultiFile();
         }
 
         /**
@@ -506,15 +546,19 @@ public class LoaderOptionPanel extends JPanel
         }
 
         /**
+         * Asynchronous preview refresh (complete preview refresh)
+         */
+        public synchronized void updatePreview()
+        {
+            updatePreview(singleUpdater.files, series);
+        }
+
+        /**
          * Asynchronous preview refresh.<br>
          * ({@link #updatePreview(List, int)} should have be called once before to give the fileId)
          */
         public synchronized void updatePreview(int s)
         {
-            // nothing to do
-            if (singleUpdater == null)
-                return;
-
             updatePreview(singleUpdater.files, s);
         }
 
@@ -575,7 +619,8 @@ public class LoaderOptionPanel extends JPanel
         // }
 
         /**
-         * We are closing the Open Dialog.
+         * We are closing the Open Dialog.<br>
+         * Don't forget to call this method otherwise the updater thread will remain active !!<br>
          * Ensure metadata are correctly loaded (it's important that this method is called from EDT)
          */
         public synchronized void close()
@@ -595,13 +640,7 @@ public class LoaderOptionPanel extends JPanel
                     {
                         // open file(s) if needed...
                         if (importer.getOpened() == null)
-                        {
-                            if (importer instanceof SequenceFileGroupImporter)
-                                ((SequenceFileGroupImporter) importer).open(singleUpdater.files,
-                                        SequenceIdImporter.FLAG_METADATA_MINIMUM);
-                            else
-                                importer.open(singleUpdater.files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
-                        }
+                            singleUpdater.openImporter(importer);
 
                         // still not open or process interrupted ? --> stop here
                         if (importer.getOpened() != null)
@@ -717,7 +756,7 @@ public class LoaderOptionPanel extends JPanel
     /**
      * Create the panel.
      */
-    public LoaderOptionPanel(boolean separate, boolean autoOrder)
+    public LoaderOptionPanel(LoaderLoadingType loadType)
     {
         super();
 
@@ -731,15 +770,16 @@ public class LoaderOptionPanel extends JPanel
         pCh = -1;
         updatingPanel = false;
 
-        initialize(separate, autoOrder);
+        initialize(loadType);
 
-        updatePanel();
-
+        // need to be done *before* updatePanel
         previewUpdater = new PreviewUpdater();
         previewUpdater.start();
+
+        updatePanel();
     }
 
-    private void initialize(boolean separate, boolean autoOrder)
+    private void initialize(LoaderLoadingType loadType)
     {
         setBorder(BorderFactory.createTitledBorder((Border) null));
         setLayout(new BorderLayout());
@@ -776,7 +816,7 @@ public class LoaderOptionPanel extends JPanel
         loadingTypeCombo.setToolTipText(
                 "Define if we try to group files or not (and eventually automatic set Z, T, C ordering from file name)");
         loadingTypeCombo.setModel(new DefaultComboBoxModel(LoaderLoadingType.values()));
-        loadingTypeCombo.setSelectedIndex(0);
+        loadingTypeCombo.setSelectedIndex(loadType.ordinal());
         loadingTypeCombo.addActionListener(new ActionListener()
         {
             @Override
@@ -1058,6 +1098,11 @@ public class LoaderOptionPanel extends JPanel
         previewUpdater.updatePreview(((Integer) seriesSpinner.getValue()).intValue());
     }
 
+    void updateLoadingType()
+    {
+        loadingTypeCombo.setEnabled((metadata != null));
+    }
+
     void updateXYRegion()
     {
         if (metadata != null)
@@ -1214,6 +1259,7 @@ public class LoaderOptionPanel extends JPanel
 
     void disablePanel()
     {
+        loadingTypeCombo.setEnabled(false);
         channelSpinner.setEnabled(false);
         seriesSpinner.setEnabled(false);
         resolutionLevelLabel.setText("");
@@ -1229,6 +1275,7 @@ public class LoaderOptionPanel extends JPanel
         updatingPanel = true;
         try
         {
+            updateLoadingType();
             updateResolutionSlider();
             updateXYRegion();
             updateTRange();
@@ -1244,12 +1291,20 @@ public class LoaderOptionPanel extends JPanel
 
     void loadingTypeChanged()
     {
-        updatePanel();
+        updatePreview(-1);
     }
 
     void regionLoadingToggleChanged()
     {
         xyRegionComp.setEnabled(xyRegionLoadingToggle.isEnabled() && xyRegionLoadingToggle.isSelected());
+    }
+
+    public List<String> getFiles()
+    {
+        if (previewUpdater != null)
+            return previewUpdater.newFiles;
+
+        return new ArrayList<String>();
     }
 
     public boolean getOptionsVisible()
@@ -1277,9 +1332,9 @@ public class LoaderOptionPanel extends JPanel
         return !(isSeparateSequenceSelected() && isMultiFile());
     }
 
-    public boolean isAutoOrderSelected()
+    public LoaderLoadingType getLoadingType()
     {
-        return loadingTypeCombo.getSelectedItem() == LoaderLoadingType.GROUP_ORDERING;
+        return (LoaderLoadingType) loadingTypeCombo.getSelectedItem();
     }
 
     void setLoadingType(LoaderLoadingType value)
@@ -1402,8 +1457,13 @@ public class LoaderOptionPanel extends JPanel
         previewUpdater.cancelPreview();
     }
 
+    protected void updatePreview(int series)
+    {
+        previewUpdater.updatePreview(series);
+    }
+
     /**
-     * Asynchronous image preview refresh only ({@link #updatePreview(String)} should have be called once before to give
+     * Asynchronous image preview refresh only, ({@link #updatePreview(String)} should have be called once before to give
      * the fileId)
      */
     protected void updatePreview(int z, int t)
@@ -1416,7 +1476,9 @@ public class LoaderOptionPanel extends JPanel
      */
     public void updatePreview(String[] files, int s)
     {
-        previewUpdater.updatePreview(files, s);
+        // series or files selection changed ?
+        if ((series != s) || !CollectionUtil.equals(getFiles(), CollectionUtil.asList(files)))
+            previewUpdater.updatePreview(files, s);
     }
 
     /**
@@ -1424,7 +1486,9 @@ public class LoaderOptionPanel extends JPanel
      */
     public void updatePreview(List<String> files, int s)
     {
-        previewUpdater.updatePreview(files, s);
+        // series or files selection changed ?
+        if ((series != s) || !CollectionUtil.equals(getFiles(), files))
+            previewUpdater.updatePreview(files, s);
     }
 
     /**
@@ -1432,7 +1496,9 @@ public class LoaderOptionPanel extends JPanel
      */
     public void updatePreview(String[] files)
     {
-        previewUpdater.updatePreview(files, -1);
+        // files selection changed ?
+        if (!CollectionUtil.equals(getFiles(), CollectionUtil.asList(files)))
+            previewUpdater.updatePreview(files, -1);
     }
 
     /**

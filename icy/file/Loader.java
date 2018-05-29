@@ -54,6 +54,7 @@ import icy.util.XMLUtil;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,6 +72,7 @@ import loci.formats.ImageReader;
 import loci.formats.meta.MetadataStore;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
+import plugins.kernel.importer.LociImporterPlugin;
 
 /**
  * Sequence / Image loader class.
@@ -779,6 +781,27 @@ public class Loader
     public static SequenceFileImporter getSequenceFileImporter(String path)
     {
         return getSequenceFileImporter(path, true);
+    }
+
+    static SequenceFileImporter cloneSequenceFileImporter(SequenceFileImporter importer)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            NoSuchMethodException, SecurityException
+    {
+        if (importer == null)
+            return null;
+
+        final SequenceFileImporter result = importer.getClass().getDeclaredConstructor().newInstance();
+        
+        if (result instanceof LociImporterPlugin)
+        {
+            final LociImporterPlugin srcImp = (LociImporterPlugin) importer;
+            final LociImporterPlugin resImp = (LociImporterPlugin) result;
+
+            resImp.setGroupFiles(srcImp.isGroupFiles());
+            resImp.setReadOriginalMetadata(srcImp.getReadOriginalMetadata());
+        }
+
+        return result;
     }
 
     /**
@@ -2189,6 +2212,8 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param separate
+     *        Force image to be loaded in separate sequence if possible (disable stitching if any)
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
@@ -2196,7 +2221,7 @@ public class Loader
      */
     public static void load(final SequenceFileImporter importer, final String path, final int series,
             final int resolution, final Rectangle region, final int minZ, final int maxZ, final int minT,
-            final int maxT, final int channel, final boolean addToRecent, final boolean showProgress)
+            final int maxT, final int channel, final boolean separate, final boolean addToRecent, final boolean showProgress)
     {
         // asynchronous call
         ThreadUtil.bgRun(new Runnable()
@@ -2211,7 +2236,7 @@ public class Loader
                     // load sequence (we use this method to allow multi series opening)
                     final List<Sequence> sequences = loadSequences(
                             (importer == null) ? getSequenceFileImporter(path, !showProgress) : importer,
-                            CollectionUtil.asList(path), series, true, false, false, addToRecent, showProgress);
+                            CollectionUtil.asList(path), series, separate, false, false, addToRecent, showProgress);
 
                     // and display them
                     for (Sequence sequence : sequences)
@@ -2836,7 +2861,7 @@ public class Loader
      *        -1 is a special value so it gives a chance to the user to select series to open from a
      *        series selector dialog.
      * @param separate
-     *        Force image to be loaded in separate sequence
+     *        Force image to be loaded in separate sequence (also disable stitching if possible)
      * @param autoOrder
      *        If set to true then images are automatically orderer from their filename.
      * @param directory
@@ -2880,6 +2905,10 @@ public class Loader
                     loadingFrame.setLength(paths.size() * 100d);
                     loadingFrame.setPosition(0d);
                 }
+
+                // force un-grouping when 'separate' is true
+                if (separate && (importer instanceof LociImporterPlugin))
+                    ((LociImporterPlugin) importer).setGroupFiles(false);
 
                 // load each file in a separate sequence
                 for (String path : paths)
@@ -3217,9 +3246,9 @@ public class Loader
      *        Caller should allocate 100 positions for the internal single load process.
      * @return the Sequence object or <code>null</code>
      */
-    public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series, int resolution,
-            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, FileFrame loadingFrame)
-            throws IOException, UnsupportedFormatException, OutOfMemoryError
+    public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series,
+            int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
+            FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
         final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
@@ -3380,7 +3409,7 @@ public class Loader
                 try
                 {
                     // series selection (create a new importer instance as selectSerie(..) does async processes)
-                    selectedSeries = selectSeries(importer.getClass().newInstance(), path, meta, 0, false);
+                    selectedSeries = selectSeries(cloneSequenceFileImporter(importer), path, meta, 0, false);
                 }
                 catch (Throwable t)
                 {

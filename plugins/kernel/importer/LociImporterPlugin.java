@@ -124,12 +124,19 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     // get reader and working buffers
                     final IFormatReader r = getReader();
                     final TilePixelsWorkBuffer buf = buffers.pop();
+                    final IFormatReader tr;
+
+                    // group file is disabled ? --> directly use internal reader
+                    if (!isGroupFiles() && (r instanceof TileStitcher))
+                        tr = ((TileStitcher) r).getReader();
+                    else
+                        tr = r;
 
                     try
                     {
                         try
                         {
-                            pixels = getPixelsInternal(r, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
+                            pixels = getPixelsInternal(tr, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
                                     buf.channelBuffer, buf.pixelBuffer);
                         }
                         finally
@@ -358,6 +365,13 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     // get reader and working buffers
                     final IFormatReader r = getReader();
                     final TileImageWorkBuffer buf = buffers.pop();
+                    final IFormatReader tr;
+
+                    // group file is disabled ? --> directly use internal reader
+                    if (!isGroupFiles() && (r instanceof TileStitcher))
+                        tr = ((TileStitcher) r).getReader();
+                    else
+                        tr = r;
 
                     try
                     {
@@ -366,12 +380,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                             // get image tile
                             if (c == -1)
                             {
-                                img = getImageInternal(r, region, z, t, false, downScaleLevel, buf.rawBuffer,
+                                img = getImageInternal(tr, region, z, t, false, downScaleLevel, buf.rawBuffer,
                                         buf.channelBuffer, buf.pixelBuffer);
                             }
                             else
                             {
-                                img = getImageInternal(r, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
+                                img = getImageInternal(tr, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
                                         buf.channelBuffer, buf.pixelBuffer);
                             }
                         }
@@ -1087,17 +1101,25 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         if (getOpened() == null)
             return null;
 
-        // don't need thread safe reader for this
-        final OMEXMLMetadata result = (OMEXMLMetadata) reader.getMetadataStore();
+        final OMEXMLMetadata result;
 
-        // TileStitcher reduced series number (stitching occurred)  ?
-        if ((reader.getSeriesCount() == 1) && (MetaDataUtil.getNumSeries(result) > 1))
+        // group file is disabled ? --> directly use internal reader to retrieve metadata
+        if (!isGroupFiles())
+            result = (OMEXMLMetadata) reader.getReader().getMetadataStore();
+        else
         {
-            // adjust series count in metadata
-            MetaDataUtil.setNumSeries(result, 1);
-            // adjust metadata regarding reader information
-            MetaDataUtil.setSizeX(result, 0, reader.getSizeX());
-            MetaDataUtil.setSizeY(result, 0, reader.getSizeY());
+            // use stitcher reader to retrieve metadata (don't need thread safe reader for this)
+            result = (OMEXMLMetadata) reader.getMetadataStore();
+
+            // TileStitcher reduced series number (stitching occurred) ?
+            if ((reader.getSeriesCount() == 1) && (MetaDataUtil.getNumSeries(result) > 1))
+            {
+                // adjust series count in metadata
+                MetaDataUtil.setNumSeries(result, 1);
+                // adjust metadata regarding reader information
+                MetaDataUtil.setSizeX(result, 0, reader.getSizeX());
+                MetaDataUtil.setSizeY(result, 0, reader.getSizeY());
+            }
         }
 
         return result;
@@ -1189,10 +1211,18 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             prepareReader(series, 0);
 
             final IFormatReader r = getReader();
+            final IFormatReader tr;
+
+            // group file is disabled ? --> directly use internal reader
+            if (!isGroupFiles() && (r instanceof TileStitcher))
+                tr = ((TileStitcher) r).getReader();
+            else
+                tr = r;
+
             try
             {
                 // get image
-                return getThumbnail(r, r.getSizeZ() / 2, r.getSizeT() / 2);
+                return getThumbnail(tr, r.getSizeZ() / 2, r.getSizeT() / 2);
             }
             finally
             {
@@ -1223,9 +1253,10 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         {
             // prepare reader and get down scale factor
             final int downScaleLevel = prepareReader(series, resolution);
-
             final IFormatReader r = getReader();
+
             final Rectangle adjRect;
+            final IFormatReader tr;
 
             // adjust rectangle to current reader resolution if needed
             if (rectangle != null)
@@ -1234,10 +1265,16 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             else
                 adjRect = null;
 
+            // group file is disabled ? --> directly use internal reader
+            if (!isGroupFiles() && (r instanceof TileStitcher))
+                tr = ((TileStitcher) r).getReader();
+            else
+                tr = r;
+
             try
             {
                 // return pixels
-                return getPixelsInternal(r, adjRect, z, t, c, false, downScaleLevel);
+                return getPixelsInternal(tr, adjRect, z, t, c, false, downScaleLevel);
             }
             finally
             {
@@ -1263,9 +1300,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         {
             // prepare reader and get down scale factor if wanted resolution is not available
             final int downScaleLevel = prepareReader(series, resolution);
-
             final IFormatReader r = getReader();
             final Rectangle adjRect;
+            final IFormatReader tr;
 
             // adjust rectangle to current reader resolution if needed
             if (rectangle != null)
@@ -1274,10 +1311,17 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             else
                 adjRect = null;
 
+            // group file is disabled ? --> directly use internal reader
+            if (!isGroupFiles() && (r instanceof TileStitcher))
+                tr = ((TileStitcher) r).getReader();
+            else
+                tr = r;
+
             try
             {
+
                 // get image
-                return getImage(r, adjRect, z, t, c, downScaleLevel);
+                return getImage(tr, adjRect, z, t, c, downScaleLevel);
             }
             catch (IOException e)
             {
