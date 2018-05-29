@@ -54,6 +54,7 @@ import icy.util.XMLUtil;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,6 +72,7 @@ import loci.formats.ImageReader;
 import loci.formats.meta.MetadataStore;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
+import plugins.kernel.importer.LociImporterPlugin;
 
 /**
  * Sequence / Image loader class.
@@ -172,12 +174,12 @@ public class Loader
     /**
      * XML, XLS and TXT file can be image metadata files used to open the whole image, accept it !
      */
-    private final static Set<String> nonImageExtensions = new HashSet<>(
+    private final static Set<String> nonImageExtensions = new HashSet<String>(
             CollectionUtil.asList(new String[] {"pdf", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
 
     // keep trace of reported / warned plugin
-    private static Set<String> reportedImporterPlugins = new HashSet<>();
-    private static Set<String> warnedImporterPlugins = new HashSet<>();
+    private static Set<String> reportedImporterPlugins = new HashSet<String>();
+    private static Set<String> warnedImporterPlugins = new HashSet<String>();
 
     private static void handleImporterError(PluginDescriptor plugin, Throwable t)
     {
@@ -217,7 +219,7 @@ public class Loader
     public static List<Importer> getImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(Importer.class);
-        final List<Importer> result = new ArrayList<>();
+        final List<Importer> result = new ArrayList<Importer>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -241,7 +243,7 @@ public class Loader
     public static List<FileImporter> getFileImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(FileImporter.class);
-        final List<FileImporter> result = new ArrayList<>();
+        final List<FileImporter> result = new ArrayList<FileImporter>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -275,8 +277,8 @@ public class Loader
     public static Map<FileImporter, List<String>> getFileImporters(List<FileImporter> importers, List<String> paths,
             boolean useFirstFound)
     {
-        final Map<FileImporter, List<String>> result = new HashMap<>(importers.size());
-        final Map<String, FileImporter> extensionImporters = new HashMap<>(importers.size());
+        final Map<FileImporter, List<String>> result = new HashMap<FileImporter, List<String>>(importers.size());
+        final Map<String, FileImporter> extensionImporters = new HashMap<String, FileImporter>(importers.size());
 
         for (String path : paths)
         {
@@ -305,7 +307,7 @@ public class Loader
                 // do not exist yet --> create it
                 if (list == null)
                 {
-                    list = new ArrayList<>();
+                    list = new ArrayList<String>();
                     // set the list for this importer
                     result.put(imp, list);
                 }
@@ -339,7 +341,7 @@ public class Loader
      */
     public static List<FileImporter> getFileImporters(List<FileImporter> importers, String path)
     {
-        final List<FileImporter> result = new ArrayList<>(importers.size());
+        final List<FileImporter> result = new ArrayList<FileImporter>(importers.size());
 
         for (FileImporter importer : importers)
             if (importer.acceptFile(path))
@@ -372,7 +374,7 @@ public class Loader
      */
     public static FileImporter getFileImporter(List<FileImporter> importers, String path, boolean useFirstFound)
     {
-        final List<FileImporter> result = new ArrayList<>(importers.size());
+        final List<FileImporter> result = new ArrayList<FileImporter>(importers.size());
 
         for (FileImporter importer : importers)
         {
@@ -441,7 +443,7 @@ public class Loader
     public static List<SequenceImporter> getSequenceImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceImporter.class);
-        final List<SequenceImporter> result = new ArrayList<>();
+        final List<SequenceImporter> result = new ArrayList<SequenceImporter>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -468,7 +470,7 @@ public class Loader
     public static List<SequenceIdImporter> getSequenceIdImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceIdImporter.class);
-        final List<SequenceIdImporter> result = new ArrayList<>();
+        final List<SequenceIdImporter> result = new ArrayList<SequenceIdImporter>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -494,7 +496,7 @@ public class Loader
     public static List<SequenceFileImporter> getSequenceFileImporters()
     {
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceFileImporter.class);
-        final List<SequenceFileImporter> result = new ArrayList<>();
+        final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>();
 
         for (PluginDescriptor plugin : plugins)
         {
@@ -529,8 +531,8 @@ public class Loader
     public static <T extends SequenceFileImporter> Map<T, List<String>> getSequenceFileImporters(List<T> importers,
             List<String> paths, boolean useFirstFound)
     {
-        final Map<T, List<String>> result = new HashMap<>(importers.size());
-        final Map<String, T> extensionImporters = new HashMap<>(importers.size());
+        final Map<T, List<String>> result = new HashMap<T, List<String>>(importers.size());
+        final Map<String, T> extensionImporters = new HashMap<String, T>(importers.size());
         T imp = null;
 
         for (String path : paths)
@@ -565,7 +567,7 @@ public class Loader
                 // do not exist yet --> create it
                 if (list == null)
                 {
-                    list = new ArrayList<>();
+                    list = new ArrayList<String>();
                     // set the list for this importer
                     result.put(imp, list);
                 }
@@ -596,14 +598,14 @@ public class Loader
             List<String> paths, boolean grouped, boolean useFirstFound)
     {
         if (paths.isEmpty())
-            return new HashMap<>();
+            return new HashMap<SequenceFileImporter, List<String>>();
 
         final Map<SequenceFileImporter, List<String>> result;
 
         // have a default importer specified ? --> use it for all files
         if (defaultImporter != null)
         {
-            result = new HashMap<>();
+            result = new HashMap<SequenceFileImporter, List<String>>();
             result.put(defaultImporter, paths);
             return result;
         }
@@ -611,7 +613,7 @@ public class Loader
         // grouped ? --> find the first valid importer
         if (grouped)
         {
-            result = new HashMap<>();
+            result = new HashMap<SequenceFileImporter, List<String>>();
 
             for (String path : paths)
             {
@@ -654,7 +656,7 @@ public class Loader
      */
     public static <T extends SequenceFileImporter> List<T> getSequenceFileImporters(List<T> importers, String path)
     {
-        final List<T> result = new ArrayList<>(importers.size());
+        final List<T> result = new ArrayList<T>(importers.size());
 
         for (T importer : importers)
             if (importer.acceptFile(path))
@@ -690,7 +692,7 @@ public class Loader
     public static <T extends SequenceFileImporter> T getSequenceFileImporter(List<T> importers, String path,
             boolean useFirstFound)
     {
-        final List<T> result = new ArrayList<>(importers.size());
+        final List<T> result = new ArrayList<T>(importers.size());
 
         for (T importer : importers)
         {
@@ -781,6 +783,27 @@ public class Loader
         return getSequenceFileImporter(path, true);
     }
 
+    static SequenceFileImporter cloneSequenceFileImporter(SequenceFileImporter importer)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            NoSuchMethodException, SecurityException
+    {
+        if (importer == null)
+            return null;
+
+        final SequenceFileImporter result = importer.getClass().getDeclaredConstructor().newInstance();
+        
+        if (result instanceof LociImporterPlugin)
+        {
+            final LociImporterPlugin srcImp = (LociImporterPlugin) importer;
+            final LociImporterPlugin resImp = (LociImporterPlugin) result;
+
+            resImp.setGroupFiles(srcImp.isGroupFiles());
+            resImp.setReadOriginalMetadata(srcImp.getReadOriginalMetadata());
+        }
+
+        return result;
+    }
+
     /**
      * Returns <code>true</code> if the specified path describes a file type (from extension) which
      * is well known to
@@ -817,7 +840,7 @@ public class Loader
      */
     public static List<String> getSupportedFiles(SequenceFileImporter importer, List<String> paths)
     {
-        final List<String> result = new ArrayList<>();
+        final List<String> result = new ArrayList<String>();
 
         for (String path : paths)
         {
@@ -1405,7 +1428,7 @@ public class Loader
     public static Sequence[] loadSequences(File[] files, int[] series, boolean separate, boolean autoOrder,
             boolean showProgress)
     {
-        final List<Sequence> result = new ArrayList<>();
+        final List<Sequence> result = new ArrayList<Sequence>();
         final List<String> paths = FileUtil.toPaths(CollectionUtil.asList(files));
 
         if (series == null)
@@ -1644,7 +1667,7 @@ public class Loader
     public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
             boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
     {
-        final List<Sequence> result = new ArrayList<>();
+        final List<Sequence> result = new ArrayList<Sequence>();
 
         // detect if this is a complete folder load
         final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
@@ -2045,8 +2068,8 @@ public class Loader
                         fileImporters = getFileImporters(singlePaths, false);
                     else
                     {
-                        fileImporters = new HashMap<>(1);
-                        fileImporters.put(importer, new ArrayList<>(singlePaths));
+                        fileImporters = new HashMap<FileImporter, List<String>>(1);
+                        fileImporters.put(importer, new ArrayList<String>(singlePaths));
                     }
 
                     for (Entry<FileImporter, List<String>> entry : fileImporters.entrySet())
@@ -2189,6 +2212,8 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param separate
+     *        Force image to be loaded in separate sequence if possible (disable stitching if any)
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
@@ -2196,7 +2221,7 @@ public class Loader
      */
     public static void load(final SequenceFileImporter importer, final String path, final int series,
             final int resolution, final Rectangle region, final int minZ, final int maxZ, final int minT,
-            final int maxT, final int channel, final boolean addToRecent, final boolean showProgress)
+            final int maxT, final int channel, final boolean separate, final boolean addToRecent, final boolean showProgress)
     {
         // asynchronous call
         ThreadUtil.bgRun(new Runnable()
@@ -2211,7 +2236,7 @@ public class Loader
                     // load sequence (we use this method to allow multi series opening)
                     final List<Sequence> sequences = loadSequences(
                             (importer == null) ? getSequenceFileImporter(path, !showProgress) : importer,
-                            CollectionUtil.asList(path), series, true, false, false, addToRecent, showProgress);
+                            CollectionUtil.asList(path), series, separate, false, false, addToRecent, showProgress);
 
                     // and display them
                     for (Sequence sequence : sequences)
@@ -2836,7 +2861,7 @@ public class Loader
      *        -1 is a special value so it gives a chance to the user to select series to open from a
      *        series selector dialog.
      * @param separate
-     *        Force image to be loaded in separate sequence
+     *        Force image to be loaded in separate sequence (also disable stitching if possible)
      * @param autoOrder
      *        If set to true then images are automatically orderer from their filename.
      * @param directory
@@ -2849,7 +2874,7 @@ public class Loader
     static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series, boolean separate,
             boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
-        final List<Sequence> result = new ArrayList<>();
+        final List<Sequence> result = new ArrayList<Sequence>();
 
         // nothing to load
         if (paths.size() <= 0)
@@ -2869,7 +2894,7 @@ public class Loader
 
         try
         {
-            final List<String> remainingFiles = new ArrayList<>(paths);
+            final List<String> remainingFiles = new ArrayList<String>(paths);
 
             // load each file in a separate sequence
             if (separate || (paths.size() <= 1))
@@ -2880,6 +2905,10 @@ public class Loader
                     loadingFrame.setLength(paths.size() * 100d);
                     loadingFrame.setPosition(0d);
                 }
+
+                // force un-grouping when 'separate' is true
+                if (separate && (importer instanceof LociImporterPlugin))
+                    ((LociImporterPlugin) importer).setGroupFiles(false);
 
                 // load each file in a separate sequence
                 for (String path : paths)
@@ -3217,9 +3246,9 @@ public class Loader
      *        Caller should allocate 100 positions for the internal single load process.
      * @return the Sequence object or <code>null</code>
      */
-    public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series, int resolution,
-            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, FileFrame loadingFrame)
-            throws IOException, UnsupportedFormatException, OutOfMemoryError
+    public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series,
+            int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
+            FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
         final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
@@ -3357,7 +3386,7 @@ public class Loader
         else
             endStep = 0d;
 
-        final List<Sequence> result = new ArrayList<>();
+        final List<Sequence> result = new ArrayList<Sequence>();
 
         try
         {
@@ -3380,7 +3409,7 @@ public class Loader
                 try
                 {
                     // series selection (create a new importer instance as selectSerie(..) does async processes)
-                    selectedSeries = selectSeries(importer.getClass().newInstance(), path, meta, 0, false);
+                    selectedSeries = selectSeries(cloneSequenceFileImporter(importer), path, meta, 0, false);
                 }
                 catch (Throwable t)
                 {
@@ -3849,7 +3878,7 @@ public class Loader
      */
     public static List<String> cleanNonImageFile(List<String> paths)
     {
-        final List<String> result = new ArrayList<>();
+        final List<String> result = new ArrayList<String>();
 
         // extensions based exclusion
         for (String path : paths)
@@ -3878,7 +3907,7 @@ public class Loader
     @Deprecated
     public static List<FilePosition> getFilePositions(List<String> paths, boolean dimOrder, FileFrame loadingFrame)
     {
-        final List<FilePosition> result = new ArrayList<>(paths.size());
+        final List<FilePosition> result = new ArrayList<FilePosition>(paths.size());
 
         // use new path grouper method
         final Collection<SequenceFileGroup> groups = SequenceFileSticher.groupAllFiles(null, paths, dimOrder,

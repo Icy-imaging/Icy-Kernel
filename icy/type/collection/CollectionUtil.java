@@ -86,5 +86,4 @@ public class CollectionUtil
 
         return c2.containsAll(c1);
     }
-
 }
