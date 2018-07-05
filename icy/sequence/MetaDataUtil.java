@@ -28,6 +28,8 @@ import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.joda.time.Instant;
+
 import loci.common.services.ServiceException;
 import loci.formats.FormatTools;
 import loci.formats.MetadataTools;
@@ -51,6 +53,7 @@ import ome.xml.model.StructuredAnnotations;
 import ome.xml.model.XMLAnnotation;
 import ome.xml.model.enums.DimensionOrder;
 import ome.xml.model.primitives.PositiveInteger;
+import ome.xml.model.primitives.Timestamp;
 
 /**
  * Meta data utilities class.<br>
@@ -944,16 +947,25 @@ public class MetaDataUtil
     /**
      * Returns T time interval (in second) for the specified image series.
      */
+    private static double getTimeInterval(Pixels pix, double defaultValue)
+    {
+        final Time timeInc = pix.getTimeIncrement();
+
+        if (timeInc != null)
+            return OMEUtil.getValue(timeInc, defaultValue);
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns T time interval (in second) for the specified image series.
+     */
     public static double getTimeInterval(OMEXMLMetadata metaData, int series, double defaultValue)
     {
         final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
-        {
-            final Time timeInc = pix.getTimeIncrement();
-            if (timeInc != null)
-                return OMEUtil.getValue(timeInc, defaultValue);
-        }
+            return getTimeInterval(pix, defaultValue);
 
         return defaultValue;
     }
@@ -1090,42 +1102,90 @@ public class MetaDataUtil
     }
 
     /**
-     * Same as {@link #getTimePosition(OMEXMLMetadata, int, int, int, int, double)}
+     * @same as {@link #getTimeStamp(OMEXMLMetadata, int, long)}
      */
-    public static double getPositionT(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
+    public static double getPositionT(OMEXMLMetadata metaData, int series, long defaultValue)
     {
-        return getTimePosition(metaData, series, t, z, c, defaultValue);
+        return getTimeStamp(metaData, series, defaultValue);
     }
 
     /**
-     * Returns the time position (in second) for the Pixels object at the specified Z, T, C
-     * position.
+     * Returns the time stamp (elapsed milliseconds from the Java epoch of 1970-01-01 T00:00:00Z) for the specified image.
      */
-    private static double getTimePosition(Pixels pix, int t, int z, int c, double defaultValue)
+    public static long getTimeStamp(OMEXMLMetadata metaData, int series, long defaultValue)
     {
-        final Plane plane = getPlane(pix, t, z, c);
+        final Image img = getSeries(metaData, series);
 
-        if (plane != null)
-            return OMEUtil.getValue(plane.getDeltaT(), defaultValue);
+        if (img != null)
+        {
+            final Timestamp time = img.getAcquisitionDate();
+
+            if (time != null)
+                return time.asInstant().getMillis();
+        }
 
         return defaultValue;
     }
 
     /**
-     * Returns the time position (in second) for the image at the specified Z, T, C position.
+     * Returns the time position offset (in second) relative to first image for the image at the specified Z, T, C position.
      */
-    public static double getTimePosition(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
+    private static double getPositionTOffset(Pixels pix, int t, int z, int c, double defaultValue)
+    {
+        double result = -1d;
+        final Plane plane = getPlane(pix, t, z, c);
+
+        if (plane != null)
+            result = OMEUtil.getValue(plane.getDeltaT(), -1d);
+
+        // got it from DeltaT
+        if (result != -1d)
+            return result;
+
+        // try from time interval instead
+        result = getTimeInterval(pix, -1d);
+
+        // we were able to get time interval ? just multiply it by T index
+        if (result != -1d)
+            return result * t;
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns the time position offset (in second) relative to first image for the image at the specified Z, T, C position.
+     */
+    public static double getPositionTOffset(OMEXMLMetadata metaData, int series, int t, int z, int c,
+            double defaultValue)
     {
         final Pixels pix = getPixels(metaData, series);
 
         if (pix != null)
-            return getTimePosition(pix, t, z, c, defaultValue);
+            return getPositionTOffset(pix, t, z, c, defaultValue);
 
         return defaultValue;
     }
 
     /**
-     * Computes time interval from the time position informations.<br>
+     * @deprecated USe {@link #getPositionTOffset(OMEXMLMetadata, int, int, int, int, double)} instead
+     */
+    @Deprecated
+    public static double getPositionT(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
+    {
+        return getPositionTOffset(metaData, series, t, z, c, defaultValue);
+    }
+
+    /**
+     * @deprecated USe {@link #getPositionTOffset(OMEXMLMetadata, int, int, int, int, double)} instead
+     */
+    @Deprecated
+    public static double getTimePosition(OMEXMLMetadata metaData, int series, int t, int z, int c, double defaultValue)
+    {
+        return getPositionTOffset(metaData, series, t, z, c, defaultValue);
+    }
+
+    /**
+     * Computes time interval (in second) from the time position informations.<br>
      * Returns <code>0d</code> if time position informations are missing ot if we have only 1 frame in the image.
      */
     private static double computeTimeIntervalFromTimePosition(Pixels pix)
@@ -1216,6 +1276,47 @@ public class MetaDataUtil
             if (plane != null)
                 plane.setPositionZ(OMEUtil.getLength(value));
         }
+    }
+
+    /**
+     * Same as {@link #setTimeStamp(OMEXMLMetadata, int, long)}
+     */
+    public static void setPositionT(OMEXMLMetadata metaData, int series, long value)
+    {
+        setTimeStamp(metaData, series, value);
+    }
+
+    /**
+     * Sets the time stamp (elapsed milliseconds from the Java epoch of 1970-01-01 T00:00:00Z) for the specified image.
+     */
+    public static void setTimeStamp(OMEXMLMetadata metaData, int series, long value)
+    {
+        final Image img = getSeries(metaData, series);
+
+        if (img != null)
+            img.setAcquisitionDate(new Timestamp(new Instant(value)));
+    }
+
+    /**
+     * Sets the time position offset (in second) relative to the first image for the image at the specified Z, T, C position.
+     */
+    private static void setPositionTOffset(Pixels pix, int t, int z, int c, double value)
+    {
+        final Plane plane = getPlane(pix, t, z, c);
+
+        if (plane != null)
+            plane.setDeltaT(OMEUtil.getTime(value));
+    }
+
+    /**
+     * Sets the time position offset (in second) relative to the first image for the image at the specified Z, T, C position.
+     */
+    public static void setPositionTOffset(OMEXMLMetadata metaData, int series, int t, int z, int c, double value)
+    {
+        final Pixels pix = getPixels(metaData, series);
+
+        if (pix != null)
+            setPositionTOffset(pix, t, z, c, value);
     }
 
     /**
