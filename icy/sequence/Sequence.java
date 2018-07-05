@@ -151,6 +151,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public static final String ID_POSITION_X = "positionX";
     public static final String ID_POSITION_Y = "positionY";
     public static final String ID_POSITION_Z = "positionZ";
+    public static final String ID_POSITION_T = "positionT";
+    public static final String ID_POSITION_T_OFFSET = "positionTOffset";
 
     public static final String ID_PIXEL_SIZE_X = "pixelSizeX";
     public static final String ID_PIXEL_SIZE_Y = "pixelSizeY";
@@ -330,14 +332,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         originChannel = -1;
 
         // default pixel size and time interval
-        if (MetaDataUtil.getPixelSizeX(metaData, 0, 1d) == 1d)
+        if (Double.isNaN(MetaDataUtil.getPixelSizeX(metaData, 0, Double.NaN)))
             MetaDataUtil.setPixelSizeX(metaData, 0, 1d);
-        if (MetaDataUtil.getPixelSizeY(metaData, 0, 1d) == 1d)
+        if (Double.isNaN(MetaDataUtil.getPixelSizeY(metaData, 0, Double.NaN)))
             MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
-        if (MetaDataUtil.getPixelSizeZ(metaData, 0, 1d) == 1d)
+        if (Double.isNaN(MetaDataUtil.getPixelSizeZ(metaData, 0, Double.NaN)))
             MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
-        if (MetaDataUtil.getTimeInterval(metaData, 0, 0.0d) == 0.0d)
-            MetaDataUtil.setTimeInterval(metaData, 0, 0.0d);
+        if (Double.isNaN(MetaDataUtil.getTimeInterval(metaData, 0, Double.NaN)))
+            MetaDataUtil.setTimeInterval(metaData, 0, 1d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         overlays = new HashSet<Overlay>();
@@ -1239,10 +1241,23 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns the physical position [X,Y,Z] (in µm) of the image represented by this Sequence.
+     * This information can be used to represent the position of the image in the original sample (microscope
+     * information) or the position of a sub image from the original image (crop operation).<br>
+     * Note that OME store this information at Plane level (each Z,T,C), here we just use value from Plane(0,0,0) then we use the pixels size and time interval
+     * information to compute other positions.
+     */
+    public double[] getPosition()
+    {
+        return new double[] {getPositionX(), getPositionY(), getPositionZ()};
+    }
+
+    /**
      * Returns the X physical position / offset (in µm) of the image represented by this Sequence.<br>
      * This information can be used to represent the position of the image in the original sample (microscope
      * information) or the position of a sub image the original image (crop operation).<br>
-     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     * Note that OME store this information at Plane level (each Z,T,C), here we just use value from Plane(0,0,0) then we use the pixels size and time interval
+     * information to compute other positions.
      */
     public double getPositionX()
     {
@@ -1253,7 +1268,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Returns the Y physical position / offset (in µm) of the image represented by this Sequence.<br>
      * This information can be used to represent the position of the image in the original sample (microscope
      * information) or the position of a sub image the original image (crop operation).<br>
-     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     * Note that OME store this information at Plane level (each Z,T,C), here we just use value from Plane(0,0,0) then we use the pixels size and time interval
+     * information to compute other positions.
      */
     public double getPositionY()
     {
@@ -1264,11 +1280,42 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * Returns the Z physical position / offset (in µm) of the image represented by this Sequence.<br>
      * This information can be used to represent the position of the image in the original sample (microscope
      * information) or the position of a sub image the original image (crop operation).<br>
-     * Note that OME store this information at Plane level (each Z,T,C), here we always use value from Plane(0,0,0)
+     * Note that OME store this information at Plane level (each Z,T,C), here we just use value from Plane(0,0,0) then we use the pixels size and time interval
+     * information to compute other positions.
      */
     public double getPositionZ()
     {
         return MetaDataUtil.getPositionZ(metaData, 0, 0, 0, 0, 0d);
+    }
+
+    /**
+     * Same as {@link #getTimeStamp()}
+     */
+    public long getPositionT()
+    {
+        return getTimeStamp();
+    }
+
+    /**
+     * Returns the timestamp (elapsed milliseconds from the Java epoch of 1970-01-01 T00:00:00Z) of the image represented by this Sequence.
+     *
+     * @see #getPositionTOffset(int, int, int)
+     * @see #getTimeInterval()
+     */
+    public long getTimeStamp()
+    {
+        return MetaDataUtil.getTimeStamp(metaData, 0, 0L);
+    }
+
+    /**
+     * Returns the time position offset (in second for OME compatibility) relative to first image for the image at specified (T,Z,C) position.
+     * 
+     * @see #getTimeInterval()
+     * @see #getTimeStamp()
+     */
+    public double getPositionTOffset(int t, int z, int c)
+    {
+        return MetaDataUtil.getPositionTOffset(metaData, 0, t, z, c, 0d);
     }
 
     /**
@@ -1317,6 +1364,44 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Same as {@link #setTimeStamp(long)}
+     */
+    public void setPositionT(long value)
+    {
+        setTimeStamp(value);
+    }
+
+    /**
+     * Sets the timestamp (elapsed milliseconds from the Java epoch of 1970-01-01 T00:00:00Z) for the image represented by this Sequence.
+     * 
+     * @see #setPositionTOffset(int, int, int, double)
+     * @see #setTimeInterval(double)
+     */
+    public void setTimeStamp(long value)
+    {
+        if (getTimeStamp() != value)
+        {
+            MetaDataUtil.setTimeStamp(metaData, 0, value);
+            metaChanged(ID_POSITION_T);
+        }
+    }
+
+    /**
+     * Sets the time position / offset (in second for OME compatibility) relative to first image for the image at specified (T,Z,C) position.
+     * 
+     * @see #setTimeInterval(double)
+     * @see #setTimeStamp(long)
+     */
+    public void setPositionTOffset(int t, int z, int c, double value)
+    {
+        if (getPositionTOffset(t, z, c) != value)
+        {
+            MetaDataUtil.setPositionTOffset(metaData, 0, t, z, c, value);
+            metaChanged(ID_POSITION_T_OFFSET, t);
+        }
+    }
+
+    /**
      * Returns pixel size for [X,Y,Z] dimension (in µm to be OME compatible)
      */
     public double[] getPixelSize()
@@ -1350,6 +1435,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Returns T time interval (in second for OME compatibility)
+     * 
+     * @see #getPositionTOffset(int, int, int)
      */
     public double getTimeInterval()
     {
@@ -1405,6 +1492,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Set T time resolution (in second to be OME compatible)
+     * 
+     * @see #setPositionTOffset(int, int, int, double)
      */
     public void setTimeInterval(double value)
     {
