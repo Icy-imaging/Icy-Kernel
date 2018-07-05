@@ -27,6 +27,7 @@ import icy.painter.Anchor3D;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
+import icy.sequence.SequenceUtil;
 import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 import icy.type.collection.CollectionUtil;
@@ -2173,7 +2174,7 @@ public class ROIUtil
         }
         // 4D or 5D ROI --> scaling not supported
         else
-            throw new UnsupportedOperationException("ROIUtil.adjustToSequenceOrigin: cannot rescale ROI4D or ROI5D !");
+            throw new UnsupportedOperationException("ROIUtil.get2XScaled: cannot rescale ROI4D or ROI5D !");
 
         return result;
     }
@@ -2214,11 +2215,195 @@ public class ROIUtil
 
     /**
      * Create a copy of the specified ROI coming from <i>source</i> sequence adjusted to the <i>destination</i> sequence.<br>
-     * The resulting ROI coordinates can be different if the {@link Sequence#getOriginXYRegion()} are not identical on the 2 sequences.<br>
-     * The resulting ROI can be up/down scaled depending the value of the {@link Sequence#getOriginResolution()} field of the 2 sequences.<br>
-     * You can use this function when you generated the ROI on the origin Sequence and want to have it adjusted to* the given sub region Sequence
-     * coordinates.<br>
-     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format..
+     * The resulting ROI coordinates can be different if the {@link Sequence#getPosition()} are not identical on the 2 sequences.<br>
+     * The resulting ROI can be scaled if the {@link Sequence#getPixelSize()} are not identical on the 2 sequences<br>
+     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format, also the scale operation may not be possible depending
+     * the original ROI format.
+     * 
+     * @param roi
+     *        input ROI we want to adjust
+     * @param source
+     *        the source sequence where the ROI was initially generated (should contains valid <i>origin</i> information, see Sequence#getOriginXXX(} methods)
+     * @param destination
+     *        the destination sequence where we want to copy the ROI (should contains valid <i>origin</i> information, see Sequence#getOriginXXX(} methods)
+     * @param translate
+     *        if we allow the returned ROI to be translated compared to the original ROI
+     * @param scale
+     *        if we allow the returned ROI to be scaled compared to the original ROI
+     * @param ignoreErrorOnScale
+     *        ignore unsupported scaling operation, in which case the result ROI won't be correctly scaled
+     * @return adjusted ROI
+     * @throws UnsupportedOperationException
+     *         if input ROI is ROI4D or ROI5D while scaling is required (scaling not supported for these ROI) and <code>ignoreErrorOnScale</code> is set to
+     *         <code>FALSE</code>
+     */
+    public static ROI adjustToSequence(ROI roi, Sequence source, Sequence destination, boolean translate, boolean scale,
+            boolean ignoreErrorOnScale) throws UnsupportedOperationException
+    {
+        if (roi == null)
+            return null;
+
+        // create a copy
+        ROI result = roi.getCopy();
+
+        if (scale)
+        {
+            final double scaleX = source.getPixelSizeX() / destination.getPixelSizeX();
+            final double scaleY = source.getPixelSizeY() / destination.getPixelSizeY();
+            final double scaleZ = source.getPixelSizeZ() / destination.getPixelSizeZ();
+
+            // ROI is a 2D or 3D shape ? --> use easy scaling
+            if ((result instanceof ROI2DShape) || (result instanceof ROI3DShape))
+                scale(result, scaleX, scaleY, scaleZ);
+            else
+            {
+                boolean doRescale = true;
+                boolean doRescaleZ = true;
+
+                if (scaleX != scaleY)
+                {
+                    doRescale = false;
+                    if (ignoreErrorOnScale)
+                        System.out.println(
+                                "[Warning] ROIUtil.adjustToSequence: cannot rescale ROI with different X/Y scale ratio.");
+                    else
+                        throw new UnsupportedOperationException(
+                                "ROIUtil.adjustToSequence: cannot rescale ROI (different X/Y scale ratio) !");
+                }
+
+                // get log2 of scaleX/Y (round it a bit)
+                final double resDelta = MathUtil.round(Math.log(scaleX) / Math.log(2), 1);
+
+                // too far from 2^x scaling
+                if (Math.round(resDelta) != resDelta)
+                {
+                    doRescale = false;
+                    if (ignoreErrorOnScale)
+                        System.out.println(
+                                "[Warning] ROIUtil.adjustToSequence: cannot rescale ROI with scale XY = " + scaleX);
+                    else
+                        throw new UnsupportedOperationException(
+                                "ROIUtil.adjustToSequence: cannot rescale ROI (scale XY = " + scaleX + ") !");
+                }
+
+                // get log2 of scaleZ (round it a bit)
+                final double resDeltaZ = MathUtil.round(Math.log(scaleZ) / Math.log(2), 1);
+
+                if (Math.round(resDeltaZ) != resDeltaZ)
+                {
+                    doRescaleZ = false;
+                    if (ignoreErrorOnScale)
+                        System.out.println("[Warning] ROIUtil.adjustToSequence: ignoring ROI Z rescaling (scale Z = "
+                                + scaleZ + ")");
+                    else
+                        throw new UnsupportedOperationException(
+                                "ROIUtil.adjustToSequence: cannot rescale ROI (scale Z = " + scaleZ + ") !");
+                }
+
+                final boolean zScaling = resDeltaZ != 0d;
+
+                // Z rescaling needed ? --> we need to have same XY and Z scale ratio
+                if (zScaling && (resDeltaZ != resDelta))
+                {
+                    doRescaleZ = false;
+                    if (ignoreErrorOnScale)
+                        System.out.println("[Warning] ROIUtil.adjustToSequence: ignoring ROI Z rescaling (scale XY = "
+                                + scaleX + " while scale Z = " + scaleZ + ")");
+                    else
+                        throw new UnsupportedOperationException(
+                                "ROIUtil.adjustToSequence: cannot rescale ROI (scale XY = " + scaleX
+                                        + " while scale Z = " + scaleZ + ") !");
+                }
+
+                try
+                {
+                    if (doRescale)
+                    {
+                        int i = (int) resDelta;
+
+                        // destination resolution level > source resolution level
+                        if (resDelta > 0)
+                        {
+                            // down scaling
+                            while (i-- > 0)
+                                result = getUpscaled(result, zScaling && doRescaleZ);
+                        }
+                        else
+                        {
+                            // up scaling
+                            while (i++ < 0)
+                                result = getDownscaled(result, zScaling && doRescaleZ);
+                        }
+                    }
+                }
+                catch (UnsupportedOperationException e)
+                {
+                    // we should propagate it then
+                    if (!ignoreErrorOnScale)
+                        throw e;
+                }
+            }
+        }
+
+        // can set position ? --> relocate it
+        if (translate && result.canSetPosition())
+        {
+            // get current position
+            final Point5D pos = result.getPosition5D();
+
+            // can change it Z position ?
+            if (!Double.isInfinite(pos.getZ()))
+            {
+                // we just want to get offset as scaling already taken care of converting relative ROI position
+                final Point3D offset = SequenceUtil.convertPoint(new Point3D.Double(), source, destination);
+
+                // compute position in destination
+                pos.setX(pos.getX() + offset.getX());
+                pos.setY(pos.getY() + offset.getY());
+                pos.setZ(pos.getZ() + offset.getZ());
+            }
+            else
+            {
+                // we just want to get offset as scaling already taken care of converting relative ROI position
+                final Point2D offset = SequenceUtil.convertPoint(new Point2D.Double(), source, destination);
+
+                // compute position in destination
+                pos.setX(pos.getX() + offset.getX());
+                pos.setY(pos.getY() + offset.getY());
+            }
+
+            // can change it ? (we don't scale T dimension)
+            if (!Double.isInfinite(pos.getT()))
+            {
+                // get time interval in ms
+                final double timeIntervalMs = destination.getTimeInterval() * 1000d;
+
+                if (timeIntervalMs > 0d)
+                {
+                    // get delta in timestamp (ms)
+                    final double deltaT = source.getPositionT() - destination.getPositionT();
+                    // get wanted destination T offset
+                    final double tOffset = deltaT / timeIntervalMs;
+
+                    // assume correct T range is ~1000
+                    if ((tOffset > -1000d) && (tOffset < 1000d))
+                        pos.setT(Math.min(999, Math.max(0, pos.getT() + tOffset)));
+                }
+            }
+
+            // set back position
+            result.setPosition5D(pos);
+        }
+
+        return result;
+    }
+
+    /**
+     * Create a copy of the specified ROI coming from <i>source</i> sequence adjusted to the <i>destination</i> sequence.<br>
+     * The resulting ROI coordinates can be different if the {@link Sequence#getPosition()} are not identical on the 2 sequences.<br>
+     * The resulting ROI can be scaled if the {@link Sequence#getPixelSize()} are not identical on the 2 sequences<br>
+     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format, also the scale operation may not be possible depending
+     * the original ROI format.
      * 
      * @param roi
      *        input ROI we want to adjust
@@ -2232,115 +2417,21 @@ public class ROIUtil
      *        if we allow the returned ROI to be scaled compared to the original ROI
      * @return adjusted ROI
      * @throws UnsupportedOperationException
-     *         if input ROI is ROI4D or ROI5D while scaling is required (scaling not supported for these ROI)
+     *         if input ROI is ROI4D or ROI5D while scaling is required (scaling not supported for these ROI) and <code>ignoreErrorOnScale</code> is set to
+     *         <code>FALSE</code>
      */
     public static ROI adjustToSequence(ROI roi, Sequence source, Sequence destination, boolean translate, boolean scale)
             throws UnsupportedOperationException
     {
-        if (roi == null)
-            return null;
-
-        // create a copy
-        ROI result = roi.getCopy();
-
-        final Point posSrc, posDst;
-        final int resSrc, resDst;
-        final int zSrc, zDst;
-        final int tSrc, tDst;
-        final int cSrc, cDst;
-
-        if (source != null)
-        {
-            posSrc = (source.getOriginXYRegion() != null) ? source.getOriginXYRegion().getLocation() : new Point(0, 0);
-            resSrc = source.getOriginResolution();
-            zSrc = (source.getOriginZMin() == -1) ? 0 : source.getOriginZMin();
-            tSrc = (source.getOriginTMin() == -1) ? 0 : source.getOriginTMin();
-            cSrc = (source.getOriginChannel() == -1) ? 0 : source.getOriginChannel();
-        }
-        else
-        {
-            posSrc = new Point(0, 0);
-            resSrc = 0;
-            zSrc = 0;
-            tSrc = 0;
-            cSrc = 0;
-        }
-
-        if (destination != null)
-        {
-            posDst = (destination.getOriginXYRegion() != null) ? destination.getOriginXYRegion().getLocation()
-                    : new Point(0, 0);
-            resDst = destination.getOriginResolution();
-            zDst = (destination.getOriginZMin() == -1) ? 0 : destination.getOriginZMin();
-            tDst = (destination.getOriginTMin() == -1) ? 0 : destination.getOriginTMin();
-            cDst = (destination.getOriginChannel() == -1) ? 0 : destination.getOriginChannel();
-        }
-        else
-        {
-            posDst = new Point(0, 0);
-            resDst = 0;
-            zDst = 0;
-            tDst = 0;
-            cDst = 0;
-        }
-
-        if (scale)
-        {
-            // get resolution difference
-            int resDelta = resDst - resSrc;
-
-            // destination resolution level > source resolution level
-            if (resDelta > 0)
-            {
-                // down scaling
-                while (resDelta-- > 0)
-                    result = getDownscaled(result, false);
-            }
-            else
-            {
-                // up scaling
-                while (resDelta++ < 0)
-                    result = getUpscaled(result, false);
-            }
-        }
-
-        // can set position ? --> relocate it
-        if (translate && result.canSetPosition())
-        {
-            // compute scale factor
-            // final double scaleFactorSrc = Math.pow(2d, resSrc);
-            final double scaleFactorDst = Math.pow(2d, resDst);
-            // get current position
-            final Point5D pos = result.getPosition5D();
-
-            // compute position in destination
-            pos.setX(pos.getX() + ((posSrc.getX() - posDst.getX()) / scaleFactorDst));
-            pos.setY(pos.getY() + ((posSrc.getY() - posDst.getY()) / scaleFactorDst));
-
-            // can change it ? (we don't scale Z dimension)
-            if (!Double.isInfinite(pos.getZ()))
-                pos.setZ(Math.max(0, (zSrc + pos.getZ()) - zDst));
-            // can change it ? (we don't scale T dimension)
-            if (!Double.isInfinite(pos.getT()))
-                pos.setT(Math.max(0, (tSrc + pos.getT()) - tDst));
-            // can change it ? (we don't scale C dimension)
-            if (!Double.isInfinite(pos.getC()))
-                pos.setC(Math.max(0, (cSrc + pos.getC()) - cDst));
-
-            // set back position
-            result.setPosition5D(pos);
-        }
-
-        return result;
+        return adjustToSequence(roi, source, destination, translate, scale, false);
     }
 
     /**
      * Create a copy of the specified ROI coming from <i>source</i> sequence adjusted to the <i>destination</i> sequence.<br>
-     * The resulting ROI coordinates can be different if the {@link Sequence#getOriginXYRegion()} are not identical on the 2 sequences.<br>
-     * The resulting ROI can be up/down scaled depending the value of the {@link Sequence#getOriginResolution()} field of the 2 sequences.<br>
-     * You can use this function when you generated the ROI on the origin Sequence and want to have it adjusted to* the given sub region Sequence
-     * coordinates.<br>
-     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format..
+     * The resulting ROI coordinates can be different if the {@link Sequence#getPosition()} are not identical on the 2 sequences.<br>
+     * The resulting ROI can be scaled if the {@link Sequence#getPixelSize()} are not identical on the 2 sequences<br>
+     * Note that the returned ROI can have a Boolean Mask format if we can't re-use original ROI format, also the scale operation may not be possible depending
+     * the original ROI format.
      * 
      * @param roi
      *        input ROI we want to adjust
