@@ -45,7 +45,8 @@ public interface ImageProvider
      * {@link MetaDataUtil#getPositionX(OMEXMLMetadata, int, int, int, int, double)}<br>
      * {@link MetaDataUtil#getPositionY(OMEXMLMetadata, int, int, int, int, double)}<br>
      * {@link MetaDataUtil#getPositionZ(OMEXMLMetadata, int, int, int, int, double)}<br>
-     * {@link MetaDataUtil#getTimePosition(OMEXMLMetadata, int, int, int, int, double)}<br>
+     * {@link MetaDataUtil#getPositionT(OMEXMLMetadata, int, long)}<br>
+     * {@link MetaDataUtil#getPositionTOffset(OMEXMLMetadata, int, int, int, int, double)}<br>
      * <br>
      * and many others informations depending the available metadata in the image format.
      */
