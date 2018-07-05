@@ -791,7 +791,7 @@ public class Loader
             return null;
 
         final SequenceFileImporter result = importer.getClass().getDeclaredConstructor().newInstance();
-        
+
         if (result instanceof LociImporterPlugin)
         {
             final LociImporterPlugin srcImp = (LociImporterPlugin) importer;
@@ -2221,7 +2221,8 @@ public class Loader
      */
     public static void load(final SequenceFileImporter importer, final String path, final int series,
             final int resolution, final Rectangle region, final int minZ, final int maxZ, final int minT,
-            final int maxT, final int channel, final boolean separate, final boolean addToRecent, final boolean showProgress)
+            final int maxT, final int channel, final boolean separate, final boolean addToRecent,
+            final boolean showProgress)
     {
         // asynchronous call
         ThreadUtil.bgRun(new Runnable()
@@ -3657,6 +3658,8 @@ public class Loader
         final double posX = sequence.getPositionX();
         final double posY = sequence.getPositionY();
         final double posZ = sequence.getPositionZ();
+        // original time stamp (in ms)
+        final long posT = sequence.getPositionT();
 
         // get sequence metadata
         final OMEXMLMetadata metadata = sequence.getOMEXMLMetadata();
@@ -3691,7 +3694,7 @@ public class Loader
             }
         }
 
-        // adjust position X,Y,Z
+        // adjust position X,Y
         if (region != null)
         {
             // set origin region
@@ -3700,8 +3703,12 @@ public class Loader
             sequence.setPositionX(posX + (region.x * psx));
             sequence.setPositionY(posY + (region.y * psy));
         }
+        // adjust position Z
         if (minZ > 0)
             sequence.setPositionZ(posZ + (minZ * psz));
+        // adjust position T
+        if (minT > 0)
+            sequence.setTimeStamp(posT + (long) (sequence.getPositionTOffset(minT, minZ, Math.max(0, channel)) * 1000d));
 
         // using sub resolution ?
         if (resolution > 0)
