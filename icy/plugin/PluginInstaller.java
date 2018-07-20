@@ -890,8 +890,9 @@ public class PluginInstaller implements Runnable
                 }
             }
 
-            // remove all plugins which failed from OK list
+            // remove all plugins which failed or require new version of Java from OK list
             pluginsOk.removeAll(pluginsNOk);
+            pluginsOk.removeAll(pluginsNewJava);
 
             if (!pluginsNOk.isEmpty())
             {
@@ -921,15 +922,15 @@ public class PluginInstaller implements Runnable
 
             if (!pluginsNewJava.isEmpty())
             {
-                System.out.println();
-                System.out.println("The following plugin(s) require a newer version of java:");
+                System.err.println();
+                System.err.println("The following plugin(s) require a newer version of java:");
                 for (PluginDescriptor plugin : pluginsNewJava)
                 {
                     System.err.println(plugin.getName() + " " + plugin.getVersion());
                     // notify about installation even fails
                     fireInstalledEvent(plugin, false);
                 }
-                System.out.println();
+                System.err.println();
             }
 
             if (showProgress && !Icy.getMainInterface().isHeadLess())
