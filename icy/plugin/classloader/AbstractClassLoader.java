@@ -219,7 +219,7 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
 
         @Override
-        public Object getLoader()
+        public ClassLoader getLoader()
         {
             return getSystemClassLoader();
         }
@@ -308,7 +308,7 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
 
         @Override
-        public Object getLoader()
+        public ClassLoader getLoader()
         {
             return getParent();
         }
@@ -396,7 +396,7 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
 
         @Override
-        public Object getLoader()
+        public ClassLoader getLoader()
         {
             return getClass().getClassLoader();
         }
@@ -486,7 +486,7 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
 
         @Override
-        public Object getLoader()
+        public ClassLoader getLoader()
         {
             return Thread.currentThread().getContextClassLoader();
         }

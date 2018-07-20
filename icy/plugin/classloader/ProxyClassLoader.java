@@ -50,7 +50,7 @@ public abstract class ProxyClassLoader implements Comparable<ProxyClassLoader>
     /**
      * Returns the internal {@link ClassLoader} object used to load class.
      */
-    public abstract Object getLoader();
+    public abstract ClassLoader getLoader();
 
     /**
      * Loads the class and returns it.
