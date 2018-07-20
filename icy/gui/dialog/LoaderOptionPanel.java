@@ -18,25 +18,6 @@
  */
 package icy.gui.dialog;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.file.Loader;
-import icy.file.SequenceFileGroupImporter;
-import icy.file.SequenceFileImporter;
-import icy.file.SequenceFileSticher.SequenceFileGroup;
-import icy.gui.component.PopupPanel;
-import icy.gui.component.RangeComponent;
-import icy.gui.component.Region2DComponent;
-import icy.gui.component.SpecialValueSpinner;
-import icy.gui.component.ThumbnailComponent;
-import icy.gui.component.model.SpecialValueSpinnerModel;
-import icy.resource.ResourceUtil;
-import icy.sequence.MetaDataUtil;
-import icy.sequence.SequenceIdImporter;
-import icy.system.IcyExceptionHandler;
-import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
-import icy.util.OMEUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -63,6 +44,24 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.Loader;
+import icy.file.SequenceFileGroupImporter;
+import icy.file.SequenceFileImporter;
+import icy.file.SequenceFileSticher.SequenceFileGroup;
+import icy.gui.component.PopupPanel;
+import icy.gui.component.RangeComponent;
+import icy.gui.component.Region2DComponent;
+import icy.gui.component.SpecialValueSpinner;
+import icy.gui.component.ThumbnailComponent;
+import icy.gui.component.model.SpecialValueSpinnerModel;
+import icy.resource.ResourceUtil;
+import icy.sequence.MetaDataUtil;
+import icy.sequence.SequenceIdImporter;
+import icy.system.IcyExceptionHandler;
+import icy.system.thread.ThreadUtil;
+import icy.type.collection.CollectionUtil;
+import icy.util.OMEUtil;
 import ome.xml.meta.OMEXMLMetadata;
 import plugins.kernel.importer.LociImporterPlugin;
 
@@ -1100,7 +1099,10 @@ public class LoaderOptionPanel extends JPanel
 
     void updateLoadingType()
     {
-        loadingTypeCombo.setEnabled((metadata != null));
+        final List<String> files = getFiles();
+
+        loadingTypeCombo.setEnabled((files != null) && !files.isEmpty());
+        // loadingTypeCombo.setEnabled(metadata != null);
     }
 
     void updateXYRegion()
@@ -1463,7 +1465,8 @@ public class LoaderOptionPanel extends JPanel
     }
 
     /**
-     * Asynchronous image preview refresh only, ({@link #updatePreview(String)} should have be called once before to give
+     * Asynchronous image preview refresh only, ({@link #updatePreview(String)} should have be called once before to
+     * give
      * the fileId)
      */
     protected void updatePreview(int z, int t)
