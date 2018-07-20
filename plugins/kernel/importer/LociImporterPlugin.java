@@ -3,6 +3,19 @@
  */
 package plugins.kernel.importer;
 
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+import javax.swing.filechooser.FileFilter;
+
 import icy.common.exception.UnsupportedFormatException;
 import icy.common.listener.ProgressListener;
 import icy.file.FileUtil;
@@ -26,20 +39,6 @@ import icy.type.rectangle.Rectangle2DUtil;
 import icy.util.ColorUtil;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.channels.ClosedByInterruptException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-
-import javax.swing.filechooser.FileFilter;
-
 import jxl.biff.drawing.PNGReader;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
@@ -124,19 +123,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     // get reader and working buffers
                     final IFormatReader r = getReader();
                     final TilePixelsWorkBuffer buf = buffers.pop();
-                    final IFormatReader tr;
-
-                    // group file is disabled ? --> directly use internal reader
-                    if (!isGroupFiles() && (r instanceof TileStitcher))
-                        tr = ((TileStitcher) r).getReader();
-                    else
-                        tr = r;
 
                     try
                     {
                         try
                         {
-                            pixels = getPixelsInternal(tr, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
+                            pixels = getPixelsInternal(r, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
                                     buf.channelBuffer, buf.pixelBuffer);
                         }
                         finally
@@ -365,13 +357,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     // get reader and working buffers
                     final IFormatReader r = getReader();
                     final TileImageWorkBuffer buf = buffers.pop();
-                    final IFormatReader tr;
-
-                    // group file is disabled ? --> directly use internal reader
-                    if (!isGroupFiles() && (r instanceof TileStitcher))
-                        tr = ((TileStitcher) r).getReader();
-                    else
-                        tr = r;
 
                     try
                     {
@@ -380,12 +365,12 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                             // get image tile
                             if (c == -1)
                             {
-                                img = getImageInternal(tr, region, z, t, false, downScaleLevel, buf.rawBuffer,
+                                img = getImageInternal(r, region, z, t, false, downScaleLevel, buf.rawBuffer,
                                         buf.channelBuffer, buf.pixelBuffer);
                             }
                             else
                             {
-                                img = getImageInternal(tr, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
+                                img = getImageInternal(r, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
                                         buf.channelBuffer, buf.pixelBuffer);
                             }
                         }
@@ -577,11 +562,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      */
     protected final ImageReader mainReader;
     /**
-     * Current active reader (should be always a {@link TileStitcher} reader wrapper)
+     * Current active reader, it can be a {@link TileStitcher} reader wrapper or the <i>internalReader</i> depending <i>groupFiles</i> state
      */
-    protected TileStitcher reader;
+    protected IFormatReader reader;
     /**
-     * Current format reader (just for test and cloning reader operation)
+     * Current format reader (just for test and cloning reader operation)O
      */
     protected IFormatReader internalReader;
     /**
@@ -636,7 +621,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         // we don't care about validation
         options.setValidate(false);
         // disable ND2 native chunk map to avoid some issues with ND2 file
-        // TODO: remove when fixed in Bio-formats (see images\bio\bug\nd2\3.19_1.nd2 --> should be a timelaps and not a single image)
+        // TODO: remove when fixed in Bio-formats (see images\bio\bug\nd2\3.19_1.nd2 --> should be a timelaps and not a
+        // single image)
         options.setBoolean(NativeND2Reader.USE_CHUNKMAP_KEY, Boolean.FALSE);
 
         originalMetadata = false;
@@ -648,15 +634,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
     protected void setReader(String path) throws FormatException, IOException
     {
+        IFormatReader newReader = internalReader;
+
         // no reader defined so just get the good one
         if (internalReader == null)
-        {
-            internalReader = mainReader.getReader(path);
-            // update 'accept' reader
-            acceptReader = internalReader;
-            // update default TileStitcher reader
-            reader = TileStitcher.makeTileStitcher(internalReader);
-        }
+            newReader = mainReader.getReader(path);
         else
         {
             // don't check if the file is currently opened
@@ -665,14 +647,22 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 // try to check only with extension first then open it if needed
                 // Note that OME TIFF can be opened with the classic TIFF reader
                 if (!internalReader.isThisType(path, false) && !internalReader.isThisType(path, true))
-                {
-                    internalReader = mainReader.getReader(path);
-                    // update 'accept' reader
-                    acceptReader = internalReader;
-                    // update default TileStitcher reader
-                    reader = TileStitcher.makeTileStitcher(internalReader);
-                }
+                    newReader = mainReader.getReader(path);
             }
+        }
+
+        // reader changed ?
+        if (internalReader != newReader)
+        {
+            // update it
+            internalReader = newReader;
+            // update 'accept' reader
+            acceptReader = newReader;
+            // use TileStitcher wrapper when grouping is ON
+            if (groupFiles)
+                reader = TileStitcher.makeTileStitcher(newReader);
+            else
+                reader = newReader;
         }
     }
 
@@ -870,7 +860,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     /**
      * Open reader for given file path
      */
-    protected void openReader(TileStitcher reader, String path, int flags) throws FormatException, IOException
+    protected void openReader(IFormatReader reader, String path, int flags) throws FormatException, IOException
     {
         switch (flags & FLAG_METADATA_MASK)
         {
@@ -914,15 +904,21 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     /**
      * Clone the current used reader conserving its properties and current path
      */
-    protected TileStitcher cloneReader()
+    protected IFormatReader cloneReader()
             throws FormatException, IOException, InstantiationException, IllegalAccessException
     {
         if (internalReader == null)
             return null;
 
-        // create the new reader instance
-        // final IFormatReader result = reader.getClass().newInstance();
-        final TileStitcher result = TileStitcher.makeTileStitcher(internalReader.getClass().newInstance());
+        // create the new internal reader instance
+        final IFormatReader newReader = internalReader.getClass().newInstance();
+        final IFormatReader result;
+
+        // use TileStitcher wrapper when grouping is ON
+        if (groupFiles)
+            result = TileStitcher.makeTileStitcher(newReader);
+        else
+            result = newReader;
 
         // get opened file
         final String path = getOpened();
@@ -1101,24 +1097,23 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         if (getOpened() == null)
             return null;
 
-        final OMEXMLMetadata result;
+        // retrieve metadata (don't need thread safe reader for this)
+        final OMEXMLMetadata result = (OMEXMLMetadata) reader.getMetadataStore();
 
-        // group file is disabled ? --> directly use internal reader to retrieve metadata
-        if (!isGroupFiles())
-            result = (OMEXMLMetadata) reader.getReader().getMetadataStore();
-        else
+        // TileStitcher reduced series number (stitching occurred) ?
+        if ((reader.getSeriesCount() == 1) && (MetaDataUtil.getNumSeries(result) > 1))
         {
-            // use stitcher reader to retrieve metadata (don't need thread safe reader for this)
-            result = (OMEXMLMetadata) reader.getMetadataStore();
+            // adjust series count in metadata
+            MetaDataUtil.setNumSeries(result, 1);
 
-            // TileStitcher reduced series number (stitching occurred) ?
-            if ((reader.getSeriesCount() == 1) && (MetaDataUtil.getNumSeries(result) > 1))
+            final int sx = reader.getSizeX();
+            final int sy = reader.getSizeY();
+
+            // fix metadata regarding reader information if available
+            if ((sx > 0) && (sy > 0))
             {
-                // adjust series count in metadata
-                MetaDataUtil.setNumSeries(result, 1);
-                // adjust metadata regarding reader information
-                MetaDataUtil.setSizeX(result, 0, reader.getSizeX());
-                MetaDataUtil.setSizeY(result, 0, reader.getSizeY());
+                MetaDataUtil.setSizeX(result, 0, sx);
+                MetaDataUtil.setSizeY(result, 0, sy);
             }
         }
 
@@ -1201,7 +1196,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         if (getOpened() == null)
             return null;
 
-        // stitched image ? --> use AbstractImageProvider implementation as getThumbnail(..) from TileSticher doesn't do stitching
+        // stitched image ? --> use AbstractImageProvider implementation as getThumbnail(..) from TileSticher doesn't do
+        // stitching
         if ((reader.getSizeX() != internalReader.getSizeX()) || (reader.getSizeY() != internalReader.getSizeY()))
             return super.getThumbnail(series);
 
@@ -1211,18 +1207,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             prepareReader(series, 0);
 
             final IFormatReader r = getReader();
-            final IFormatReader tr;
-
-            // group file is disabled ? --> directly use internal reader
-            if (!isGroupFiles() && (r instanceof TileStitcher))
-                tr = ((TileStitcher) r).getReader();
-            else
-                tr = r;
 
             try
             {
                 // get image
-                return getThumbnail(tr, r.getSizeZ() / 2, r.getSizeT() / 2);
+                return getThumbnail(r, r.getSizeZ() / 2, r.getSizeT() / 2);
             }
             finally
             {
@@ -1256,7 +1245,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             final IFormatReader r = getReader();
 
             final Rectangle adjRect;
-            final IFormatReader tr;
 
             // adjust rectangle to current reader resolution if needed
             if (rectangle != null)
@@ -1265,16 +1253,10 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             else
                 adjRect = null;
 
-            // group file is disabled ? --> directly use internal reader
-            if (!isGroupFiles() && (r instanceof TileStitcher))
-                tr = ((TileStitcher) r).getReader();
-            else
-                tr = r;
-
             try
             {
                 // return pixels
-                return getPixelsInternal(tr, adjRect, z, t, c, false, downScaleLevel);
+                return getPixelsInternal(r, adjRect, z, t, c, false, downScaleLevel);
             }
             finally
             {
@@ -1302,7 +1284,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             final int downScaleLevel = prepareReader(series, resolution);
             final IFormatReader r = getReader();
             final Rectangle adjRect;
-            final IFormatReader tr;
 
             // adjust rectangle to current reader resolution if needed
             if (rectangle != null)
@@ -1311,17 +1292,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             else
                 adjRect = null;
 
-            // group file is disabled ? --> directly use internal reader
-            if (!isGroupFiles() && (r instanceof TileStitcher))
-                tr = ((TileStitcher) r).getReader();
-            else
-                tr = r;
-
             try
             {
 
                 // get image
-                return getImage(tr, adjRect, z, t, c, downScaleLevel);
+                return getImage(r, adjRect, z, t, c, downScaleLevel);
             }
             catch (IOException e)
             {
@@ -2130,7 +2105,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      *        Set to <code>true</code> to request a thumbnail of the image in which case <i>rect</i>
      *        parameter should contains thumbnail size
      * @param buffer
-     *        pre allocated output byte data buffer ([reader.getRGBChannelCount() * rect.width * rect.height * Datatype.size]) used to
+     *        pre allocated output byte data buffer ([reader.getRGBChannelCount() * rect.width * rect.height *
+     *        Datatype.size]) used to
      *        read the whole RGB raw data (can be <code>null</code>)
      * @return byte array containing pixels data.<br>
      * @throws UnsupportedOperationException
