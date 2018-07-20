@@ -18,9 +18,6 @@
  */
 package icy.gui.component.editor;
 
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -30,10 +27,12 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.UIManager;
 import javax.swing.table.TableCellEditor;
 import javax.swing.tree.TreeCellEditor;
 
-import sun.swing.DefaultLookup;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 
 /**
  * @author Stephane
@@ -93,7 +92,7 @@ public class VisibleCellEditor extends AbstractCellEditor implements TableCellEd
             Color background = table.getBackground();
             if (background == null || background instanceof javax.swing.plaf.UIResource)
             {
-                Color alternateColor = DefaultLookup.getColor(label, label.getUI(), "Table.alternateRowColor");
+                final Color alternateColor = UIManager.getColor("Table.alternateRowColor");
                 if (alternateColor != null && ((row & 1) == 0))
                     background = alternateColor;
             }
