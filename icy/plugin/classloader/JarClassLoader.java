@@ -265,13 +265,13 @@ public class JarClassLoader extends AbstractClassLoader
         }
 
         @Override
-        public Object getLoader()
+        public ClassLoader getLoader()
         {
-            return this;
+            return JarClassLoader.this;
         }
 
         @Override
-        public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException
+        public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException, ClassFormatError
         {
             Class result = null;
             byte[] classBytes;

@@ -178,17 +178,42 @@ public class SequencePersistent implements XMLPersistent
         if (nodeMeta == null)
             return true;
 
-        sequence.setPositionX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_X, 0d));
-        sequence.setPositionY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Y, 0d));
-        sequence.setPositionZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Z, 0d));
-        sequence.setPixelSizeX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, 1d));
-        sequence.setPixelSizeY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, 1d));
-        sequence.setPixelSizeZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, 1d));
-        sequence.setTimeInterval(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, 1d));
+        double d;
+        long l;
+
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_X, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setPositionX(d);
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Y, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setPositionY(d);
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Z, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setPositionZ(d);
+        l = XMLUtil.getElementLongValue(nodeMeta, Sequence.ID_POSITION_T, -1L);
+        if (l != -1L)
+            sequence.setPositionT(l);
+
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setPixelSizeX(d);
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setPixelSizeY(d);
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setPixelSizeZ(d);
+        d = XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, Double.NaN);
+        if (!Double.isNaN(d))
+            sequence.setTimeInterval(d);
 
         for (int c = 0; c < sequence.getSizeC(); c++)
-            sequence.setChannelName(c, XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c,
-                    MetaDataUtil.DEFAULT_CHANNEL_NAME + c));
+        {
+            final String s = XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c, "");
+
+            if (!StringUtil.isEmpty(s))
+                sequence.setChannelName(c, s);
+        }
 
         return true;
     }
@@ -270,6 +295,7 @@ public class SequencePersistent implements XMLPersistent
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_POSITION_X, sequence.getPositionX());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Y, sequence.getPositionY());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_POSITION_Z, sequence.getPositionZ());
+            XMLUtil.setElementLongValue(nodeMeta, Sequence.ID_POSITION_T, sequence.getPositionT());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, sequence.getPixelSizeX());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, sequence.getPixelSizeY());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, sequence.getPixelSizeZ());

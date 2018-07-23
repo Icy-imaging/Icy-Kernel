@@ -317,7 +317,7 @@ public class RoiActions
                         for (ROI roi : rois)
                         {
                             // final ROI newROI = roi.getCopy();
-                            final ROI newROI = ROIUtil.adjustToSequence(roi, sequenceSrc, sequence, true, true);
+                            final ROI newROI = ROIUtil.adjustToSequence(roi, sequenceSrc, sequence, true, true, true);
 
                             if (newROI != null)
                             {

@@ -25,21 +25,26 @@ import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.painter.Overlay;
 import icy.painter.VtkPainter;
+import icy.roi.BooleanMask2D;
+import icy.roi.BooleanMask3D;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
-import icy.type.geom.GeomUtil;
+import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import plugins.kernel.canvas.VtkCanvas;
+import plugins.kernel.roi.roi2d.ROI2DArea;
+import plugins.kernel.roi.roi3d.ROI3DArea;
+import vtk.vtkAbstractTransform;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
 import vtk.vtkActor2DCollection;
@@ -752,6 +757,49 @@ public class VtkUtil
     }
 
     /**
+     * Returns a {@link ROI2DArea} or {@link ROI3DArea} from a binary (0/1 values) {@link vtkImageData}.
+     */
+    public static ROI getROIFromBinaryImage(vtkImageData image, boolean force3DROI)
+    {
+        final vtkDataArray data = image.GetPointData().GetScalars();
+        final double[] origin = image.GetOrigin();
+        final int[] dim = image.GetDimensions();
+        final int sizeX = dim[0];
+        final int sizeY = dim[1];
+        final int sizeZ = dim[2];
+        final int sizeXY = sizeX * sizeY;
+        final Rectangle bounds2D = new Rectangle((int) origin[0], (int) origin[1], sizeX, sizeY);
+
+        if ((sizeZ > 1) || force3DROI)
+        {
+            // 3D
+            final BooleanMask2D[] masks = new BooleanMask2D[sizeZ];
+
+            int off = 0;
+            for (int z = 0; z < sizeZ; z++)
+            {
+                final boolean[] mask = new boolean[sizeXY];
+
+                for (int xy = 0; xy < sizeXY; xy++)
+                    mask[xy] = (data.GetTuple1(off++) != 0d);
+
+                masks[z] = new BooleanMask2D(bounds2D, mask);
+            }
+
+            return new ROI3DArea(new BooleanMask3D(
+                    new Rectangle3D.Integer(bounds2D.x, bounds2D.y, (int) origin[2], sizeX, sizeY, sizeZ), masks));
+        }
+
+        // 2D
+        final boolean[] mask = new boolean[sizeXY];
+
+        for (int xy = 0; xy < sizeXY; xy++)
+            mask[xy] = (data.GetTuple1(xy) != 0d);
+
+        return new ROI2DArea(new BooleanMask2D(bounds2D, mask));
+    }
+
+    /**
      * Build and return volume image data from given Sequence object.
      * 
      * @param sequence
@@ -773,13 +821,13 @@ public class VtkUtil
         if (posC == -1)
         {
             data = sequence.getDataCopyCXYZ(posT);
-            result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+            result = getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
                     sequence.getSizeZ(), sequence.getSizeC());
         }
         else
         {
             data = sequence.getDataCopyXYZ(posT, posC);
-            result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+            result = getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
                     sequence.getSizeZ(), 1);
         }
 
@@ -833,7 +881,7 @@ public class VtkUtil
     }
 
     /**
-     * Create a 3D surface in VTK polygon format from the input VTK image.
+     * Create a 3D surface in VTK polygon format from the input VTK image data.
      * 
      * @param imageData
      *        the input image to construct surface from
@@ -860,6 +908,7 @@ public class VtkUtil
         pad.Update();
 
         final vtkImageData out = pad.GetOutput();
+        out.SetOrigin(imageData.GetOrigin());
         // do not delete input image
         pad.Delete();
 
@@ -876,12 +925,12 @@ public class VtkUtil
     }
 
     /**
-     * Transform a {@link vtkPolyData} object to {@link vtkImageData} (0/255 intensity value)
+     * Transforms a {@link vtkPolyData} object to binary (0/1 values) {@link vtkImageData}
      * 
      * @param space
      *        spacing between each image point
      */
-    public static vtkImageData polyDataToImageData(vtkPolyData polyData, double space[])
+    public static vtkImageData getBinaryImageData(vtkPolyData polyData, double space[])
     {
         final vtkImageData whiteImage = new vtkImageData();
 
@@ -929,12 +978,12 @@ public class VtkUtil
         // get VTK array
         final vtkUnsignedCharArray vtkArray = (vtkUnsignedCharArray) whiteImage.GetPointData().GetScalars();
 
-        // build the java array 255 filled (-1 = 255)
-        Arrays.fill(javaArray, (byte) -1);
+        // build the java array 1 filled
+        Arrays.fill(javaArray, (byte) 1);
         // set to VTK array
         vtkArray.SetJavaArray(javaArray);
 
-        // polygonal data --> image stencil:
+        // polygonal data --> image stencil
         final vtkPolyDataToImageStencil polyToImgStencil = new vtkPolyDataToImageStencil();
 
         polyToImgStencil.SetInputData(polyData);
@@ -964,23 +1013,40 @@ public class VtkUtil
     }
 
     /**
-     * Transform a polyData using specified rotation, scaling and offset informations (3D)
+     * @deprecated Use {@link #getBinaryImageData(vtkPolyData, double[])} instead.
      */
-    public static vtkPolyData transformPolyData(vtkPolyData polyData, double off[], double scale[], double rot[])
+    @Deprecated
+    public static vtkImageData polyDataToImageData(vtkPolyData polyData, double space[])
+    {
+        return getBinaryImageData(polyData, space);
+    }
+
+    /**
+     * Get VTK transform object from specified transform infos
+     */
+    public static vtkTransform getTransform(double off[], double scale[], double rot[])
     {
         final double[] offset = (off == null) ? new double[] {0d, 0d, 0d} : off;
         final double[] scaling = (scale == null) ? new double[] {1d, 1d, 1d} : scale;
         final double[] rotation = (rot == null) ? new double[] {0d, 0d, 0d} : rot;
 
-        final vtkTransform transform = new vtkTransform();
+        final vtkTransform result = new vtkTransform();
 
-        transform.Translate(offset);
-        transform.Scale(scaling);
-        transform.RotateX(rotation[0]);
-        transform.RotateY(rotation[1]);
-        transform.RotateZ(rotation[2]);
-        transform.Update();
+        result.Translate(offset);
+        result.Scale(scaling);
+        result.RotateX(rotation[0]);
+        result.RotateY(rotation[1]);
+        result.RotateZ(rotation[2]);
+        result.Update();
 
+        return result;
+    }
+
+    /**
+     * Transform a polyData using specified rotation, scaling and offset informations
+     */
+    public static vtkPolyData transformPolyData(vtkPolyData polyData, vtkAbstractTransform transform)
+    {
         final vtkTransformPolyDataFilter transformFilter = new vtkTransformPolyDataFilter();
         transformFilter.SetInputData(polyData);
         transformFilter.SetTransform(transform);
@@ -989,39 +1055,25 @@ public class VtkUtil
         final vtkPolyData result = transformFilter.GetOutput();
 
         transformFilter.Delete();
-        transform.Delete();
 
         return result;
     }
 
     /**
-     * Transform a polyData using java AffineTransform
+     * Transform a polyData using specified rotation, scaling and offset informations (3D)
      */
-    public static vtkPolyData transformPolyData(vtkPolyData polyData, AffineTransform transform, double scaleZ)
+    public static vtkPolyData transformPolyData(vtkPolyData polyData, double off[], double scale[], double rot[])
     {
-        final double[] offset = new double[3];
-        final double[] scale = new double[3];
-        final double[] rotation = new double[3];
-
-        offset[0] = transform.getTranslateX();
-        offset[1] = transform.getTranslateY();
-        offset[2] = 0d;
-
-        scale[0] = GeomUtil.getScaleX(transform);
-        scale[1] = GeomUtil.getScaleY(transform);
-        scale[2] = scaleZ;
-
-        rotation[0] = 0d;
-        rotation[1] = 0d;
-        rotation[2] = Math.toDegrees(GeomUtil.getRotation(transform));
-
-        return transformPolyData(polyData, offset, scale, rotation);
+        final vtkTransform transform = getTransform(off, scale, rot);
+        final vtkPolyData result = transformPolyData(polyData, transform);
+        transform.Delete();
+        return result;
     }
 
     /**
      * Read a OBJ 3D model file and returns it in VTK mesh format ({@link vtkPolyData})
      */
-    public static vtkPolyData objToMesh(String objPath)
+    public static vtkPolyData getSurfaceFromOBJ(String objPath)
     {
         final vtkOBJReader reader = new vtkOBJReader();
 
@@ -1031,28 +1083,6 @@ public class VtkUtil
         final vtkPolyData result = reader.GetOutput();
 
         reader.Delete();
-
-        return result;
-    }
-
-    /**
-     * Read a OBJ 3D model file and returns it in VTK image data format ({@link vtkImageData})
-     * 
-     * @param scaleZ
-     * @param transform
-     */
-    public static vtkImageData objToImageData(String objPath, AffineTransform transform, double scaleZ, double space[])
-    {
-        final vtkPolyData polyData = objToMesh(objPath);
-        final vtkPolyData transformedPolyData = transformPolyData(polyData, transform, scaleZ);
-        final vtkImageData result = polyDataToImageData(transformedPolyData, space);
-
-        transformedPolyData.GetPolys().Delete();
-        transformedPolyData.GetPoints().Delete();
-        transformedPolyData.Delete();
-        polyData.GetPolys().Delete();
-        polyData.GetPoints().Delete();
-        polyData.Delete();
 
         return result;
     }

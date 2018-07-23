@@ -31,6 +31,8 @@ import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
+import icy.type.point.Point3D;
+import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
@@ -2083,6 +2085,8 @@ public class SequenceUtil
         result.setPositionX(source.getPositionX() + (region2d.x * source.getPixelSizeX()));
         result.setPositionY(source.getPositionY() + (region2d.y * source.getPixelSizeY()));
         result.setPositionZ(source.getPositionZ() + (startZ * source.getPixelSizeZ()));
+        // adjust TimeStamp
+        result.setTimeStamp(source.getTimeStamp() + (long) (source.getPositionTOffset(startT, startZ, startC) * 1000d));
 
         return result;
     }
@@ -2347,6 +2351,87 @@ public class SequenceUtil
 
         return new Rectangle2D.Double(rect.getX() * factor, rect.getY() * factor, rect.getWidth() * factor,
                 rect.getHeight() * factor);
+    }
+
+    /**
+     * Convert the given Point2D coordinate from the <code>source</code> {@link Sequence} to the <code>destination</code> {@link Sequence}.<br>
+     * It internally uses the {@link Sequence#getPosition()} and {@link Sequence#getPixelSize()} information to do the coordinate conversion.
+     */
+    public static Point3D convertPoint(Point3D pt, Sequence source, Sequence destination)
+    {
+        if (pt == null)
+            return new Point3D.Double();
+
+        if ((source == null) || (destination == null))
+            return new Point3D.Double(pt.getX(), pt.getY(), pt.getZ());
+
+        // get global position in um
+        final double posXum = (pt.getX() * source.getPixelSizeX()) + source.getPositionX();
+        final double posYum = (pt.getY() * source.getPixelSizeY()) + source.getPositionY();
+        final double posZum = (pt.getZ() * source.getPixelSizeZ()) + source.getPositionZ();
+
+        // convert to destination
+        return new Point3D.Double((posXum - destination.getPositionX()) / destination.getPixelSizeX(),
+                (posYum - destination.getPositionY()) / destination.getPixelSizeY(),
+                (posZum - destination.getPositionZ()) / destination.getPixelSizeZ());
+    }
+
+    /**
+     * Convert the given Point2D coordinate from the <code>source</code> {@link Sequence} to the <code>destination</code> {@link Sequence}.<br>
+     * It internally uses the {@link Sequence#getPosition()} and {@link Sequence#getPixelSize()} information to do the coordinate conversion.
+     */
+    public static Point2D convertPoint(Point2D pt, Sequence source, Sequence destination)
+    {
+        if (pt == null)
+            return new Point2D.Double();
+
+        return convertPoint(new Point3D.Double(pt.getX(), pt.getY(), 0d), source, destination).toPoint2D();
+    }
+
+    /**
+     * Convert the given {@link Rectangle3D} from the <code>source</code> {@link Sequence} to the <code>destination</code> {@link Sequence}.<br>
+     * It internally uses the {@link Sequence#getPosition()} and {@link Sequence#getPixelSize()} information to do the coordinate conversion.
+     */
+    public static Rectangle3D convertRectangle(Rectangle3D rect, Sequence source, Sequence destination)
+    {
+        if (rect == null)
+            return new Rectangle3D.Double();
+
+        if ((source == null) || (destination == null))
+            return new Rectangle3D.Double(rect);
+
+        // get global rectangle in um
+        final double psxs = source.getPixelSizeX();
+        final double psys = source.getPixelSizeY();
+        final double pszs = source.getPixelSizeZ();
+        final double posXum = (rect.getX() * psxs) + source.getPositionX();
+        final double posYum = (rect.getY() * psys) + source.getPositionY();
+        final double posZum = (rect.getZ() * pszs) + source.getPositionZ();
+        final double sizeXum = rect.getX() * psxs;
+        final double sizeYum = rect.getY() * psys;
+        final double sizeZum = rect.getZ() * pszs;
+
+        // convert to destination
+        final double psxd = destination.getPixelSizeX();
+        final double psyd = destination.getPixelSizeY();
+        final double pszd = destination.getPixelSizeZ();
+        return new Rectangle3D.Double((posXum - destination.getPositionX()) / psxd,
+                (posYum - destination.getPositionY()) / psyd, (posZum - destination.getPositionZ()) / pszd,
+                sizeXum / psxd, sizeYum / psyd, sizeZum / pszd);
+    }
+
+    /**
+     * Convert the given {@link Rectangle2D} from the <code>source</code> {@link Sequence} to the <code>destination</code> {@link Sequence}.<br>
+     * It internally uses the {@link Sequence#getPosition()} and {@link Sequence#getPixelSize()} information to do the coordinate conversion.
+     */
+    public static Rectangle2D convertRectangle(Rectangle2D rect, Sequence source, Sequence destination)
+    {
+        if (rect == null)
+            return new Rectangle2D.Double();
+
+        return convertRectangle(
+                new Rectangle3D.Double(rect.getX(), rect.getY(), 0d, rect.getWidth(), rect.getHeight(), 0d), source,
+                destination).toRectangle2D();
     }
 
     /**
