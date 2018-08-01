@@ -94,7 +94,7 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
         preferencePanels.add(new GeneralPreferencePanel(this));
         preferencePanels.add(new NetworkPreferencePanel(this));
         preferencePanels.add(new CanvasPreferencePanel(this));
-        preferencePanels.add(new ChatPreferencePanel(this));
+//        preferencePanels.add(new ChatPreferencePanel(this));
         preferencePanels.add(new RepositoryPreferencePanel(this));
         preferencePanels.add(new PluginPreferencePanel(this));
         preferencePanels.add(new PluginLocalPreferencePanel(this));

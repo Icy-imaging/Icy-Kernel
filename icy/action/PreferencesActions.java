@@ -98,22 +98,22 @@ public class PreferencesActions
         }
     };
 
-    public static IcyAbstractAction chatPreferencesAction = new IcyAbstractAction("Chat preferences", new IcyIcon(
-            ResourceUtil.ICON_CHAT), "Show the chat preferences window",
-            "Setup chat setting as auto connect, real name, chat password...")
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 7557101963461320397L;
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            new PreferenceFrame(ChatPreferencePanel.NODE_NAME);
-            return true;
-        }
-    };
+//    public static IcyAbstractAction chatPreferencesAction = new IcyAbstractAction("Chat preferences", new IcyIcon(
+//            ResourceUtil.ICON_CHAT), "Show the chat preferences window",
+//            "Setup chat setting as auto connect, real name, chat password...")
+//    {
+//        /**
+//         * 
+//         */
+//        private static final long serialVersionUID = 7557101963461320397L;
+//
+//        @Override
+//        public boolean doAction(ActionEvent e)
+//        {
+//            new PreferenceFrame(ChatPreferencePanel.NODE_NAME);
+//            return true;
+//        }
+//    };
 
     public static IcyAbstractAction networkPreferencesAction = new IcyAbstractAction("Network preferences",
             new IcyIcon(ResourceUtil.ICON_NETWORK), "Show the network preferences window",

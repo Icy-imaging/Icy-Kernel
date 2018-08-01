@@ -18,22 +18,6 @@
  */
 package icy.file;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.file.SequenceFileSticher.SequenceFileGroup;
-import icy.file.SequenceFileSticher.SequenceIdent;
-import icy.file.SequenceFileSticher.SequencePosition;
-import icy.file.SequenceFileSticher.SequenceType;
-import icy.gui.dialog.LoaderDialog;
-import icy.image.AbstractImageProvider;
-import icy.image.IcyBufferedImage;
-import icy.image.ImageUtil;
-import icy.sequence.MetaDataUtil;
-import icy.system.IcyExceptionHandler;
-import icy.type.collection.CollectionUtil;
-import icy.type.collection.array.Array1DUtil;
-import icy.util.OMEUtil;
-import icy.util.StringUtil;
-
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -45,6 +29,22 @@ import java.util.Map;
 
 import javax.swing.filechooser.FileFilter;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.SequenceFileSticher.SequenceFileGroup;
+import icy.file.SequenceFileSticher.SequenceIdent;
+import icy.file.SequenceFileSticher.SequencePosition;
+import icy.file.SequenceFileSticher.SequenceType;
+import icy.gui.dialog.LoaderDialog;
+import icy.image.AbstractImageProvider;
+import icy.image.IcyBufferedImage;
+import icy.image.ImageUtil;
+import icy.image.colormap.IcyColorMap;
+import icy.sequence.MetaDataUtil;
+import icy.system.IcyExceptionHandler;
+import icy.type.collection.CollectionUtil;
+import icy.type.collection.array.Array1DUtil;
+import icy.util.OMEUtil;
+import icy.util.StringUtil;
 import loci.formats.FormatTools;
 import loci.formats.MetadataTools;
 import loci.formats.ome.OMEXMLMetadataImpl;
@@ -713,7 +713,7 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
 
     // internal use only
     @SuppressWarnings("resource")
-    public Object getPixelsInternal(SequencePosition pos, int series, int resolution, Rectangle region, int z, int t,
+    private Object getPixelsInternal(SequencePosition pos, int series, int resolution, Rectangle region, int z, int t,
             int c) throws UnsupportedFormatException, IOException
     {
         if (pos == null)
@@ -757,7 +757,7 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         final SequenceIdent ident = group.ident;
         final SequenceType baseType = ident.baseType;
 
-        // define XY region to load
+        // define XY region to load (original resolution)
         Rectangle region = new Rectangle(group.totalSizeX, group.totalSizeY);
         if (rectangle != null)
             region = region.intersection(rectangle);
@@ -771,13 +771,16 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
             return getPixelsInternal(positions[cursor.index + tiles.get(0).index], series, resolution, region,
                     cursor.internalZ, cursor.internalT, cursor.internalC);
 
+        // define XY region to load (wanted resolution)
+        final Rectangle finalRegion = new Rectangle(region.x >> resolution, region.y >> resolution,
+                region.width >> resolution, region.height >> resolution);
+
         // multiple tiles, create result buffer
-        final Object result = Array1DUtil.createArray(baseType.dataType,
-                (region.width >> resolution) * (region.height >> resolution));
+        final Object result = Array1DUtil.createArray(baseType.dataType, finalRegion.width * finalRegion.height);
         final boolean signed = baseType.dataType.isSigned();
         // deltas to put tile to region origin
-        final int dx = -region.x;
-        final int dy = -region.y;
+        final int dx = -finalRegion.x;
+        final int dy = -finalRegion.y;
 
         // each tile represent a single image
         for (TileIndex tile : tiles)
@@ -792,15 +795,123 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
             if (pixels == null)
                 continue;
 
-            // define destination in destination
-            final Point pt = tileRegion.getLocation();
+            // tile region (wanted resolution)
+            final Rectangle finalTileRegion = new Rectangle(tileRegion.x >> resolution, tileRegion.y >> resolution,
+                    tileRegion.width >> resolution, tileRegion.height >> resolution);
+            // destination
+            final Point pt = finalTileRegion.getLocation();
             pt.translate(dx, dy);
 
             // copy tile to result
-            Array1DUtil.copyRect(pixels, tileRegion.getSize(), null, result, region.getSize(), pt, signed);
+            Array1DUtil.copyRect(pixels, finalTileRegion.getSize(), null, result, finalRegion.getSize(), pt, signed);
         }
 
         // return full region pixels object
+        return result;
+    }
+
+    // internal use only
+    private IcyBufferedImage getImageInternal(SequencePosition pos, int series, int resolution, Rectangle region, int z,
+            int t, int c) throws UnsupportedFormatException, IOException
+    {
+        if (pos == null)
+        {
+            final SequenceType bt = currentGroup.ident.baseType;
+            System.err.println("SequenceIdGroupImporter.getImageInternal: no image for tile [" + (region.x / bt.sizeX)
+                    + "," + (region.y / bt.sizeY) + "] !");
+            return null;
+        }
+
+        // get importer for this image
+        final SequenceFileImporter imp = getImporter(pos.getPath());
+
+        if (imp == null)
+        {
+            System.err.println("SequenceIdGroupImporter.getImageInternal: cannot get importer for image '"
+                    + pos.getPath() + "' !");
+            return null;
+        }
+
+        try
+        {
+            // get image from importer (it actually represents a tile of the resulting image)
+            return imp.getImage(series, resolution, region, z, t, c);
+        }
+        finally
+        {
+            // release importer
+            releaseImporter(pos.getPath(), imp);
+        }
+    }
+
+    // internal use only, at this point c cannot be -1
+    private IcyBufferedImage getImageInternal(int series, int resolution, Rectangle rectangle, int z, int t, int c)
+            throws UnsupportedFormatException, IOException
+    {
+        if (!isOpen())
+            return null;
+
+        final SequenceFileGroup group = currentGroup;
+        final SequenceIdent ident = group.ident;
+        final SequenceType baseType = ident.baseType;
+
+        // define XY region to load
+        Rectangle region = new Rectangle(group.totalSizeX, group.totalSizeY);
+        if (rectangle != null)
+            region = region.intersection(rectangle);
+
+        // get cursor and tile indexes
+        final FileCursor cursor = getCursor(z, t, c);
+        final List<TileIndex> tiles = getTileIndexes(region);
+
+        // single tile ?
+        if (tiles.size() == 1)
+            return getImageInternal(positions[cursor.index + tiles.get(0).index], series, resolution, region,
+                    cursor.internalZ, cursor.internalT, cursor.internalC);
+
+        // define XY region to load (wanted resolution)
+        final Rectangle finalRegion = new Rectangle(region.x >> resolution, region.y >> resolution,
+                region.width >> resolution, region.height >> resolution);
+
+        // multiple tiles, create result image
+        final IcyBufferedImage result = new IcyBufferedImage(finalRegion.width, finalRegion.height, 1,
+                baseType.dataType);
+        // colormap save
+        IcyColorMap colormap = null;
+        // deltas to put tile to region origin
+        final int dx = -finalRegion.x;
+        final int dy = -finalRegion.y;
+
+        // each tile represent a single image
+        for (TileIndex tile : tiles)
+        {
+            // adjusted tile region
+            final Rectangle tileRegion = tile.region.intersection(region);
+            // get tile pixels
+            final IcyBufferedImage image = getImageInternal(positions[cursor.index + tile.index], series, resolution,
+                    tileRegion, cursor.internalZ, cursor.internalT, cursor.internalC);
+
+            // cannot retrieve pixels for this tile ? --> ignore
+            if (image == null)
+                continue;
+
+            // store colormap
+            if (colormap == null)
+                colormap = image.getColorMap(0);
+
+            // destination
+            final Point pt = new Point(tileRegion.x >> resolution, tileRegion.y >> resolution);
+            pt.translate(dx, dy);
+
+            // copy tile to image result
+            result.copyData(image, null, pt);
+        }
+
+        // set colormap
+        if (colormap != null)
+            result.setColorMap(0, colormap);
+
+        // return full image region
         return result;
     }
 
@@ -812,36 +923,42 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
             return null;
 
         final SequenceFileGroup group = currentGroup;
-        final SequenceIdent ident = group.ident;
-        final SequenceType baseType = ident.baseType;
-        final int sizeX = ((rectangle != null) ? rectangle.width : group.totalSizeX) >> resolution;
-        final int sizeY = ((rectangle != null) ? rectangle.height : group.totalSizeY) >> resolution;
-        final int sizeC = group.totalSizeC;
+        final int sizeC = (c == -1) ? group.totalSizeC : 1;
+        final List<IcyBufferedImage> result = new ArrayList<IcyBufferedImage>();
 
         // multi channel ?
-        if ((c == -1) && (sizeC > 1))
+        if (sizeC > 1)
         {
-            final List<IcyBufferedImage> result = new ArrayList<IcyBufferedImage>();
-
-            // get channel per channel
+            // handle channel independently we can have channel in separate file
             for (int ch = 0; ch < sizeC; ch++)
-            {
-                IcyBufferedImage img = getImage(series, resolution, rectangle, z, t, ch);
+                result.add(getImageInternal(series, resolution, rectangle, z, t, ch));
+        }
+        // single channel
+        else
+            result.add(getImageInternal(series, resolution, rectangle, z, t, (c == -1) ? 0 : c));
 
-                // no image at this position ? --> use empty image then
-                if (img == null)
-                    img = new IcyBufferedImage(sizeX, sizeY, 1, baseType.dataType);
+        // we have a null image in the result ?
+        if (result.contains(null))
+        {
+            final SequenceIdent ident = group.ident;
+            final SequenceType baseType = ident.baseType;
 
-                result.add(img);
-            }
+            // define XY region to load
+            Rectangle region = new Rectangle(group.totalSizeX, group.totalSizeY);
+            if (rectangle != null)
+                region = region.intersection(rectangle);
 
-            // then build a single image from all channels
-            return IcyBufferedImage.createFrom(result);
+            final int sizeX = region.width >> resolution;
+            final int sizeY = region.height >> resolution;
+
+            // replace null by empty image
+            for (int i = 0; i < result.size(); i++)
+                if (result.get(i) == null)
+                    result.set(i, new IcyBufferedImage(sizeX, sizeY, 1, baseType.dataType));
         }
 
-        // create result image
-        return new IcyBufferedImage(sizeX, sizeY, getPixels(series, resolution, rectangle, z, t, (c == -1) ? 0 : c),
-                baseType.dataType.isSigned());
+        // then build a single image from all channels
+        return IcyBufferedImage.createFrom(result);
     }
 
     @SuppressWarnings("resource")

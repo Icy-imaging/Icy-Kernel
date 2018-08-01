@@ -18,16 +18,6 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.IcyTextField;
-import icy.gui.dialog.MessageDialog;
-import icy.gui.util.GuiUtil;
-import icy.gui.util.LookAndFeelUtil;
-import icy.main.Icy;
-import icy.math.MathUtil;
-import icy.preferences.ApplicationPreferences;
-import icy.preferences.GeneralPreferences;
-import icy.system.SystemUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -43,6 +33,17 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+
+import icy.gui.component.IcyTextField;
+import icy.gui.dialog.MessageDialog;
+import icy.gui.util.GuiUtil;
+import icy.gui.util.LookAndFeelUtil;
+import icy.main.Icy;
+import icy.math.MathUtil;
+import icy.preferences.ApplicationPreferences;
+import icy.preferences.GeneralPreferences;
+import icy.system.SystemUtil;
+import icy.util.StringUtil;
 
 /**
  * @author stephane
@@ -186,10 +187,10 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner,
                 new JLabel(maxMemoryMess), Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
         // TODO: uncomment when ready
-//        topPanel.add(Box.createVerticalStrut(2));
-//        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Cache ratio     "), cacheMemoryPercent,
-//                new JLabel("%    Path  "), cachePath, Box.createHorizontalStrut(4), setCachePathButton,
-//                Box.createHorizontalStrut(4)));
+        // topPanel.add(Box.createVerticalStrut(2));
+        // topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Cache ratio "), cacheMemoryPercent,
+        // new JLabel("% Path "), cachePath, Box.createHorizontalStrut(4), setCachePathButton,
+        // Box.createHorizontalStrut(4)));
         topPanel.add(Box.createVerticalStrut(6));
 
         final JPanel bottomPanel = new JPanel();
@@ -243,7 +244,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         ApplicationPreferences.setCacheMemoryPercent(intValue);
 
         stringValue = cachePath.getText();
-        if (ApplicationPreferences.getCachePath() != stringValue)
+        if (!StringUtil.equals(ApplicationPreferences.getCachePath(), stringValue))
             getPreferenceFrame().setNeedRestart();
         ApplicationPreferences.setCachePath(stringValue);
 
