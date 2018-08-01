@@ -18,6 +18,18 @@
  */
 package icy.gui.inspector;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import icy.gui.component.ExtTabbedPanel;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.main.ActiveSequenceListener;
@@ -31,18 +43,6 @@ import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
-
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Point;
-
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * This window shows all details about the current sequence.
@@ -63,7 +63,7 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
     final LayersPanel layersPanel;
     final UndoManagerPanel historyPanel;
     final OutputConsolePanel outputConsolePanel;
-    final ChatPanel chatPanel;
+    // final ChatPanel chatPanel;
 
     /**
      * The width of the inner component of the inspector should not exceed 300.
@@ -83,7 +83,7 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
         layersPanel = new LayersPanel();
         historyPanel = new UndoManagerPanel();
         outputConsolePanel = new OutputConsolePanel();
-        chatPanel = new ChatPanel();
+//        chatPanel = new ChatPanel();
 
         // add main tab panels
         mainPane.addTab("Sequence", null, new JScrollPane(sequencePanel,
@@ -94,7 +94,7 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("History", null, historyPanel, "Actions history");
         mainPane.addTab("Output", null, outputConsolePanel, "Console output");
-        mainPane.addTab("Chat", null, chatPanel, "Chat room");
+//        mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
         // minimum required size for sequence infos panel
         final Dimension minDim = new Dimension(300, 480);
@@ -206,11 +206,12 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
     }
 
     /**
-     * @return the chatPanel
+     * @deprecated IRC has been removed since Icy 1.9.8.0
      */
     public ChatPanel getChatPanel()
     {
-        return chatPanel;
+        return null;
+        // return chatPanel;
     }
 
     /**

@@ -367,11 +367,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                             {
                                 img = getImageInternal(r, region, z, t, false, downScaleLevel, buf.rawBuffer,
                                         buf.channelBuffer, buf.pixelBuffer);
+                                // colormaps not yet set ?
+                                if (colormaps[0] == null)
+                                {
+                                    for (int c = 0; c < img.getSizeC(); c++)
+                                        colormaps[c] = img.getColorMap(c);
+                                }
                             }
                             else
                             {
                                 img = getImageInternal(r, region, z, t, c, false, downScaleLevel, buf.rawBuffer,
-                                        buf.channelBuffer, buf.pixelBuffer);
+                                        buf.channelBuffer, buf.pixelBuffer[0]);
+                                // colormap not yet set ?
+                                if (colormaps[0] == null)
+                                    colormaps[0] = img.getColorMap(0);
                             }
                         }
                         finally
@@ -380,7 +389,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                             releaseReader(r);
                         }
 
-                        // define destination in destination
+                        // define destination point in destination
                         final Point pt = region.getLocation();
                         pt.translate(-imageRegion.x, -imageRegion.y);
 
@@ -412,6 +421,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final int t;
         final int c;
         final IcyBufferedImage result;
+        final IcyColorMap[] colormaps;
         final Stack<TileImageWorkBuffer> buffers;
 
         public LociTileImageReader(int series, int resolution, Rectangle region, int z, int t, int c, int tileW,
@@ -427,7 +437,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             final int sizeX = MetaDataUtil.getSizeX(meta, series);
             final int sizeY = MetaDataUtil.getSizeY(meta, series);
             final DataType type = MetaDataUtil.getDataType(meta, series);
-            final int sizeC = MetaDataUtil.getSizeC(meta, series);
+            final int sizeC = (c == -1) ? MetaDataUtil.getSizeC(meta, series) : 1;
 
             // define XY region to load
             Rectangle adjRegion = new Rectangle(sizeX, sizeY);
@@ -448,7 +458,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
             // allocate result (adapted to final wanted resolution)
             result = new IcyBufferedImage(imageRegion.width, imageRegion.height, sizeC, type);
-
+            // allocate colormaps
+            colormaps = new IcyColorMap[sizeC];
             // allocate working buffers
             final int rgbChannelCount = reader.getRGBChannelCount();
 
@@ -551,6 +562,10 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             {
                 result.endUpdate();
             }
+
+            // set back colormap
+            for (int i = 0; i < colormaps.length; i++)
+                result.setColorMap(i, colormaps[i], true);
 
             // faster memory release
             buffers.clear();
@@ -1874,7 +1889,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      *        {@link IFormatReader}
      * @param rect
      *        Define the image rectangular region we want to retrieve data for (considering current selected image
-     *        resolution).<br>
+     *        reader resolution).<br>
      *        Should be adjusted if <i>thumbnail</i> parameter is <code>true</code>
      * @param z
      *        Z position of the image to load

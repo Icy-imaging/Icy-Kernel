@@ -113,8 +113,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     /**
      * Create an IcyBufferedImage (multi component) from a list of BufferedImage.<br>
-     * IMPORTANT : source images can be used as part or as the whole result so consider them as
-     * 'lost'.
+     * IMPORTANT: source images can be used as part or as the whole result so consider them as 'lost'.
      * 
      * @param imageList
      *        list of {@link BufferedImage}

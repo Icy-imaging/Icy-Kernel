@@ -18,13 +18,12 @@
  */
 package icy.util;
 
-import icy.system.IcyExceptionHandler;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 
+import icy.system.IcyExceptionHandler;
 import jxl.Workbook;
 import jxl.format.Colour;
 import jxl.read.biff.BiffException;
@@ -37,7 +36,9 @@ import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 
 /**
- * XLS (excel) utilities class (create and write XLS documents).
+ * XLS (excel) utilities class (create and write XLS documents).<br>
+ * <b>IMPORTANT NOTE</b>: this class only handles basic XLS file, for XLSX files (XML excel)
+ * you need to use the <code>Workbooks</code> plugin (Alexandre Dufour)
  * 
  * @author Stephane
  */
@@ -311,7 +312,7 @@ public class XLSUtil
     /**
      * Fill sheet content from CSV text.
      * 
-     *  @return <code>true</code> if the operation succeed
+     * @return <code>true</code> if the operation succeed
      */
     public static boolean setFromCSV(WritableSheet sheet, String csvContent)
     {
@@ -334,7 +335,7 @@ public class XLSUtil
 
                 y++;
             }
-            
+
             return true;
         }
         catch (IOException e)

@@ -105,7 +105,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("1.9.8.0");
+    public static Version version = new Version("1.9.8.1");
 
     /**
      * Main interface
@@ -683,8 +683,8 @@ public class Icy
                 final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
 
                 // disconnect from chat (not needed but preferred)
-                if (mainFrame != null)
-                    mainFrame.getChat().disconnect("Icy closed");
+//                if (mainFrame != null)
+//                    mainFrame.getChat().disconnect("Icy closed");
 
                 // close all icyFrames (force wait completion)
                 ThreadUtil.invokeNow(new Runnable()

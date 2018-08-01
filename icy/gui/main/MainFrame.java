@@ -18,36 +18,6 @@
  */
 package icy.gui.main;
 
-import icy.action.FileActions;
-import icy.action.GeneralActions;
-import icy.action.SequenceOperationActions;
-import icy.file.FileUtil;
-import icy.file.Loader;
-import icy.gui.component.ExternalizablePanel;
-import icy.gui.component.ExternalizablePanel.StateListener;
-import icy.gui.frame.IcyExternalFrame;
-import icy.gui.inspector.ChatPanel;
-import icy.gui.inspector.InspectorPanel;
-import icy.gui.menu.ApplicationMenu;
-import icy.gui.menu.MainRibbon;
-import icy.gui.menu.search.SearchBar;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.WindowPositionSaver;
-import icy.gui.viewer.Viewer;
-import icy.imagej.ImageJWrapper;
-import icy.main.Icy;
-import icy.math.HungarianAlgorithm;
-import icy.preferences.GeneralPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyApplicationIcon;
-import icy.system.FileDrop;
-import icy.system.FileDrop.FileDropExtListener;
-import icy.system.FileDrop.FileDropListener;
-import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -80,6 +50,35 @@ import javax.swing.JSplitPane;
 import org.pushingpixels.flamingo.api.ribbon.JRibbon;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
 
+import icy.action.FileActions;
+import icy.action.GeneralActions;
+import icy.action.SequenceOperationActions;
+import icy.file.FileUtil;
+import icy.file.Loader;
+import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.ExternalizablePanel.StateListener;
+import icy.gui.frame.IcyExternalFrame;
+import icy.gui.inspector.ChatPanel;
+import icy.gui.inspector.InspectorPanel;
+import icy.gui.menu.ApplicationMenu;
+import icy.gui.menu.MainRibbon;
+import icy.gui.menu.search.SearchBar;
+import icy.gui.util.ComponentUtil;
+import icy.gui.util.WindowPositionSaver;
+import icy.gui.viewer.Viewer;
+import icy.imagej.ImageJWrapper;
+import icy.main.Icy;
+import icy.math.HungarianAlgorithm;
+import icy.preferences.GeneralPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyApplicationIcon;
+import icy.system.FileDrop;
+import icy.system.FileDrop.FileDropExtListener;
+import icy.system.FileDrop.FileDropListener;
+import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
+import icy.type.collection.CollectionUtil;
+import icy.util.StringUtil;
 import ij.IJ;
 
 /**
@@ -143,8 +142,8 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     private static final long serialVersionUID = 1113003570969611614L;
 
     public static final String TITLE = "Icy";
@@ -302,7 +301,8 @@ public class MainFrame extends JRibbonFrame
         // handle file drop in desktop pane and in ribbon pane
         new FileDrop(desktopPane, BorderFactory.createLineBorder(Color.blue.brighter(), 2), false,
                 desktopFileDropListener);
-        new FileDrop(getRibbon(), BorderFactory.createLineBorder(Color.blue.brighter(), 1), false, bandFileDropListener);
+        new FileDrop(getRibbon(), BorderFactory.createLineBorder(Color.blue.brighter(), 1), false,
+                bandFileDropListener);
 
         // listen ribbon minimization event
         getRibbon().addPropertyChangeListener(JRibbon.PROPERTY_MINIMIZED, new PropertyChangeListener()
@@ -512,7 +512,7 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * @return the chat component
+     * @deprecated IRC has been removed since Icy 1.9.8.0
      */
     public ChatPanel getChat()
     {

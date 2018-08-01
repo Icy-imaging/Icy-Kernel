@@ -18,11 +18,6 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.IcyTextField;
-import icy.gui.main.MainFrame;
-import icy.main.Icy;
-import icy.preferences.ChatPreferences;
-
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -33,6 +28,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
+
+import icy.gui.component.IcyTextField;
+import icy.preferences.ChatPreferences;
 
 public class ChatPreferencePanel extends PreferencePanel
 {
@@ -104,8 +102,8 @@ public class ChatPreferencePanel extends PreferencePanel
         mainPanel.add(enableDesktopOverlayCheckBox, gbc_enableDesktopOverlayCheckBox);
 
         desktopChannelsField = new IcyTextField();
-        desktopChannelsField
-                .setToolTipText("Channel(s) to display on dekstop chat. You can enter severals channels (ex : \"icy;icy-support\")");
+        desktopChannelsField.setToolTipText(
+                "Channel(s) to display on dekstop chat. You can enter severals channels (ex : \"icy;icy-support\")");
         desktopChannelsField.setText("icy");
         GridBagConstraints gbc_desktopChannelsField = new GridBagConstraints();
         gbc_desktopChannelsField.gridwidth = 2;
@@ -172,8 +170,8 @@ public class ChatPreferencePanel extends PreferencePanel
         mainPanel.add(passwordField, gbc_passwordField);
 
         JLabel lblChannels = new JLabel("Extra channels");
-        lblChannels
-                .setToolTipText("Extra channels to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;others\")");
+        lblChannels.setToolTipText(
+                "Extra channels to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;others\")");
         GridBagConstraints gbc_lblChannels = new GridBagConstraints();
         gbc_lblChannels.anchor = GridBagConstraints.EAST;
         gbc_lblChannels.insets = new Insets(0, 0, 0, 5);
@@ -182,8 +180,8 @@ public class ChatPreferencePanel extends PreferencePanel
         mainPanel.add(lblChannels, gbc_lblChannels);
 
         extraChannelsField = new IcyTextField();
-        extraChannelsField
-                .setToolTipText("Extra channel(s) to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;...\")");
+        extraChannelsField.setToolTipText(
+                "Extra channel(s) to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;...\")");
         GridBagConstraints gbc_channelsField = new GridBagConstraints();
         gbc_channelsField.gridwidth = 3;
         gbc_channelsField.insets = new Insets(0, 0, 0, 5);
@@ -232,11 +230,11 @@ public class ChatPreferencePanel extends PreferencePanel
         ChatPreferences.setDesktopOverlay(enableDesktopOverlayCheckBox.isSelected());
         ChatPreferences.setDesktopChannels(desktopChannelsField.getText());
 
-        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-
+        // final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+        //
         // repaint desktop pane for desktop overlay change
-        if (mainFrame != null)
-            mainFrame.getChat().refreshDesktopOverlayState();
+        // if (mainFrame != null)
+        // mainFrame.getChat().refreshDesktopOverlayState();
     }
 
 }
