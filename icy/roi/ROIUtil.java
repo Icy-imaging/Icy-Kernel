@@ -1142,10 +1142,10 @@ public class ROIUtil
                             roi2.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
                 }
 
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+                mask4D[t] = new BooleanMask3D(new Rectangle3D.Integer(bounds3D), mask3D);
             }
 
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+            mask5D[c] = new BooleanMask4D(new Rectangle4D.Integer(bounds4D), mask4D);
         }
 
         // build the 5D result ROI
@@ -1194,18 +1194,18 @@ public class ROIUtil
 
                 for (int z = 0; z < roiSize.sizeZ; z++)
                 {
-                    final BooleanMask2D roi1Mask2D = new BooleanMask2D(bounds2D,
+                    final BooleanMask2D roi1Mask2D = new BooleanMask2D(new Rectangle(bounds2D),
                             roi1.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t, bounds.c + c, true));
-                    final BooleanMask2D roi2Mask2D = new BooleanMask2D(bounds2D,
+                    final BooleanMask2D roi2Mask2D = new BooleanMask2D(new Rectangle(bounds2D),
                             roi2.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t, bounds.c + c, true));
 
                     mask3D[z] = BooleanMask2D.getIntersection(roi1Mask2D, roi2Mask2D);
                 }
 
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+                mask4D[t] = new BooleanMask3D(new Rectangle3D.Integer(bounds3D), mask3D);
             }
 
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+            mask5D[c] = new BooleanMask4D(new Rectangle4D.Integer(bounds4D), mask4D);
         }
 
         // build the 5D result ROI
@@ -1265,10 +1265,10 @@ public class ROIUtil
                             roi2.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
                 }
 
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+                mask4D[t] = new BooleanMask3D(new Rectangle3D.Integer(bounds3D), mask3D);
             }
 
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+            mask5D[c] = new BooleanMask4D(new Rectangle4D.Integer(bounds4D), mask4D);
         }
 
         // build the 5D result ROI
@@ -1323,10 +1323,10 @@ public class ROIUtil
                             roi2.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
                 }
 
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+                mask4D[t] = new BooleanMask3D(new Rectangle3D.Integer(bounds3D), mask3D);
             }
 
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+            mask5D[c] = new BooleanMask4D(new Rectangle4D.Integer(bounds4D), mask4D);
         }
 
         // build the 5D result ROI
@@ -1503,13 +1503,13 @@ public class ROIUtil
                 final BooleanMask2D mask3D[] = new BooleanMask2D[roiSize.sizeZ];
 
                 for (int z = 0; z < roiSize.sizeZ; z++)
-                    mask3D[z] = new BooleanMask2D(bounds2D,
+                    mask3D[z] = new BooleanMask2D(new Rectangle(bounds2D),
                             roi.getBooleanMask2D(bounds2D, bounds.z + z, bounds.t + t, bounds.c + c, true));
 
-                mask4D[t] = new BooleanMask3D(bounds3D, mask3D);
+                mask4D[t] = new BooleanMask3D(new Rectangle3D.Integer(bounds3D), mask3D);
             }
 
-            mask5D[c] = new BooleanMask4D(bounds4D, mask4D);
+            mask5D[c] = new BooleanMask4D(new Rectangle4D.Integer(bounds4D), mask4D);
         }
 
         // build the 5D result ROI

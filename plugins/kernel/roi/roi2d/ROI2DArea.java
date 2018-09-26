@@ -18,6 +18,28 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -43,29 +65,6 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
-
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.IndexColorModel;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkImageData;
@@ -90,7 +89,7 @@ public class ROI2DArea extends ROI2D
     protected static Color brushColor = Color.red;
     protected static float brushSize = DEFAULT_CURSOR_SIZE;
 
-    public class ROI2DAreaPainter extends ROI2DPainter implements VtkPainter, Runnable
+    public class ROI2DAreaPainter extends ROI2DPainter implements Runnable
     {
         /**
          * @deprecated Use {@link #getOpacity()} instead.

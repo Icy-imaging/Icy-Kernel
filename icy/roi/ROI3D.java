@@ -269,6 +269,8 @@ public abstract class ROI3D extends ROI
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
+            super.paint(g, sequence, canvas);
+
             if (isActiveFor(canvas))
             {
                 drawROI(g, sequence, canvas);

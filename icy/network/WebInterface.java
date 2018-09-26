@@ -1,5 +1,13 @@
 package icy.network;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.w3c.dom.Document;
+
 import icy.main.Icy;
 import icy.math.UnitUtil;
 import icy.plugin.PluginDescriptor;
@@ -14,20 +22,9 @@ import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.w3c.dom.Document;
-
 public class WebInterface
 {
-    // beta test
-    public static final String BASE_URL_BETA = "https://icy.yhello.co/interface/";
-    // new official
-    public static final String BASE_URL = "https://icy.bioimageanalysis.org/interface/";
+    public static final String BASE_URL = NetworkUtil.WEBSITE_URL + "interface/";
 
     public static final String PARAM_ACTION = "action";
     public static final String PARAM_CLIENT_ID = "clientId";
@@ -229,7 +226,7 @@ public class WebInterface
         values.put(PARAM_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
 
         // TODO: change when ready !
-//        NetworkUtil.report(values);
+        // NetworkUtil.report(values);
 
         // send report in background task (we don't want to wait for response from server)
         ThreadUtil.bgRun(new Runnable()
@@ -239,8 +236,7 @@ public class WebInterface
             {
                 try
                 {
-                    // if (NetworkUtil.postData(BASE_URL, values) == null)
-                    final String result = NetworkUtil.postData(BASE_URL_BETA, values);
+                    final String result = NetworkUtil.postData(BASE_URL, values);
 
                     if (result == null)
                         System.out.println("Error while reporting data, verifying your internet connection.");

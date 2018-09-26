@@ -18,6 +18,25 @@
  */
 package icy.sequence;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.swing.undo.UndoManager;
+
+import org.w3c.dom.Node;
+
 import icy.common.CollapsibleEvent;
 import icy.common.UpdateEventHandler;
 import icy.common.exception.TooLargeArrayException;
@@ -72,26 +91,6 @@ import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
-import javax.swing.undo.UndoManager;
-
-import org.w3c.dom.Node;
-
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 
@@ -1162,6 +1161,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void resetOriginInformation()
     {
+        setSeries(0);
         setOriginChannel(-1);
         setOriginResolution(0);
         setOriginTMin(-1);
@@ -1190,6 +1190,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return 0;
+    }
+
+    /**
+     * Set series index if the Sequence comes from a multi serie image (internal use only).
+     */
+    public void setSeries(int value)
+    {
+        // retrieve the image ID (sequences are always single serie)
+        final String id = MetaDataUtil.getImageID(getOMEXMLMetadata(), 0);
+
+        if (id.startsWith("Image:"))
+            MetaDataUtil.setImageID(getOMEXMLMetadata(), 0, "Image:" + value);
     }
 
     /**
@@ -4410,6 +4422,43 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns the data value located at position (t, z, c, y, x) as double.<br>
+     * It returns 0d if value is not found.
+     */
+    public double getData(int t, int z, int c, int y, int x)
+    {
+        final IcyBufferedImage img = getImage(t, z);
+
+        if (img != null)
+            return img.getData(x, y, c);
+
+        return 0d;
+    }
+
+    /**
+     * Returns the data value located at position (t, z, c, y, x) as double.<br>
+     * The value is interpolated depending the current double (x,y,z) coordinates.<br>
+     * It returns 0d if value is out of range.
+     */
+    public double getDataInterpolated(int t, double z, int c, double y, double x)
+    {
+        final int zi = (int) z;
+        final double ratioNextZ = z - (double) zi;
+        final double ratioCurZ = 1d - ratioNextZ;
+
+        double result = 0d;
+
+        IcyBufferedImage img = getImage(t, zi);
+        if (img != null)
+            result += img.getDataInterpolated(x, y, c) * ratioCurZ;
+        img = getImage(t, zi + 1);
+        if ((img != null) && (ratioNextZ > 0d))
+            result += img.getDataInterpolated(x, y, c) * ratioNextZ;
+
+        return result;
+    }
+
+    /**
      * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public Object getDataXYCZT()
@@ -4477,20 +4526,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             return img.getDataXY(c);
 
         return null;
-    }
-
-    /**
-     * Returns the data value located at position (t, z, c, y, x) as double.<br>
-     * It returns 0 if value is not found.
-     */
-    public double getData(int t, int z, int c, int y, int x)
-    {
-        final IcyBufferedImage img = getImage(t, z);
-
-        if (img != null)
-            return img.getData(x, y, c);
-
-        return 0d;
     }
 
     /**

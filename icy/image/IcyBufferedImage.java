@@ -18,27 +18,6 @@
  */
 package icy.image;
 
-import icy.common.CollapsibleEvent;
-import icy.common.UpdateEventHandler;
-import icy.common.exception.TooLargeArrayException;
-import icy.common.listener.ChangeListener;
-import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
-import icy.image.colormap.IcyColorMap;
-import icy.image.colormap.LinearColorMap;
-import icy.image.colormodel.IcyColorModel;
-import icy.image.colormodel.IcyColorModelEvent;
-import icy.image.colormodel.IcyColorModelListener;
-import icy.image.lut.LUT;
-import icy.math.ArrayMath;
-import icy.math.MathUtil;
-import icy.math.Scaler;
-import icy.type.DataType;
-import icy.type.TypeUtil;
-import icy.type.collection.array.Array1DUtil;
-import icy.type.collection.array.Array2DUtil;
-import icy.type.collection.array.ArrayUtil;
-import icy.type.collection.array.ByteArrayConvert;
-
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
@@ -59,6 +38,26 @@ import java.util.List;
 
 import javax.media.jai.PlanarImage;
 
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.exception.TooLargeArrayException;
+import icy.common.listener.ChangeListener;
+import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
+import icy.image.colormap.IcyColorMap;
+import icy.image.colormap.LinearColorMap;
+import icy.image.colormodel.IcyColorModel;
+import icy.image.colormodel.IcyColorModelEvent;
+import icy.image.colormodel.IcyColorModelListener;
+import icy.image.lut.LUT;
+import icy.math.ArrayMath;
+import icy.math.MathUtil;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.type.TypeUtil;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.Array2DUtil;
+import icy.type.collection.array.ArrayUtil;
+import icy.type.collection.array.ByteArrayConvert;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.gui.SignedByteBuffer;
@@ -2778,6 +2777,34 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         // notify data changed
         dataChanged();
+    }
+
+    /**
+     * Returns the data value located at position (x, y, c) as double whatever is the internal data type.<br>
+     * The value is interpolated depending the current double (x,y) coordinates.<br>
+     * It returns 0d if value is out of range.
+     */
+    public double getDataInterpolated(double x, double y, int c)
+    {
+        final int xi = (int) x;
+        final int yi = (int) y;
+        final int sx = getSizeX();
+        final int sy = getSizeY();
+
+        final double ratioNextX = x - (double) xi;
+        final double ratioCurX = 1d - ratioNextX;
+        final double ratioNextY = y - (double) yi;
+        final double ratioCurY = 1d - ratioNextY;
+
+        double result = getData(xi, yi, c) * (ratioCurX * ratioCurY);
+        if ((xi + 1) < sx)
+            result += getData(xi + 1, yi, c) * (ratioNextX * ratioCurY);
+        if ((yi + 1) < sy)
+            result += getData(xi, yi + 1, c) * (ratioCurX * ratioNextY);
+        if (((xi + 1) < sx) && ((yi + 1) < sy))
+            result += getData(xi + 1, yi + 1, c) * (ratioNextX * ratioNextY);
+
+        return result;
     }
 
     /**

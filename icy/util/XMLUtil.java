@@ -18,14 +18,6 @@
  */
 package icy.util;
 
-import icy.file.FileUtil;
-import icy.network.AuthenticationInfo;
-import icy.network.NetworkUtil;
-import icy.network.URLUtil;
-import icy.system.IcyExceptionHandler;
-import icy.type.DataType;
-import icy.type.collection.array.ArrayUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,6 +50,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import icy.file.FileUtil;
+import icy.network.AuthenticationInfo;
+import icy.network.NetworkUtil;
+import icy.network.URLUtil;
+import icy.system.IcyExceptionHandler;
+import icy.type.DataType;
+import icy.type.collection.array.ArrayUtil;
 
 /**
  * XML utilities class (parse, read, create and write XML documents).
@@ -401,7 +401,7 @@ public class XMLUtil
                 }
             }
             else if (showError)
-                System.err.println("XMLUtil.loadDocument('" + url + "') error :");
+                System.err.println("XMLUtil.loadDocument('" + url + "') failed.");
         }
 
         return null;

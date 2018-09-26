@@ -18,20 +18,6 @@
  */
 package icy.roi;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.canvas.IcyCanvas3D;
-import icy.gui.util.FontUtil;
-import icy.preferences.GeneralPreferences;
-import icy.roi.edit.PositionROIEdit;
-import icy.sequence.Sequence;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil.ShapeOperation;
-import icy.util.XMLUtil;
-
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -45,6 +31,19 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
+import icy.gui.util.FontUtil;
+import icy.preferences.GeneralPreferences;
+import icy.roi.edit.PositionROIEdit;
+import icy.sequence.Sequence;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil.ShapeOperation;
+import icy.util.XMLUtil;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 
 public abstract class ROI2D extends ROI
@@ -179,8 +178,8 @@ public abstract class ROI2D extends ROI
 
             double dx = imagePoint.getX() - startDragMousePosition.getX();
             double dy = imagePoint.getY() - startDragMousePosition.getY();
-            int dz = (getZ() == -1) || (imagePoint.getZ() == -1d) || (startDragMouseZ == -1) ? 0 : (int) imagePoint
-                    .getZ() - startDragMouseZ;
+            int dz = (getZ() == -1) || (imagePoint.getZ() == -1d) || (startDragMouseZ == -1) ? 0
+                    : (int) imagePoint.getZ() - startDragMouseZ;
 
             // shift action --> limit to one direction
             if (EventUtil.isShiftDown(e))
@@ -331,6 +330,8 @@ public abstract class ROI2D extends ROI
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
+            super.paint(g, sequence, canvas);
+
             if (isActiveFor(canvas))
             {
                 drawROI(g, sequence, canvas);
@@ -384,6 +385,7 @@ public abstract class ROI2D extends ROI
 
             }
         }
+
     }
 
     public static final String ID_Z = "z";

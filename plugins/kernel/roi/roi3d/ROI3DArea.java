@@ -65,7 +65,7 @@ import vtk.vtkProp;
  */
 public class ROI3DArea extends ROI3DStack<ROI2DArea>
 {
-    public class ROI3DAreaPainter extends ROI3DStackPainter implements VtkPainter, Runnable
+    public class ROI3DAreaPainter extends ROI3DStackPainter implements Runnable
     {
         // VTK 3D objects
         protected vtkPolyData outline;
@@ -350,6 +350,8 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
+            super.paint(g, sequence, canvas);
+
             if (isActiveFor(canvas))
             {
                 if (canvas instanceof VtkCanvas)
@@ -384,8 +386,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                         needRebuild = false;
                     }
                 }
-                else
-                    super.paint(g, sequence, canvas);
             }
         }
 

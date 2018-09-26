@@ -18,20 +18,20 @@
  */
 package icy.vtk;
 
-import icy.preferences.CanvasPreferences;
-import icy.util.EventUtil;
-
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import icy.preferences.CanvasPreferences;
+import icy.util.EventUtil;
 import vtk.vtkActor;
 import vtk.vtkPanel;
 import vtk.vtkPropPicker;
 
 /**
+ * @deprecated Use {@link IcyVtkPanel} instead
  * @author stephane
  */
 public class IcyVtkPanelOld extends vtkPanel

@@ -18,22 +18,6 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import icy.canvas.IcyCanvas;
-import icy.painter.OverlayEvent;
-import icy.painter.OverlayListener;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI2D.ROI2DPainter;
-import icy.roi.ROI3D;
-import icy.roi.ROIEvent;
-import icy.roi.ROIListener;
-import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle3D;
-import icy.util.XMLUtil;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -52,6 +36,22 @@ import java.util.concurrent.Semaphore;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import icy.canvas.IcyCanvas;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayListener;
+import icy.roi.BooleanMask2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROI2D.ROI2DPainter;
+import icy.roi.ROI3D;
+import icy.roi.ROIEvent;
+import icy.roi.ROIListener;
+import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle3D;
+import icy.util.XMLUtil;
 
 /**
  * Base class defining a generic 3D ROI as a stack of individual 2D ROI slices.
@@ -409,10 +409,19 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
 
         if (roi2d != null)
         {
-            // set Z, T and C position
-            roi2d.setZ(z);
-            roi2d.setT(getT());
-            roi2d.setC(getC());
+            roi2d.beginUpdate();
+            try
+            {
+                // set Z, T and C position
+                roi2d.setZ(z);
+                roi2d.setT(getT());
+                roi2d.setC(getC());
+            }
+            finally
+            {
+                roi2d.endUpdate();
+            }
+
             // listen events from this ROI and its overlay
             roi2d.addListener(this);
             roi2d.getOverlay().addOverlayListener(this);

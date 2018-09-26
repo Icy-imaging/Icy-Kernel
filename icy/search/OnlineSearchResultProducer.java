@@ -18,6 +18,7 @@
  */
 package icy.search;
 
+import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.network.WebInterface;
 import icy.system.IcyExceptionHandler;
@@ -44,9 +45,7 @@ public abstract class OnlineSearchResultProducer extends SearchResultProducer
      * @deprecated Use {@link WebInterface#doSearch(String, String)} instead
      */
     @Deprecated
-    protected static final String SEARCH_URL = "http://icy.bioimageanalysis.org/search/search.php?search=";
-    // public static final String SEARCH_URL = "https://icy.yhello.co/search/search.php?search=";
-    // public static final String SEARCH_URL = "https://icy.yhello.co/interface/?action=search&search=";
+    protected static final String SEARCH_URL = NetworkUtil.WEBSITE_URL + "search/search.php?search=";
 
     public static final long REQUEST_INTERVAL = 250;
     public static final long MAXIMUM_SEARCH_TIME = 5000;

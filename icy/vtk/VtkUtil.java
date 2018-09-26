@@ -18,6 +18,12 @@
  */
 package icy.vtk;
 
+import java.awt.Color;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import icy.canvas.Layer;
 import icy.common.exception.TooLargeArrayException;
 import icy.image.colormap.IcyColorMap;
@@ -34,13 +40,6 @@ import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
-
-import java.awt.Color;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi3d.ROI3DArea;
@@ -54,6 +53,8 @@ import vtk.vtkCollection;
 import vtk.vtkColorTransferFunction;
 import vtk.vtkContourFilter;
 import vtk.vtkDataArray;
+import vtk.vtkDataSet;
+import vtk.vtkDataSetSurfaceFilter;
 import vtk.vtkDoubleArray;
 import vtk.vtkFloatArray;
 import vtk.vtkIdTypeArray;
@@ -275,6 +276,36 @@ public class VtkUtil
         return result;
     }
 
+    /**
+     * Returns a native java array from the specified {@link vtkDataArray}.
+     */
+    public static Object getJavaArray(vtkDataArray dataArray)
+    {
+        switch (dataArray.GetDataType())
+        {
+            case VTK_UNSIGNED_CHAR:
+                return ((vtkUnsignedCharArray) dataArray).GetJavaArray();
+            case VTK_SHORT:
+                return ((vtkShortArray) dataArray).GetJavaArray();
+            case VTK_UNSIGNED_SHORT:
+                return ((vtkUnsignedShortArray) dataArray).GetJavaArray();
+            case VTK_INT:
+                return ((vtkIntArray) dataArray).GetJavaArray();
+            case VTK_UNSIGNED_INT:
+                return ((vtkUnsignedIntArray) dataArray).GetJavaArray();
+            case VTK_LONG:
+                return ((vtkLongArray) dataArray).GetJavaArray();
+            case VTK_UNSIGNED_LONG:
+                return ((vtkUnsignedLongArray) dataArray).GetJavaArray();
+            case VTK_FLOAT:
+                return ((vtkFloatArray) dataArray).GetJavaArray();
+            case VTK_DOUBLE:
+                return ((vtkDoubleArray) dataArray).GetJavaArray();
+            default:
+                return null;
+        }
+    }
+
     public static int[] getArray(vtkIdTypeArray array)
     {
         final vtkIntArray iarray = new vtkIntArray();
@@ -391,6 +422,23 @@ public class VtkUtil
         final vtkPolyData result = vertexFilter.GetOutput();
 
         vertexFilter.Delete();
+
+        return result;
+    }
+
+    /**
+     * Returns a {@link vtkPolyData} from {@link vtkDataSet}
+     */
+    public static vtkPolyData getPolyDataFromDataSet(vtkDataSet dataSet)
+    {
+        // transform grid to polydata first
+        final vtkDataSetSurfaceFilter surfaceFilter = new vtkDataSetSurfaceFilter();
+        surfaceFilter.SetInputData(dataSet);
+        surfaceFilter.Update();
+
+        final vtkPolyData result = surfaceFilter.GetOutput();
+
+        surfaceFilter.Delete();
 
         return result;
     }
@@ -757,9 +805,9 @@ public class VtkUtil
     }
 
     /**
-     * Returns a {@link ROI2DArea} or {@link ROI3DArea} from a binary (0/1 values) {@link vtkImageData}.
+     * Returns a {@link BooleanMask3D} from a binary (0/1 values) {@link vtkImageData}.
      */
-    public static ROI getROIFromBinaryImage(vtkImageData image, boolean force3DROI)
+    public static BooleanMask3D getBooleanMaskFromBinaryImage(vtkImageData image, boolean optimizeBounds)
     {
         final vtkDataArray data = image.GetPointData().GetScalars();
         final double[] origin = image.GetOrigin();
@@ -769,12 +817,11 @@ public class VtkUtil
         final int sizeZ = dim[2];
         final int sizeXY = sizeX * sizeY;
         final Rectangle bounds2D = new Rectangle((int) origin[0], (int) origin[1], sizeX, sizeY);
+        final BooleanMask2D[] masks = new BooleanMask2D[sizeZ];
 
-        if ((sizeZ > 1) || force3DROI)
+        // more than 200M ? use simple iterator (slower but consume less memory)
+        if ((sizeXY * sizeZ) > (200 * 1024 * 1024))
         {
-            // 3D
-            final BooleanMask2D[] masks = new BooleanMask2D[sizeZ];
-
             int off = 0;
             for (int z = 0; z < sizeZ; z++)
             {
@@ -783,20 +830,126 @@ public class VtkUtil
                 for (int xy = 0; xy < sizeXY; xy++)
                     mask[xy] = (data.GetTuple1(off++) != 0d);
 
-                masks[z] = new BooleanMask2D(bounds2D, mask);
+                masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
             }
+        }
+        else
+        {
+            final Object javaArray = getJavaArray(data);
+            int off = 0;
 
-            return new ROI3DArea(new BooleanMask3D(
-                    new Rectangle3D.Integer(bounds2D.x, bounds2D.y, (int) origin[2], sizeX, sizeY, sizeZ), masks));
+            switch (ArrayUtil.getDataType(javaArray))
+            {
+                case BYTE:
+                    final byte[] javaByteArray = (byte[]) javaArray;
+
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final boolean[] mask = new boolean[sizeXY];
+
+                        for (int xy = 0; xy < mask.length; xy++)
+                            mask[xy] = (javaByteArray[off++] != 0);
+
+                        masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
+                    }
+                    break;
+
+                case SHORT:
+                    final short[] javaShortArray = (short[]) javaArray;
+
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final boolean[] mask = new boolean[sizeXY];
+
+                        for (int xy = 0; xy < mask.length; xy++)
+                            mask[xy] = (javaShortArray[off++] != 0);
+
+                        masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
+                    }
+                    break;
+
+                case INT:
+                    final int[] javaIntArray = (int[]) javaArray;
+
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final boolean[] mask = new boolean[sizeXY];
+
+                        for (int xy = 0; xy < mask.length; xy++)
+                            mask[xy] = (javaIntArray[off++] != 0);
+
+                        masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
+                    }
+                    break;
+
+                case LONG:
+                    final long[] javaLongArray = (long[]) javaArray;
+
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final boolean[] mask = new boolean[sizeXY];
+
+                        for (int xy = 0; xy < mask.length; xy++)
+                            mask[xy] = (javaLongArray[off++] != 0L);
+
+                        masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
+                    }
+                    break;
+
+                case FLOAT:
+                    final float[] javaFloatArray = (float[]) javaArray;
+
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final boolean[] mask = new boolean[sizeXY];
+
+                        for (int xy = 0; xy < mask.length; xy++)
+                            mask[xy] = (javaFloatArray[off++] != 0f);
+
+                        masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
+                    }
+                    break;
+
+                case DOUBLE:
+                    final double[] javaDoubleArray = (double[]) javaArray;
+
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final boolean[] mask = new boolean[sizeXY];
+
+                        for (int xy = 0; xy < mask.length; xy++)
+                            mask[xy] = (javaDoubleArray[off++] != 0d);
+
+                        masks[z] = new BooleanMask2D(new Rectangle(bounds2D), mask);
+                    }
+                    break;
+
+                default:
+                    // nothing to do here
+                    break;
+            }
         }
 
-        // 2D
-        final boolean[] mask = new boolean[sizeXY];
+        final BooleanMask3D result = new BooleanMask3D(
+                new Rectangle3D.Integer(bounds2D.x, bounds2D.y, (int) origin[2], sizeX, sizeY, sizeZ), masks);
 
-        for (int xy = 0; xy < sizeXY; xy++)
-            mask[xy] = (data.GetTuple1(xy) != 0d);
+        if (optimizeBounds)
+            result.optimizeBounds();
 
-        return new ROI2DArea(new BooleanMask2D(bounds2D, mask));
+        return result;
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMaskFromBinaryImage(vtkImageData)} then {@link ROI3DArea#ROI3DArea(BooleanMask3D)} instead.
+     */
+    public static ROI getROIFromBinaryImage(vtkImageData image, boolean force3DROI)
+    {
+        final BooleanMask3D mask = getBooleanMaskFromBinaryImage(image, true);
+
+        if ((mask.bounds.getSizeZ() > 1) || force3DROI)
+            return new ROI3DArea(mask);
+        else
+            return new ROI2DArea(mask.getMask2D(mask.bounds.z));
     }
 
     /**
@@ -874,6 +1027,8 @@ public class VtkUtil
                 break;
             case DOUBLE:
                 ((vtkDoubleArray) array).SetJavaArray((double[]) data);
+                break;
+            default:
                 break;
         }
 

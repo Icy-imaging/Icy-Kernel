@@ -1,5 +1,10 @@
 package plugins.kernel.roi.descriptor.measure;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginROIDescriptor;
 import icy.roi.ROI;
@@ -8,11 +13,8 @@ import icy.roi.ROIIterator;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import plugins.kernel.roi.roi2d.ROI2DPoint;
+import plugins.kernel.roi.roi3d.ROI3DPoint;
 
 /**
  * This {@link PluginROIDescriptor} implements the mass center ROI descriptors:<br/>
@@ -45,8 +47,11 @@ public class ROIMassCenterDescriptorsPlugin extends Plugin implements PluginROID
     {
         final Rectangle5D bounds = roi.getBounds5D();
 
-        // special case --> return position
+        // special case of empty bounds ? --> return position
         if (bounds.isEmpty())
+            return bounds.getPosition();
+        // special case of single point ? --> return position
+        if ((roi instanceof ROI2DPoint) || (roi instanceof ROI3DPoint))
             return bounds.getPosition();
 
         final ROIIterator it = new ROIIterator(roi, true);
