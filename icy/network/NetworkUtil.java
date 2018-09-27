@@ -264,12 +264,12 @@ public class NetworkUtil
         final int javaInt = (int) java;
         final double javaFrac = java - javaInt;
 
-        if (java == 7)
-            httpsSupported = javaFrac >= 111;
-        else if (java == 8)
-            httpsSupported = javaFrac >= 101;
+        if (javaInt == 7)
+            httpsSupported = (javaFrac >= 0.111d);
+        else if (javaInt == 8)
+            httpsSupported = (javaFrac >= 0.101d);
         else
-            httpsSupported = (java >= 9);
+            httpsSupported = (javaInt >= 9);
 
         updateNetworkSetting();
         // accept all HTTPS connections by default
