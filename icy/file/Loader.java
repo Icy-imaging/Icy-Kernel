@@ -18,6 +18,21 @@
  */
 package icy.file;
 
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
 import icy.common.exception.UnsupportedFormatException;
 import icy.file.SequenceFileSticher.SequenceFileGroup;
 import icy.file.SequenceFileSticher.SequenceIdent;
@@ -50,22 +65,6 @@ import icy.type.collection.CollectionUtil;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
-
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
@@ -2699,7 +2698,7 @@ public class Loader
                 try
                 {
                     // series selection (create a new importer instance as selectSerie(..) does async processes)
-                    selectedSerie = selectSerie(imp.getClass().newInstance(), path, meta, 0);
+                    selectedSerie = selectSerie(cloneSequenceFileImporter(imp), path, meta, 0);
                 }
                 catch (Throwable t)
                 {
@@ -2915,7 +2914,8 @@ public class Loader
                 for (String path : paths)
                 {
                     // load the file
-                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, loadingFrame);
+                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, !separate,
+                            loadingFrame);
 
                     // special case where loading was interrupted
                     if (sequences == null)
@@ -3369,12 +3369,15 @@ public class Loader
      *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
      *        series selector dialog.
+     * @param groupSeries
+     *        Enable series grouping into the same sequence (appended in T dimension), only meaningful if <code>series</code> = -1
      * @param loadingFrame
      *        the loading frame used to display progress of the operation (can be null)
      * @throws IOException
      */
     static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int series,
-            FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
+            boolean groupSeries, FileFrame loadingFrame)
+            throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final double endStep;
 
@@ -3409,8 +3412,12 @@ public class Loader
             {
                 try
                 {
+                    // try to group series
+                    if (groupSeries)
+                        selectedSeries = groupSeries(meta);
                     // series selection (create a new importer instance as selectSerie(..) does async processes)
-                    selectedSeries = selectSeries(cloneSequenceFileImporter(importer), path, meta, 0, false);
+                    else
+                        selectedSeries = selectSeries(cloneSequenceFileImporter(importer), path, meta, 0, false);
                 }
                 catch (Throwable t)
                 {
@@ -3428,7 +3435,29 @@ public class Loader
 
             // add sequence to result
             for (int s : selectedSeries)
-                result.add(internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, loadingFrame));
+            {
+                final Sequence seq = internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, loadingFrame);
+
+                // group series together
+                if ((result.size() > 0) && groupSeries)
+                    concatenateSequence(result.get(0), seq, true, false);
+                else
+                    // just add to list
+                    result.add(seq);
+            }
+
+            // grouped series ?
+            if (groupSeries && (selectedSeries.length > 1))
+            {
+                final Sequence seq = result.get(0);
+                final String imageName = MetaDataUtil.getName(meta, 0);
+
+                // reset to metadata name
+                if (StringUtil.isEmpty(imageName))
+                    seq.setName(Sequence.DEFAULT_NAME + StringUtil.toString(seq.getId(), 3));
+                else
+                    seq.setName(imageName);
+            }
 
             // Don't close importer on success ! we want to keep it inside the sequence.
             // We will close it when finalizing the sequence...
@@ -3593,6 +3622,31 @@ public class Loader
         return internalLoadGroup(group, 0, null, -1, -1, -1, -1, -1, directory, mainMenu, loadingFrame);
     }
 
+    public static String getSequenceName(Sequence sequence, String path, boolean multiSerie, int series)
+    {
+        // default name
+        String name = FileUtil.getFileName(path, false);
+
+        // default name used --> use better name
+        if (sequence.isDefaultName())
+        {
+            // multi series image --> add series info
+            if (multiSerie)
+                name += " - series " + StringUtil.toString(series);
+        }
+        else
+        {
+            // multi series image --> adjust name to keep file name info
+            if (multiSerie)
+                name += " - " + sequence.getName();
+            else
+                // just use sequence metadata name
+                name = sequence.getName();
+        }
+
+        return name;
+    }
+
     /**
      * Setup the specified sequence object given the different opening informations
      * 
@@ -3630,25 +3684,8 @@ public class Loader
             int channel)
     {
         final String path = FileUtil.getGenericPath(importer.getOpened());
-        // default name
-        String name = FileUtil.getFileName(path, false);
-
-        // default name used --> use better name
-        if (sequence.isDefaultName())
-        {
-            // multi series image --> add series info
-            if (multiSerie)
-                name += " - series " + StringUtil.toString(series);
-        }
-        else
-        {
-            // multi series image --> adjust name to keep file name info
-            if (multiSerie)
-                name += " - " + sequence.getName();
-            else
-                // just use sequence metadata name
-                name = sequence.getName();
-        }
+        // get default name
+        String name = getSequenceName(sequence, path, multiSerie, series);
 
         // original pixel size
         final double psx = sequence.getPixelSizeX();
@@ -3708,7 +3745,8 @@ public class Loader
             sequence.setPositionZ(posZ + (minZ * psz));
         // adjust position T
         if (minT > 0)
-            sequence.setTimeStamp(posT + (long) (sequence.getPositionTOffset(minT, minZ, Math.max(0, channel)) * 1000d));
+            sequence.setTimeStamp(
+                    posT + (long) (sequence.getPositionTOffset(minT, minZ, Math.max(0, channel)) * 1000d));
 
         // using sub resolution ?
         if (resolution > 0)
@@ -3827,6 +3865,50 @@ public class Loader
         System.arraycopy(tmp, 1, result, 0, result.length);
 
         return result;
+    }
+
+    /**
+     * Try to group series with similar images properties (XYZC dimension) starting from first image and return the list of grouped series index.
+     */
+    public static int[] groupSeries(OMEXMLMetadata meta)
+    {
+        final List<Integer> result = new ArrayList<Integer>();
+
+        final int sizeS = MetaDataUtil.getNumSeries(meta);
+        if (sizeS > 0)
+        {
+            final int sizeX = MetaDataUtil.getSizeX(meta, 0);
+            final int sizeY = MetaDataUtil.getSizeY(meta, 0);
+            final int sizeZ = MetaDataUtil.getSizeZ(meta, 0);
+            final int sizeC = MetaDataUtil.getSizeC(meta, 0);
+            final DataType dataType = MetaDataUtil.getDataType(meta, 0);
+
+            result.add(Integer.valueOf(0));
+
+            // we can group series only if size T == 1 (as we group on T dimension)
+            if (MetaDataUtil.getSizeT(meta, 0) == 1)
+            {
+                for (int s = 1; s < sizeS; s++)
+                {
+                    final int sx = MetaDataUtil.getSizeX(meta, s);
+                    final int sy = MetaDataUtil.getSizeY(meta, s);
+                    final int sz = MetaDataUtil.getSizeZ(meta, s);
+                    final int sc = MetaDataUtil.getSizeC(meta, s);
+                    final DataType dt = MetaDataUtil.getDataType(meta, s);
+
+                    if ((sx == sizeX) && (sy == sizeY) && (sz == sizeZ) && (sc == sizeC) && (dt == dataType)
+                            && (MetaDataUtil.getSizeT(meta, s) == 1))
+                        result.add(Integer.valueOf(s));
+                }
+            }
+        }
+
+        final int[] ires = new int[result.size()];
+
+        for (int i = 0; i < ires.length; i++)
+            ires[i] = result.get(i).intValue();
+
+        return ires;
     }
 
     /**

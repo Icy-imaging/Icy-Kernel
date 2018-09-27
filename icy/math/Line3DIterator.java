@@ -1,9 +1,9 @@
 package icy.math;
 
+import java.util.Iterator;
+
 import icy.type.geom.Line3D;
 import icy.type.point.Point3D;
-
-import java.util.Iterator;
 
 /**
  * Line3D iterator (iterate over Line3D points given a wanted step).
@@ -16,6 +16,7 @@ public class Line3DIterator implements Iterator<Point3D>
 
     protected boolean done;
     protected int count;
+    final protected boolean forceLast;
 
     final protected Point3D pos;
     final protected Point3D last;
@@ -28,14 +29,17 @@ public class Line3DIterator implements Iterator<Point3D>
      *        the lien we want to iterate points
      * @param step
      *        step between each point (default = 1d)
+     * @param forceLastPoint
+     *        set to <i>true</i> if you want the last point to match the end line position
      */
-    public Line3DIterator(Line3D line, double step)
+    public Line3DIterator(Line3D line, double step, boolean forceLastPoint)
     {
         super();
 
         pos = line.getP1();
         last = line.getP2();
         done = false;
+        forceLast = forceLastPoint;
 
         final double dx = last.getX() - pos.getX();
         final double dy = last.getY() - pos.getY();
@@ -96,10 +100,25 @@ public class Line3DIterator implements Iterator<Point3D>
      * 
      * @param line
      *        the lien we want to iterate points
+     * @param step
+     *        step between each point (default = 1d)
+     * @param forceLastPoint
+     *        set to <i>true</i> if you want the last point to match the end line position
+     */
+    public Line3DIterator(Line3D line, double step)
+    {
+        this(line, step, true);
+    }
+
+    /**
+     * Create the Line3D Iterator.
+     * 
+     * @param line
+     *        the lien we want to iterate points
      */
     public Line3DIterator(Line3D line)
     {
-        this(line, DEFAULT_STEP);
+        this(line, DEFAULT_STEP, true);
     }
 
     @Override
@@ -116,10 +135,15 @@ public class Line3DIterator implements Iterator<Point3D>
         // done ?
         if (--count <= 0)
         {
-            // consider done only if pos is equal to last
-            done = pos.equals(last);
-            // force equality with last position
-            pos.setLocation(last);
+            if (forceLast)
+            {
+                // consider done only if pos is equal to last
+                done = pos.equals(last);
+                // force equality with last position
+                pos.setLocation(last);
+            }
+            else
+                done = true;
         }
         else
             pos.setLocation(pos.getX() + sx, pos.getY() + sy, pos.getZ() + sz);

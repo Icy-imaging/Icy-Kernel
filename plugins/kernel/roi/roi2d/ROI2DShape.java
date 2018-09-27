@@ -18,34 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.common.CollapsibleEvent;
-import icy.painter.Anchor2D;
-import icy.painter.Anchor2D.Anchor2DPositionListener;
-import icy.painter.OverlayEvent;
-import icy.painter.OverlayEvent.OverlayEventType;
-import icy.painter.OverlayListener;
-import icy.painter.PainterEvent;
-import icy.painter.PathAnchor2D;
-import icy.painter.VtkPainter;
-import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROIEvent;
-import icy.roi.edit.Point2DAddedROIEdit;
-import icy.roi.edit.Point2DMovedROIEdit;
-import icy.roi.edit.Point2DRemovedROIEdit;
-import icy.sequence.Sequence;
-import icy.system.thread.ThreadUtil;
-import icy.type.point.Point2DUtil;
-import icy.type.point.Point5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
-import icy.util.StringUtil;
-import icy.vtk.IcyVtkPanel;
-import icy.vtk.VtkUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -71,6 +43,32 @@ import java.util.Set;
 
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.common.CollapsibleEvent;
+import icy.painter.Anchor2D;
+import icy.painter.Anchor2D.Anchor2DPositionListener;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.OverlayListener;
+import icy.painter.PainterEvent;
+import icy.painter.PathAnchor2D;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROIEvent;
+import icy.roi.edit.Point2DAddedROIEdit;
+import icy.roi.edit.Point2DMovedROIEdit;
+import icy.roi.edit.Point2DRemovedROIEdit;
+import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
+import icy.type.point.Point2DUtil;
+import icy.type.point.Point5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.StringUtil;
+import icy.vtk.IcyVtkPanel;
+import icy.vtk.VtkUtil;
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkCellArray;
@@ -87,7 +85,7 @@ import vtk.vtkRenderer;
  */
 public abstract class ROI2DShape extends ROI2D implements Shape
 {
-    public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter, Runnable
+    public class ROI2DShapePainter extends ROI2DPainter implements Runnable
     {
         // VTK 3D objects
         protected vtkPolyData outline;

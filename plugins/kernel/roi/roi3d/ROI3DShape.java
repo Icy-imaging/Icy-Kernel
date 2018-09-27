@@ -3,6 +3,24 @@
  */
 package plugins.kernel.roi.roi3d;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.CollapsibleEvent;
@@ -32,25 +50,6 @@ import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkUtil;
-
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Composite;
-import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.w3c.dom.Node;
-
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkCellArray;
@@ -69,7 +68,7 @@ import vtk.vtkRenderer;
  */
 public class ROI3DShape extends ROI3D implements Shape3D
 {
-    public class ROI3DShapePainter extends ROI3DPainter implements VtkPainter, Runnable
+    public class ROI3DShapePainter extends ROI3DPainter implements Runnable
     {
         // VTK 3D objects
         protected vtkPolyData outline;
@@ -1453,13 +1452,13 @@ public class ROI3DShape extends ROI3D implements Shape3D
     public Rectangle3D computeBounds3D()
     {
         final Rectangle3D result = shape.getBounds();
-        
+
         // shape shouldn't be empty (even for single Point) --> always use a minimal bounds
         if (result.isEmpty())
         {
-            result.setSizeX(0.001d);
-            result.setSizeY(0.001d);
-            result.setSizeZ(0.001d);
+            result.setSizeX(Math.max(result.getSizeX(), 0.001d));
+            result.setSizeY(Math.max(result.getSizeY(), 0.001d));
+            result.setSizeZ(Math.max(result.getSizeZ(), 0.001d));
         }
 
         return result;

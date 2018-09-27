@@ -18,16 +18,6 @@
  */
 package icy.network;
 
-import icy.common.listener.ProgressListener;
-import icy.common.listener.weak.WeakListener;
-import icy.file.FileUtil;
-import icy.preferences.NetworkPreferences;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-import icy.system.audit.Audit;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.io.BufferedInputStream;
@@ -51,6 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -67,11 +58,51 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
+import icy.common.listener.ProgressListener;
+import icy.common.listener.weak.WeakListener;
+import icy.file.FileUtil;
+import icy.preferences.NetworkPreferences;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
+import icy.system.audit.Audit;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
 /**
  * @author stephane
  */
 public class NetworkUtil
 {
+    /**
+     * URL
+     */
+    // beta test
+    // public static final String WEBSITE_HOST = "icy.yhello.co";
+    public static final String WEBSITE_HOST = "icy.bioimageanalysis.org";
+    public static final String WEBSITE_URL = "http://" + WEBSITE_HOST + "/";
+    // public static final String WEBSITE_URL = "https://" + WEBSITE_HOST + "/";
+
+    static final String REPORT_URL = WEBSITE_URL + "index.php";
+
+    /**
+     * Parameters id
+     */
+    public static final String ID_KERNELVERSION = "kernelVersion";
+    public static final String ID_BETAALLOWED = "betaAllowed";
+    public static final String ID_JAVANAME = "javaName";
+    public static final String ID_JAVAVERSION = "javaVersion";
+    public static final String ID_JAVABITS = "javaBits";
+    public static final String ID_OSNAME = "osName";
+    public static final String ID_OSVERSION = "osVersion";
+    public static final String ID_OSARCH = "osArch";
+    public static final String ID_PLUGINCLASSNAME = "pluginClassName";
+    public static final String ID_PLUGINVERSION = "pluginVersion";
+    public static final String ID_DEVELOPERID = "developerId";
+    public static final String ID_ERRORLOG = "errorLog";
+
+    /**
+     * Proxy config ID
+     */
     public static final int NO_PROXY = 0;
     public static final int SYSTEM_PROXY = 1;
     public static final int USER_PROXY = 2;
@@ -187,7 +218,6 @@ public class NetworkUtil
         }
     };
 
-    
     /**
      * 'Accept all' host name verifier
      */
@@ -207,30 +237,6 @@ public class NetworkUtil
     };
 
     /**
-     * URL
-     */
-    public static final String WEBSITE_HOST = "icy.bioimageanalysis.org";
-    public static final String WEBSITE_URL = "http://" + WEBSITE_HOST + "/";
-
-    static final String REPORT_URL = WEBSITE_URL + "index.php";
-
-    /**
-     * Parameters id
-     */
-    public static final String ID_KERNELVERSION = "kernelVersion";
-    public static final String ID_BETAALLOWED = "betaAllowed";
-    public static final String ID_JAVANAME = "javaName";
-    public static final String ID_JAVAVERSION = "javaVersion";
-    public static final String ID_JAVABITS = "javaBits";
-    public static final String ID_OSNAME = "osName";
-    public static final String ID_OSVERSION = "osVersion";
-    public static final String ID_OSARCH = "osArch";
-    public static final String ID_PLUGINCLASSNAME = "pluginClassName";
-    public static final String ID_PLUGINVERSION = "pluginVersion";
-    public static final String ID_DEVELOPERID = "developerId";
-    public static final String ID_ERRORLOG = "errorLog";
-
-    /**
      * List of all listeners on network connection changes.
      */
     private final static Set<InternetAccessListener> listeners = new HashSet<InternetAccessListener>();;
@@ -243,14 +249,60 @@ public class NetworkUtil
      * Internet access up flag
      */
     private static boolean internetAccess;
+    /**
+     * internal HTTPS compatibility for the new web site
+     */
+    private static boolean httpsSupported;
 
     public static void init()
     {
         internetAccess = false;
+        httpsSupported = false;
+
+        // check for HTTPS "let's encrypt" certificate compatibility
+        final double java = SystemUtil.getJavaVersionAsNumber();
+        final int javaInt = (int) java;
+        final double javaFrac = java - javaInt;
+
+        if (java == 7)
+            httpsSupported = javaFrac >= 111;
+        else if (java == 8)
+            httpsSupported = javaFrac >= 101;
+        else
+            httpsSupported = (java >= 9);
 
         updateNetworkSetting();
         // accept all HTTPS connections by default
         installTruster();
+
+        // String addr;
+        //
+        // // --> connection HTTPS: fails with java 7, ok with java 8 (let's enrypt certificate)
+        // addr = "https://icy.yhello.co";
+        // // addr = "http://icy.yhello.co/update/update.php?arch=win64&version=1.9.8.2";
+        // // addr = "https://icy.yhello.co/update/update.php?arch=win64&version=1.9.8.2";
+        // // addr = "https://icy.yhello.co/register/getLinkedUserInfo.php?IcyId=4817172";
+        // // addr = "https://randomuser.me/";
+        //
+        // try
+        // {
+        // HttpURLConnection uc = (HttpURLConnection) new URL(addr).openConnection();
+        // uc.connect();
+        // if (uc instanceof HttpsURLConnection)
+        // System.out.println(((HttpsURLConnection) uc).getLocalPrincipal());
+        // if (uc instanceof HttpURLConnection)
+        // System.out.println(((HttpURLConnection) uc).getResponseCode() + " - "
+        // + ((HttpURLConnection) uc).getResponseMessage());
+        //
+        // InputStream inputStream = uc.getInputStream();
+        // inputStream.read();
+        // uc.disconnect();
+        // }
+        // catch (Exception e)
+        // {
+        // // TODO Auto-generated catch block
+        // e.printStackTrace();
+        // }
 
         // start monitor thread
         internetMonitor.setPriority(Thread.MIN_PRIORITY);
@@ -259,6 +311,9 @@ public class NetworkUtil
 
     private static void installTruster()
     {
+        // enable support for TLS v1.X (used by new Icy web site: TLS 1.2 or TLS 1.3)
+        System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+
         try
         {
             // install the accept all host name verifier
@@ -277,12 +332,14 @@ public class NetworkUtil
                 public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType)
                 {
                     // ignore
+                    // System.out.println(certs.length);
                 }
 
                 @Override
                 public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType)
                 {
                     // ignore
+                    // System.out.println(certs.length + " - " + authType);
                 }
 
                 @Override
@@ -290,6 +347,7 @@ public class NetworkUtil
                         throws CertificateException
                 {
                     // ignore
+                    // System.out.println(chain.length + " - " + authType);
                 }
 
                 @Override
@@ -297,6 +355,7 @@ public class NetworkUtil
                         throws CertificateException
                 {
                     // ignore
+                    // System.out.println(chain.length + " - " + authType);
                 }
 
                 @Override
@@ -304,6 +363,7 @@ public class NetworkUtil
                         throws CertificateException
                 {
                     // ignore
+                    // System.out.println(chain.length + " - " + authType);
                 }
 
                 @Override
@@ -311,14 +371,21 @@ public class NetworkUtil
                         throws CertificateException
                 {
                     // ignore
+                    // System.out.println(chain.length + " - " + authType);
                 }
             }};
 
             // install the all-trusting trust manager
-            final SSLContext sc = SSLContext.getInstance("SSL");
+            SSLContext sc;
 
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            sc = SSLContext.getInstance("SSL");
+            if (sc != null)
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            sc = SSLContext.getInstance("TLS");
+            if (sc != null)
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
         }
         catch (Exception e)
         {
@@ -331,6 +398,8 @@ public class NetworkUtil
      */
     public static void updateNetworkSetting()
     {
+        HttpURLConnection.setFollowRedirects(false);
+
         final int proxySetting = NetworkPreferences.getProxySetting();
 
         if (proxySetting == NO_PROXY)
@@ -513,6 +582,14 @@ public class NetworkUtil
     public static boolean hasInternetConnection()
     {
         return hasInternetAccess();
+    }
+
+    /**
+     * Returns true if HTTPS is supported for the new web site.
+     */
+    public static boolean isHTTPSSupported()
+    {
+        return httpsSupported;
     }
 
     /**
@@ -705,17 +782,8 @@ public class NetworkUtil
             }
         }
 
-        // get connection object
-        final URLConnection uc = openConnection(url, login, pass, true, displayError);
-
-        // error --> exit
-        if (uc == null)
-            return null;
-        // can't connect --> exit
-        if (!connect(uc, displayError))
-            return null;
-
-        // get input stream
+        // get connection object and connect it
+        final URLConnection uc = openConnection(url, login, pass, true, true, displayError);
         final InputStream ip = getInputStream(uc, displayError);
 
         // error --> exit
@@ -724,27 +792,7 @@ public class NetworkUtil
 
         try
         {
-            final byte[] result = download(ip, uc.getContentLength(), listener);
-
-            // we test response code for HTTP connection
-            if (uc instanceof HttpURLConnection)
-            {
-                final HttpURLConnection huc = (HttpURLConnection) uc;
-
-                // not ok ?
-                if (huc.getResponseCode() != HttpURLConnection.HTTP_OK)
-                {
-                    if (displayError)
-                    {
-                        System.out.println("Error while downloading '" + huc.getURL() + "':");
-                        System.out.println(huc.getResponseMessage());
-                    }
-
-                    return null;
-                }
-            }
-
-            return result;
+            return download(ip, uc.getContentLength(), listener);
         }
         catch (Exception e)
         {
@@ -879,30 +927,69 @@ public class NetworkUtil
      *        Set it to null if no authentication needed.
      * @param disableCache
      *        Disable proxy cache if any.
+     * @param doConnect
+     *        do the connection before return the {@link URLConnection} object
      * @param displayError
      *        Display error message in console if something wrong happen.
      */
     public static URLConnection openConnection(URL url, String login, String pass, boolean disableCache,
-            boolean displayError)
+            boolean doConnect, boolean displayError)
     {
         if (url == null)
         {
             if (displayError)
-                System.out.println("NetworkUtil.openConnection(URL url, ...) error : URL is null !");
+                System.out.println("NetworkUtil.openConnection(...) error: URL is null !");
 
             return null;
         }
 
+        URLConnection uc = null;
+
         try
         {
-            final URLConnection uc = url.openConnection();
+            uc = url.openConnection();
+            boolean redirect;
 
-            if (disableCache)
-                disableCache(uc);
+            do
+            {
+                redirect = false;
 
-            // authentication
-            if (!StringUtil.isEmpty(login) && !StringUtil.isEmpty(pass))
-                setAuthentication(uc, login, pass);
+                if (disableCache)
+                    disableCache(uc);
+
+                // authentication
+                if (!StringUtil.isEmpty(login) && !StringUtil.isEmpty(pass))
+                    setAuthentication(uc, login, pass);
+
+                if (doConnect)
+                {
+                    // try to connect
+                    if (!connect(uc, displayError))
+                        // error ? --> return null
+                        return null;
+
+                    // we test response code for HTTP connection
+                    if (uc instanceof HttpURLConnection)
+                    {
+                        final int respCode = ((HttpURLConnection) uc).getResponseCode();
+
+                        redirect = (respCode == HttpURLConnection.HTTP_MOVED_PERM)
+                                || (respCode == HttpURLConnection.HTTP_MOVED_TEMP)
+                                || (respCode == HttpURLConnection.HTTP_SEE_OTHER);
+
+                        // redirection ?
+                        if (redirect)
+                        {
+                            // restart connection with new URL
+                            String location = ((HttpURLConnection) uc).getHeaderField("Location");
+                            ((HttpURLConnection) uc).disconnect();
+                            location = URLDecoder.decode(location, "UTF-8");
+                            uc = new URL(location).openConnection();
+                        }
+                    }
+                }
+            }
+            while (redirect);
 
             return uc;
         }
@@ -910,12 +997,45 @@ public class NetworkUtil
         {
             if (displayError)
             {
-                System.out.println("NetworkUtil.openConnection('" + url + "',...) error :");
-                IcyExceptionHandler.showErrorMessage(e, false, false);
+                // HTTPS not supported while we have a HTTPS connection to icy web site
+                if (!isHTTPSSupported() && (uc != null)
+                        && uc.getURL().toString().toLowerCase().startsWith("https://icy"))
+                {
+                    System.err.println("NetworkUtil.openConnection('" + uc.getURL()
+                            + "') error: HTTPS connection not supported (see detail below).");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
+                }
+                else
+                {
+                    System.out.println("NetworkUtil.openConnection('" + url + "') error :");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
+                }
             }
 
             return null;
         }
+    }
+
+    /**
+     * Returns a new {@link URLConnection} from specified URL (null if an error occurred).
+     * 
+     * @param url
+     *        url to connect.
+     * @param login
+     *        login if the connection requires authentication.<br>
+     *        Set it to null if no authentication needed.
+     * @param pass
+     *        login if the connection requires authentication.
+     *        Set it to null if no authentication needed.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static URLConnection openConnection(URL url, String login, String pass, boolean disableCache,
+            boolean displayError)
+    {
+        return openConnection(url, login, pass, disableCache, false, displayError);
     }
 
     /**
@@ -983,18 +1103,18 @@ public class NetworkUtil
     {
         try
         {
-            final URL prevUrl = uc.getURL();
+            // final URL prevUrl = uc.getURL();
 
             // connect
             uc.connect();
 
-            // we have to test that as sometime url are automatically modified / fixed by host!
-            if (!uc.getURL().toString().toLowerCase().equals(prevUrl.toString().toLowerCase()))
-            {
-                // TODO : do something better
-                System.out.println("Host URL change rejected : " + prevUrl + " --> " + uc.getURL());
-                return false;
-            }
+            // // we have to test that as sometime url are automatically modified / fixed by host!
+            // if (!uc.getURL().toString().toLowerCase().equals(prevUrl.toString().toLowerCase()))
+            // {
+            // // TODO : do something better
+            // System.out.println("Host URL change rejected : " + prevUrl + " --> " + uc.getURL());
+            // return false;
+            // }
 
             // we test response code for HTTP connection
             if (uc instanceof HttpURLConnection)
@@ -1002,11 +1122,11 @@ public class NetworkUtil
                 final HttpURLConnection huc = (HttpURLConnection) uc;
 
                 // not ok ?
-                if (huc.getResponseCode() != HttpURLConnection.HTTP_OK)
+                if (huc.getResponseCode() >= 0x400)
                 {
                     if (displayError)
                     {
-                        System.out.println("Error while connecting to '" + huc.getURL() + "':");
+                        System.out.println("NetworkUtil.connect('" + huc.getURL() + "' error:");
                         System.out.println(huc.getResponseMessage());
                     }
 
@@ -1018,12 +1138,27 @@ public class NetworkUtil
         {
             if (displayError)
             {
-                if (!hasInternetAccess())
-                    System.out.println("Can't connect to '" + uc.getURL() + "' (no internet connection).");
+                if (uc.getURL().getProtocol().equalsIgnoreCase("file"))
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
                 else
                 {
-                    System.out.println("Error while connecting to '" + uc.getURL() + "':");
-                    IcyExceptionHandler.showErrorMessage(e, false, false);
+                    if (!hasInternetAccess())
+                        System.out.println("Can't connect to '" + uc.getURL() + "' (no internet connection).");
+                    else
+                    {
+                        // HTTPS not supported while we have a HTTPS connection to icy web site
+                        if (!isHTTPSSupported() && uc.getURL().toString().toLowerCase().startsWith("https://icy"))
+                        {
+                            System.err.println("NetworkUtil.connect('" + uc.getURL()
+                                    + "') error: HTTPS connection not supported (see detail below).");
+                            IcyExceptionHandler.showErrorMessage(e, false, false);
+                        }
+                        else
+                        {
+                            System.out.println("NetworkUtil.connect('" + uc.getURL() + "' error:");
+                            IcyExceptionHandler.showErrorMessage(e, false, false);
+                        }
+                    }
                 }
             }
 
@@ -1048,8 +1183,7 @@ public class NetworkUtil
         {
             if (displayError)
             {
-                System.out.print("NetworkUtil.getInputStream(URLConnection uc) error: ");
-                System.out.println("URLConnection object is null !");
+                System.out.print("NetworkUtil.getInputStream(URLConnection uc) error: URLConnection object is null !");
             }
 
             return null;
@@ -1065,9 +1199,17 @@ public class NetworkUtil
             {
                 if (!hasInternetAccess())
                     System.out.println("Can't connect to '" + uc.getURL() + "' (no internet connection).");
+                // HTTPS not supported while we have a HTTPS connection to icy web site
+                else if (!isHTTPSSupported() && (uc != null)
+                        && uc.getURL().toString().toLowerCase().startsWith("https://icy"))
+                {
+                    System.err.println("NetworkUtil.getInputStream('" + uc.getURL()
+                            + "') error: HTTPS connection not supported !");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
+                }
                 else
                 {
-                    System.out.println("Error while connecting to '" + uc.getURL() + "' :");
+                    System.out.println("NetworkUtil.getInputStream('" + uc.getURL() + "') error:");
                     IcyExceptionHandler.showErrorMessage(e, false, false);
                 }
             }
@@ -1095,14 +1237,12 @@ public class NetworkUtil
     public static InputStream getInputStream(URL url, String login, String pass, boolean disableCache,
             boolean displayError)
     {
-        final URLConnection uc = openConnection(url, login, pass, disableCache, displayError);
+        final URLConnection uc = openConnection(url, login, pass, disableCache, true, displayError);
 
         if (uc != null)
-            if (connect(uc, displayError))
-                return getInputStream(uc, displayError);
+            return getInputStream(uc, displayError);
 
         return null;
-
     }
 
     /**

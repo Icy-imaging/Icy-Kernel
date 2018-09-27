@@ -18,6 +18,19 @@
  */
 package icy.main;
 
+import java.awt.EventQueue;
+import java.beans.PropertyVetoException;
+import java.io.File;
+import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
+import javax.swing.WindowConstants;
+
 import icy.action.ActionManager;
 import icy.common.Version;
 import icy.file.FileUtil;
@@ -61,20 +74,6 @@ import icy.update.IcyUpdater;
 import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
-
-import java.awt.EventQueue;
-import java.beans.PropertyVetoException;
-import java.io.File;
-import java.nio.channels.FileLock;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JOptionPane;
-import javax.swing.WindowConstants;
-
 import ij.ImageJ;
 import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
@@ -105,7 +104,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("1.9.8.1");
+    public static Version version = new Version("1.9.9.0");
 
     /**
      * Main interface
@@ -354,6 +353,25 @@ public class Icy
 
             // force check update for the new version
             GeneralPreferences.setLastUpdateCheckTime(0);
+        }
+
+        // HTTPS not supported ?
+        if (!NetworkUtil.isHTTPSSupported())
+        {
+            // TODO: change message when new web site is here !
+            final String text1 = "Your version of java does not support HTTPS connection required by the future new web site.";
+            final String text2 = "You need to upgrade java to 7u111 (Java 7) or 8u101 (Java 8) at least to be able to use online features in future.";
+            // final String text1 = "Your version of java does not support HTTPS connection required by the new web site !";
+            // final String text2 = "Online features (as search or plugin update) will be disabled until you update your version of java (Java 7u111 or Java
+            // 8u101 minimum).";
+
+            System.err.println("Warning: " + text1);
+            System.err.println(text2);
+
+            // TODO: change message when new web site is here
+            if (!Icy.getMainInterface().isHeadLess())
+                new ToolTipFrame("<html><b>WARNING:</b> " + text1 + "<br>" + text2 + "</html>", 0, "httpsNotSupportedWarning");
+            // new ToolTipFrame("<html><b>" + text1 + "<br>" + text2 + "</b></html>", 0, "httpsNotSupported");
         }
 
         final long currentTime = System.currentTimeMillis();
@@ -683,8 +701,8 @@ public class Icy
                 final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
 
                 // disconnect from chat (not needed but preferred)
-//                if (mainFrame != null)
-//                    mainFrame.getChat().disconnect("Icy closed");
+                // if (mainFrame != null)
+                // mainFrame.getChat().disconnect("Icy closed");
 
                 // close all icyFrames (force wait completion)
                 ThreadUtil.invokeNow(new Runnable()

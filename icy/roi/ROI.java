@@ -18,32 +18,8 @@
  */
 package icy.roi;
 
-import icy.canvas.IcyCanvas;
-import icy.common.CollapsibleEvent;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
-import icy.file.xml.XMLPersistent;
-import icy.gui.inspector.RoisPanel;
-import icy.main.Icy;
-import icy.painter.Overlay;
-import icy.plugin.abstract_.Plugin;
-import icy.plugin.interface_.PluginROI;
-import icy.preferences.GeneralPreferences;
-import icy.resource.ResourceUtil;
-import icy.roi.ROIEvent.ROIEventType;
-import icy.roi.ROIEvent.ROIPointEventType;
-import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
-import icy.type.point.Point5D;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.ClassUtil;
-import icy.util.ColorUtil;
-import icy.util.EventUtil;
-import icy.util.ShapeUtil.BooleanOperator;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
@@ -62,10 +38,37 @@ import java.util.Set;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import icy.canvas.IcyCanvas;
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.file.xml.XMLPersistent;
+import icy.gui.inspector.RoisPanel;
+import icy.main.Icy;
+import icy.painter.Overlay;
+import icy.painter.VtkPainter;
+import icy.plugin.abstract_.Plugin;
+import icy.plugin.interface_.PluginROI;
+import icy.preferences.GeneralPreferences;
+import icy.resource.ResourceUtil;
+import icy.roi.ROIEvent.ROIEventType;
+import icy.roi.ROIEvent.ROIPointEventType;
+import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.ClassUtil;
+import icy.util.ColorUtil;
+import icy.util.EventUtil;
+import icy.util.ShapeUtil.BooleanOperator;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi3d.ROI3DArea;
 import plugins.kernel.roi.roi4d.ROI4DArea;
 import plugins.kernel.roi.roi5d.ROI5DArea;
+import vtk.vtkProp;
 
 public abstract class ROI implements ChangeListener, XMLPersistent
 {
@@ -631,7 +634,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Abstract basic class for ROI overlay
      */
-    public abstract class ROIPainter extends Overlay
+    public abstract class ROIPainter extends Overlay implements VtkPainter
     {
         /**
          * Overlay properties
@@ -1215,6 +1218,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            // special case of VTK canvas
+            if (canvas instanceof VtkCanvas)
+            {
+                // hide object is not active for canvas
+                if (!isActiveFor(canvas))
+                    hideVtkObjects();
+            }
+        }
+
+        @Override
         public boolean loadFromXML(Node node)
         {
             if (node == null)
@@ -1248,6 +1263,19 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             XMLUtil.setElementBooleanValue(node, ID_SHOWNAME, showName);
 
             return true;
+        }
+
+        @Override
+        public vtkProp[] getProps()
+        {
+            // default implementation
+            return new vtkProp[0];
+        }
+
+        public void hideVtkObjects()
+        {
+            for (vtkProp prop : getProps())
+                prop.SetVisibility(0);
         }
     }
 

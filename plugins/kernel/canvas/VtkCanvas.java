@@ -1,5 +1,31 @@
 package plugins.kernel.canvas;
 
+import java.awt.AWTException;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.swing.JToolBar;
+
 import icy.canvas.Canvas3D;
 import icy.canvas.CanvasLayerEvent;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
@@ -36,33 +62,6 @@ import icy.vtk.VtkImageVolume;
 import icy.vtk.VtkImageVolume.VtkVolumeBlendType;
 import icy.vtk.VtkImageVolume.VtkVolumeMapperType;
 import icy.vtk.VtkUtil;
-
-import java.awt.AWTException;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.JToolBar;
-
 import plugins.kernel.canvas.VtkSettingPanel.SettingChangeListener;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
@@ -1771,10 +1770,14 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
             {
                 case C:
                     propertyChange(PROPERTY_DATA, null);
+                    // layers can change depending position
+                    refresh();
                     break;
 
                 case T:
                     propertyChange(PROPERTY_DATA, null);
+                    // layers can change depending position
+                    refresh();
                     break;
 
                 case Z:
@@ -1876,94 +1879,6 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
         propertyChange(PROPERTY_LAYERS_VISIBLE, null);
     }
 
-    /**
-     * Refresh VTK actor properties from layer properties (alpha and visible)
-     */
-    protected void refreshLayerProperties(Layer layer)
-    {
-        final boolean lv = isLayersVisible();
-
-        // refresh all layers
-        if (layer == null)
-        {
-            for (Layer l : getLayers())
-            {
-                for (vtkProp prop : VtkUtil.getLayerProps(l))
-                {
-                    // image layer is not impacted by global layer visibility
-                    if (l == getImageLayer())
-                    {
-                        final Sequence seq = getSequence();
-                        // we have a no empty image --> display it if layer is visible
-                        if (l.isVisible() && (seq != null) && !seq.isEmpty())
-                            prop.SetVisibility(1);
-                        else
-                            prop.SetVisibility(0);
-                    }
-                    else
-                    {
-                        boolean visible = lv && l.isVisible();
-                        // FIXME: find a better method to know visibility flags should not be impacted here
-                        final vtkInformation vtkInfo = prop.GetPropertyKeys();
-
-                        if (vtkInfo != null)
-                        {
-                            // pick the visibility info
-                            if ((vtkInfo.Has(visibilityKey) != 0) && (vtkInfo.Get(visibilityKey) == 0))
-                                visible = false;
-                        }
-
-                        // finally set the visibility state
-                        prop.SetVisibility(visible ? 1 : 0);
-                    }
-
-                    // opacity seems to not be correctly handled in VTK ??
-                    if (prop instanceof vtkActor)
-                        ((vtkActor) prop).GetProperty().SetOpacity(l.getOpacity());
-                    else if (prop instanceof vtkActor2D)
-                        ((vtkActor2D) prop).GetProperty().SetOpacity(l.getOpacity());
-                }
-            }
-        }
-        else
-        {
-            for (vtkProp prop : VtkUtil.getLayerProps(layer))
-            {
-                if (layer == getImageLayer())
-                {
-                    final Sequence seq = getSequence();
-                    // we have a no empty image --> display it if layer is visible
-                    if (layer.isVisible() && (seq != null) && !seq.isEmpty())
-                        prop.SetVisibility(1);
-                    else
-                        prop.SetVisibility(0);
-                }
-                else
-                {
-                    boolean visible = lv && layer.isVisible();
-                    // FIXME: hacky method to know visibility flags should not be impacted here
-                    final vtkInformation vtkInfo = prop.GetPropertyKeys();
-
-                    if (vtkInfo != null)
-                    {
-                        // pick the visibility info
-                        if ((vtkInfo.Has(visibilityKey) != 0) && (vtkInfo.Get(visibilityKey) == 0))
-                            visible = false;
-                    }
-
-                    // finally set the visibility state
-                    prop.SetVisibility(visible ? 1 : 0);
-                }
-
-                // opacity seems to not be correctly handled in VTK ??
-                if (prop instanceof vtkActor)
-                    ((vtkActor) prop).GetProperty().SetOpacity(layer.getOpacity());
-                else if (prop instanceof vtkActor2D)
-                    ((vtkActor2D) prop).GetProperty().SetOpacity(layer.getOpacity());
-            }
-        }
-    }
-
     @Override
     public void actionPerformed(ActionEvent e)
     {
@@ -1989,7 +1904,7 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
         // we can ignore it in this case
         if (propertiesUpdater == null)
             return;
-        
+
         final Property prop = new Property(name, value);
 
         propertiesUpdater.submit(prop);
@@ -2119,22 +2034,7 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
             }
 
             // call paint on overlays first
-            if (isLayersVisible())
-            {
-                final List<Layer> layers = getLayers(true);
-                final Layer imageLayer = getImageLayer();
-                final Sequence seq = getSequence();
-
-                // call paint in inverse order to have first overlay "at top"
-                for (int i = layers.size() - 1; i >= 0; i--)
-                {
-                    final Layer layer = layers.get(i);
-
-                    // don't call paint on the image layer
-                    if (layer != imageLayer)
-                        paintLayer(seq, layer);
-                }
-            }
+            paintLayers(getLayers(true), getImageLayer(), getSequence());
 
             // then do 3D rendering
             super.paint(g);
@@ -2143,12 +2043,62 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
         }
 
         /**
-         * Draw specified layer
+         * Paint layers
          */
-        protected void paintLayer(Sequence seq, Layer layer)
+        protected void paintLayers(List<Layer> sortedLayers, final Layer imageLayer, Sequence seq)
         {
-            if (layer.isVisible())
-                layer.getOverlay().paint(null, seq, VtkCanvas.this);
+            final boolean lv = isLayersVisible();
+
+            // call paint in inverse order to have first overlay "at top"
+            for (int i = sortedLayers.size() - 1; i >= 0; i--)
+            {
+                final Layer layer = sortedLayers.get(i);
+
+                if (layer == null)
+                    continue;
+                
+                // update VTK visibility flag
+                for (vtkProp prop : VtkUtil.getLayerProps(layer))
+                {
+                    // image layer is not impacted by global layer visibility
+                    if (layer == imageLayer)
+                    {
+                        // we have a no empty image --> display it if layer is visible
+                        if (layer.isVisible() && (seq != null) && !seq.isEmpty())
+                            prop.SetVisibility(1);
+                        else
+                            prop.SetVisibility(0);
+                    }
+                    else
+                    {
+                        boolean visible = lv && layer.isVisible();
+                        // FIXME: find a better method to know visibility flags should not be impacted here
+                        final vtkInformation vtkInfo = prop.GetPropertyKeys();
+
+                        if (vtkInfo != null)
+                        {
+                            // pick the visibility info
+                            if ((vtkInfo.Has(visibilityKey) != 0) && (vtkInfo.Get(visibilityKey) == 0))
+                                visible = false;
+                        }
+
+                        // finally set the visibility state
+                        prop.SetVisibility(visible ? 1 : 0);
+                    }
+
+                    // opacity seems to not be correctly handled in VTK ??
+                    if (prop instanceof vtkActor)
+                        ((vtkActor) prop).GetProperty().SetOpacity(layer.getOpacity());
+                    else if (prop instanceof vtkActor2D)
+                        ((vtkActor2D) prop).GetProperty().SetOpacity(layer.getOpacity());
+                }
+
+                // then do layer painting
+                if (lv && layer.isVisible())
+                    // important to set Graphics to null for VtkCanvas as some plugins rely on it to detect VtkCanvas
+                    // (note that this is not a good way of doing it)
+                    layer.getOverlay().paint(null, seq, VtkCanvas.this);
+            }
         }
 
         @Override
@@ -2644,16 +2594,8 @@ public class VtkCanvas extends Canvas3D implements ActionListener, SettingChange
             }
             else if (StringUtil.equals(name, PROPERTY_LAYERS_VISIBLE))
             {
-                final Layer layer = (Layer) value;
-
-                invokeOnEDT(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        refreshLayerProperties(layer);
-                    }
-                });
+                // force refresh
+                refresh();
             }
         }
 

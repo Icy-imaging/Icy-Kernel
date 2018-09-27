@@ -18,6 +18,22 @@
  */
 package plugins.kernel.roi.roi5d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.Semaphore;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
@@ -35,22 +51,6 @@ import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.XMLUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.concurrent.Semaphore;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  * Abstract class defining a generic 5D ROI as a stack of individual 4D ROI slices.
@@ -910,6 +910,8 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
+            super.paint(g, sequence, canvas);
+
             if (isActiveFor(canvas))
             {
                 if (canvas instanceof IcyCanvas3D)

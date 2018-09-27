@@ -18,6 +18,22 @@
  */
 package plugins.kernel.roi.roi4d;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.Semaphore;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
@@ -35,22 +51,6 @@ import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.util.XMLUtil;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.concurrent.Semaphore;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  * Abstract class defining a generic 4D ROI as a stack of individual 3D ROI slices.
@@ -444,9 +444,18 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         if (roi3d == null)
             throw new IllegalArgumentException("Cannot set an empty slice in a 4D ROI");
 
-        // set T and C position
-        roi3d.setT(t);
-        roi3d.setC(getC());
+        roi3d.beginUpdate();
+        try
+        {
+            // set T and C position
+            roi3d.setT(t);
+            roi3d.setC(getC());
+        }
+        finally
+        {
+            roi3d.endUpdate();
+        }
+
         // listen events from this ROI and its overlay
         roi3d.addListener(this);
         roi3d.getOverlay().addOverlayListener(this);
@@ -938,6 +947,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
+            super.paint(g, sequence, canvas);
+
             if (isActiveFor(canvas))
             {
                 if (canvas instanceof IcyCanvas3D)
