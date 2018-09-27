@@ -112,7 +112,7 @@ import ome.xml.meta.OMEXMLMetadata;
 public class Sequence implements SequenceModel, IcyColorModelListener, IcyBufferedImageListener, ChangeListener,
         ROIListener, OverlayListener
 {
-    private static final String DEFAULT_NAME = "no name";
+    public static final String DEFAULT_NAME = "no name";
 
     /**
      * @deprecated
