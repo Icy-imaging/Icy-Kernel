@@ -3210,6 +3210,129 @@ public class Loader
 
     /**
      * <b>Internal use only !</b><br>
+     * Load a single file and return result as a Sequence (asynchrone loading).<br>
+     * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
+     * loading of current path.
+     * 
+     * @param importer
+     *        Opened importer used to load the image file (cannot be <code>null</code> here)
+     * @param metadata
+     *        Metadata of the image
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base image resolution / 2
+     *        and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve (in full image resolution).<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param loadingFrame
+     *        the loading frame used to display progress of the operation (can be null).<br>
+     *        Caller should allocate 100 positions for the internal single load process.
+     * @return the Sequence object or <code>null</code>
+     */
+    static Sequence internalLoadSingleAsync(SequenceIdImporter importer, OMEXMLMetadata metadata, int series,
+            int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
+            FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
+    {
+        final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
+        final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
+
+        final Rectangle adjRegion;
+
+        if (region != null)
+            adjRegion = new Rectangle(0, 0, imgSizeX, imgSizeY).intersection(region);
+        else
+            adjRegion = null;
+
+        final int sizeX = (adjRegion == null) ? imgSizeX : adjRegion.width;
+        final int sizeY = (adjRegion == null) ? imgSizeY : adjRegion.height;
+        final int sizeZ = MetaDataUtil.getSizeZ(metadata, series);
+        final int sizeT = MetaDataUtil.getSizeT(metadata, series);
+        final int sizeC = MetaDataUtil.getSizeC(metadata, series);
+
+        final int adjMinZ, adjMaxZ;
+        final int adjMinT, adjMaxT;
+
+        if (minZ < 0)
+            adjMinZ = 0;
+        else
+            adjMinZ = Math.min(minZ, sizeZ);
+        if (maxZ < 0)
+            adjMaxZ = sizeZ - 1;
+        else
+            adjMaxZ = Math.min(maxZ, sizeZ - 1);
+        if (minT < 0)
+            adjMinT = 0;
+        else
+            adjMinT = Math.min(minT, sizeT);
+        if (maxT < 0)
+            adjMaxT = sizeT - 1;
+        else
+            adjMaxT = Math.min(maxT, sizeT - 1);
+
+        // check that we can open the image
+        checkOpening(resolution, sizeX, sizeY, (channel == -1) ? sizeC : 1, (adjMaxZ - adjMinZ) + 1,
+                (adjMaxT - adjMinT) + 1, MetaDataUtil.getDataType(metadata, series),
+                " Try to open a sub resolution or sub part of the image only.");
+
+        // create result sequence with desired series metadata
+        final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(metadata, series));
+
+        // setup sequence properties and metadata from the opening setting
+        setupSequence(result, importer, MetaDataUtil.getNumSeries(metadata) > 1, series, adjRegion, resolution, sizeZ,
+                sizeT, sizeC, adjMinZ, adjMaxZ, adjMinT, adjMaxT, channel);
+
+        // number of image to process
+        final int numImage = ((adjMaxZ - adjMinZ) + 1) * ((adjMaxT - adjMinT) + 1);
+
+        if (numImage > 0)
+        {
+            if (loadingFrame != null)
+            {
+                // cancel requested ? --> stop loading here...
+                if (loadingFrame.isCancelRequested())
+                    return result;
+
+                // special group importer ? --> use internal file path
+                if (importer instanceof SequenceFileGroupImporter)
+                    loadingFrame.setFilename(((SequenceFileGroupImporter) importer).getPath(adjMinZ, adjMinT,
+                            (channel != -1) ? channel : 0));
+            }
+
+            final IcyBufferedImage img;
+
+            // load first image only (other images will be loaded on demand)
+            if (channel == -1)
+                img = importer.getImage(series, resolution, adjRegion, adjMinZ, adjMinT);
+            else
+                img = importer.getImage(series, resolution, adjRegion, adjMinZ, adjMinT, channel);
+
+            // add it to the sequence
+            result.setImage(0, 0, img);
+        }
+
+        return result;
+    }
+
+    /**
+     * <b>Internal use only !</b><br>
      * Load a single file and return result as a Sequence.<br>
      * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
      * loading of current path.

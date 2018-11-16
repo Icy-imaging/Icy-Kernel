@@ -18,9 +18,9 @@
  */
 package icy.math;
 
-import icy.util.StringUtil;
-
 import java.util.concurrent.TimeUnit;
+
+import icy.util.StringUtil;
 
 /**
  * Unit conversion utilities class.
@@ -370,7 +370,7 @@ public class UnitUtil
     public static String displayTimeAsStringWithUnits(double valueInMs, boolean displayZero)
     {
         String result = "";
-        double v = valueInMs;
+        double v = Math.abs(valueInMs);
 
         if (v >= 24d * 60d * 60d * 1000d)
         {
@@ -400,8 +400,8 @@ public class UnitUtil
         }
         else if (displayZero)
             result += "00sec ";
-        if (v != 0d)
-            result += StringUtil.toString(v, 2) + "ms";
+        if (v >= 0d)
+            result += StringUtil.toString(v, 3) + "ms";
         else if (displayZero)
             result += "000ms";
 

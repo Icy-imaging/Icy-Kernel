@@ -18,11 +18,6 @@
  */
 package icy.gui.menu.search;
 
-import icy.main.Icy;
-import icy.search.SearchEngine;
-import icy.search.SearchResult;
-import icy.system.thread.ThreadUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -48,6 +43,11 @@ import javax.swing.table.TableColumnModel;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 import org.pushingpixels.flamingo.internal.ui.common.JRichTooltipPanel;
+
+import icy.main.Icy;
+import icy.search.SearchEngine;
+import icy.search.SearchResult;
+import icy.system.thread.ThreadUtil;
 
 /**
  * This class is the most important part of this plugin: it will handle and
@@ -349,8 +349,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
     /**
      * Close the results panel.<br>
-     * If <code>reset</br>
-     * is true that also reset search.
+     * If <code>reset</code> is true that also reset search.
      */
     public void close(boolean reset)
     {

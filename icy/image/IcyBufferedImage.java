@@ -31,6 +31,9 @@ import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
+import java.awt.image.ImageObserver;
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -457,6 +460,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     private boolean autoUpdateChannelBounds;
 
     /**
+     * required cached field as raster is volatile
+     */
+    private final int width;
+    private final int height;
+    private final int minX;
+    private final int minY;
+    private final int offsetX;
+    private final int offsetY;
+
+    /**
      * internal updater
      */
     private final UpdateEventHandler updater;
@@ -478,6 +491,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     protected IcyBufferedImage(IcyColorModel cm, WritableRaster wr, boolean autoUpdateChannelBounds)
     {
         super(cm, wr, false, null);
+
+        width = wr.getWidth();
+        height = wr.getHeight();
+        minX = wr.getMinX();
+        minY = wr.getMinY();
+        offsetX = wr.getSampleModelTranslateX();
+        offsetY = wr.getSampleModelTranslateY();
 
         updater = new UpdateEventHandler(this, false);
         listeners = new ArrayList<IcyBufferedImageListener>();
@@ -707,6 +727,249 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public IcyBufferedImage(int width, int height, int numComponents, int dataType)
     {
         this(IcyColorModel.createInstance(numComponents, dataType, false), width, height);
+    }
+
+    public WritableRaster getLiveRaster()
+    {
+        return null;
+    }
+
+    @Override
+    public WritableRaster getRaster()
+    {
+        return super.getRaster();
+    }
+
+    @Override
+    public WritableRaster getAlphaRaster()
+    {
+        return getColorModel().getAlphaRaster(getRaster());
+    }
+
+    protected void releaseRaster()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public int getWidth()
+    {
+        return width;
+    }
+
+    @Override
+    public int getHeight()
+    {
+        return height;
+    }
+
+    @Override
+    public int getWidth(ImageObserver observer)
+    {
+        return width;
+    }
+
+    @Override
+    public int getHeight(ImageObserver observer)
+    {
+        return height;
+    }
+
+    @Override
+    public int getMinX()
+    {
+        return minX;
+    }
+
+    @Override
+    public int getMinY()
+    {
+        return minY;
+    }
+
+    @Override
+    public int getTileWidth()
+    {
+        return getWidth();
+    }
+
+    @Override
+    public int getTileHeight()
+    {
+        return getHeight();
+    }
+
+    @Override
+    public int getTileGridXOffset()
+    {
+        return offsetX;
+    }
+
+    @Override
+    public int getTileGridYOffset()
+    {
+        return offsetY;
+    }
+
+    @Override
+    public SampleModel getSampleModel()
+    {
+        return getRaster().getSampleModel();
+    }
+
+    @Override
+    public void coerceData(boolean isAlphaPremultiplied)
+    {
+        getRaster();
+        try
+        {
+            super.coerceData(isAlphaPremultiplied);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public WritableRaster copyData(WritableRaster outRaster)
+    {
+        getRaster();
+        try
+        {
+            return super.copyData(outRaster);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public Raster getTile(int tileX, int tileY)
+    {
+        getRaster();
+        try
+        {
+            return super.getTile(tileX, tileY);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public WritableRaster getWritableTile(int tileX, int tileY)
+    {
+        getRaster();
+        try
+        {
+            return super.getWritableTile(tileX, tileY);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public Raster getData()
+    {
+        getRaster();
+        try
+        {
+            return super.getData();
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public Raster getData(Rectangle rect)
+    {
+        getRaster();
+        try
+        {
+            return super.getData(rect);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public void setData(Raster r)
+    {
+        getRaster();
+        try
+        {
+            super.setData(r);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public int getRGB(int x, int y)
+    {
+        getRaster();
+        try
+        {
+            return super.getRGB(x, y);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public int[] getRGB(int startX, int startY, int w, int h, int[] rgbArray, int offset, int scansize)
+    {
+        getRaster();
+        try
+        {
+            return super.getRGB(startX, startY, w, h, rgbArray, offset, scansize);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public synchronized void setRGB(int x, int y, int rgb)
+    {
+        getRaster();
+        try
+        {
+            super.setRGB(x, y, rgb);
+        }
+        finally
+        {
+            releaseRaster();
+        }
+    }
+
+    @Override
+    public void setRGB(int startX, int startY, int w, int h, int[] rgbArray, int offset, int scansize)
+    {
+        getRaster();
+        try
+        {
+            super.setRGB(startX, startY, w, h, rgbArray, offset, scansize);
+        }
+        finally
+        {
+            releaseRaster();
+        }
     }
 
     /**
@@ -2787,22 +3050,37 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public double getDataInterpolated(double x, double y, int c)
     {
         final int xi = (int) x;
+        final int xip = xi + 1;
         final int yi = (int) y;
+        final int yip = yi + 1;
         final int sx = getSizeX();
         final int sy = getSizeY();
 
-        final double ratioNextX = x - (double) xi;
-        final double ratioCurX = 1d - ratioNextX;
-        final double ratioNextY = y - (double) yi;
-        final double ratioCurY = 1d - ratioNextY;
+        double result = 0d;
 
-        double result = getData(xi, yi, c) * (ratioCurX * ratioCurY);
-        if ((xi + 1) < sx)
-            result += getData(xi + 1, yi, c) * (ratioNextX * ratioCurY);
-        if ((yi + 1) < sy)
-            result += getData(xi, yi + 1, c) * (ratioCurX * ratioNextY);
-        if (((xi + 1) < sx) && ((yi + 1) < sy))
-            result += getData(xi + 1, yi + 1, c) * (ratioNextX * ratioNextY);
+        // at least one pixel inside
+        if ((xi < sx) && (yi < sy) && (xip >= 0) && (yip >= 0))
+        {
+            final double ratioNextX = x - (double) xi;
+            final double ratioCurX = 1d - ratioNextX;
+            final double ratioNextY = y - (double) yi;
+            final double ratioCurY = 1d - ratioNextY;
+
+            if (yi >= 0)
+            {
+                if (xi >= 0)
+                    result += getData(xi, yi, c) * (ratioCurX * ratioCurY);
+                if (xip < sx)
+                    result += getData(xip, yi, c) * (ratioNextX * ratioCurY);
+            }
+            if (yip < sy)
+            {
+                if (xi >= 0)
+                    result += getData(xi, yip, c) * (ratioCurX * ratioNextY);
+                if (xip < sx)
+                    result += getData(xip, yip, c) * (ratioNextX * ratioNextY);
+            }
+        }
 
         return result;
     }

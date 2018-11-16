@@ -18,6 +18,15 @@
  */
 package icy.plugin;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.swing.event.EventListenerList;
+
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.progress.AnnounceFrame;
@@ -36,15 +45,6 @@ import icy.update.Updater;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.util.ZipUtil;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.swing.event.EventListenerList;
 
 /**
  * @author Stephane
@@ -935,11 +935,13 @@ public class PluginInstaller implements Runnable
 
             if (showProgress && !Icy.getMainInterface().isHeadLess())
             {
-                if (pluginsNOk.isEmpty())
-                    new SuccessfullAnnounceFrame("Plugin(s) installation was successful !", 10);
-                else if (pluginsOk.isEmpty())
+                // no plugin success ?
+                if (pluginsOk.isEmpty())
                     new FailedAnnounceFrame("Plugin(s) installation failed !", 10);
-                else
+                // no plugin fail ?
+                else if (pluginsNOk.isEmpty() && pluginsNewJava.isEmpty())
+                    new SuccessfullAnnounceFrame("Plugin(s) installation was successful !", 10);
+                else if (!pluginsNOk.isEmpty())
                     new FailedAnnounceFrame(
                             "Some plugin(s) installation failed (looks at the output console for detail) !", 10);
 

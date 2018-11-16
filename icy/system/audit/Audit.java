@@ -171,17 +171,25 @@ public class Audit
      */
     public static void pluginLaunched(Plugin plugin)
     {
-        prepare();
+        // we don't want to wait for initialization here (can lock the application loading for sometime)
+        // and we don't care about init usage stats (ROI and daemons plugins)...
+        if (!initialized)
+            return;
+
         storage.pluginLaunched(plugin);
     }
 
     /**
-     * Plugin instancied event audit
+     * Plugin instanced event audit
      */
-    public static void pluginInstancied(Plugin plugin)
+    public static void pluginInstanced(Plugin plugin)
     {
-        prepare();
-        storage.pluginInstancied(plugin);
+        // we don't want to wait for initialization here (can lock the application loading for sometime)
+        // and we don't care about init usage stats (ROI and daemons plugins)...
+        if (!initialized)
+            return;
+
+        storage.pluginInstanced(plugin);
     }
 
     /**

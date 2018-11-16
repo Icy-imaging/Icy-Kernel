@@ -3,6 +3,14 @@
  */
 package icy.gui.dialog;
 
+import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+
 import icy.file.FileUtil;
 import icy.file.ImageFileFormat;
 import icy.file.Saver;
@@ -13,15 +21,6 @@ import icy.preferences.XMLPreferences;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
-
 import loci.formats.IFormatWriter;
 import loci.formats.gui.ExtensionFileFilter;
 import loci.plugins.out.Exporter;
@@ -127,7 +126,15 @@ public class SaverDialog extends JFileChooser
         settingPanel = new SaverOptionPanel();
         settingPanel.setMultipleFiles(preferences.getBoolean(ID_MULTIPLEFILE, false));
         settingPanel.setOverwriteMetadata(preferences.getBoolean(ID_OVERWRITENAME, false));
-        settingPanel.setFramePerSecond(preferences.getInt(ID_FPS, 15));
+
+        // try to set time interval from metadata
+        final double ti = sequence.getTimeInterval() * 1000d;
+
+        if (ti != 0d)
+            settingPanel.setTimeInterval(ti);
+        // otherwise we just use the last used FPS
+        else
+            settingPanel.setFramePerSecond(preferences.getInt(ID_FPS, 20));
 
         setAccessory(settingPanel);
         updateSettingPanel();
@@ -362,6 +369,17 @@ public class SaverDialog extends JFileChooser
             return settingPanel.getFramePerSecond();
 
         return 1;
+    }
+
+    /**
+     * Returns the desired time interval between 2 frames in ms (only for AVI file).
+     */
+    public double getTimeInterval()
+    {
+        if (settingPanel.isFramePerSecondVisible())
+            return settingPanel.getTimeInterval();
+
+        return 100d;
     }
 
     /**

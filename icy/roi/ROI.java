@@ -142,6 +142,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final Color DEFAULT_COLOR = Color.GREEN;
     public static final float DEFAULT_OPACITY = 0.3f;
 
+    // cached value (often used)
+    public static Color defaultColor = null;
+    public static Float defaultOpacity = null;
+    public static Double defaultStroke = null;
+    public static Boolean defaultShowName = null;
+
     /**
      * @deprecated Use {@link #DEFAULT_COLOR} instead.
      */
@@ -503,41 +509,61 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     public static Color getDefaultColor()
     {
-        return new Color(GeneralPreferences.getPreferencesRoiOverlay().getInt(ID_COLOR, DEFAULT_COLOR.getRGB()));
+        if (defaultColor == null)
+            defaultColor = new Color(
+                    GeneralPreferences.getPreferencesRoiOverlay().getInt(ID_COLOR, DEFAULT_COLOR.getRGB()));
+
+        return defaultColor;
     }
 
     public static float getDefaultOpacity()
     {
-        return GeneralPreferences.getPreferencesRoiOverlay().getFloat(ID_OPACITY, DEFAULT_OPACITY);
+        if (defaultOpacity == null)
+            defaultOpacity = Float
+                    .valueOf(GeneralPreferences.getPreferencesRoiOverlay().getFloat(ID_OPACITY, DEFAULT_OPACITY));
+
+        return defaultOpacity.floatValue();
     }
 
     public static double getDefaultStroke()
     {
-        return GeneralPreferences.getPreferencesRoiOverlay().getDouble(ID_STROKE, DEFAULT_STROKE);
+        if (defaultStroke == null)
+            defaultStroke = Double
+                    .valueOf(GeneralPreferences.getPreferencesRoiOverlay().getDouble(ID_STROKE, DEFAULT_STROKE));
+
+        return defaultStroke.doubleValue();
     }
 
     public static boolean getDefaultShowName()
     {
-        return GeneralPreferences.getPreferencesRoiOverlay().getBoolean(ID_SHOWNAME, false);
+        if (defaultShowName == null)
+            defaultShowName = Boolean
+                    .valueOf(GeneralPreferences.getPreferencesRoiOverlay().getBoolean(ID_SHOWNAME, false));
+
+        return defaultShowName.booleanValue();
     }
 
     public static void setDefaultColor(Color value)
     {
+        defaultColor = value;
         GeneralPreferences.getPreferencesRoiOverlay().putInt(ID_COLOR, value.getRGB());
     }
 
     public static void setDefaultOpacity(float value)
     {
+        defaultOpacity = Float.valueOf(value);
         GeneralPreferences.getPreferencesRoiOverlay().putFloat(ID_OPACITY, value);
     }
 
     public static void setDefaultStroke(double value)
     {
+        defaultStroke = Double.valueOf(value);
         GeneralPreferences.getPreferencesRoiOverlay().putDouble(ID_STROKE, value);
     }
 
     public static void setDefaultShowName(boolean value)
     {
+        defaultShowName = Boolean.valueOf(value);
         GeneralPreferences.getPreferencesRoiOverlay().putBoolean(ID_SHOWNAME, value);
     }
 

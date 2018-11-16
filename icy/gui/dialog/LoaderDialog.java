@@ -212,7 +212,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
                 // get the selected importer from file filter
                 final Object importer = getImporter(getFileFilterIndex());
 
-                // multi file or folder loading
+                // multiple files or folder loading
                 if ((paths.size() > 1) || FileUtil.isDirectory(firstPath))
                 {
                     if (importer instanceof FileImporter)
