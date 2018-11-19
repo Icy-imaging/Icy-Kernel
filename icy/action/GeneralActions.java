@@ -14,6 +14,18 @@
  */
 package icy.action;
 
+import java.awt.Image;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.pushingpixels.flamingo.api.common.RichTooltip;
+
 import icy.clipboard.Clipboard;
 import icy.clipboard.TransferableImage;
 import icy.gui.dialog.ConfirmDialog;
@@ -36,19 +48,6 @@ import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import icy.util.ClassUtil;
-
-import java.awt.Image;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.pushingpixels.flamingo.api.common.RichTooltip;
-
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -87,8 +86,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction exitApplicationAction = new IcyAbstractAction("Exit", new IcyIcon(
-            ResourceUtil.ICON_ON_OFF))
+    public static IcyAbstractAction exitApplicationAction = new IcyAbstractAction("Exit",
+            new IcyIcon(ResourceUtil.ICON_ON_OFF))
     {
         /**
          * 
@@ -103,8 +102,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction detachedModeAction = new IcyAbstractAction("Detached Mode", new IcyIcon(
-            ResourceUtil.ICON_DETACHED_WINDOW), "Detached mode ON/OFF",
+    public static IcyAbstractAction detachedModeAction = new IcyAbstractAction("Detached Mode",
+            new IcyIcon(ResourceUtil.ICON_DETACHED_WINDOW), "Detached mode ON/OFF",
             "Switch application to detached / attached mode")
     {
         /**
@@ -126,8 +125,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction copyImageAction = new IcyAbstractAction("Copy image", new IcyIcon(
-            ResourceUtil.ICON_PICTURE_COPY), "Copy image to clipboard",
+    public static IcyAbstractAction copyImageAction = new IcyAbstractAction("Copy image",
+            new IcyIcon(ResourceUtil.ICON_PICTURE_COPY), "Copy image to clipboard",
             "Copy the active image to the system clipboard.", KeyEvent.VK_C, SystemUtil.getMenuCtrlMask(), true,
             "Copying image to the clipboard...")
     {
@@ -177,8 +176,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction pasteImageAction = new IcyAbstractAction("Paste image", new IcyIcon(
-            ResourceUtil.ICON_PICTURE_PASTE), "Paste image from clipboard",
+    public static IcyAbstractAction pasteImageAction = new IcyAbstractAction("Paste image",
+            new IcyIcon(ResourceUtil.ICON_PICTURE_PASTE), "Paste image from clipboard",
             "Paste image from the system clipboard in a new sequence.", KeyEvent.VK_V, SystemUtil.getMenuCtrlMask(),
             true, "Creating new sequence from clipboard image...")
     {
@@ -190,19 +189,19 @@ public class GeneralActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            if (Clipboard.hasTypeSystem(DataFlavor.imageFlavor))
+            try
             {
-                try
+                if (Clipboard.hasTypeSystem(DataFlavor.imageFlavor))
                 {
                     final Image img = (Image) Clipboard.getSystem(DataFlavor.imageFlavor);
                     Icy.getMainInterface().addSequence(new Sequence("Clipboard image", ImageUtil.toBufferedImage(img)));
                     return true;
                 }
-                catch (Throwable e1)
-                {
-                    System.err.println("Can't paste image from clipboard:");
-                    IcyExceptionHandler.showErrorMessage(e1, false);
-                }
+            }
+            catch (Throwable e1)
+            {
+                System.err.println("Can't paste image from clipboard:");
+                IcyExceptionHandler.showErrorMessage(e1, false);
             }
 
             return false;
@@ -211,13 +210,20 @@ public class GeneralActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && Clipboard.hasTypeSystem(DataFlavor.imageFlavor);
+            try
+            {
+                return super.isEnabled() && Clipboard.hasTypeSystem(DataFlavor.imageFlavor);
+            }
+            catch (Throwable e)
+            {
+                return false;
+            }
         }
     };
 
-    public static IcyAbstractAction toIJAction = new IcyAbstractAction("Convert to IJ", new IcyIcon(
-            ResourceUtil.ICON_TOIJ), "Convert to ImageJ", "Convert the selected Icy sequence to ImageJ image.", true,
-            "Converting to ImageJ image...")
+    public static IcyAbstractAction toIJAction = new IcyAbstractAction("Convert to IJ",
+            new IcyIcon(ResourceUtil.ICON_TOIJ), "Convert to ImageJ",
+            "Convert the selected Icy sequence to ImageJ image.", true, "Converting to ImageJ image...")
     {
         /**
          * 
@@ -267,9 +273,9 @@ public class GeneralActions
 
     };
 
-    public static IcyAbstractAction toIcyAction = new IcyAbstractAction("Convert to Icy", new IcyIcon(
-            ResourceUtil.ICON_TOICY), "Convert to Icy", "Convert the selected ImageJ image to Icy sequence.", true,
-            "Converting to Icy image...")
+    public static IcyAbstractAction toIcyAction = new IcyAbstractAction("Convert to Icy",
+            new IcyIcon(ResourceUtil.ICON_TOICY), "Convert to Icy",
+            "Convert the selected ImageJ image to Icy sequence.", true, "Converting to Icy image...")
     {
         /**
          * 
@@ -318,8 +324,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction onlineHelpAction = new IcyAbstractAction("Online help (F1)", new IcyIcon(
-            ResourceUtil.ICON_HELP), "Open a browser and display support forum", KeyEvent.VK_F1)
+    public static IcyAbstractAction onlineHelpAction = new IcyAbstractAction("Online help (F1)",
+            new IcyIcon(ResourceUtil.ICON_HELP), "Open a browser and display support forum", KeyEvent.VK_F1)
     {
         /**
          * 
@@ -335,8 +341,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction websiteAction = new IcyAbstractAction("Website", new IcyIcon(
-            ResourceUtil.ICON_BROWSER))
+    public static IcyAbstractAction websiteAction = new IcyAbstractAction("Website",
+            new IcyIcon(ResourceUtil.ICON_BROWSER))
     {
         /**
          * 
@@ -394,8 +400,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction checkUpdateAction = new IcyAbstractAction("Check for update", new IcyIcon(
-            ResourceUtil.ICON_DOWNLOAD), "Check for updates",
+    public static IcyAbstractAction checkUpdateAction = new IcyAbstractAction("Check for update",
+            new IcyIcon(ResourceUtil.ICON_DOWNLOAD), "Check for updates",
             "Search updates for application and plugins in all referenced repositories.")
     {
         /**

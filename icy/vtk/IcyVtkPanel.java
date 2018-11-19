@@ -18,10 +18,6 @@
  */
 package icy.vtk;
 
-import icy.preferences.CanvasPreferences;
-import icy.system.thread.ThreadUtil;
-import icy.util.EventUtil;
-
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -30,6 +26,9 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
+import icy.preferences.CanvasPreferences;
+import icy.system.thread.ThreadUtil;
+import icy.util.EventUtil;
 import vtk.vtkActor;
 import vtk.vtkActorCollection;
 import vtk.vtkAxesActor;
@@ -45,8 +44,8 @@ import vtk.vtkRenderer;
  * 
  * @author stephane dallongeville
  */
-public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMotionListener, MouseWheelListener,
-        KeyListener, Runnable
+public class IcyVtkPanel extends VtkJoglPanel
+        implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, Runnable
 {
     /**
      * 
@@ -559,24 +558,6 @@ public class IcyVtkPanel extends VtkJoglPanel implements MouseListener, MouseMot
                     ThreadUtil.sleep(1);
             }
         }
-    }
-
-    @Override
-    public void lock()
-    {
-        // if (!isWindowSet())
-        // return;
-
-        super.lock();
-    }
-
-    @Override
-    public void unlock()
-    {
-        // if (!isWindowSet())
-        // return;
-
-        super.unlock();
     }
 
     @Override

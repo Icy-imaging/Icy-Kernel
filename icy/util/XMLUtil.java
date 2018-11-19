@@ -1071,7 +1071,7 @@ public class XMLUtil
         return StringUtil.parseDouble(value, def);
     }
 
-    private static byte[] getBytes(String value, byte[] def) throws DataFormatException
+    public static byte[] getBytes(String value, byte[] def) throws DataFormatException
     {
         if (value == null)
             return def;
@@ -1111,7 +1111,7 @@ public class XMLUtil
         return StringUtil.toString(value);
     }
 
-    private static String toString(byte[] value)
+    public static String toString(byte[] value)
     {
         final byte[] packed;
 

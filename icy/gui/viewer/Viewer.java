@@ -331,6 +331,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         {
             setVisible(true);
             requestFocus();
+            toFront();
         }
         else
             setVisible(false);

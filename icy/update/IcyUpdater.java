@@ -286,12 +286,12 @@ public class IcyUpdater
                 {
                     final ElementDescriptor element = (ElementDescriptor) list.getSelectedValue();
 
-                    final String changeLog = element.getChangelog();
+                    final String changeLog = element.getChangelog().trim();
 
                     if (StringUtil.isEmpty(changeLog))
                         changeLogArea.setText("no change log");
                     else
-                        changeLogArea.setText(element.getChangelog());
+                        changeLogArea.setText(changeLog);
                     changeLogArea.setCaretPosition(0);
                     changeLogTitleLabel.setText(element.getName() + " change log");
                 }

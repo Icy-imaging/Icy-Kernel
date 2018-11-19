@@ -58,6 +58,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
+import icy.common.Version;
 import icy.common.listener.ProgressListener;
 import icy.common.listener.weak.WeakListener;
 import icy.file.FileUtil;
@@ -260,16 +261,15 @@ public class NetworkUtil
         httpsSupported = false;
 
         // check for HTTPS "let's encrypt" certificate compatibility
-        final double java = SystemUtil.getJavaVersionAsNumber();
-        final int javaInt = (int) java;
-        final double javaFrac = java - javaInt;
+        final Version javaVersion = SystemUtil.getJavaVersionAsVersion();
+        final int javaInt = javaVersion.getMajor();
 
-        if (java == 7)
-            httpsSupported = javaFrac >= 111;
-        else if (java == 8)
-            httpsSupported = javaFrac >= 101;
+        if (javaInt == 7)
+            httpsSupported = javaVersion.isGreaterOrEqual(new Version("7.0.111"));
+        else if (javaInt == 8)
+            httpsSupported = javaVersion.isGreaterOrEqual(new Version("8.0.101"));
         else
-            httpsSupported = (java >= 9);
+            httpsSupported = (javaInt >= 9);
 
         updateNetworkSetting();
         // accept all HTTPS connections by default
@@ -277,7 +277,7 @@ public class NetworkUtil
 
         // String addr;
         //
-        // // --> connection HTTPS: fails with java 7, ok with java 8 (let's enrypt certificate)
+        // // --> connection HTTPS: fails with java 7, ok with java 8 (let's encrypt certificate)
         // addr = "https://icy.yhello.co";
         // // addr = "http://icy.yhello.co/update/update.php?arch=win64&version=1.9.8.2";
         // // addr = "https://icy.yhello.co/update/update.php?arch=win64&version=1.9.8.2";

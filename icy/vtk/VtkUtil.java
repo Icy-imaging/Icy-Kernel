@@ -65,6 +65,7 @@ import vtk.vtkIntArray;
 import vtk.vtkLongArray;
 import vtk.vtkOBJReader;
 import vtk.vtkObject;
+import vtk.vtkObjectBase;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkPoints;
 import vtk.vtkPolyData;
@@ -272,6 +273,7 @@ public class VtkUtil
         final vtkIntArray iarray = getIntArray(array);
 
         result.DeepCopy(iarray);
+        iarray.Delete();
 
         return result;
     }
@@ -306,13 +308,16 @@ public class VtkUtil
         }
     }
 
-    public static int[] getArray(vtkIdTypeArray array)
+    public static int[] getJavaArray(vtkIdTypeArray array)
     {
         final vtkIntArray iarray = new vtkIntArray();
 
         iarray.DeepCopy(array);
 
-        return iarray.GetJavaArray();
+        final int[] result = iarray.GetJavaArray();
+        iarray.Delete();
+
+        return result;
     }
 
     /**
@@ -1485,5 +1490,13 @@ public class VtkUtil
         }
 
         return true;
+    }
+
+    /**
+     * VTK forced garbage collection
+     */
+    public static void vtkGC()
+    {
+        vtkObjectBase.JAVA_OBJECT_MANAGER.gc(false);
     }
 }

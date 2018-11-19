@@ -3,6 +3,15 @@
  */
 package icy.system.audit;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.w3c.dom.Node;
+
 import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.file.xml.XMLPersistentHelper;
@@ -14,15 +23,6 @@ import icy.plugin.abstract_.Plugin;
 import icy.system.IcyExceptionHandler;
 import icy.util.DateUtil;
 import icy.util.XMLUtil;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.w3c.dom.Node;
 
 /**
  * @author Stephane
@@ -151,7 +151,7 @@ public class AuditStorage implements XMLPersistent
         autoSave();
     }
 
-    public void pluginInstancied(Plugin plugin)
+    public void pluginInstanced(Plugin plugin)
     {
         final PluginDescriptor descriptor;
 

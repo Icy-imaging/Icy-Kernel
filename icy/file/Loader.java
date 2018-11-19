@@ -2716,7 +2716,7 @@ public class Loader
 
             // load the image
             result = internalLoadSingle(imp, meta, selectedSerie, resolution, region, minZ, maxZ, minT, maxT, channel,
-                    loadingFrame);
+                    loadingFrame, true);
 
             // Don't close importer on success ! we want to keep it inside the sequence.
             // We will close it when finalizing the sequence...
@@ -3210,7 +3210,7 @@ public class Loader
 
     /**
      * <b>Internal use only !</b><br>
-     * Load a single file and return result as a Sequence.<br>
+     * Load image(s) from the given importer and parameters and return the result as a Sequence.<br>
      * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
      * loading of current path.
      * 
@@ -3245,11 +3245,14 @@ public class Loader
      * @param loadingFrame
      *        the loading frame used to display progress of the operation (can be null).<br>
      *        Caller should allocate 100 positions for the internal single load process.
+     * @param loadImage
+     *        if set to <code>true</code> (default) then image(s) are loaded immediately otherwise images are set to <code>null</code> into the Sequence so they
+     *        can be loaded on demand later (used for <i>Virtual</i> sequence / streaming).
      * @return the Sequence object or <code>null</code>
      */
     public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series,
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
-            FileFrame loadingFrame) throws IOException, UnsupportedFormatException, OutOfMemoryError
+            FileFrame loadingFrame, boolean loadImage) throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
         final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
@@ -3330,13 +3333,22 @@ public class Loader
                                         (channel != -1) ? channel : 0));
                         }
 
-                        // load image and add it to the sequence
-                        if (channel == -1)
-                            result.setImage(t - adjMinT, z - adjMinZ,
-                                    importer.getImage(series, resolution, adjRegion, z, t));
+                        final IcyBufferedImage image;
+
+                        // load image(s) now
+                        if (loadImage)
+                        {
+                            // load image now
+                            if (channel == -1)
+                                image = importer.getImage(series, resolution, adjRegion, z, t);
+                            else
+                                image = importer.getImage(series, resolution, adjRegion, z, t, channel);
+                        }
                         else
-                            result.setImage(t - adjMinT, z - adjMinZ,
-                                    importer.getImage(series, resolution, adjRegion, z, t, channel));
+                            image = null;
+
+                        // set image into the sequence
+                        result.setImage(t - adjMinT, z - adjMinZ, image);
 
                         progress += progressStep;
 
@@ -3436,7 +3448,8 @@ public class Loader
             // add sequence to result
             for (int s : selectedSeries)
             {
-                final Sequence seq = internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, loadingFrame);
+                final Sequence seq = internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, loadingFrame,
+                        true);
 
                 // group series together
                 if ((result.size() > 0) && groupSeries)
@@ -3549,7 +3562,7 @@ public class Loader
             MetaDataUtil.clean(meta);
 
             result = internalLoadSingle(groupImporter, meta, 0, resolution, region, minZ, maxZ, minT, maxT, channel,
-                    loadingFrame);
+                    loadingFrame, true);
 
             // directory load ?
             if (directory)

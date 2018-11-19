@@ -131,12 +131,20 @@ public class ROI3DPoint extends ROI3DShape
         @Override
         protected void initVtkObjects()
         {
+            super.initVtkObjects();
+            
             // init 3D painters stuff
             vtkSource = new vtkSphereSource();
             vtkSource.SetRadius(getStroke());
             vtkSource.SetThetaResolution(12);
             vtkSource.SetPhiResolution(12);
 
+            // delete previously created objects that we will recreate
+            if (actor != null)
+                actor.Delete();
+            if (polyMapper != null)
+                polyMapper.Delete();
+            
             polyMapper = new vtkPolyDataMapper();
             polyMapper.SetInputConnection((vtkSource).GetOutputPort());
 

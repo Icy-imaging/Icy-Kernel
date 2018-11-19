@@ -124,6 +124,10 @@ public class Clipboard
      * @param type
      *        the requested <code>DataFlavor</code> for the contents
      * @see java.awt.datatransfer.Clipboard#isDataFlavorAvailable(DataFlavor)
+     * @throws NullPointerException
+     *         if <code>flavor</code> is <code>null</code>
+     * @throws IllegalStateException
+     *         if this clipboard is currently unavailable
      */
     public static boolean hasTypeSystem(DataFlavor type)
     {
@@ -134,6 +138,8 @@ public class Clipboard
      * Returns all type of content available in the system clipboard.
      * 
      * @see java.awt.datatransfer.Clipboard#getAvailableDataFlavors()
+     * @throws IllegalStateException
+     *         if this clipboard is currently unavailable
      */
     public static DataFlavor[] getAllTypeSystem()
     {
@@ -146,7 +152,14 @@ public class Clipboard
      * @param type
      *        the requested <code>DataFlavor</code> for the contents
      * @throws IOException
+     * @throws NullPointerException
+     *         if <code>flavor</code> is <code>null</code>
+     * @throws IllegalStateException
+     *         if this clipboard is currently unavailable
      * @throws UnsupportedFlavorException
+     * @throws IOException
+     *         if the data in the requested <code>DataFlavor</code>
+     *         can not be retrieved
      * @see java.awt.datatransfer.Clipboard#getData(DataFlavor)
      */
     public static Object getSystem(DataFlavor type) throws UnsupportedFlavorException, IOException

@@ -18,12 +18,6 @@
  */
 package icy.system;
 
-import icy.file.FileUtil;
-import icy.main.Icy;
-import icy.type.collection.CollectionUtil;
-import icy.util.ReflectionUtil;
-import icy.util.StringUtil;
-
 import java.awt.BufferCapabilities;
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
@@ -52,6 +46,13 @@ import java.util.List;
 import java.util.Properties;
 
 import com.sun.management.OperatingSystemMXBean;
+
+import icy.common.Version;
+import icy.file.FileUtil;
+import icy.main.Icy;
+import icy.type.collection.CollectionUtil;
+import icy.util.ReflectionUtil;
+import icy.util.StringUtil;
 
 /**
  * @author stephane
@@ -815,7 +816,7 @@ public class SystemUtil
     }
 
     /**
-     * Returns the JVM integer version in number format (ex: 6.091, 7.071, 8.151..)
+     * Returns the JVM version in number format (ex: 6.091, 7.071, 8.151..)
      */
     public static double getJavaVersionAsNumber()
     {
@@ -841,9 +842,40 @@ public class SystemUtil
                 version = version.substring(0, lastSepInd) + version.substring(lastSepInd + 1);
                 lastSepInd = version.lastIndexOf('.');
             }
+
+            if (version.charAt(firstSepInd + 1) == '0')
+                version = version.substring(0, lastSepInd + 1) + version.substring(lastSepInd + 2);
         }
 
         return StringUtil.parseDouble(version, 0);
+    }
+
+    /**
+     * Returns the JVM integer version (ex: 6.0.91, 7.0.71, 8.0.151..)
+     */
+    public static Version getJavaVersionAsVersion()
+    {
+        // replace separators by '.'
+        String version = getJavaVersion().replaceAll("-", ".");
+        version = version.replaceAll("_", ".");
+        // then remove all unwanted characters
+        version = version.replaceAll("[^\\d.]", "");
+
+        int firstSepInd = version.indexOf('.');
+
+        if (firstSepInd >= 0)
+        {
+            // version 1.xxx ?
+            if (version.substring(0, firstSepInd).equals("1"))
+            {
+                // remove "1."
+                version = version.substring(firstSepInd + 1);
+                // get first "." index
+                firstSepInd = version.indexOf('.');
+            }
+        }
+
+        return new Version(version);
     }
 
     /**

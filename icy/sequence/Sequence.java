@@ -3240,7 +3240,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Add an image to the specified VolumetricImage at the specified z location
+     * Put an image into the specified VolumetricImage at the given z location
      */
     protected void setImage(VolumetricImage volImg, int z, BufferedImage image) throws IllegalArgumentException
     {
@@ -3576,16 +3576,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public int getSizeZ()
     {
         final int sizeT = getSizeT();
-        int maxZ = 0;
 
+        int result = 0;
         for (int i = 0; i < sizeT; i++)
-            maxZ = Math.max(maxZ, getSizeZ(i));
+            result = Math.max(result, getSizeZ(i));
 
-        return maxZ;
+        return result;
     }
 
     /**
-     * Returns the number of z stack of the volumetricImage[t].
+     * Returns the number of z stack for the volumetricImage[t].
      */
     public int getSizeZ(int t)
     {
@@ -3620,10 +3620,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public int getSizeC()
     {
+        // color model defined ? --> get it from color model
         if (colorModel != null)
             return colorModel.getNumComponents();
 
-        return 0;
+        // else try to get it from metadata
+        return MetaDataUtil.getSizeC(metaData, 0);
     }
 
     /**
@@ -3640,12 +3642,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public int getSizeY()
     {
+        // try to get from image first
         final IcyBufferedImage img = getFirstNonNullImage();
 
         if (img != null)
             return img.getHeight();
 
-        return 0;
+        // else try to get from metadata
+        return MetaDataUtil.getSizeY(metaData, 0);
     }
 
     /**
@@ -3664,10 +3668,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final IcyBufferedImage img = getFirstNonNullImage();
 
+        // try to get it from image first
         if (img != null)
             return img.getWidth();
 
-        return 0;
+        // else try to get from metadata
+        return MetaDataUtil.getSizeX(metaData, 0);
     }
 
     /**
@@ -4444,16 +4450,23 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final int zi = (int) z;
         final double ratioNextZ = z - (double) zi;
-        final double ratioCurZ = 1d - ratioNextZ;
 
         double result = 0d;
+        IcyBufferedImage img;
 
-        IcyBufferedImage img = getImage(t, zi);
+        img = getImage(t, zi);
         if (img != null)
-            result += img.getDataInterpolated(x, y, c) * ratioCurZ;
+        {
+            final double ratioCurZ = 1d - ratioNextZ;
+            if (ratioCurZ > 0d)
+                result += img.getDataInterpolated(x, y, c) * ratioCurZ;
+        }
         img = getImage(t, zi + 1);
-        if ((img != null) && (ratioNextZ > 0d))
-            result += img.getDataInterpolated(x, y, c) * ratioNextZ;
+        if (img != null)
+        {
+            if (ratioNextZ > 0d)
+                result += img.getDataInterpolated(x, y, c) * ratioNextZ;
+        }
 
         return result;
     }
