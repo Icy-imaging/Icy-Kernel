@@ -3547,18 +3547,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public int getSizeT()
     {
-        final int result;
-
         synchronized (volumetricImages)
         {
             if (volumetricImages.isEmpty())
-                result = 0;
-            else
-                result = volumetricImages.lastKey().intValue() + 1;
-        }
+                return 0;
 
-        // we may have incomplete loaded sequence so always take the maximum value from the volumetric map and metadata
-        return Math.max(result, MetaDataUtil.getSizeT(metaData, 0));
+            return volumetricImages.lastKey().intValue() + 1;
+        }
     }
 
     /**
@@ -3586,8 +3581,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         for (int i = 0; i < sizeT; i++)
             result = Math.max(result, getSizeZ(i));
 
-        // we may have incomplete loaded sequence so always take the maximum value from the volumetric map and metadata
-        return Math.max(result, MetaDataUtil.getSizeZ(metaData, 0));
+        return result;
     }
 
     /**
