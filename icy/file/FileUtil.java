@@ -548,7 +548,7 @@ public class FileUtil
                     {
                         System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                                 + "'");
-                        System.err.println("Reason : destination cannot be overwritten.");
+                        System.err.println("Reason: destination cannot be overwritten.");
                         System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
                         System.err.println("Also check that you have the rights to do this operation.");
                         return false;
