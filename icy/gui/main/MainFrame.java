@@ -66,6 +66,7 @@ import icy.gui.menu.search.SearchBar;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
 import icy.gui.viewer.Viewer;
+import icy.image.cache.ImageCache;
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
@@ -421,6 +422,8 @@ public class MainFrame extends JRibbonFrame
 
         // initialize now some stuff that need main frame to be initialized
         mainRibbon.init();
+        // refresh title
+        refreshTitle();
 
         setVisible(true);
 
@@ -928,19 +931,20 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * Refresh connected username informations
+     * Refresh application title
      */
-    public void refreshUserInfos()
+    public void refreshTitle()
     {
         final String login = GeneralPreferences.getUserLogin();
         final String userName = GeneralPreferences.getUserName();
+        final String virtual = ImageCache.isEnabled() && GeneralPreferences.getVirtualMode() ? " (virtual mode)" : "";
 
         if (!StringUtil.isEmpty(userName))
-            setTitle(TITLE + " - " + userName);
+            setTitle(TITLE + virtual + " - " + userName);
         else if (!StringUtil.isEmpty(login))
-            setTitle(TITLE + " - " + login);
+            setTitle(TITLE + virtual + " - " + login);
         else
-            setTitle(TITLE);
+            setTitle(TITLE + virtual);
     }
 
     @Override

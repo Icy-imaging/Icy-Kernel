@@ -18,6 +18,20 @@
  */
 package icy.gui.main;
 
+import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyVetoException;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.event.EventListenerList;
+
 import icy.common.listener.AcceptListener;
 import icy.common.listener.weak.WeakListener;
 import icy.gui.frame.IcyFrame;
@@ -41,6 +55,7 @@ import icy.painter.Overlay;
 import icy.painter.OverlayWrapper;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
+import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
@@ -53,20 +68,6 @@ import icy.swimmingPool.SwimmingPool;
 import icy.system.thread.ThreadUtil;
 import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
-
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyVetoException;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLayeredPane;
-import javax.swing.event.EventListenerList;
 
 /**
  * MainInterfaceGui
@@ -876,7 +877,7 @@ public class MainInterfaceGui implements MainInterface
         if (mainFrame != null)
             getROIRibbonTask().setSelected(command);
     }
-    
+
     @Override
     public ROITask getROIRibbonTask()
     {
@@ -1676,5 +1677,19 @@ public class MainInterfaceGui implements MainInterface
     {
         for (Viewer viewer : getViewers())
             viewer.setViewSyncId(id);
+    }
+
+    @Override
+    public boolean isVirtualMode()
+    {
+        return GeneralPreferences.getVirtualMode();
+    }
+
+    @Override
+    public void setVirtualMode(boolean value)
+    {
+        final InspectorPanel inspector = getInspector();
+        if (inspector != null)
+            inspector.setVirtualMode(value);
     }
 }

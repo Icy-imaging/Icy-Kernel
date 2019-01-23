@@ -42,6 +42,7 @@ public class GeneralPreferences
      */
     public static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
     public static final String ID_SAVE_NEW_SEQUENCE = "saveNewSequence";
+    public static final String ID_VIRTUAL_MODE = "virtualMode";
     public static final String ID_AUTO_UPDATE = "autoUpdate";
     public static final String ID_LAST_UPDATECHECK_TIME = "lastUpdateCheckTime";
     public static final String ID_RIBBON_MINIMIZED = "ribbonMinimized";
@@ -223,6 +224,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_OUTPUT_LOG_FILE, false);
     }
 
+    public static boolean getVirtualMode()
+    {
+        return prefGeneral.getBoolean(ID_VIRTUAL_MODE, false);
+    }
+
     public static void setExitConfirm(boolean value)
     {
         prefConfirms.putBoolean(ID_CONFIRM_EXIT, value);
@@ -321,5 +327,10 @@ public class GeneralPreferences
     public static void setOutputLogFile(boolean value)
     {
         prefGeneral.putBoolean(ID_OUTPUT_LOG_FILE, value);
+    }
+
+    public static void setVirtualMode(boolean value)
+    {
+        prefGeneral.putBoolean(ID_VIRTUAL_MODE, value);
     }
 }

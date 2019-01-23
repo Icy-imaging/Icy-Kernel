@@ -1,5 +1,16 @@
 package icy.gui.dialog;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+
 import icy.file.FileImporter;
 import icy.file.FileUtil;
 import icy.file.Loader;
@@ -13,17 +24,6 @@ import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
-
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 
 /**
  * Loader dialog used to load resource or image from the {@link FileImporter} or
@@ -210,7 +210,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
                 // first path
                 final String firstPath = paths.get(0);
                 // get the selected importer from file filter
-                final Object importer = getImporter(getFileFilterIndex());
+                final Object importer = getSelectedImporter();
 
                 // multiple files or folder loading
                 if ((paths.size() > 1) || FileUtil.isDirectory(firstPath))
@@ -354,7 +354,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
     protected boolean isImageFilter()
     {
-        return getImporter(getFileFilterIndex()) instanceof SequenceFileImporter;
+        return getSelectedImporter() instanceof SequenceFileImporter;
     }
 
     protected boolean isAllFileFilter()
@@ -388,6 +388,11 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         }
 
         return null;
+    }
+
+    public Object getSelectedImporter()
+    {
+        return getImporter(getFileFilterIndex());
     }
 
     /**

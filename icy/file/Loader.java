@@ -851,6 +851,41 @@ public class Loader
     }
 
     /**
+     * Check if we can open the given image plane resolution (XY size < 2^31).<br>
+     * If the image plane is too large the method throw an exception with an informative error
+     * message about the encountered limitation.
+     * 
+     * @param resolution
+     *        wanted image resolution: a value of <code>0</code> means full resolution of the
+     *        original image while value <code>1</code> correspond to the resolution / 2.<br>
+     *        Formula: <code>resolution / 2^value</code><br>
+     * @param sizeX
+     *        width of the image region we want to load
+     * @param sizeY
+     *        height of the image region we want to load
+     * @param messageSuffix
+     *        message suffix for the exception if wanted
+     * @throws UnsupportedOperationException
+     *         if the XY plane size is >= 2^31 pixels
+     * @return the number of pixels of the image plane
+     */
+    public static long checkOpeningPlane(int resolution, int sizeX, int sizeY, String messageSuffix)
+            throws UnsupportedOperationException
+    {
+        // size of XY plane
+        long sizeXY = (long) sizeX * (long) sizeY;
+        // wanted resolution
+        sizeXY /= Math.pow(4, resolution);
+
+        // we can't handle that plane size
+        if (sizeXY > Integer.MAX_VALUE)
+            throw new UnsupportedOperationException(
+                    "Cannot open image with a XY plane size >= 2^31." + ((messageSuffix != null) ? messageSuffix : ""));
+
+        return sizeXY;
+    }
+
+    /**
      * Check if we have enough resource to open the image defined by the given size information and
      * wanted resolution.<br>
      * If the image is too large to be displayed at full resolution (XY plane size > 2^31) or if we
@@ -861,8 +896,7 @@ public class Loader
      * 
      * @param resolution
      *        wanted image resolution: a value of <code>0</code> means full resolution of the
-     *        original image while value
-     *        <code>1</code> correspond to the resolution / 2.<br>
+     *        original image while value <code>1</code> correspond to the resolution / 2.<br>
      *        Formula: <code>resolution / 2^value</code><br>
      * @param sizeX
      *        width of the image region we want to load
@@ -886,15 +920,7 @@ public class Loader
     public static void checkOpening(int resolution, int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
             DataType dataType, String messageSuffix) throws UnsupportedOperationException, OutOfMemoryError
     {
-        // size of XY plane
-        long sizeXY = (long) sizeX * (long) sizeY;
-        // wanted resolution
-        sizeXY /= Math.pow(4, resolution);
-
-        // we can't handle that plane size
-        if (sizeXY > Integer.MAX_VALUE)
-            throw new UnsupportedOperationException(
-                    "Cannot open image with a XY plane size >= 2^31." + ((messageSuffix != null) ? messageSuffix : ""));
+        final long sizeXY = checkOpeningPlane(resolution, sizeX, sizeY, messageSuffix);
 
         // get free memory
         long freeInByte = SystemUtil.getJavaFreeMemory() - (16 * 1024 * 1024);
@@ -1653,6 +1679,9 @@ public class Loader
      *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user<br>
      *        to select the series to open from a series selector dialog.
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param separate
      *        Force image to be loaded in separate sequence.
      * @param autoOrder
@@ -1664,7 +1693,7 @@ public class Loader
      */
     @SuppressWarnings("resource")
     public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
-            boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
+            boolean forceVolatile, boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
     {
         final List<Sequence> result = new ArrayList<Sequence>();
 
@@ -1685,8 +1714,8 @@ public class Loader
                     && (currPaths.size() == singlePaths.size());
 
             // load sequence
-            result.addAll(
-                    loadSequences(imp, currPaths, series, adjSeparate, autoOrder, dir, addToRecent, showProgress));
+            result.addAll(loadSequences(imp, currPaths, series, forceVolatile, adjSeparate, autoOrder, dir, addToRecent,
+                    showProgress));
 
             // remove loaded files
             singlePaths.removeAll(currPaths);
@@ -1719,6 +1748,39 @@ public class Loader
 
         // return sequences
         return result;
+    }
+
+    /**
+     * Load a list of sequence from the specified list of file with the given {@link SequenceFileImporter} and returns them.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
+     * The method returns an empty array if an error occurred or if no file could be opened (not supported).<br>
+     * If the user cancelled the action (series selection dialog) then it returns <code>null</code>.
+     * 
+     * @param importer
+     *        Importer used to open and load image files.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a
+     *        selection dialog.
+     * @param paths
+     *        List of image file to load.
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user<br>
+     *        to select the series to open from a series selector dialog.
+     * @param separate
+     *        Force image to be loaded in separate sequence.
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression of loading process.
+     */
+    @SuppressWarnings("resource")
+    public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
+            boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
+    {
+        return loadSequences(importer, paths, series, false, separate, autoOrder, addToRecent, showProgress);
     }
 
     /**
@@ -1788,7 +1850,7 @@ public class Loader
             final SequenceFileGroup group = SequenceFileSticher.groupFiles(importer, cleanNonImageFile(paths),
                     showProgress, loadingFrame);
             // do group loading
-            result = internalLoadGroup(group, false, mainMenu, loadingFrame);
+            result = internalLoadGroup(group, false, false, mainMenu, loadingFrame);
             // load sequence XML data
             if (GeneralPreferences.getSequencePersistence())
                 result.loadXMLData();
@@ -1858,7 +1920,7 @@ public class Loader
 
         final List<String> paths;
 
-        if (files.get(1) instanceof File)
+        if (files.get(0) instanceof File)
             paths = FileUtil.toPaths((List<File>) files);
         else
             paths = (List<String>) files;
@@ -2211,6 +2273,9 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param separate
      *        Force image to be loaded in separate sequence if possible (disable stitching if any)
      * @param addToRecent
@@ -2220,8 +2285,8 @@ public class Loader
      */
     public static void load(final SequenceFileImporter importer, final String path, final int series,
             final int resolution, final Rectangle region, final int minZ, final int maxZ, final int minT,
-            final int maxT, final int channel, final boolean separate, final boolean addToRecent,
-            final boolean showProgress)
+            final int maxT, final int channel, final boolean forceVolatile, final boolean separate,
+            final boolean addToRecent, final boolean showProgress)
     {
         // asynchronous call
         ThreadUtil.bgRun(new Runnable()
@@ -2236,7 +2301,8 @@ public class Loader
                     // load sequence (we use this method to allow multi series opening)
                     final List<Sequence> sequences = loadSequences(
                             (importer == null) ? getSequenceFileImporter(path, !showProgress) : importer,
-                            CollectionUtil.asList(path), series, separate, false, false, addToRecent, showProgress);
+                            CollectionUtil.asList(path), series, forceVolatile, separate, false, false, addToRecent,
+                            showProgress);
 
                     // and display them
                     for (Sequence sequence : sequences)
@@ -2247,7 +2313,7 @@ public class Loader
                 {
                     // load sequence
                     final Sequence sequence = loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT,
-                            maxT, channel, addToRecent, showProgress);
+                            maxT, channel, forceVolatile, addToRecent, showProgress);
 
                     // and display it
                     if (sequence != null)
@@ -2255,6 +2321,63 @@ public class Loader
                 }
             }
         });
+    }
+
+    /**
+     * Load the specified image file with the given {@link SequenceFileImporter}.<br>
+     * The loading process is asynchronous.<br>
+     * The resulting sequence is automatically displayed when the process complete.
+     * 
+     * @param importer
+     *        Importer used to load the image file.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a selection dialog if
+     *        <code>showProgress</code> parameter is set to <code>true</code> otherwise the first
+     *        compatible importer will be automatically used.
+     * @param path
+     *        image file to load
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select series to open from a
+     *        series selector dialog.
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base
+     *        image
+     *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve.<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param separate
+     *        Force image to be loaded in separate sequence if possible (disable stitching if any)
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(final SequenceFileImporter importer, final String path, final int series,
+            final int resolution, final Rectangle region, final int minZ, final int maxZ, final int minT,
+            final int maxT, final int channel, final boolean separate, final boolean addToRecent,
+            final boolean showProgress)
+    {
+        load(importer, path, series, resolution, region, minZ, maxZ, minT, maxT, channel, false, separate, addToRecent,
+                showProgress);
     }
 
     /**
@@ -2288,6 +2411,8 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param directory
+     *        specify is the source is a single complete directory
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
@@ -2322,7 +2447,7 @@ public class Loader
                             true, loadingFrame))
                     {
                         final Sequence sequence = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT,
-                                channel, directory, mainMenu, loadingFrame);
+                                channel, false, directory, mainMenu, loadingFrame);
 
                         if (sequence != null)
                         {
@@ -2383,6 +2508,8 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param directory
+     *        specify is the source is a single complete directory
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
@@ -2414,7 +2541,7 @@ public class Loader
                 {
                     // load sequence from group with advanced options
                     final Sequence sequence = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT,
-                            channel, directory, mainMenu, loadingFrame);
+                            channel, false, directory, mainMenu, loadingFrame);
 
                     if (sequence != null)
                     {
@@ -2496,6 +2623,9 @@ public class Loader
      * 
      * @param paths
      *        list of file to load
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param separate
      *        Force image to be loaded in separate sequence (image files only)
      * @param autoOrder
@@ -2503,8 +2633,8 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    public static void load(final List<String> paths, final boolean separate, final boolean autoOrder,
-            final boolean showProgress)
+    public static void load(final List<String> paths, final boolean forceVolatile, final boolean separate,
+            final boolean autoOrder, final boolean showProgress)
     {
         // asynchronous call
         ThreadUtil.bgRun(new Runnable()
@@ -2529,8 +2659,8 @@ public class Loader
                             && (currPaths.size() == singlePaths.size());
 
                     // load sequence
-                    final List<Sequence> sequences = loadSequences(importer, currPaths, -1, adjSeparate, autoOrder, dir,
-                            true, showProgress);
+                    final List<Sequence> sequences = loadSequences(importer, currPaths, -1, forceVolatile, adjSeparate,
+                            autoOrder, dir, true, showProgress);
                     // and display them
                     for (Sequence seq : sequences)
                         Icy.getMainInterface().addSequence(seq);
@@ -2582,6 +2712,32 @@ public class Loader
     }
 
     /**
+     * Load the specified files (asynchronous process) by using automatically the appropriate
+     * {@link FileImporter} or {@link SequenceFileImporter}. If several importers match to open the
+     * file the user will have to select the appropriate one from a selection dialog.<br>
+     * <br>
+     * If the specified files are image files:<br>
+     * When <i>separate</i> is <code>false</code> the loader try to set image in the same
+     * sequence.<br>
+     * When <i>separate</i> is <code>true</code> each image is loaded in a separate sequence.<br>
+     * The resulting sequences are automatically displayed when the process complete.
+     * 
+     * @param paths
+     *        list of file to load
+     * @param separate
+     *        Force image to be loaded in separate sequence (image files only)
+     * @param autoOrder
+     *        Try to order image in sequence from their filename (image files only)
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(final List<String> paths, final boolean separate, final boolean autoOrder,
+            final boolean showProgress)
+    {
+        load(paths, false, separate, autoOrder, showProgress);
+    }
+
+    /**
      * Load the specified file (asynchronous process) by using automatically the appropriate
      * {@link FileImporter} or
      * {@link SequenceFileImporter}. If several importers match to open the
@@ -2609,7 +2765,7 @@ public class Loader
             boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
         final List<String> paths = cleanNonImageFile(CollectionUtil.asList(FileUtil.toPaths(files)));
-        final List<Sequence> result = loadSequences(importer, paths, series, separate, autoOrder, directory,
+        final List<Sequence> result = loadSequences(importer, paths, series, false, separate, autoOrder, directory,
                 addToRecent, showProgress);
         return result.toArray(new Sequence[result.size()]);
     }
@@ -2654,14 +2810,17 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
      *        Show progression in loading process
      */
     public static Sequence loadSequence(SequenceFileImporter importer, String path, int series, int resolution,
-            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, boolean addToRecent,
-            boolean showProgress)
+            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, boolean forceVolatile,
+            boolean addToRecent, boolean showProgress)
     {
         final ApplicationMenu mainMenu;
         final FileFrame loadingFrame;
@@ -2716,7 +2875,7 @@ public class Loader
 
             // load the image
             result = internalLoadSingle(imp, meta, selectedSerie, resolution, region, minZ, maxZ, minT, maxT, channel,
-                    loadingFrame, true);
+                    forceVolatile, loadingFrame);
 
             // Don't close importer on success ! we want to keep it inside the sequence.
             // We will close it when finalizing the sequence...
@@ -2765,6 +2924,150 @@ public class Loader
     }
 
     /**
+     * Loads the specified image file and return it as a Sequence, it can return <code>null</code>
+     * if an error occured.<br>
+     * As this method can take sometime, you should not call it from the EDT.
+     * 
+     * @param importer
+     *        Importer used to load the image file.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers
+     *        match the user will have to select the appropriate one from a selection dialog if
+     *        <code>showProgress</code> parameter is set to <code>true</code> otherwise the first
+     *        compatible importer will be automatically used.
+     * @param path
+     *        image file to load
+     * @param series
+     *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user to select series to open from a
+     *        series selector dialog.
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base image resolution / 2
+     *        and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve (in full image resolution).<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static Sequence loadSequence(SequenceFileImporter importer, String path, int series, int resolution,
+            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, boolean addToRecent,
+            boolean showProgress)
+    {
+        return loadSequence(importer, path, series, resolution, region, minZ, maxZ, minT, maxT, channel, false,
+                addToRecent, showProgress);
+    }
+
+    /**
+     * Load a sequence from the specified list of file and returns it.<br>
+     * The function try to guess image ordering from file name and metadata.<br>
+     * 
+     * @param importer
+     *        Importer used to load the image files.<br>
+     *        If set to <code>null</code> the loader will take the first compatible importer found.
+     * @param paths
+     *        list of file where to load image from
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base
+     *        image
+     *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve.<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
+     * @param directory
+     *        specify is the source is a single complete directory
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     * @see #getSequenceFileImporter(String, boolean)
+     */
+    public static Sequence loadSequence(SequenceFileImporter importer, List<String> paths, int resolution,
+            Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel, boolean forceVolatile,
+            boolean directory, boolean addToRecent, boolean showProgress)
+    {
+        final ApplicationMenu mainMenu;
+        final FileFrame loadingFrame;
+        Sequence result = null;
+
+        if (addToRecent)
+            mainMenu = Icy.getMainInterface().getApplicationMenu();
+        else
+            mainMenu = null;
+        if (showProgress && !Icy.getMainInterface().isHeadLess())
+            loadingFrame = new FileFrame("Loading", null);
+        else
+            loadingFrame = null;
+
+        try
+        {
+            // we want only one group
+            final SequenceFileGroup group = SequenceFileSticher.groupFiles(importer, cleanNonImageFile(paths), true,
+                    loadingFrame);
+            // do group loading
+            result = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT, channel, forceVolatile,
+                    directory, mainMenu, loadingFrame);
+            // load sequence XML data
+            if (GeneralPreferences.getSequencePersistence())
+                result.loadXMLData();
+        }
+        catch (Throwable t)
+        {
+            // just show the error
+            IcyExceptionHandler.showErrorMessage(t, true);
+
+            if (loadingFrame != null)
+                new FailedAnnounceFrame((t instanceof OutOfMemoryError) ? t.getMessage()
+                        : "Failed to open file(s), see the console output for more details.");
+        }
+        finally
+        {
+            if (loadingFrame != null)
+                loadingFrame.close();
+        }
+
+        return result;
+    }
+
+    /**
      * Load a sequence from the specified list of file and returns it.<br>
      * The function try to guess image ordering from file name and metadata.<br>
      * 
@@ -2794,6 +3097,57 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
+     * @param directory
+     *        specify is the source is a single complete directory
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression in loading process
+     * @see #getSequenceFileImporter(String, boolean)
+     */
+    public static Sequence loadSequence(List<String> paths, int resolution, Rectangle region, int minZ, int maxZ,
+            int minT, int maxT, int channel, boolean forceVolatile, boolean directory, boolean addToRecent,
+            boolean showProgress)
+    {
+        return loadSequence(null, paths, resolution, region, minZ, maxZ, minT, maxT, channel, forceVolatile, directory,
+                addToRecent, showProgress);
+    }
+
+    /**
+     * Load a sequence from the specified list of file and returns it.<br>
+     * The function try to guess image ordering from file name and metadata.<br>
+     * 
+     * @param paths
+     *        list of file where to load image from
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure), useful for large image<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default/full image resolution while level 1 is base
+     *        image
+     *        resolution / 2 and so on...
+     * @param region
+     *        The 2D region of the image we want to retrieve.<br>
+     *        If set to <code>null</code> then the whole XY plane of the image is returned.
+     * @param minZ
+     *        the minimum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param maxZ
+     *        the maximum Z position of the image (slice) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole stack.
+     * @param minT
+     *        the minimum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param maxT
+     *        the maximum T position of the image (frame) we want retrieve (inclusive).<br>
+     *        Set to -1 to retrieve the whole timelaps.
+     * @param channel
+     *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param directory
+     *        specify is the source is a single complete directory
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress
@@ -2803,47 +3157,8 @@ public class Loader
     public static Sequence loadSequence(List<String> paths, int resolution, Rectangle region, int minZ, int maxZ,
             int minT, int maxT, int channel, boolean directory, boolean addToRecent, boolean showProgress)
     {
-        final ApplicationMenu mainMenu;
-        final FileFrame loadingFrame;
-        Sequence result = null;
-
-        if (addToRecent)
-            mainMenu = Icy.getMainInterface().getApplicationMenu();
-        else
-            mainMenu = null;
-        if (showProgress && !Icy.getMainInterface().isHeadLess())
-            loadingFrame = new FileFrame("Loading", null);
-        else
-            loadingFrame = null;
-
-        try
-        {
-            // we want only one group
-            final SequenceFileGroup group = SequenceFileSticher.groupFiles(null, cleanNonImageFile(paths), true,
-                    loadingFrame);
-            // do group loading
-            result = internalLoadGroup(group, resolution, region, minZ, maxZ, minT, maxT, channel, directory, mainMenu,
-                    loadingFrame);
-            // load sequence XML data
-            if (GeneralPreferences.getSequencePersistence())
-                result.loadXMLData();
-        }
-        catch (Throwable t)
-        {
-            // just show the error
-            IcyExceptionHandler.showErrorMessage(t, true);
-
-            if (loadingFrame != null)
-                new FailedAnnounceFrame((t instanceof OutOfMemoryError) ? t.getMessage()
-                        : "Failed to open file(s), see the console output for more details.");
-        }
-        finally
-        {
-            if (loadingFrame != null)
-                loadingFrame.close();
-        }
-
-        return result;
+        return loadSequence(null, paths, resolution, region, minZ, maxZ, minT, maxT, channel, false, directory,
+                addToRecent, showProgress);
     }
 
     /**
@@ -2860,6 +3175,9 @@ public class Loader
      *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
      *        series selector dialog.
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param separate
      *        Force image to be loaded in separate sequence (also disable stitching if possible)
      * @param autoOrder
@@ -2871,8 +3189,9 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series, boolean separate,
-            boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
+    static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
+            boolean forceVolatile, boolean separate, boolean autoOrder, boolean directory, boolean addToRecent,
+            boolean showProgress)
     {
         final List<Sequence> result = new ArrayList<Sequence>();
 
@@ -2914,8 +3233,8 @@ public class Loader
                 for (String path : paths)
                 {
                     // load the file
-                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, !separate,
-                            loadingFrame);
+                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, forceVolatile,
+                            !separate, loadingFrame);
 
                     // special case where loading was interrupted
                     if (sequences == null)
@@ -2954,7 +3273,8 @@ public class Loader
 
                 for (SequenceFileGroup group : groups)
                 {
-                    final Sequence sequence = internalLoadGroup(group, directory, mainMenu, loadingFrame);
+                    final Sequence sequence = internalLoadGroup(group, forceVolatile, directory, mainMenu,
+                            loadingFrame);
 
                     // loading interrupted ?
                     if ((loadingFrame != null) && loadingFrame.isCancelRequested())
@@ -3242,17 +3562,18 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param loadingFrame
      *        the loading frame used to display progress of the operation (can be null).<br>
      *        Caller should allocate 100 positions for the internal single load process.
-     * @param loadImage
-     *        if set to <code>true</code> (default) then image(s) are loaded immediately otherwise images are set to <code>null</code> into the Sequence so they
-     *        can be loaded on demand later (used for <i>Virtual</i> sequence / streaming).
      * @return the Sequence object or <code>null</code>
      */
     public static Sequence internalLoadSingle(SequenceIdImporter importer, OMEXMLMetadata metadata, int series,
             int resolution, Rectangle region, int minZ, int maxZ, int minT, int maxT, int channel,
-            FileFrame loadingFrame, boolean loadImage) throws IOException, UnsupportedFormatException, OutOfMemoryError
+            boolean forceVolatile, FileFrame loadingFrame)
+            throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final int imgSizeX = MetaDataUtil.getSizeX(metadata, series);
         final int imgSizeY = MetaDataUtil.getSizeY(metadata, series);
@@ -3269,6 +3590,7 @@ public class Loader
         final int sizeZ = MetaDataUtil.getSizeZ(metadata, series);
         final int sizeT = MetaDataUtil.getSizeT(metadata, series);
         final int sizeC = MetaDataUtil.getSizeC(metadata, series);
+        final DataType dataType = MetaDataUtil.getDataType(metadata, series);
 
         final int adjMinZ, adjMaxZ;
         final int adjMinT, adjMaxT;
@@ -3290,10 +3612,26 @@ public class Loader
         else
             adjMaxT = Math.min(maxT, sizeT - 1);
 
-        // check that we can open the image
-        checkOpening(resolution, sizeX, sizeY, (channel == -1) ? sizeC : 1, (adjMaxZ - adjMinZ) + 1,
-                (adjMaxT - adjMinT) + 1, MetaDataUtil.getDataType(metadata, series),
-                " Try to open a sub resolution or sub part of the image only.");
+        // we want volatile image
+        boolean volatileImage = forceVolatile || GeneralPreferences.getVirtualMode();
+
+        try
+        {
+            // volatile image ? --> we just need to check the plane size
+            if (volatileImage)
+                checkOpeningPlane(resolution, sizeX, sizeY,
+                        " Try to open a sub resolution or sub part of the image only.");
+            else
+                // check that can open the image
+                checkOpening(resolution, sizeX, sizeY, (channel == -1) ? sizeC : 1, (adjMaxZ - adjMinZ) + 1,
+                        (adjMaxT - adjMinT) + 1, dataType,
+                        " Try to open a sub resolution or sub part of the image only.");
+        }
+        catch (OutOfMemoryError e)
+        {
+            // force volatile image if we don't have enough memory to open the image
+            volatileImage = true;
+        }
 
         // create result sequence with desired series metadata
         final Sequence result = new Sequence(OMEUtil.createOMEXMLMetadata(metadata, series));
@@ -3336,7 +3674,7 @@ public class Loader
                         final IcyBufferedImage image;
 
                         // load image(s) now
-                        if (loadImage)
+                        if (!volatileImage)
                         {
                             // load image now
                             if (channel == -1)
@@ -3345,7 +3683,8 @@ public class Loader
                                 image = importer.getImage(series, resolution, adjRegion, z, t, channel);
                         }
                         else
-                            image = null;
+                            // use empty image for now
+                            image = new IcyBufferedImage(sizeX, sizeY, sizeC, dataType, volatileImage);
 
                         // set image into the sequence
                         result.setImage(t - adjMinT, z - adjMinZ, image);
@@ -3381,6 +3720,9 @@ public class Loader
      *        Series index to load (for multi series sequence), set to 0 if unsure (default).<br>
      *        -1 is a special value so it gives a chance to the user to select series to open from a
      *        series selector dialog.
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param groupSeries
      *        Enable series grouping into the same sequence (appended in T dimension), only meaningful if <code>series</code> = -1
      * @param loadingFrame
@@ -3388,7 +3730,7 @@ public class Loader
      * @throws IOException
      */
     static List<Sequence> internalLoadSingle(SequenceFileImporter importer, String path, int series,
-            boolean groupSeries, FileFrame loadingFrame)
+            boolean forceVolatile, boolean groupSeries, FileFrame loadingFrame)
             throws IOException, UnsupportedFormatException, OutOfMemoryError
     {
         final double endStep;
@@ -3448,8 +3790,8 @@ public class Loader
             // add sequence to result
             for (int s : selectedSeries)
             {
-                final Sequence seq = internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, loadingFrame,
-                        true);
+                final Sequence seq = internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, forceVolatile,
+                        loadingFrame);
 
                 // group series together
                 if ((result.size() > 0) && groupSeries)
@@ -3523,6 +3865,9 @@ public class Loader
      *        Set to -1 to retrieve the whole timelaps.
      * @param channel
      *        C position of the image (channel) we want retrieve (-1 means all channel).
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param directory
      *        specify is the source is a single complete directory
      * @param mainMenu
@@ -3532,8 +3877,8 @@ public class Loader
      * @Return the loaded Sequence (or <code>null<code> if loading was canceled)
      */
     static Sequence internalLoadGroup(SequenceFileGroup group, int resolution, Rectangle region, int minZ, int maxZ,
-            int minT, int maxT, int channel, boolean directory, ApplicationMenu mainMenu, FileFrame loadingFrame)
-            throws UnsupportedFormatException, IOException
+            int minT, int maxT, int channel, boolean forceVolatile, boolean directory, ApplicationMenu mainMenu,
+            FileFrame loadingFrame) throws UnsupportedFormatException, IOException
     {
         final double endStep;
         Sequence result;
@@ -3562,7 +3907,7 @@ public class Loader
             MetaDataUtil.clean(meta);
 
             result = internalLoadSingle(groupImporter, meta, 0, resolution, region, minZ, maxZ, minT, maxT, channel,
-                    loadingFrame, true);
+                    forceVolatile, loadingFrame);
 
             // directory load ?
             if (directory)
@@ -3625,14 +3970,17 @@ public class Loader
      *        specify is the source is a single complete directory
      * @param mainMenu
      *        menu object used to store recent file (can be null)
+     * @param forceVolatile
+     *        If set to <code>true</code> then image data is forced to volatile (see {@link IcyBufferedImage#isVolatile()}).<br>
+     *        Note that if you don't have enough memory to load the whole Sequence into memory then image data are always made volatile.
      * @param loadingFrame
      *        the loading frame used to cancel / display progress of the operation (can be null)
      * @Return the loaded Sequence (or <code>null<code> if loading was canceled)
      */
-    static Sequence internalLoadGroup(SequenceFileGroup group, boolean directory, ApplicationMenu mainMenu,
-            FileFrame loadingFrame) throws UnsupportedFormatException, IOException
+    static Sequence internalLoadGroup(SequenceFileGroup group, boolean forceVolatile, boolean directory,
+            ApplicationMenu mainMenu, FileFrame loadingFrame) throws UnsupportedFormatException, IOException
     {
-        return internalLoadGroup(group, 0, null, -1, -1, -1, -1, -1, directory, mainMenu, loadingFrame);
+        return internalLoadGroup(group, 0, null, -1, -1, -1, -1, -1, forceVolatile, directory, mainMenu, loadingFrame);
     }
 
     public static String getSequenceName(Sequence sequence, String path, boolean multiSerie, int series)

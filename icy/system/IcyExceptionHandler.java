@@ -18,6 +18,14 @@
  */
 package icy.system;
 
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.plugin.PluginErrorReport;
@@ -31,14 +39,6 @@ import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginBundled;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
-
-import java.io.File;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Stephane
@@ -169,7 +169,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 else
                 {
                     message = "The task could not be completed because there is not enough memory !\n"
-                            + "Try to increase the Maximum Memory parameter in Preferences.";
+                            + "Try to use 'virtual mode' (image caching) or increase increase the 'Maximum Memory' parameter in Preferences.";
                 }
             }
 
@@ -199,7 +199,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 {
                     if (!Icy.getMainInterface().isHeadLess())
                         new FailedAnnounceFrame(
-                                "Not enough memory to complete the process ! Try to increase the 'Max Memory' parameter in Preferences.",
+                                "Not enough memory to complete the process ! Try to use 'Virtual Mode' (image caching) or increase the 'Maximum Memory' parameter in Preferences.",
                                 30);
                 }
                 else

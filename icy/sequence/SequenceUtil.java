@@ -1801,21 +1801,24 @@ public class SequenceUtil
                     output.setImage(t, z, converted);
                 }
             }
-
-            // preserve channel informations
-            for (int c = 0; c < source.getSizeC(); c++)
-            {
-                output.setChannelName(c, source.getChannelName(c));
-                output.setDefaultColormap(c, source.getDefaultColorMap(c), true);
-                output.setColormap(c, source.getColorMap(c));
-            }
-
-            output.setName(source.getName() + " (" + output.getDataType_() + ")");
         }
         finally
         {
             output.endUpdate();
         }
+
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            output.setChannelName(c, source.getChannelName(c));
+            output.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
+            output.setColormap(c, source.getColorMap(c));
+        }
+
+        // and finally set name
+        output.setName(source.getName() + " (" + output.getDataType_() + ")");
 
         return output;
     }
@@ -1858,6 +1861,8 @@ public class SequenceUtil
         {
             result.setChannelName(c, source.getChannelName(c));
             result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
             result.setColormap(c, source.getColorMap(c));
         }
 
@@ -1941,6 +1946,8 @@ public class SequenceUtil
         {
             result.setChannelName(c, source.getChannelName(c));
             result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
             result.setColormap(c, source.getColorMap(c));
         }
 
@@ -2076,6 +2083,8 @@ public class SequenceUtil
         {
             result.setChannelName(c - startC, source.getChannelName(c));
             result.setDefaultColormap(c - startC, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
             result.setColormap(c - startC, source.getColorMap(c));
         }
 
@@ -2209,22 +2218,24 @@ public class SequenceUtil
                 for (Overlay overlay : source.getOverlays())
                     result.addOverlay(overlay);
             }
-
-            // preserve channel informations
-            for (int c = 0; c < source.getSizeC(); c++)
-            {
-                result.setChannelName(c, source.getChannelName(c));
-                result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
-                result.setColormap(c, source.getColorMap(c));
-            }
-
-            if (nameSuffix)
-                result.setName(source.getName() + " (copy)");
         }
         finally
         {
             result.endUpdate();
         }
+
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            result.setChannelName(c, source.getChannelName(c));
+            result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
+            result.setColormap(c, source.getColorMap(c));
+        }
+
+        if (nameSuffix)
+            result.setName(source.getName() + " (copy)");
 
         return result;
     }

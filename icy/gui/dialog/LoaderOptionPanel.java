@@ -102,6 +102,7 @@ public class LoaderOptionPanel extends JPanel
         int z;
         int t;
         boolean imageRefreshOnly;
+        boolean softInterrupted;
 
         PreviewSingleUpdate(SequenceFileImporter importer, List<String> files, int z, int t, boolean imageRefreshOnly)
         {
@@ -112,6 +113,7 @@ public class LoaderOptionPanel extends JPanel
             this.z = z;
             this.t = t;
             this.imageRefreshOnly = imageRefreshOnly;
+            softInterrupted = false;
         }
 
         public SequenceFileImporter createSingleFileImporter()
@@ -195,7 +197,7 @@ public class LoaderOptionPanel extends JPanel
         public void run()
         {
             // interrupt process
-            if (isInterrupted())
+            if (isSoftInterrupted())
                 return;
 
             // get current selected series
@@ -239,7 +241,7 @@ public class LoaderOptionPanel extends JPanel
                             throw new Exception("Can't open '" + files.get(0) + "' image file..");
 
                         // interrupted ? --> stop here
-                        if (isInterrupted())
+                        if (isSoftInterrupted())
                             return;
 
                         // not defined --> use first
@@ -266,11 +268,7 @@ public class LoaderOptionPanel extends JPanel
                             ((SequenceFileGroupImporter) importer).closeInternalsImporters();
                     }
                 }
-                catch (ClosedByInterruptException e)
-                {
-                    // ignore...
-                }
-                catch (Throwable t)
+                catch (Throwable e)
                 {
                     // no more update ? --> show that an error happened
                     if (!previewUpdater.getNeedUpdate())
@@ -352,7 +350,7 @@ public class LoaderOptionPanel extends JPanel
                 try
                 {
                     // interrupted ? --> stop here
-                    if (isInterrupted())
+                    if (isSoftInterrupted())
                         return;
 
                     metadata = importer.getOMEXMLMetaData();
@@ -389,7 +387,7 @@ public class LoaderOptionPanel extends JPanel
                             + "T - " + sizeC + " ch (" + MetaDataUtil.getDataType(metadata, s) + ")");
 
                     // interrupted ? --> stop here
-                    if (isInterrupted())
+                    if (isSoftInterrupted())
                         return;
 
                     // initial preview --> use thumbnail
@@ -451,6 +449,16 @@ public class LoaderOptionPanel extends JPanel
                 }
             }
         }
+
+        boolean isSoftInterrupted()
+        {
+            return softInterrupted;
+        }
+
+        void softInterrupt()
+        {
+            softInterrupted = true;
+        }
     }
 
     private class PreviewUpdater extends Thread
@@ -507,9 +515,9 @@ public class LoaderOptionPanel extends JPanel
          */
         public void cancelPreview()
         {
-            // interrupt current preview update
+            // interrupt (soft interrupt to not close IO channel) current preview update
             if (singleUpdater != null)
-                singleUpdater.interrupt();
+                singleUpdater.softInterrupt();
         }
 
         /**

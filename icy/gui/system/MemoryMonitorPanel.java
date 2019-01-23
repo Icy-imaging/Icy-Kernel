@@ -18,15 +18,6 @@
  */
 package icy.gui.system;
 
-import icy.image.ImageUtil;
-import icy.math.UnitUtil;
-import icy.network.NetworkUtil;
-import icy.resource.ResourceUtil;
-import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
-import icy.util.ColorUtil;
-import icy.util.GraphicsUtil;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -43,6 +34,15 @@ import java.util.TimerTask;
 
 import javax.swing.JPanel;
 
+import icy.image.ImageUtil;
+import icy.image.cache.ImageCache;
+import icy.math.UnitUtil;
+import icy.network.NetworkUtil;
+import icy.resource.ResourceUtil;
+import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
+import icy.util.ColorUtil;
+import icy.util.GraphicsUtil;
 import vtk.vtkObjectBase;
 
 /**
@@ -63,6 +63,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     private final String[] infos;
     private final Timer updateTimer;
 
+    private final Color cacheTextColor = ColorUtil.mix(Color.yellow, Color.white);
     private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
     private final Color cpuTextColor = ColorUtil.mix(cpuColor, Color.white);
     private final Color memColor = Color.green;
@@ -76,6 +77,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     private final Image deleteImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red);
 
     boolean displayHelpMessage = false;
+    int lastCacheUpdate;
 
     public MemoryMonitorPanel()
     {
@@ -87,12 +89,16 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         valeur = new double[NBVAL][2];
         for (int i = 0; i < NBVAL; i++)
         {
+            // mem
             valeur[i][0] = 0;
+            // cpu load
             valeur[i][1] = 0;
         }
-        infos = new String[2];
+        infos = new String[3];
         for (int i = 0; i < 2; i++)
             infos[i] = "";
+
+        lastCacheUpdate = 10;
 
         setMinimumSize(new Dimension(120, 50));
         setPreferredSize(new Dimension(140, 55));
@@ -104,7 +110,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             @Override
             public void run()
             {
-                updateMemoryMessageBar();
+                updateStats();
             }
         }, 100, 100);
     }
@@ -112,9 +118,12 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     @Override
     protected void paintComponent(Graphics g)
     {
+        final Graphics2D g2 = (Graphics2D) g.create();
+
         final int w = getWidth();
         final int h = getHeight();
 
+        // refresh BG
         if ((background.getWidth() != w) || (background.getHeight() != h))
         {
             background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
@@ -122,10 +131,10 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             GraphicsUtil.paintIcyBackGround(w, h, background_g2);
         }
 
-        g.drawImage(background, 0, 0, null);
+        // draw cached BG
+        g2.drawImage(background, 0, 0, null);
 
-        final Graphics2D g2 = (Graphics2D) g.create();
-
+        // enabled AA
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // display graph
@@ -184,6 +193,11 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         GraphicsUtil.drawHCenteredString(g2, infos[1], (w / 2) + 1, 18 + 1, false);
         g2.setColor(cpuTextColor);
         GraphicsUtil.drawHCenteredString(g2, infos[1], w / 2, 18, false);
+        // display cache Load
+        g2.setColor(Color.black);
+        GraphicsUtil.drawHCenteredString(g2, infos[2], (w / 2) + 1, 30 + 1, false);
+        g2.setColor(cacheTextColor);
+        GraphicsUtil.drawHCenteredString(g2, infos[2], w / 2, 30, false);
 
         String text;
 
@@ -216,7 +230,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         g2.dispose();
     }
 
-    void updateMemoryMessageBar()
+    void updateStats()
     {
         final double usedMemory = SystemUtil.getJavaUsedMemory();
         final int cpuLoad = SystemUtil.getCpuLoad();
@@ -226,10 +240,20 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         // save CPU load
         newValue(1, cpuLoad);
 
-        setInfo(0,
-                "Memory: " + UnitUtil.getBytesString(usedMemory) + " / "
-                        + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
+        setInfo(0, "Memory: " + UnitUtil.getBytesString(usedMemory) + " / "
+                + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
         setInfo(1, "CPU: " + cpuLoad + "%");
+        if (ImageCache.isEnabled())
+        {
+            // don't update cache stats (take sometime) at each frame
+            if (--lastCacheUpdate == 0)
+            {
+                setInfo(2, "Cache - Memory: " + ImageCache.usedMemory() + " MB  Disk: " + ImageCache.usedDisk() + " MB");
+                lastCacheUpdate = 10;
+            }
+        }
+        else
+            setInfo(2, "Cache disabled");
 
         repaint();
     }

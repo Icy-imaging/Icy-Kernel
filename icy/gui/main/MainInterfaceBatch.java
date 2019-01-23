@@ -19,6 +19,12 @@
 
 package icy.gui.main;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.LayersPanel;
@@ -33,6 +39,7 @@ import icy.imagej.ImageJWrapper;
 import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
+import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
 import icy.search.SearchEngine;
@@ -41,12 +48,6 @@ import icy.swimmingPool.SwimmingPool;
 import icy.type.collection.CollectionUtil;
 import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 
 /**
  * MainInterfaceBatch
@@ -454,7 +455,6 @@ public class MainInterfaceBatch implements MainInterface
     {
         //
     }
-    
 
     @Override
     public ROITask getROIRibbonTask()
@@ -720,5 +720,17 @@ public class MainInterfaceBatch implements MainInterface
     public SearchEngine getSearchEngine()
     {
         return null;
+    }
+
+    @Override
+    public boolean isVirtualMode()
+    {
+        return GeneralPreferences.getVirtualMode();
+    }
+
+    @Override
+    public void setVirtualMode(boolean value)
+    {
+        GeneralPreferences.setVirtualMode(value);
     }
 }

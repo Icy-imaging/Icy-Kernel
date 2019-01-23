@@ -18,8 +18,20 @@
  */
 package icy.action;
 
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.swing.JToggleButton;
+
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.main.MainFrame;
 import icy.gui.sequence.tools.SequenceCanvasResizeFrame;
 import icy.gui.sequence.tools.SequenceDimensionAdjustFrame;
@@ -28,6 +40,7 @@ import icy.gui.sequence.tools.SequenceDimensionExtendFrame;
 import icy.gui.sequence.tools.SequenceDimensionMergeFrame;
 import icy.gui.sequence.tools.SequenceResizeFrame;
 import icy.gui.viewer.Viewer;
+import icy.image.cache.ImageCache;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -42,15 +55,6 @@ import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 import icy.undo.IcyUndoManager;
 import icy.util.ClassUtil;
-
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Actions for "Sequence Operation" tab.
@@ -311,6 +315,104 @@ public class SequenceOperationActions
             return true;
         }
     }
+
+    public static class ToggleVirtualSequenceAction extends IcyAbstractAction
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -2210853124199344868L;
+
+        public ToggleVirtualSequenceAction(boolean selected)
+        {
+            super("Virtual", new IcyIcon(ResourceUtil.ICON_HDD_STREAM),
+                    "Enable/Disable virtual mode (data streaming) for this sequence");
+
+            setSelected(selected);
+        }
+
+        public ToggleVirtualSequenceAction()
+        {
+            this(false);
+        }
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final JToggleButton btn = (e.getSource() instanceof JToggleButton) ? (JToggleButton) e.getSource() : null;
+            final boolean value = (btn != null) ? btn.isSelected() : isSelected();
+
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+            boolean result = false;
+            String errMess = "";
+
+            try
+            {
+                // apply on sequence
+                if (sequence != null)
+                    sequence.setVirtual(value);
+
+                result = true;
+            }
+            catch (OutOfMemoryError error)
+            {
+                errMess = "Not enough available memory to put back the sequence in memory (still in virtual state).";
+                result = false;
+            }
+            catch (UnsupportedOperationException error)
+            {
+                errMess = "Image cache engine is disable.";
+                result = false;
+            }
+            catch (Throwable error)
+            {
+                errMess = error.getMessage();
+                result = false;
+            }
+
+            // restore previous state if operation failed
+            if (!result)
+            {
+                // display error
+                if (!value)
+                    new FailedAnnounceFrame(errMess);
+
+                // revert to original state
+                if (btn != null)
+                    btn.setSelected(!value);
+                setSelected(!value);
+            }
+
+            if (btn != null)
+            {
+                if (btn.isSelected())
+                    btn.setToolTipText("Disable virtual sequence (caching)");
+                else
+                    btn.setToolTipText("Enable virtual sequence (caching)");
+            }
+
+            return result;
+        }
+
+        @Override
+        public void setSelected(boolean value)
+        {
+            super.setSelected(value);
+
+            if (!ImageCache.isEnabled())
+                setDescription("Image cache is disabled, cannot use virtual sequence");
+            else if (value)
+                setDescription("Disable virtual sequence (caching)");
+            else
+                setDescription("Enable virtual sequence (caching)");
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && ImageCache.isEnabled();
+        }
+    };
 
     public static IcyAbstractAction cloneSequenceAction = new IcyAbstractAction("Duplicate",
             new IcyIcon(ResourceUtil.ICON_COPY), "Duplicate sequence", "Create a fresh copy of the sequence", true,
