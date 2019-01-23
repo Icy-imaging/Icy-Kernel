@@ -190,9 +190,9 @@ public class ApplicationPreferences
     /**
      * Get cache reserved memory (in MB)
      */
-    public static int getCacheMaxMemoryMB()
+    public static int getCacheMemoryMB()
     {
-        return (getMaxMemoryMB() * getCacheMemoryPercent()) / 100;
+        return (int) (((SystemUtil.getJavaMaxMemory() / (1024 * 1024)) * getCacheMemoryPercent()) / 100L);
     }
 
     /**
@@ -209,8 +209,7 @@ public class ApplicationPreferences
     public static String getExtraVMParams()
     {
         // we want a big perm gen space for the class loader
-        return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:MaxPermSize=128M");
+        return preferences.get(ID_EXTRA_VMPARAMS, "-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:MaxPermSize=128M");
     }
 
     /**
