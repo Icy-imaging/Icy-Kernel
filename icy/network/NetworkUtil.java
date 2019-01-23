@@ -77,11 +77,8 @@ public class NetworkUtil
     /**
      * URL
      */
-    // beta test
-    // public static final String WEBSITE_HOST = "icy.yhello.co";
     public static final String WEBSITE_HOST = "icy.bioimageanalysis.org";
     public static final String WEBSITE_URL = "http://" + WEBSITE_HOST + "/";
-    // public static final String WEBSITE_URL = "https://" + WEBSITE_HOST + "/";
 
     static final String REPORT_URL = WEBSITE_URL + "index.php";
 
