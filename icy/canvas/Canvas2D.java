@@ -18,45 +18,6 @@
  */
 package icy.canvas;
 
-import icy.canvas.Canvas2D.CanvasView.ImageCache.ImageCacheTile;
-import icy.canvas.CanvasLayerEvent.LayersEventType;
-import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.menu.ROITask;
-import icy.gui.menu.ROITask.ROITaskListener;
-import icy.gui.util.GuiUtil;
-import icy.gui.viewer.Viewer;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
-import icy.image.ImageUtil;
-import icy.image.lut.LUT;
-import icy.main.Icy;
-import icy.math.Interpolator;
-import icy.math.MathUtil;
-import icy.math.MultiSmoothMover;
-import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
-import icy.math.SmoothMover;
-import icy.math.SmoothMover.SmoothMoveType;
-import icy.math.SmoothMover.SmoothMoverAdapter;
-import icy.painter.ImageOverlay;
-import icy.painter.Overlay;
-import icy.preferences.CanvasPreferences;
-import icy.preferences.XMLPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.roi.ROI;
-import icy.sequence.DimensionId;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.system.thread.SingleProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.type.rectangle.Rectangle2DUtil;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
-import icy.util.ShapeUtil;
-import icy.util.StringUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -97,6 +58,44 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import icy.canvas.Canvas2D.CanvasView.ImageCache.ImageCacheTile;
+import icy.canvas.CanvasLayerEvent.LayersEventType;
+import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.menu.ROITask;
+import icy.gui.menu.ROITask.ROITaskListener;
+import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.image.ImageUtil;
+import icy.image.lut.LUT;
+import icy.main.Icy;
+import icy.math.Interpolator;
+import icy.math.MathUtil;
+import icy.math.MultiSmoothMover;
+import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
+import icy.math.SmoothMover;
+import icy.math.SmoothMover.SmoothMoveType;
+import icy.math.SmoothMover.SmoothMoverAdapter;
+import icy.painter.ImageOverlay;
+import icy.painter.Overlay;
+import icy.preferences.CanvasPreferences;
+import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.roi.ROI;
+import icy.sequence.DimensionId;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle2DUtil;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
+import icy.util.ShapeUtil;
+import icy.util.StringUtil;
 import plugins.kernel.roi.tool.plugin.ROILineCutterPlugin;
 
 /**
@@ -2596,7 +2595,10 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
      */
     public boolean getFitToCanvas()
     {
-        return zoomFitCanvasButton.isSelected();
+        if (zoomFitCanvasButton != null)
+            return zoomFitCanvasButton.isSelected();
+
+        return false;
     }
 
     /**
@@ -2604,7 +2606,8 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
      */
     public void setFitToCanvas(boolean value)
     {
-        zoomFitCanvasButton.setSelected(value);
+        if (zoomFitCanvasButton != null)
+            zoomFitCanvasButton.setSelected(value);
     }
 
     @Override
