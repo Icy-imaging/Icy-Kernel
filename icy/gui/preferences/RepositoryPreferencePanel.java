@@ -1,5 +1,4 @@
 /*
- * Copyright 2010-2015 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
