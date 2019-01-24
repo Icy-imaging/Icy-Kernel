@@ -3258,17 +3258,37 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns image at time t and depth z.
+     * 
+     * @param loadData
+     *        if <code>true</code> then we ensure that image data is loaded (in case of lazy loading) before returning the image
+     */
+    public IcyBufferedImage getImage(int t, int z, boolean loadData)
+    {
+        final VolumetricImage volImg = getVolumetricImage(t);
+
+        if (volImg != null)
+        {
+            final IcyBufferedImage result = volImg.getImage(z);
+
+            if (loadData && (result != null))
+                result.loadData();
+
+            return result;
+        }
+
+        return null;
+    }
+
+    /**
      * Returns image at time t and depth z
      */
     @Override
     public IcyBufferedImage getImage(int t, int z)
     {
-        final VolumetricImage volImg = getVolumetricImage(t);
-
-        if (volImg != null)
-            return volImg.getImage(z);
-
-        return null;
+        // by default we prefer to load data on getImage(t,z) call as we probably need it
+        // (and that is important if we want to set the image in another Sequence)
+        return getImage(t, z, true);
     }
 
     /**
@@ -3347,9 +3367,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     if (colorModel != null)
                         icyImg.getIcyColorModel().setColorSpace(colorModel.getIcyColorSpace());
 
-                    // set Z and T position of the image
-                    icyImg.setZ(z);
-                    icyImg.setT(volImg.getT());
+                    // set automatic channel update from sequence
+                    icyImg.setAutoUpdateChannelBounds(getAutoUpdateChannelBounds());
 
                     // set image
                     volImg.setImage(z, icyImg);
@@ -4504,6 +4523,17 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public double[][] getComponentsUserBounds()
     {
         return getChannelsBounds();
+    }
+
+    /**
+     * Force all image data to be loaded (so channels bounds can be correctly computed).<br>
+     * Be careful, this function can take sometime.
+     */
+    public void loadAllData()
+    {
+        for (IcyBufferedImage image : getAllImage())
+            if (image != null)
+                image.loadData();
     }
 
     /**
@@ -7243,18 +7273,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     if (event.getSource() == null)
                         // recalculate all images bounds (automatically update sequence bounds in imageChange event)
                         recalculateAllImageChannelsBounds();
-                    // image added or changed
-                    else if (event.getType() != SequenceEventType.REMOVED)
-                    {
-                        final IcyBufferedImage image = (IcyBufferedImage) event.getSource();
-                        // image is not automatically updating its bounds ? --> force it as sequence want it
-                        // this automatically update sequence bounds in imageChange event
-                        if (!image.getAutoUpdateChannelBounds())
-                            image.updateChannelsBounds();
-                    }
-                    else
-                        // just refresh sequence channel bounds from images bounds
-                        internalUpdateChannelsBounds();
+
+                    // refresh sequence channel bounds from images bounds
+                    internalUpdateChannelsBounds();
                 }
 
                 // fire SequenceModel event

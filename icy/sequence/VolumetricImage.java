@@ -31,18 +31,11 @@ public class VolumetricImage
 {
     protected final Sequence sequence;
     protected final TreeMap<Integer, IcyBufferedImage> images;
-    protected int t;
-
-    public VolumetricImage(Sequence seq, int t)
-    {
-        sequence = seq;
-        images = new TreeMap<Integer, IcyBufferedImage>();
-        this.t = t;
-    }
 
     public VolumetricImage(Sequence seq)
     {
-        this(seq, -1);
+        sequence = seq;
+        images = new TreeMap<Integer, IcyBufferedImage>();
     }
 
     public VolumetricImage()
@@ -87,30 +80,6 @@ public class VolumetricImage
     public boolean isEmpty()
     {
         return (getSize() == 0);
-    }
-
-    /**
-     * Returns the T position for this {@link VolumetricImage}
-     */
-    public int getT()
-    {
-        // not provided at first at instantiation ?
-        if (t == -1)
-        {
-            // get it from sequence
-            for (Entry<Integer, VolumetricImage> entry : sequence.getVolumetricImages().entrySet())
-            {
-                // we found the volumetric image ?
-                if (entry.getValue() == this)
-                {
-                    // set T position and stop
-                    t = entry.getKey().intValue();
-                    break;
-                }
-            }
-        }
-
-        return t;
     }
 
     /**

@@ -55,7 +55,7 @@ public class EHCache2 extends AbstractCache
             // CacheWriterFactoryConfiguration c = new CacheWriterFactoryConfiguration();
             // c.setClass(path);
             final CacheConfiguration cacheConfig = new CacheConfiguration().name("ehCache2")
-                    .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES).maxBytesLocalDisk(50, MemoryUnit.GIGABYTES)
+                    .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES).maxBytesLocalDisk(500, MemoryUnit.GIGABYTES)
                     .eternal(true).memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU)
                     .persistence(persistenceConfig);
 
@@ -89,14 +89,14 @@ public class EHCache2 extends AbstractCache
     @Override
     public long usedMemory()
     {
-        return (cache.calculateInMemorySize() + cache.calculateOffHeapSize()) / (1024L * 1024L);
+        return cache.calculateInMemorySize() + cache.calculateOffHeapSize();
     }
 
     @SuppressWarnings("deprecation")
     @Override
     public long usedDisk()
     {
-        return cache.calculateOnDiskSize() / (1024L * 1024L);
+        return cache.calculateOnDiskSize();
     }
 
     @Override

@@ -31,7 +31,7 @@ public class ImageCache
 
     private static IcyBufferedImage getImage(Integer key)
     {
-        return IcyBufferedImage.getIcyBuffreredImage(key);
+        return IcyBufferedImage.getIcyBufferedImage(key);
     }
 
     private static Collection<IcyBufferedImage> getImages(Collection<Integer> keys, boolean getNull)
@@ -70,7 +70,7 @@ public class ImageCache
     }
 
     /**
-     * Return used memory for cache (in MB)
+     * Return used memory for cache (in bytes)
      */
     public static long usedMemory()
     {
@@ -78,7 +78,7 @@ public class ImageCache
     }
 
     /**
-     * Return used disk space for cache (in MB)
+     * Return used disk space for cache (in bytes)
      */
     public static long usedDisk()
     {

@@ -24,7 +24,6 @@ import java.awt.Insets;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
@@ -145,7 +144,6 @@ public class GUICanvasPreferencePanel extends PreferencePanel
         filteringCheckBox.setSelected(CanvasPreferences.getFiltering());
         alwaysOnTopCheckBox.setSelected(GeneralPreferences.getAlwaysOnTop());
         uiFontSizeSpinner.setValue(Integer.valueOf(GeneralPreferences.getGuiFontSize()));
-
     }
 
     @Override
@@ -162,7 +160,5 @@ public class GUICanvasPreferencePanel extends PreferencePanel
         int intValue = ((Integer) uiFontSizeSpinner.getValue()).intValue();
         LookAndFeelUtil.setFontSize(intValue);
         GeneralPreferences.setGuiFontSize(intValue);
-
     }
-
 }

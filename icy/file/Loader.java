@@ -1145,10 +1145,10 @@ public class Loader
      * It can returns <code>null</code> if the specified file is not a valid or supported) image
      * file.
      */
-    public static OMEXMLMetadata getOMEXMLMetaData(String path) throws UnsupportedFormatException, IOException
+    public static OMEXMLMetadata getOMEXMLMetaData(String path) throws UnsupportedFormatException
     {
         OMEXMLMetadata result;
-        UnsupportedFormatException lastError = null;
+        Exception lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -1159,7 +1159,7 @@ public class Loader
                 if (result != null)
                     return result;
             }
-            catch (UnsupportedFormatException e)
+            catch (Exception e)
             {
                 lastError = e;
             }
@@ -1194,10 +1194,10 @@ public class Loader
      * @deprecated Use {@link #getOMEXMLMetaData(String)} instead
      */
     @Deprecated
-    public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
+    public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException
     {
         OMEXMLMetadataImpl result;
-        UnsupportedFormatException lastError = null;
+        Exception lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -1208,7 +1208,7 @@ public class Loader
                 if (result != null)
                     return result;
             }
-            catch (UnsupportedFormatException e)
+            catch (Exception e)
             {
                 lastError = e;
             }
@@ -1293,10 +1293,10 @@ public class Loader
      *        Series index we want to retrieve thumbnail from (for multi series image).<br>
      *        Set to 0 if unsure.
      */
-    public static IcyBufferedImage loadThumbnail(String path, int series) throws UnsupportedFormatException, IOException
+    public static IcyBufferedImage loadThumbnail(String path, int series) throws UnsupportedFormatException
     {
         IcyBufferedImage result;
-        UnsupportedFormatException lastError = null;
+        Exception lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -1307,7 +1307,7 @@ public class Loader
                 if (result != null)
                     return result;
             }
-            catch (UnsupportedFormatException e)
+            catch (Exception e)
             {
                 lastError = e;
             }
@@ -3671,20 +3671,27 @@ public class Loader
                                         (channel != -1) ? channel : 0));
                         }
 
-                        final IcyBufferedImage image;
-
-                        // load image(s) now
-                        if (!volatileImage)
-                        {
-                            // load image now
-                            if (channel == -1)
-                                image = importer.getImage(series, resolution, adjRegion, z, t);
-                            else
-                                image = importer.getImage(series, resolution, adjRegion, z, t, channel);
-                        }
-                        else
-                            // use empty image for now
-                            image = new IcyBufferedImage(sizeX, sizeY, sizeC, dataType, volatileImage);
+//                        final IcyBufferedImage image;
+//
+//                        // load image(s) now
+//                        if (!volatileImage)
+//                        {
+//                            // load image now
+//                            if (channel == -1)
+//                                image = importer.getImage(series, resolution, adjRegion, z, t);
+//                            else
+//                                image = importer.getImage(series, resolution, adjRegion, z, t, channel);
+//                        }
+//                        else
+//                            // use empty image for now
+//                            image = new IcyBufferedImage(sizeX, sizeY, sizeC, dataType, volatileImage);
+                        
+                        // always use lazy data loading
+                        final IcyBufferedImage image = new IcyBufferedImage(sizeX, sizeY, sizeC, dataType, volatileImage);
+                        
+                        // define the internal Z & T position here (used for delayed loading from importer)
+                        image.setInternalZPosition(z - adjMinZ);
+                        image.setInternalTPosition(t - adjMinT);
 
                         // set image into the sequence
                         result.setImage(t - adjMinT, z - adjMinZ, image);
@@ -3818,14 +3825,14 @@ public class Loader
             // We will close it when finalizing the sequence...
             // importer.close();
         }
-        catch (UnsupportedFormatException e)
+        catch (Throwable t)
         {
             // close importer when error happen (not stored in Sequence so we need to close it manually)
             importer.close();
 
             // the importer is supposed to support this file --> re throw the exception
             if (importer.acceptFile(path))
-                throw e;
+                throw t;
         }
         finally
         {
@@ -3934,21 +3941,13 @@ public class Loader
             // We will close it when finalizing the sequence...
             // groupImporter.close();
         }
-        catch (UnsupportedFormatException e)
+        catch (Throwable t)
         {
             // close importer when error happen (not stored in Sequence so we need to close it manually)
             groupImporter.close();
 
             // re throw
-            throw e;
-        }
-        catch (IOException e)
-        {
-            // close importer when error happen (not stored in Sequence so we need to close it manually)
-            groupImporter.close();
-
-            // re throw
-            throw e;
+            throw t;
         }
         finally
         {

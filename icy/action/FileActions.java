@@ -18,6 +18,15 @@
  */
 package icy.action;
 
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import icy.file.Saver;
 import icy.gui.dialog.LoaderDialog;
 import icy.gui.dialog.MessageDialog;
@@ -37,15 +46,6 @@ import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
-
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * File actions (open / save / close...)
@@ -234,7 +234,7 @@ public class FileActions
 
     public static IcyAbstractAction newARGBSequenceAction = new IcyAbstractAction("Create RGBA sequence",
             new IcyIcon(ResourceUtil.ICON_DOC_NEW), "Create a new RGBA color sequence",
-            "Create a 4 channels sequence (red, green, blue, alpha).")
+            "Create a 4 channels sequence (red, green, blue, alpha).", true, "Creating RGBA sequence...")
     {
         /**
          * 
@@ -244,16 +244,9 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            ThreadUtil.bgRun(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    final IcyBufferedImage image = new IcyBufferedImage(512, 512, 4, DataType.UBYTE);
-                    Arrays.fill(image.getDataXYAsByte(3), (byte) -1);
-                    Icy.getMainInterface().addSequence(new Sequence("RGBA sequence", image));
-                }
-            });
+            final IcyBufferedImage image = new IcyBufferedImage(512, 512, 4, DataType.UBYTE);
+            Arrays.fill(image.getDataXYAsByte(3), (byte) -1);
+            Icy.getMainInterface().addSequence(new Sequence("RGBA sequence", image));
 
             return true;
         }

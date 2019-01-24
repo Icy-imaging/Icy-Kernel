@@ -63,12 +63,12 @@ public abstract class AbstractCache
     public abstract boolean isOnDiskCache(Integer key);
 
     /**
-     * Return used memory for cache (in MB)
+     * Return used memory for cache (in bytes)
      */
     public abstract long usedMemory();
 
     /**
-     * Return used disk space for cache (in MB)
+     * Return used disk space for cache (in bytes)
      */
     public abstract long usedDisk();
 

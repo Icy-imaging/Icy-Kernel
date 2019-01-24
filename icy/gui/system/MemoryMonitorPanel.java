@@ -248,7 +248,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             // don't update cache stats (take sometime) at each frame
             if (--lastCacheUpdate == 0)
             {
-                setInfo(2, "Cache - Memory: " + ImageCache.usedMemory() + " MB  Disk: " + ImageCache.usedDisk() + " MB");
+                setInfo(2, "Cache - Memory: " + UnitUtil.getBytesString(ImageCache.usedMemory()) + "  Disk: "
+                        + UnitUtil.getBytesString(ImageCache.usedDisk()));
                 lastCacheUpdate = 10;
             }
         }

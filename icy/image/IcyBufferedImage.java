@@ -64,7 +64,6 @@ import icy.math.MathUtil;
 import icy.math.Scaler;
 import icy.preferences.GeneralPreferences;
 import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
@@ -119,7 +118,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Retrieve an {@link IcyBufferedImage} from its identity hash code
      */
-    public static IcyBufferedImage getIcyBuffreredImage(Integer idHashCode)
+    public static IcyBufferedImage getIcyBufferedImage(Integer idHashCode)
     {
         final WeakIcyBufferedImageReference ref = images.get(idHashCode);
 
@@ -132,9 +131,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Retrieve an {@link IcyBufferedImage} from its identity hash code
      */
-    public static IcyBufferedImage getIcyBuffreredImage(int idHashCode)
+    public static IcyBufferedImage getIcyBufferedImage(int idHashCode)
     {
-        return getIcyBuffreredImage(Integer.valueOf(idHashCode));
+        return getIcyBufferedImage(Integer.valueOf(idHashCode));
     }
 
     /**
@@ -392,6 +391,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 g.dispose();
                 break;
 
+            case BufferedImage.TYPE_3BYTE_BGR:
+            case BufferedImage.TYPE_4BYTE_ABGR:
+                temp = image;
+                break;
+
             default:
                 // if we have severals components with an unknown / incompatible sampleModel
                 if ((image.getColorModel().getNumComponents() > 1)
@@ -499,10 +503,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     protected boolean autoUpdateChannelBounds;
 
     /**
-     * Z, T position of the image (-1 = no defined)
+     * Original Z, T position, used for delayed data loading from importer (-1 = no defined)
      */
-    protected int z;
-    protected int t;
+    protected int internalZPos;
+    protected int internalTPos;
 
     /**
      * required cached field as raster is volatile
@@ -523,11 +527,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * data initialized state
      */
     protected boolean dataInitialized;
-    // /**
-    // * volatile internal buffer reference
-    // */
-    // protected Reference<WritableRaster> volatileRaster;
-    // protected Reference volatileData[];
 
     // internal constructed state (needed for proper data initialization)
     private boolean constructed = false;
@@ -567,8 +566,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // store it in the hashmap (weak reference)
         images.put(Integer.valueOf(System.identityHashCode(this)), new WeakIcyBufferedImageReference(this));
 
-        z = -1;
-        t = -1;
+        internalZPos = -1;
+        internalTPos = -1;
         width = wr.getWidth();
         height = wr.getHeight();
         minX = wr.getMinX();
@@ -643,7 +642,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     protected IcyBufferedImage(IcyColorModel cm, WritableRaster wr, boolean autoUpdateChannelBounds)
     {
-        this(cm, wr, false, true, false);
+        this(cm, wr, autoUpdateChannelBounds, true, false);
     }
 
     /**
@@ -702,7 +701,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     protected IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
     {
-        this(cm, cm.createWritableRaster(data, width, height), autoUpdateChannelBounds, true, false);
+        this(cm, cm.createWritableRaster(data, width, height), autoUpdateChannelBounds);
     }
 
     /**
@@ -899,41 +898,25 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         super.finalize();
     }
 
-    public int getZ()
+    public int getInternalZPosition()
     {
-        return z;
+        return internalZPos;
     }
 
-    public void setZ(int value)
+    public int getInternalTPosition()
     {
-        z = value;
+        return internalTPos;
     }
 
-    public int getT()
+    public void setInternalZPosition(int z)
     {
-        return t;
+        internalZPos = z;
     }
 
-    public void setT(int value)
+    public void setInternalTPosition(int t)
     {
-        t = value;
+        internalTPos = t;
     }
-
-    // /**
-    // * Returns <code>true</code> if data is currently loaded in memory
-    // */
-    // public boolean isDataInMemory()
-    // {
-    // return getVolatileRaster() != null;
-    // }
-    //
-    // /**
-    // * Returns <code>true</code> if data is currently loaded in cache
-    // */
-    // public boolean isDataInCache()
-    // {
-    // return ImageCache.isInCache(this);
-    // }
 
     /**
      * Returns <code>true</code> if data is initialized
@@ -949,8 +932,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public boolean isDataInMemory()
     {
-        return ImageCache.isInCache(this);
-        // return isDataInMemory() || isDataInCache();
+        return ImageCache.isOnMemoryCache(this);
     }
 
     /**
@@ -1044,8 +1026,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 {
                     System.out.println(e.getMessage());
                     System.out.println(
-                            "IcyBufferedImage.setVolatile(false) error: not enough memory to set image data (Z=" + z
-                                    + ",T=" + t + ") back in memory.");
+                            "IcyBufferedImage.setVolatile(false) error: not enough memory to set image data back in memory.");
                     throw e;
                 }
                 catch (Throwable e)
@@ -1058,29 +1039,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
     }
 
-    // protected WritableRaster getVolatileRaster()
-    // {
-    // // always try first from parent
-    // WritableRaster result = super.getRaster();
-    // if (result != null)
-    // return result;
-    //
-    // // get it from volatile reference
-    // if (volatileRaster != null)
-    // {
-    // result = volatileRaster.get();
-    // if (result != null)
-    // return result;
-    // }
-    //
-    // // otherwise try from volatile reference
-    // return buildRasterFromVolatileData();
-    // }
-
-    protected WritableRaster getRaster(boolean retain)
+    /**
+     * Force loading data for this image (so channel bounds can be correctly computed even with lazy loading)
+     */
+    public void loadData()
     {
-        // WritableRaster result = getVolatileRaster();
+        if (!isDataInitialized())
+            // that is enough to get data loaded
+            getRaster();
+    }
 
+    protected synchronized WritableRaster getRaster(boolean retain)
+    {
         // always try first from parent
         WritableRaster result = super.getRaster();
 
@@ -1089,6 +1059,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             // initialize data
             final Object rasterData = initializeData();
+
+            // could not initialize data ? --> use temporary empty data (we want to retry data initialization later)
+            if (rasterData == null)
+                return buildRaster(createEmptyRasterData());
+
             // save them in cache (for volatile image)
             saveRasterDataInCache(rasterData);
             // we have the parent raster ? --> update its data (important to do it before setting data initialized)
@@ -1098,7 +1073,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             // data is initialized (important to set it before updating channel bounds)
             dataInitialized = true;
 
-            // now we can update image channels bounds
+            // update image channels bounds
             if (autoUpdateChannelBounds)
                 updateChannelsBounds();
         }
@@ -1125,18 +1100,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         return result;
     }
 
-    /**
-     * Ensure raster data remains strongly referenced until we call {@link #releaseRaster(boolean)}.<br>
-     * This is important to lock / release raster for Volatile image when you are modifying data externally otherwise data could be lost.
-     * 
-     * @see #releaseRaster(boolean)
-     * @see #isVolatile()
-     */
-    public void lockRaster()
-    {
-        getRaster(true);
-    }
-
     @Override
     public WritableRaster getRaster()
     {
@@ -1150,12 +1113,24 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Ensure raster data remains strongly referenced until we call {@link #releaseRaster(boolean)}.<br>
+     * This is important to lock / release raster for Volatile image when you are modifying data externally otherwise data could be lost.
+     * 
+     * @see #releaseRaster(boolean)
+     * @see #isVolatile()
+     */
+    public synchronized void lockRaster()
+    {
+        getRaster(true);
+    }
+
+    /**
      * Release the raster object.
      * 
      * @param saveInCache
      *        force to save raster data in cache (for volatile image only)
      */
-    public void releaseRaster(boolean saveInCache)
+    public synchronized void releaseRaster(boolean saveInCache)
     {
         try
         {
@@ -1419,8 +1394,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         catch (Throwable e)
         {
             System.err.println(e.getMessage());
-            System.err.println(
-                    "ImageCache error: couldn't get image data  (Z=" + z + ",T=" + t + ") from cache (data lost)");
+            System.err.println("ImageCache error: couldn't get image data from cache (data lost)");
 
             // create empty data (don't even try to save it in cache as disk may be full)
             rasterData = createEmptyRasterData();
@@ -1433,26 +1407,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             rasterData = createEmptyRasterData();
             saveRasterDataInCache(rasterData);
 
-            System.err.println("IcyBufferedImage.loadRasterFromCache: cannot find image data (Z=" + z + ",T=" + t
-                    + ") in cache (data lost)");
+            System.err.println("IcyBufferedImage.loadRasterFromCache: cannot find image data in cache (data lost)");
         }
-
-        // // found in cache ?
-        // if (rasterData != null)
-        // {
-        // // build raster object
-        // final WritableRaster wr = buildRaster(rasterData);
-        //
-        // // try to update it from volatile data (in case it was loaded from disk cache)
-        // if (updateFromVolatileData(rasterData))
-        // // save it in cache if updated
-        // saveRasterInCache(wr);
-        // // update image components bounds
-        // if (autoUpdateChannelBounds)
-        // updateChannelsBounds();
-        //
-        // return wr;
-        // }
 
         return buildRaster(rasterData);
     }
@@ -1472,14 +1428,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     protected void saveRasterInCache(WritableRaster wr)
     {
         saveRasterDataInCache(getRasterData(wr));
-
-        // final Object rasterData = getRasterData(wr);
-        // // save it in cache
-        // ImageCache.set(this, rasterData, true);
-        // // update volatile raster reference
-        // volatileRaster = new WeakReference<WritableRaster>(wr);
-        // // refresh volatile data references
-        // updateVolatileData(rasterData);
     }
 
     protected void saveRasterDataInCache(Object rasterData)
@@ -1494,71 +1442,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             catch (Throwable e)
             {
                 System.err.println(e.getMessage());
-                System.err.println("ImageCache error: couldn't save image data (Z=" + z + ",T=" + t
-                        + ") in cache (data may be lost)");
+                System.err.println("ImageCache error: couldn't save image data in cache (data may be lost)");
             }
         }
     }
-
-    // @SuppressWarnings("unchecked")
-    // private void updateVolatileData(Object rasterData)
-    // {
-    // volatileData = new WeakReference[Array.getLength(rasterData)];
-    // // store each 1D array individually so preserve at best internal references
-    // for (int c = 0; c < volatileData.length; c++)
-    // volatileData[c] = new WeakReference(Array.get(rasterData, c));
-    // }
-    //
-    // protected WritableRaster buildRasterFromVolatileData()
-    // {
-    // if (volatileData == null)
-    // return null;
-    //
-    // // should never happen
-    // if (volatileData.length != getSizeC())
-    // return null;
-    //
-    // // build the 2D array first
-    // final Object data2D = Array2DUtil.createArray(getDataType_(), volatileData.length);
-    // for (int c = 0; c < volatileData.length; c++)
-    // {
-    // final Object data = volatileData[c].get();
-    // // we lost the reference --> return null
-    // if (data == null)
-    // return null;
-    //
-    // // set data
-    // Array.set(data2D, c, data);
-    // }
-    //
-    // return buildRaster(data2D);
-    // }
-    //
-    // private boolean updateFromVolatileData(Object rasterData)
-    // {
-    // if (volatileData == null)
-    // return false;
-    //
-    // // should never happen
-    // if (volatileData.length != Array.getLength(rasterData))
-    // return false;
-    //
-    // boolean result = false;
-    // for (int c = 0; c < volatileData.length; c++)
-    // {
-    // final Object data = volatileData[c].get();
-    // // we still have reference and raster data was recover from disk cache ?
-    // if ((data != null) && (data != Array.get(rasterData, c)))
-    // {
-    // // update with memory data as it may have be updated in between
-    // Array.set(rasterData, c, data);
-    // // we updated the data
-    // result = true;
-    // }
-    // }
-    //
-    // return result;
-    // }
 
     /**
      * Build raster from an Object (internally the Object is always a 2D array of native data type)
@@ -1640,22 +1527,26 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     protected Object initializeData()
     {
+        final int z = getInternalZPosition();
+        final int t = getInternalTPosition();
+
+        // Z or T position not defined (not attached to importer) --> create empty data
+        if ((z == -1) || (t == -1))
+            return createEmptyRasterData();
+
         try
         {
-            // try to load data from importer if possible
-            final Object result = loadDataFromImporter();
-            // ok ? --> return data
-            if (result != null)
-                return result;
+            // load data from importer
+            return loadDataFromImporter(z, t);
         }
         catch (Exception e)
         {
-            System.err.println("IcyBufferedImage.loadDataFromImporter(): can't get image from ImageProvider !");
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
+            System.err.println(
+                    "IcyBufferedImage.loadDataFromImporter() warning: cannot get image from ImageProvider (possible data loss).");
+            // IcyExceptionHandler.showErrorMessage(e, true);
 
-        // can't load it from importer ? --> get empty data
-        return createEmptyRasterData();
+            return null;
+        }
     }
 
     protected Object createEmptyRasterData()
@@ -1673,26 +1564,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         return result;
     }
 
-    protected Object loadDataFromImporter() throws UnsupportedFormatException, IOException
+    protected Object loadDataFromImporter(int z, int t) throws UnsupportedFormatException, IOException
     {
         final Sequence seq = getOwnerSequence();
 
-        // not attached to a sequence ? --> cannot load
+        // not currently attached to a sequence ? --> cannot load
         if (seq == null)
-            return null;
+            throw new IOException("Image is not attached to a Sequence.");
 
         final ImageProvider imp = seq.getImageProvider();
 
-        // no image provider ? --> cannot load
+        // no image provider in sequence ? --> cannot load
         if (imp == null)
-            return null;
-
-        final int zPos = getZ();
-        final int tPos = getT();
-
-        // Z or T position not defined ? --> cannot load
-        if ((zPos == -1) || (tPos == -1))
-            return null;
+            throw new IOException("No image provider in the Sequence.");
 
         // get original series index
         final int series = seq.getSeries();
@@ -1719,7 +1603,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final Object[] result = Array2DUtil.createArray(seq.getDataType_(), sizeC);
 
         for (int c = 0; c < sizeC; c++)
-            result[c] = imp.getPixels(series, res, region, zOff + zPos, tOff + tPos, cOff + c);
+            result[c] = imp.getPixels(series, res, region, zOff + z, tOff + t, cOff + c);
 
         return result;
     }
@@ -4307,13 +4191,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        destination channel (only significant if source channel != -1)
      * @return <code>true</code> if the copy operation succeed, <code>false</code> otherwise
      */
-    public boolean copyData(ComponentSampleModel sampleModel, WritableRaster raster, int srcChannel, int dstChannel)
+    public boolean copyData(ComponentSampleModel sampleModel, WritableRaster sourceRaster, int srcChannel, int dstChannel)
     {
         // not compatible sample model
         if (DataType.getDataTypeFromDataBufferType(sampleModel.getDataType()) != getDataType_())
             return false;
 
-        final DataBuffer src_db = raster.getDataBuffer();
+        final DataBuffer src_db = sourceRaster.getDataBuffer();
         final WritableRaster dst_raster = getRaster();
         final DataBuffer dst_db = dst_raster.getDataBuffer();
         final int[] indices = sampleModel.getBankIndices();
@@ -4323,8 +4207,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final int pixelStride_src = sampleModel.getPixelStride();
         final int maxX = Math.min(getSizeX(), sampleModel.getWidth());
         final int maxY = Math.min(getSizeY(), sampleModel.getHeight());
-        final int decOffsetSrc = raster.getSampleModelTranslateX()
-                + (raster.getSampleModelTranslateY() * scanlineStride_src);
+        final int decOffsetSrc = sourceRaster.getSampleModelTranslateX()
+                + (sourceRaster.getSampleModelTranslateY() * scanlineStride_src);
 
         // all channels
         if (srcChannel == -1)
@@ -4864,10 +4748,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             // do here global process on image data change
             case DATA_CHANGED:
-                // FIXME: we cannot really do that as we may recover 'outdated' data from the cache
-                // find a way to still have a good data reference somewhere
-                // save changed data cache
-                // saveDataInCache();
                 // update image components bounds
                 if (autoUpdateChannelBounds)
                     updateChannelsBounds();
@@ -4905,6 +4785,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public String toString()
     {
         return "IcyBufferedImage: " + getSizeX() + " x " + getSizeY() + " - " + getSizeC() + " ch (" + getDataType_()
-                + ") - Z=" + z + " T=" + t;
+                + ") - Z=" + internalZPos + " T=" + internalTPos;
     }
 }

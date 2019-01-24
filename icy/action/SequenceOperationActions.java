@@ -434,25 +434,18 @@ public class SequenceOperationActions
             if (seq == null)
                 return false;
 
-            ThreadUtil.bgRun(new Runnable()
+            // create output sequence
+            final Sequence out = SequenceUtil.getCopy(seq);
+
+            ThreadUtil.invokeLater(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    // create output sequence
-                    final Sequence out = SequenceUtil.getCopy(seq);
-
-                    ThreadUtil.invokeLater(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            // get output viewer
-                            final Viewer vout = new Viewer(out);
-                            // copy colormap from input viewer
-                            vout.getLut().copyFrom(viewer.getLut());
-                        }
-                    });
+                    // get output viewer
+                    final Viewer vout = new Viewer(out);
+                    // copy colormap from input viewer
+                    vout.getLut().copyFrom(viewer.getLut());
                 }
             });
 
@@ -492,7 +485,7 @@ public class SequenceOperationActions
 
     // XY plan operations
     public static IcyAbstractAction cropSequenceAction = new IcyAbstractAction("Fast crop",
-            new IcyIcon(ResourceUtil.ICON_CUT), "Fast crop image", "Crop an image from a ROI")
+            new IcyIcon(ResourceUtil.ICON_CUT), "Fast crop image", "Crop an image from a ROI", true, "Doing image crop...")
     {
         private static final long serialVersionUID = 2928113834852115366L;
 
@@ -538,25 +531,18 @@ public class SequenceOperationActions
 
             final ROI roi = rois.get(0);
 
-            ThreadUtil.bgRun(new Runnable()
+            // create output sequence
+            final Sequence out = SequenceUtil.getSubSequence(seq, roi);
+
+            ThreadUtil.invokeLater(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    // create output sequence
-                    final Sequence out = SequenceUtil.getSubSequence(seq, roi);
-
-                    ThreadUtil.invokeLater(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            // get output viewer
-                            final Viewer vout = new Viewer(out);
-                            // copy colormap from input viewer
-                            vout.getLut().copyFrom(viewer.getLut());
-                        }
-                    });
+                    // get output viewer
+                    final Viewer vout = new Viewer(out);
+                    // copy colormap from input viewer
+                    vout.getLut().copyFrom(viewer.getLut());
                 }
             });
 
@@ -634,7 +620,7 @@ public class SequenceOperationActions
 
     // Z operations
     public static IcyAbstractAction reverseSlicesAction = new IcyAbstractAction("Reverse order",
-            new IcyIcon(ResourceUtil.ICON_LAYER_REVERSE_V), "Reverse Z slices", "Reverse Z slices order", false,
+            new IcyIcon(ResourceUtil.ICON_LAYER_REVERSE_V), "Reverse Z slices", "Reverse Z slices order", true,
             "Reversing slices...")
     {
         private static final long serialVersionUID = -4731940627380446776L;
@@ -810,7 +796,7 @@ public class SequenceOperationActions
 
     // T operations
     public static IcyAbstractAction reverseFramesAction = new IcyAbstractAction("Reverse order",
-            new IcyIcon(ResourceUtil.ICON_LAYER_REVERSE_H), "Reverse T frames", "Reverse T frames order", false,
+            new IcyIcon(ResourceUtil.ICON_LAYER_REVERSE_H), "Reverse T frames", "Reverse T frames order", true,
             "Reversing frames...")
     {
         /**

@@ -1309,7 +1309,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
             try
             {
-
                 // get image
                 return getImage(r, adjRect, z, t, c, downScaleLevel);
             }
@@ -2165,6 +2164,6 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         else if (exception instanceof MissingLibraryException)
             return new UnsupportedFormatException(path + ": Missing library to load the image.", exception);
         else
-            return new UnsupportedFormatException(path + ": Unsupported image format.", exception);
+            return new UnsupportedFormatException(path + ": Unsupported image.", exception);
     }
 }
