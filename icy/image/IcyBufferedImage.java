@@ -64,6 +64,7 @@ import icy.math.MathUtil;
 import icy.math.Scaler;
 import icy.preferences.GeneralPreferences;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceIdImporter;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
@@ -71,6 +72,7 @@ import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
 import icy.type.collection.array.ByteArrayConvert;
 import icy.util.ReflectionUtil;
+import icy.util.StringUtil;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.gui.SignedByteBuffer;
@@ -107,6 +109,42 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 return obj.hashCode() == hashCode();
 
             return super.equals(obj);
+        }
+    }
+
+    public static class ImageSourceInfo
+    {
+        // importer
+        public final SequenceIdImporter imp;
+        // series index
+        public final int series;
+        // resolution
+        public final int resolution;
+        // region
+        public final Rectangle region;
+        // T, Z, C position
+        public final int t;
+        public final int z;
+        public final int c;
+
+        public ImageSourceInfo(SequenceIdImporter imp, int series, int resolution, Rectangle region, int t, int z,
+                int c)
+        {
+            super();
+
+            this.imp = imp;
+            this.series = series;
+            this.resolution = resolution;
+            this.region = region;
+            this.t = t;
+            this.z = z;
+            this.c = c;
+        }
+
+        @Override
+        public String toString()
+        {
+            return imp.toString() + " s=" + series + " r=" + resolution + " t=" + t + " z=" + z + " c=" + c;
         }
     }
 
@@ -498,15 +536,14 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Image source information used for delayed image loading
+     */
+    protected ImageSourceInfo imageSourceInfo;
+
+    /**
      * automatic update of channel bounds
      */
     protected boolean autoUpdateChannelBounds;
-
-    /**
-     * Original Z, T position, used for delayed data loading from importer (-1 = no defined)
-     */
-    protected int internalZPos;
-    protected int internalTPos;
 
     /**
      * required cached field as raster is volatile
@@ -566,8 +603,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // store it in the hashmap (weak reference)
         images.put(Integer.valueOf(System.identityHashCode(this)), new WeakIcyBufferedImageReference(this));
 
-        internalZPos = -1;
-        internalTPos = -1;
+        imageSourceInfo = null;
         width = wr.getWidth();
         height = wr.getHeight();
         minX = wr.getMinX();
@@ -895,27 +931,29 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // remove it from hashmap
         images.remove(Integer.valueOf(System.identityHashCode(this)));
 
+//        if (imageSourceInfo != null)
+//            System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
+//                    + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
+//                    + imageSourceInfo.toString());
+//        else
+//            System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
+//                    + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - NULL");
+
         super.finalize();
     }
 
-    public int getInternalZPosition()
+    public ImageSourceInfo getImageSourceInfo()
     {
-        return internalZPos;
+        return imageSourceInfo;
     }
 
-    public int getInternalTPosition()
+    /**
+     * Set the image source information that will be used later for lazy image data loading.
+     */
+    public void setImageSourceInfo(SequenceIdImporter imp, int series, int resolution, Rectangle region, int t, int z,
+            int c)
     {
-        return internalTPos;
-    }
-
-    public void setInternalZPosition(int z)
-    {
-        internalZPos = z;
-    }
-
-    public void setInternalTPosition(int t)
-    {
-        internalTPos = t;
+        imageSourceInfo = new ImageSourceInfo(imp, series, resolution, region, t, z, c);
     }
 
     /**
@@ -1064,8 +1102,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             if (rasterData == null)
                 return buildRaster(createEmptyRasterData());
 
-            // save them in cache (for volatile image)
-            saveRasterDataInCache(rasterData);
+            // save them in cache (for volatile image) but don't need to be eternal
+            saveRasterDataInCache(rasterData, false);
             // we have the parent raster ? --> update its data (important to do it before setting data initialized)
             if (result != null)
                 setRasterData(result, rasterData);
@@ -1400,14 +1438,20 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             rasterData = createEmptyRasterData();
         }
 
-        // should never happen
+        // should happen only for unmodified data
         if (rasterData == null)
         {
-            // create empty data and save it in cache
-            rasterData = createEmptyRasterData();
-            saveRasterDataInCache(rasterData);
+            // we should be able to initialize data back
+            rasterData = initializeData();
+            // no data (should never happen) --> create empty data
+            if (rasterData == null)
+            {
+                createEmptyRasterData();
+                System.err.println("IcyBufferedImage.loadRasterFromCache: cannot find image data in cache (data lost)");
+            }
 
-            System.err.println("IcyBufferedImage.loadRasterFromCache: cannot find image data in cache (data lost)");
+            // save it in cache but not eternal
+            saveRasterDataInCache(rasterData, false);
         }
 
         return buildRaster(rasterData);
@@ -1425,19 +1469,33 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             saveRasterInCache(getRaster());
     }
 
-    protected void saveRasterInCache(WritableRaster wr)
+    protected void saveRasterInCache(WritableRaster wr, boolean eternal)
     {
-        saveRasterDataInCache(getRasterData(wr));
+        saveRasterDataInCache(getRasterData(wr), eternal);
     }
 
-    protected void saveRasterDataInCache(Object rasterData)
+    protected void saveRasterInCache(WritableRaster wr)
+    {
+        saveRasterInCache(wr, true);
+    }
+
+    protected void saveRasterDataInCache(Object rasterData, boolean eternal)
     {
         // save data in cache (volatile image only)
         if (isVolatile())
         {
             try
             {
-                ImageCache.set(this, rasterData, true);
+//                if (imageSourceInfo != null)
+//                    System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
+//                            + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
+//                            + imageSourceInfo.toString() + " - " + Boolean.valueOf(eternal).toString());
+//                else
+//                    System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
+//                            + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence")
+//                            + " - NULL - " + Boolean.valueOf(eternal).toString());
+//
+                ImageCache.set(this, rasterData, eternal);
             }
             catch (Throwable e)
             {
@@ -1445,6 +1503,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 System.err.println("ImageCache error: couldn't save image data in cache (data may be lost)");
             }
         }
+    }
+
+    protected void saveRasterDataInCache(Object rasterData)
+    {
+        saveRasterDataInCache(rasterData, true);
     }
 
     /**
@@ -1527,20 +1590,14 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     protected Object initializeData()
     {
-        final int z = getInternalZPosition();
-        final int t = getInternalTPosition();
-
-        // Z or T position not defined (not attached to importer) --> create empty data
-        if ((z == -1) || (t == -1))
-            return createEmptyRasterData();
-
         try
         {
             // load data from importer
-            return loadDataFromImporter(z, t);
+            return loadDataFromImporter();
         }
         catch (Exception e)
         {
+            System.err.println(e.getMessage());
             System.err.println(
                     "IcyBufferedImage.loadDataFromImporter() warning: cannot get image from ImageProvider (possible data loss).");
             // IcyExceptionHandler.showErrorMessage(e, true);
@@ -1564,46 +1621,41 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         return result;
     }
 
-    protected Object loadDataFromImporter(int z, int t) throws UnsupportedFormatException, IOException
+    protected Object loadDataFromImporter() throws UnsupportedFormatException, IOException
     {
-        final Sequence seq = getOwnerSequence();
+        // image source information not defined (not attached to importer) ? --> create empty data
+        if (imageSourceInfo == null)
+            return createEmptyRasterData();
 
-        // not currently attached to a sequence ? --> cannot load
-        if (seq == null)
-            throw new IOException("Image is not attached to a Sequence.");
+        final SequenceIdImporter imp = imageSourceInfo.imp;
 
-        final ImageProvider imp = seq.getImageProvider();
+        // importer not opened ? --> cannot load
+        if (StringUtil.isEmpty(imp.getOpened()))
+            throw new IOException("Cannot load image data: Sequence importer is closed.");
 
-        // no image provider in sequence ? --> cannot load
-        if (imp == null)
-            throw new IOException("No image provider in the Sequence.");
-
-        // get original series index
-        final int series = seq.getSeries();
-        // get original resolution
-        final int res = seq.getOriginResolution();
-        // get original region
-        final Rectangle region = seq.getOriginXYRegion();
-
-        // get T, Z, C offset
-        int tOff = seq.getOriginTMin();
-        int zOff = seq.getOriginZMin();
-        int cOff = seq.getOriginChannel();
-
-        // fix them
-        if (tOff < 0)
-            tOff = 0;
-        if (zOff < 0)
-            zOff = 0;
-        if (cOff < 0)
-            cOff = 0;
-
-        final int sizeC = seq.getSizeC();
+        final int sizeC = getSizeC();
         // create the result array (always 2D native type)
-        final Object[] result = Array2DUtil.createArray(seq.getDataType_(), sizeC);
+        final Object[] result = Array2DUtil.createArray(getDataType_(), sizeC);
 
-        for (int c = 0; c < sizeC; c++)
-            result[c] = imp.getPixels(series, res, region, zOff + z, tOff + t, cOff + c);
+        // all channel ?
+        if ((imageSourceInfo.c == -1) && (sizeC > 1))
+        {
+            // better to directly load image
+            final IcyBufferedImage image = imp.getImage(imageSourceInfo.series, imageSourceInfo.resolution,
+                    imageSourceInfo.region, imageSourceInfo.z, imageSourceInfo.t);
+            // then get data
+            for (int c = 0; c < sizeC; c++)
+                result[c] = image.getDataXY(c);
+        }
+        else
+        {
+            // all channel for single channel image --> channel 0
+            final int startC = (imageSourceInfo.c == -1) ? 0 : imageSourceInfo.c;
+            // directly load pixel data
+            for (int c = 0; c < sizeC; c++)
+                result[c] = imp.getPixels(imageSourceInfo.series, imageSourceInfo.resolution, imageSourceInfo.region,
+                        imageSourceInfo.z, imageSourceInfo.t, startC + c);
+        }
 
         return result;
     }
@@ -4191,7 +4243,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        destination channel (only significant if source channel != -1)
      * @return <code>true</code> if the copy operation succeed, <code>false</code> otherwise
      */
-    public boolean copyData(ComponentSampleModel sampleModel, WritableRaster sourceRaster, int srcChannel, int dstChannel)
+    public boolean copyData(ComponentSampleModel sampleModel, WritableRaster sourceRaster, int srcChannel,
+            int dstChannel)
     {
         // not compatible sample model
         if (DataType.getDataTypeFromDataBufferType(sampleModel.getDataType()) != getDataType_())
@@ -4785,6 +4838,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public String toString()
     {
         return "IcyBufferedImage: " + getSizeX() + " x " + getSizeY() + " - " + getSizeC() + " ch (" + getDataType_()
-                + ") - Z=" + internalZPos + " T=" + internalTPos;
+                + ")";
     }
 }

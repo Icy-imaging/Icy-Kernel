@@ -54,10 +54,16 @@ public class EHCache2 extends AbstractCache
                     .strategy(Strategy.LOCALTEMPSWAP);
             // CacheWriterFactoryConfiguration c = new CacheWriterFactoryConfiguration();
             // c.setClass(path);
+
+            final long freeBytes = new File(FileUtil.getDrive(path)).getUsableSpace();
+            // subtract 200 MB to available space for safety
+            final long freeMB = (freeBytes <= 0) ? Long.MAX_VALUE : Math.max(0, (freeBytes / (1024 * 1024)) - 200);
+
             final CacheConfiguration cacheConfig = new CacheConfiguration().name("ehCache2")
-                    .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES).maxBytesLocalDisk(500, MemoryUnit.GIGABYTES)
-                    .eternal(true).memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU)
-                    .persistence(persistenceConfig);
+                    .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES)
+                    .maxBytesLocalDisk(Math.min(freeMB, 500000L), MemoryUnit.MEGABYTES)
+                    .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(10)
+                    .timeToLiveSeconds(10).diskExpiryThreadIntervalSeconds(15).persistence(persistenceConfig);
 
             cacheManagerConfig.addCache(cacheConfig);
 

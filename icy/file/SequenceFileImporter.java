@@ -18,15 +18,15 @@
  */
 package icy.file;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.image.AbstractImageProvider;
-import icy.image.ImageProvider;
-import icy.sequence.SequenceIdImporter;
-
 import java.io.IOException;
 import java.util.List;
 
 import javax.swing.filechooser.FileFilter;
+
+import icy.common.exception.UnsupportedFormatException;
+import icy.image.AbstractImageProvider;
+import icy.image.ImageProvider;
+import icy.sequence.SequenceIdImporter;
 
 /**
  * Sequence file importer interface.<br>

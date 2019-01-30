@@ -18,12 +18,6 @@
  */
 package icy.file;
 
-import icy.network.NetworkUtil;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -35,6 +29,12 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import icy.network.NetworkUtil;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
 /**
  * @author stephane
  */
@@ -42,7 +42,7 @@ public class FileUtil
 {
     public static final char separatorChar = '/';
     public static final String separator = "/";
-    
+
     public static final String APPLICATION_DIRECTORY = getApplicationDirectory();
 
     /**
@@ -369,6 +369,28 @@ public class FileUtil
     }
 
     /**
+     * Return drive / mount point from specified path<br>
+     * <br>
+     * getDrive("D:/temp/file.txt") --> "D:"<br>
+     * getDrive("D:/temp") --> "D:"<br>
+     * getDrive("C:file.txt") --> "C:"<br>
+     * getDrive("file.txt") --> ""<br>
+     */
+    public static String getDrive(String path)
+    {
+        File fp = new File(path);
+        File f;
+        do
+        {
+            f = fp;
+            fp = f.getParentFile();
+        }
+        while (fp != null);
+
+        return f.getAbsolutePath();
+    }
+    
+    /**
      * Return directory information from specified path<br>
      * <br>
      * getDirectory("/file.txt") --> "/"<br>
@@ -494,7 +516,7 @@ public class FileUtil
         final int indexSep = finalPath.lastIndexOf(separatorChar);
         final int indexDot = finalPath.lastIndexOf('.');
 
-        if ((indexDot == -1) || (indexDot < indexSep)) 
+        if ((indexDot == -1) || (indexDot < indexSep))
             return "";
 
         if (withDot)
@@ -546,8 +568,8 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
-                                + "'");
+                        System.err.println(
+                                "Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                         System.err.println("Reason: destination cannot be overwritten.");
                         System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
                         System.err.println("Also check that you have the rights to do this operation.");
@@ -556,8 +578,8 @@ public class FileUtil
                 }
                 else
                 {
-                    System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
-                            + "'");
+                    System.err.println(
+                            "Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                     System.err.println("The destination already exists.");
                     System.err.println("Use the 'force' flag to force the operation.");
                     return false;
@@ -747,8 +769,8 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
-                                + "'");
+                        System.err.println(
+                                "Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
                         System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
                         System.err.println("Also check that you have the rights to do this operation.");
@@ -1090,7 +1112,8 @@ public class FileUtil
     public static String[] getFiles(String directory, FileFilter filter, boolean recursive, boolean wantDirectory,
             boolean wantHidden)
     {
-        final File[] files = getFiles(new File(getGenericPath(directory)), filter, recursive, wantDirectory, wantHidden);
+        final File[] files = getFiles(new File(getGenericPath(directory)), filter, recursive, wantDirectory,
+                wantHidden);
         final String[] result = new String[files.length];
 
         for (int i = 0; i < files.length; i++)

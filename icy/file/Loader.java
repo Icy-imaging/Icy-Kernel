@@ -169,12 +169,12 @@ public class Loader
 
     // private final static Set<String> nonImageExtensions = new
     // HashSet<String>(CollectionUtil.asList(new String[] {
-    // "xml", "txt", "pdf", "xls", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
+    // "xml", "txt", "pdf", "xls", "doc", "docx", "rtf", "exe", "wav", "mp3", "app"}));
     /**
      * XML, XLS and TXT file can be image metadata files used to open the whole image, accept it !
      */
     private final static Set<String> nonImageExtensions = new HashSet<String>(
-            CollectionUtil.asList(new String[] {"pdf", "doc", "docx", "pdf", "rtf", "exe", "wav", "mp3", "app"}));
+            CollectionUtil.asList(new String[] {"pdf", "doc", "docx", "rtf", "exe", "wav", "mp3", "app"}));
 
     // keep trace of reported / warned plugin
     private static Set<String> reportedImporterPlugins = new HashSet<String>();
@@ -3648,6 +3648,10 @@ public class Loader
             // set local length for loader frame
             final double progressStep = 100d / numImage;
             double progress = 0d;
+            boolean first = true;
+            final int resDivisor = Math.max(1, (int) Math.pow(2, resolution));
+            final int adjSizeX = sizeX / resDivisor;
+            final int adjSizeY = sizeY / resDivisor;
 
             if (loadingFrame != null)
                 progress = loadingFrame.getPosition();
@@ -3671,28 +3675,28 @@ public class Loader
                                         (channel != -1) ? channel : 0));
                         }
 
-//                        final IcyBufferedImage image;
-//
-//                        // load image(s) now
-//                        if (!volatileImage)
-//                        {
-//                            // load image now
-//                            if (channel == -1)
-//                                image = importer.getImage(series, resolution, adjRegion, z, t);
-//                            else
-//                                image = importer.getImage(series, resolution, adjRegion, z, t, channel);
-//                        }
-//                        else
-//                            // use empty image for now
-//                            image = new IcyBufferedImage(sizeX, sizeY, sizeC, dataType, volatileImage);
-                        
-                        // always use lazy data loading
-                        final IcyBufferedImage image = new IcyBufferedImage(sizeX, sizeY, sizeC, dataType, volatileImage);
-                        
-                        // define the internal Z & T position here (used for delayed loading from importer)
-                        image.setInternalZPosition(z - adjMinZ);
-                        image.setInternalTPosition(t - adjMinT);
+                        final IcyBufferedImage image;
 
+                        // need to load one image at least to get the colormap information (stored in image colormodel)
+                        if (first)
+                        {
+                            // load image now
+                            if (channel == -1)
+                                image = importer.getImage(series, resolution, adjRegion, z, t);
+                            else
+                                image = importer.getImage(series, resolution, adjRegion, z, t, channel);
+
+                            // don't forget to set volatile state
+                            image.setVolatile(volatileImage);
+                            // first image has been loaded now
+                            first = false;
+                        }
+                        else
+                            // use empty image for now (lazy loading)
+                            image = new IcyBufferedImage(adjSizeX, adjSizeY, sizeC, dataType, volatileImage);
+
+                        // set image source information for delayed image data loading
+                        image.setImageSourceInfo(importer, series, resolution, adjRegion, t, z, channel);
                         // set image into the sequence
                         result.setImage(t - adjMinT, z - adjMinZ, image);
 

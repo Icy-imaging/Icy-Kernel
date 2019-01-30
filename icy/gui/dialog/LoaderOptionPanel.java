@@ -44,7 +44,6 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import icy.common.exception.UnsupportedFormatException;
 import icy.file.Loader;
 import icy.file.SequenceFileGroupImporter;
 import icy.file.SequenceFileImporter;
@@ -55,6 +54,7 @@ import icy.gui.component.Region2DComponent;
 import icy.gui.component.SpecialValueSpinner;
 import icy.gui.component.ThumbnailComponent;
 import icy.gui.component.model.SpecialValueSpinnerModel;
+import icy.image.IcyBufferedImage;
 import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
 import icy.sequence.SequenceIdImporter;
@@ -98,55 +98,162 @@ public class LoaderOptionPanel extends JPanel
     private class PreviewSingleUpdate extends Thread
     {
         SequenceFileImporter importer;
+        List<SequenceFileImporter> importers;
         List<String> files;
         int z;
         int t;
         boolean imageRefreshOnly;
-        boolean softInterrupted;
+        // boolean softInterrupted;
 
         PreviewSingleUpdate(SequenceFileImporter importer, List<String> files, int z, int t, boolean imageRefreshOnly)
         {
             super("Preview single update");
 
             this.importer = importer;
+            this.importers = null;
             this.files = Loader.cleanNonImageFile(files);
             this.z = z;
             this.t = t;
             this.imageRefreshOnly = imageRefreshOnly;
-            softInterrupted = false;
+            // softInterrupted = false;
         }
 
-        public SequenceFileImporter createSingleFileImporter()
+        public List<SequenceFileImporter> getSingleFileImporters()
         {
             // get importer and open image
-            final SequenceFileImporter result = Loader.getSequenceFileImporter(files.get(0), true);
+            final List<SequenceFileImporter> result = Loader.getSequenceFileImporters(files.get(0));
 
-            if (result instanceof LociImporterPlugin)
+            // adjust importers setting if needed
+            for (SequenceFileImporter imp : result)
             {
-                // separate loading wanted ? --> disable grouping in LOCI importer
-                if (isSeparateSequenceSelected())
-                    ((LociImporterPlugin) result).setGroupFiles(false);
+                // LOCI importer ?
+                if (imp instanceof LociImporterPlugin)
+                {
+                    // separate loading wanted ? --> disable grouping in LOCI importer
+                    if (isSeparateSequenceSelected())
+                        ((LociImporterPlugin) imp).setGroupFiles(false);
+                }
             }
 
             return result;
         }
 
-        public SequenceFileImporter createImporter()
+        void getImporters()
         {
-            // need to open a single file ?
-            if (isSeparateSequenceSelected() || !isMultiFile())
-                // get importer and open image
-                return createSingleFileImporter();
+            // already done ? --> exit
+            if (importer != null)
+                return;
 
-            return new SequenceFileGroupImporter();
+            // importers for single file opening
+            importers = getSingleFileImporters();
+
+            // want to open a group of file ? --> insert the SequenceFileGroupImporter importer
+            if (isGroupedSequenceSelected() && isMultiFile())
+                importers.add(0, new SequenceFileGroupImporter());
+
+            // get default importer
+            importer = importers.get(0);
         }
 
-        public void openImporter(SequenceFileImporter importer) throws IOException, UnsupportedFormatException
+        void close()
         {
-            if (importer instanceof SequenceFileGroupImporter)
-                ((SequenceFileGroupImporter) importer).open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
-            else
-                importer.open(files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
+            try
+            {
+                // close previous importer (shouldn't exist here)
+                if (importer != null)
+                    importer.close();
+            }
+            catch (IOException e)
+            {
+                // ignore
+            }
+
+            importer = null;
+        }
+
+        boolean internalOpen(SequenceFileImporter imp) throws ClosedByInterruptException
+        {
+            try
+            {
+                if (imp instanceof SequenceFileGroupImporter)
+                    ((SequenceFileGroupImporter) imp).open(files, SequenceIdImporter.FLAG_METADATA_MINIMUM);
+                else
+                    imp.open(files.get(0), SequenceIdImporter.FLAG_METADATA_MINIMUM);
+            }
+            catch (ClosedByInterruptException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    imp.close();
+                }
+                catch (Throwable e2)
+                {
+                    // ignore
+                }
+            }
+
+            // correctly opened ? --> use this importer
+            return imp.getOpened() != null;
+        }
+
+        boolean open() throws ClosedByInterruptException
+        {
+            // get importers first if not already done
+            getImporters();
+
+            // already opened ? --> exit
+            if (importer.getOpened() != null)
+                return true;
+
+            // case where we just have the good importer that we need to re-open
+            if (importers == null)
+                return internalOpen(importer);
+
+            // try to open from the given importers
+            for (SequenceFileImporter imp : importers)
+            {
+                // correctly opened ? --> use this importer
+                if (internalOpen(imp))
+                {
+                    importer = imp;
+                    return true;
+                }
+            }
+
+            // can't open
+            return false;
+        }
+
+        OMEXMLMetadata getMetaData() throws Exception
+        {
+            if (!open())
+                throw new Exception("Can't open importer !");
+
+            return importer.getOMEXMLMetaData();
+        }
+
+        IcyBufferedImage getThumbnail(int s) throws Exception
+        {
+            if (!open())
+                throw new Exception("Can't open importer !");
+
+            return importer.getThumbnail(s);
+        }
+
+        IcyBufferedImage getImage(int s, int res) throws Exception
+        {
+            if (!open())
+                throw new Exception("Can't open importer !");
+
+            if (pCh == -1)
+                return importer.getImage(s, res, z, t);
+
+            // specific channel
+            return importer.getImage(s, res, z, t, pCh);
         }
 
         public boolean isMultiFile()
@@ -197,7 +304,7 @@ public class LoaderOptionPanel extends JPanel
         public void run()
         {
             // interrupt process
-            if (isSoftInterrupted())
+            if (isInterrupted())
                 return;
 
             // get current selected series
@@ -215,33 +322,14 @@ public class LoaderOptionPanel extends JPanel
                     // use last - 1 resolution
                     final int res = Math.max(0, resolutionSlider.getMaximum() - 1);
 
-                    // need to create the importer ?
-                    if (importer == null)
-                        importer = createImporter();
-
                     try
                     {
-                        // open importer if needed
-                        if (importer.getOpened() == null)
-                        {
-                            openImporter(importer);
-
-                            // open failed while we were using group importer ? --> try to use the classic importer
-                            if ((importer.getOpened() == null) && (importer instanceof SequenceFileGroupImporter))
-                            {
-                                // get single file importer
-                                importer = createSingleFileImporter();
-                                // and try to open it
-                                openImporter(importer);
-                            }
-                        }
-
-                        // still not open ? --> error
-                        if (importer.getOpened() == null)
+                        // can't open ? --> error
+                        if (!open())
                             throw new Exception("Can't open '" + files.get(0) + "' image file..");
 
                         // interrupted ? --> stop here
-                        if (isSoftInterrupted())
+                        if (isInterrupted())
                             return;
 
                         // not defined --> use first
@@ -253,13 +341,10 @@ public class LoaderOptionPanel extends JPanel
 
                         // default position --> use thumbnail
                         if ((z == 0) && (t == 0) && (pCh == -1))
-                            preview.setImage(importer.getThumbnail(s));
-                        // all channel
-                        else if (pCh == -1)
-                            preview.setImage(importer.getImage(s, res, z, t));
-                        // specific channel
+                            preview.setImage(getThumbnail(s));
+                        // specific image
                         else
-                            preview.setImage(importer.getImage(s, res, z, t, pCh));
+                            preview.setImage(getImage(s, res));
                     }
                     finally
                     {
@@ -267,6 +352,16 @@ public class LoaderOptionPanel extends JPanel
                         if (importer instanceof SequenceFileGroupImporter)
                             ((SequenceFileGroupImporter) importer).closeInternalsImporters();
                     }
+                }
+                catch (ClosedByInterruptException e)
+                {
+                    // can't use importer anymore
+                    close();
+                }
+                catch (InterruptedException e2)
+                {
+                    // can't use importer anymore
+                    close();
                 }
                 catch (Throwable e)
                 {
@@ -326,34 +421,19 @@ public class LoaderOptionPanel extends JPanel
                 });
 
                 // close previous importer (shouldn't exist here)
-                if (importer != null)
-                    importer.close();
+                close();
 
-                // create the importer
-                importer = createImporter();
                 // open file(s)...
-                openImporter(importer);
-
-                // open failed while we were using group importer ? --> try to use the classic importer
-                if ((importer.getOpened() == null) && (importer instanceof SequenceFileGroupImporter))
-                {
-                    // get single file importer
-                    importer = createSingleFileImporter();
-                    // and try to open it
-                    openImporter(importer);
-                }
-
-                // still not open ? --> throw error
-                if (importer.getOpened() == null)
+                if (!open())
                     throw new Exception("Can't open '" + files.get(0) + "' image file..");
 
                 try
                 {
                     // interrupted ? --> stop here
-                    if (isSoftInterrupted())
+                    if (isInterrupted())
                         return;
 
-                    metadata = importer.getOMEXMLMetaData();
+                    metadata = getMetaData();
 
                     // update it as soon as possible (use Callable as we can get interrupted here...)
                     ThreadUtil.invokeNow(new Callable<Boolean>()
@@ -387,11 +467,11 @@ public class LoaderOptionPanel extends JPanel
                             + "T - " + sizeC + " ch (" + MetaDataUtil.getDataType(metadata, s) + ")");
 
                     // interrupted ? --> stop here
-                    if (isSoftInterrupted())
+                    if (isInterrupted())
                         return;
 
                     // initial preview --> use thumbnail
-                    preview.setImage(importer.getThumbnail(s));
+                    preview.setImage(getThumbnail(s));
                 }
                 finally
                 {
@@ -402,11 +482,13 @@ public class LoaderOptionPanel extends JPanel
             }
             catch (ClosedByInterruptException e)
             {
-                // no need to do more here...
+                // can't use importer anymore
+                close();
             }
             catch (InterruptedException t)
             {
-                // no need to do more here...
+                // can't use importer anymore
+                close();
             }
             catch (Throwable t1)
             {
@@ -450,15 +532,15 @@ public class LoaderOptionPanel extends JPanel
             }
         }
 
-        boolean isSoftInterrupted()
-        {
-            return softInterrupted;
-        }
-
-        void softInterrupt()
-        {
-            softInterrupted = true;
-        }
+        // boolean isSoftInterrupted()
+        // {
+        // return softInterrupted;
+        // }
+        //
+        // void softInterrupt()
+        // {
+        // softInterrupted = true;
+        // }
     }
 
     private class PreviewUpdater extends Thread
@@ -517,7 +599,7 @@ public class LoaderOptionPanel extends JPanel
         {
             // interrupt (soft interrupt to not close IO channel) current preview update
             if (singleUpdater != null)
-                singleUpdater.softInterrupt();
+                singleUpdater.interrupt();
         }
 
         /**
@@ -640,29 +722,22 @@ public class LoaderOptionPanel extends JPanel
                 // need update metadata fields
                 if (!metadataFieldsOk)
                 {
-                    // get importer
-                    final SequenceFileImporter importer = singleUpdater.importer;
-
                     try
                     {
                         // open file(s) if needed...
-                        if (importer.getOpened() == null)
-                            singleUpdater.openImporter(importer);
-
-                        // still not open or process interrupted ? --> stop here
-                        if (importer.getOpened() != null)
+                        if (!singleUpdater.open())
                             return;
 
                         try
                         {
-                            metadata = importer.getOMEXMLMetaData();
+                            metadata = singleUpdater.importer.getOMEXMLMetaData();
 
                             // update panel (we are on EDT)
                             updatePanel();
                         }
                         finally
                         {
-                            importer.close();
+                            singleUpdater.close();
                         }
                     }
                     catch (Throwable t)
@@ -1330,6 +1405,11 @@ public class LoaderOptionPanel extends JPanel
     public boolean isSeparateSequenceSelected()
     {
         return loadingTypeCombo.getSelectedItem() == LoaderLoadingType.NO_GROUP;
+    }
+
+    public boolean isGroupedSequenceSelected()
+    {
+        return loadingTypeCombo.getSelectedItem() == LoaderLoadingType.GROUP;
     }
 
     public boolean isMultiFile()

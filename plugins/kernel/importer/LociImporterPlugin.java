@@ -777,22 +777,30 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         if (Loader.canDiscardImageFile(path))
             return false;
 
-        try
-        {
-            // better for Bio-Formats to have system path format (bug with Bio-Format ?)
-            final String adjPath = new File(path).getAbsolutePath();
+        // better for Bio-Formats to have system path format (bug with Bio-Format ?)
+        final String adjPath = new File(path).getAbsolutePath();
 
-            // this method should not modify the current reader so we use a specific reader for that :)
-            if ((acceptReader == null)
-                    || (!acceptReader.isThisType(adjPath, false) && !acceptReader.isThisType(adjPath, true)))
-                acceptReader = mainReader.getReader(adjPath);
-
-            return true;
-        }
-        catch (Exception e)
+        while (true)
         {
-            // assume false on exception (FormatException or IOException)
-            return false;
+            try
+            {
+                // this method should not modify the current reader so we use a specific reader for that :)
+                if ((acceptReader == null)
+                        || (!acceptReader.isThisType(adjPath, false) && !acceptReader.isThisType(adjPath, true)))
+                    acceptReader = mainReader.getReader(adjPath);
+
+                return true;
+            }
+            catch (ClosedByInterruptException e)
+            {
+                // we don't accept this interrupt here --> remove interrupted state & retry
+                Thread.interrupted();
+            }
+            catch (Exception e)
+            {
+                // assume false on exception (FormatException or IOException)
+                return false;
+            }
         }
     }
 
