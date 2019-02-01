@@ -1145,10 +1145,10 @@ public class Loader
      * It can returns <code>null</code> if the specified file is not a valid or supported) image
      * file.
      */
-    public static OMEXMLMetadata getOMEXMLMetaData(String path) throws UnsupportedFormatException
+    public static OMEXMLMetadata getOMEXMLMetaData(String path) throws UnsupportedFormatException, IOException
     {
         OMEXMLMetadata result;
-        Exception lastError = null;
+        UnsupportedFormatException lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -1159,7 +1159,7 @@ public class Loader
                 if (result != null)
                     return result;
             }
-            catch (Exception e)
+            catch (UnsupportedFormatException e)
             {
                 lastError = e;
             }
@@ -1191,13 +1191,14 @@ public class Loader
     }
 
     /**
+     * @throws IOException
      * @deprecated Use {@link #getOMEXMLMetaData(String)} instead
      */
     @Deprecated
-    public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException
+    public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
     {
         OMEXMLMetadataImpl result;
-        Exception lastError = null;
+        UnsupportedFormatException lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -1208,7 +1209,7 @@ public class Loader
                 if (result != null)
                     return result;
             }
-            catch (Exception e)
+            catch (UnsupportedFormatException e)
             {
                 lastError = e;
             }
@@ -1293,10 +1294,10 @@ public class Loader
      *        Series index we want to retrieve thumbnail from (for multi series image).<br>
      *        Set to 0 if unsure.
      */
-    public static IcyBufferedImage loadThumbnail(String path, int series) throws UnsupportedFormatException
+    public static IcyBufferedImage loadThumbnail(String path, int series) throws UnsupportedFormatException, IOException
     {
         IcyBufferedImage result;
-        Exception lastError = null;
+        UnsupportedFormatException lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -1307,7 +1308,7 @@ public class Loader
                 if (result != null)
                     return result;
             }
-            catch (Exception e)
+            catch (UnsupportedFormatException e)
             {
                 lastError = e;
             }
