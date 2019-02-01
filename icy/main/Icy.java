@@ -562,7 +562,7 @@ public class Icy
                     + Icy.class.getResource("/res/image/help/virtual_mode.jpg").toString() + "\" /><br>"
                     + "This new button allow to enable/disable Icy <b>virtual mode</b>.<br><br>"
                     + "Virtual mode will force all new created images to be in <i>virtual mode</i> which mean their data can be stored on disk to spare memory.<br>"
-                    + "Note that <i>virtual mode</i> is still experimental and <b>some plugins don't support it</b> (processed data can be lost) so use it carefully and only if you're running out of memory !<br>"
+                    + "Note that <i>virtual mode</i> is still experimental and <b>some plugins don't support it</b> (processed data can be lost) so use it carefully and only if you're running out of memory.<br>"
                     + "<i>You can change the image caching settings in Icy preferences</i></html>", 30, "virtualMode");
             tooltip.setSize(380, 240);
         }

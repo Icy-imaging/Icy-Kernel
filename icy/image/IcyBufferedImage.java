@@ -931,13 +931,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // remove it from hashmap
         images.remove(Integer.valueOf(System.identityHashCode(this)));
 
-//        if (imageSourceInfo != null)
-//            System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
-//                    + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
-//                    + imageSourceInfo.toString());
-//        else
-//            System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
-//                    + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - NULL");
+        // if (imageSourceInfo != null)
+        // System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
+        // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
+        // + imageSourceInfo.toString());
+        // else
+        // System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
+        // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - NULL");
 
         super.finalize();
     }
@@ -1148,6 +1148,26 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public WritableRaster getAlphaRaster()
     {
         return getColorModel().getAlphaRaster(getRaster());
+    }
+
+    /**
+     * Return <code>true</code> if raster data is strongly referenced, <code>false</code> otherwise.<br>
+     * Note that it doesn't necessary mean that we called {@link #lockRaster()} method.
+     * 
+     * @see #lockRaster()
+     * @see #isVolatile()
+     */
+    public synchronized boolean isRasterLocked()
+    {
+        try
+        {
+            return (rasterField == null) || (rasterField.get(this) != null);
+        }
+        catch (Exception e)
+        {
+            // something bad happened, just assume false then..
+            return false;
+        }
     }
 
     /**
@@ -1486,15 +1506,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             try
             {
-//                if (imageSourceInfo != null)
-//                    System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
-//                            + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
-//                            + imageSourceInfo.toString() + " - " + Boolean.valueOf(eternal).toString());
-//                else
-//                    System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
-//                            + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence")
-//                            + " - NULL - " + Boolean.valueOf(eternal).toString());
-//
+                // if (imageSourceInfo != null)
+                // System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
+                // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
+                // + imageSourceInfo.toString() + " - " + Boolean.valueOf(eternal).toString());
+                // else
+                // System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
+                // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence")
+                // + " - NULL - " + Boolean.valueOf(eternal).toString());
+                //
                 ImageCache.set(this, rasterData, eternal);
             }
             catch (Throwable e)

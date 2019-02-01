@@ -18,6 +18,9 @@
  */
 package icy.sequence;
 
+import java.awt.Rectangle;
+import java.util.NoSuchElementException;
+
 import icy.image.IcyBufferedImage;
 import icy.image.ImageDataIterator;
 import icy.roi.ROI;
@@ -25,9 +28,6 @@ import icy.type.DataIterator;
 import icy.type.DataType;
 import icy.type.rectangle.Rectangle5D;
 import icy.type.rectangle.Rectangle5D.Integer;
-
-import java.awt.Rectangle;
-import java.util.NoSuchElementException;
 
 /**
  * Sequence data iterator.<br>
@@ -141,8 +141,8 @@ public class SequenceDataIterator implements DataIterator
     @Deprecated
     public SequenceDataIterator(Sequence sequence, int startX, int endX, int startY, int endY, int c, int z, int t)
     {
-        this(sequence, new Rectangle5D.Integer(startX, startY, z, t, c, (endX - startX) + 1, (endY - startY) + 1, 1, 1,
-                1));
+        this(sequence,
+                new Rectangle5D.Integer(startX, startY, z, t, c, (endX - startX) + 1, (endY - startY) + 1, 1, 1, 1));
     }
 
     /**
@@ -294,11 +294,20 @@ public class SequenceDataIterator implements DataIterator
         }
     }
 
+    protected void flushDataXY()
+    {
+        if (imageIterator != null)
+            imageIterator.flush();
+    }
+
     /**
      * Prepare data for XY iteration.
      */
     protected void prepareDataXY()
     {
+        // flush previous dataXY
+        flushDataXY();
+
         final IcyBufferedImage img = sequence.getImage(t, z);
 
         // get the 2D mask for specified C
@@ -434,4 +443,11 @@ public class SequenceDataIterator implements DataIterator
         return t;
     }
 
+    /**
+     * Ensure changed data are correctly saved back to original data source (should be called at the end)
+     */
+    public void flush()
+    {
+        flushDataXY();
+    }
 }

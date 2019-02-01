@@ -62,8 +62,8 @@ public class EHCache2 extends AbstractCache
             final CacheConfiguration cacheConfig = new CacheConfiguration().name("ehCache2")
                     .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES)
                     .maxBytesLocalDisk(Math.min(freeMB, 500000L), MemoryUnit.MEGABYTES)
-                    .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(10)
-                    .timeToLiveSeconds(10).diskExpiryThreadIntervalSeconds(15).persistence(persistenceConfig);
+                    .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(20)
+                    .timeToLiveSeconds(60).diskExpiryThreadIntervalSeconds(90).persistence(persistenceConfig);
 
             cacheManagerConfig.addCache(cacheConfig);
 

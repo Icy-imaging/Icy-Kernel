@@ -734,16 +734,15 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             {
                 virtualButton.setToolTipText("Disable virtual sequence (caching)");
 
-                // virtual was automatically enabled for this sequence --> show tooltip to explain
-                if (!toolTipVirtualDone && !GeneralPreferences.getVirtualMode())
+                // virtual was enabled for this sequence --> show tooltip to explain
+                if (!toolTipVirtualDone)
                 {
                     final ToolTipFrame tooltip = new ToolTipFrame("<html>" + "<img src=\""
                             + Icy.class.getResource("/res/image/help/viewer_virtual.jpg").toString() + "\" /><br>"
-                            + "<b>Your image has been automatically made <i>virtual</i></b>.<br> This happens because there is not enough available memory to store it in memory. When your "
-                            + "image is <i>virtual</i> its data can be partially cached on disk which result in slower display / processing.<br>"
-                            + "Also you should note that <b>some plugins aren't compatible with <i>virtual</i> images</b> and so the result may be inconsistent and suffer from data lost."
+                            + "<b>Your image has been made <i>virtual</i></b>.<br> This means that its data can be stored on disk to spare memory but this is at the cost of slower display / processing.<br>"
+                            + "Also you should note that <b>some plugins aren't compatible with <i>virtual</i> images</b> and so the result may be inconsistent (possible data lost)."
                             + "</html>", 30, "viewerVirtual");
-                    tooltip.setSize(400, 200);
+                    tooltip.setSize(400, 180);
                     toolTipVirtualDone = true;
                 }
             }
