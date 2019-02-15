@@ -365,6 +365,10 @@ public class LoaderOptionPanel extends JPanel
                 }
                 catch (Throwable e)
                 {
+                    // can't use importer anymore
+                    if (e.getCause() instanceof ClosedByInterruptException)
+                        close();
+
                     // no more update ? --> show that an error happened
                     if (!previewUpdater.getNeedUpdate())
                         preview.setImage(ResourceUtil.ICON_DELETE);

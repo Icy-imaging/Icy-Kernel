@@ -18,15 +18,39 @@
  */
 package icy.gui.menu;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+
+import javax.swing.SwingConstants;
+import javax.swing.event.EventListenerList;
+
+import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
+import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
+import org.pushingpixels.flamingo.api.common.HorizontalAlignment;
+import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
+import org.pushingpixels.flamingo.api.common.JCommandToggleButton;
+import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
+import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
+import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
+import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
+import org.pushingpixels.flamingo.api.ribbon.JRibbonComponent;
+import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
+import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
+import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
+import org.pushingpixels.flamingo.internal.ui.ribbon.BasicBandControlPanelUI;
+
 import icy.action.RoiActions;
-import icy.gui.component.IcyTextField;
+import icy.gui.component.NumberTextField;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.plugin.PluginCommandButton;
-import icy.gui.util.ComponentUtil;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
@@ -41,29 +65,6 @@ import icy.roi.ROI3D;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-
-import javax.swing.event.EventListenerList;
-
-import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
-import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
-import org.pushingpixels.flamingo.api.common.JCommandButton;
-import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
-import org.pushingpixels.flamingo.api.common.JCommandToggleButton;
-import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
-import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
-import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
-import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
-import org.pushingpixels.flamingo.api.ribbon.JRibbonComponent;
-import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
-import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
-import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
-
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi2d.ROI2DShape;
 import plugins.kernel.roi.roi2d.plugin.ROI2DAreaPlugin;
@@ -229,6 +230,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
 
             RibbonUtil.setRestrictiveResizePolicies(this);
             setToolTipText("External Region Of Interest");
+            updateButtonsState();
         }
 
         public static List<PluginDescriptor> getROIPlugins()
@@ -257,28 +259,90 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
     {
         public static final String BAND_NAME = "Conversion";
 
-        final IcyCommandButton convertToStackButton;
-        final IcyCommandButton convertToMaskButton;
-        final IcyCommandButton convertToShapeButton;
+        final NumberTextField radiusField;
+        final IcyButton convertToEllipseButton;
+        final IcyButton convertToRectangleButton;
+        final IcyButton convertToStackButton;
+        final IcyButton convertToMaskButton;
+        final IcyButton convertToShapeButton;
 
         public ROIConversionBand()
         {
             super(BAND_NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
 
             // conversion
-            convertToStackButton = new IcyCommandButton(RoiActions.convertToStackAction);
-            convertToMaskButton = new IcyCommandButton(RoiActions.convertToMaskAction);
-            convertToShapeButton = new IcyCommandButton(RoiActions.convertToShapeAction);
-            addCommandButton(convertToStackButton, RibbonElementPriority.MEDIUM);
-            addCommandButton(convertToMaskButton, RibbonElementPriority.MEDIUM);
-            addCommandButton(convertToShapeButton, RibbonElementPriority.MEDIUM);
+            // convertToStackButton = new IcyCommandButton(RoiActions.convertToStackAction);
+            // convertToMaskButton = new IcyCommandButton(RoiActions.convertToMaskAction);
+            // convertToShapeButton = new IcyCommandButton(RoiActions.convertToShapeAction);
+            // addCommandButton(convertToStackButton, RibbonElementPriority.MEDIUM);
+            // addCommandButton(convertToMaskButton, RibbonElementPriority.MEDIUM);
+            // addCommandButton(convertToShapeButton, RibbonElementPriority.MEDIUM);
+
+            convertToEllipseButton = new IcyButton(RoiActions.convertToEllipseAction);
+            convertToEllipseButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToEllipseButton.setFlat(true);
+            convertToRectangleButton = new IcyButton(RoiActions.convertToRectangleAction);
+            convertToRectangleButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToRectangleButton.setFlat(true);
+            radiusField = new NumberTextField();
+            radiusField.setHorizontalAlignment(SwingConstants.CENTER);
+            radiusField.setToolTipText("Radius for Circle/Rectangle conversion");
+            radiusField.setNumericValue(1);
+            convertToMaskButton = new IcyButton(RoiActions.convertToMaskAction);
+            convertToMaskButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToMaskButton.setFlat(true);
+            convertToShapeButton = new IcyButton(RoiActions.convertToShapeAction);
+            convertToShapeButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToShapeButton.setFlat(true);
+            convertToStackButton = new IcyButton(RoiActions.convertToStackAction);
+            convertToStackButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToStackButton.setFlat(true);
+
+            JRibbonComponent comp;
+
+            comp = new JRibbonComponent(convertToEllipseButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(convertToRectangleButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(radiusField);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+
+            comp = new JRibbonComponent(convertToMaskButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(convertToShapeButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(convertToStackButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
 
             setToolTipText("Conversion tools for ROI");
-            RibbonUtil.setRestrictiveResizePolicies(this);
+
+            // better to do that to fix the ending gap for band containing wrapped components
+            ((BasicBandControlPanelUI) getControlPanel().getUI()).setLayoutGap(0);
+            RibbonUtil.setRestrictiveResizePolicies(this, 0);
+            updateButtonsState();
+        }
+
+        public double getRadius()
+        {
+            return Math.max(0, radiusField.getNumericValue());
         }
 
         public void updateButtonsState()
         {
+            boolean convertEllipseEnable = false;
+            boolean convertRectangleEnable = false;
             boolean convertStackEnable = false;
             boolean convertMaskEnable = false;
             boolean convertShapeEnable = false;
@@ -304,9 +368,14 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
                         if (roi instanceof ROI3DArea)
                             convertShapeEnable = true;
                     }
+                    convertEllipseEnable = true;
+                    convertRectangleEnable = true;
                 }
             }
 
+            convertToEllipseButton.setEnabled(convertEllipseEnable);
+            convertToRectangleButton.setEnabled(convertRectangleEnable);
+            radiusField.setEnabled(convertEllipseEnable || convertRectangleEnable);
             convertToStackButton.setEnabled(convertStackEnable);
             convertToMaskButton.setEnabled(convertMaskEnable);
             convertToShapeButton.setEnabled(convertShapeEnable);
@@ -358,6 +427,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
 
             setToolTipText("Boolean operation for ROI");
             RibbonUtil.setRestrictiveResizePolicies(this);
+            updateButtonsState();
         }
 
         public void updateButtonsState()
@@ -611,7 +681,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
     {
         public static final String BAND_NAME = "Fill operation";
 
-        final IcyTextField fillValueField;
+        final NumberTextField fillValueField;
         // final IcyButton fillImage;
         final IcyButton fillInterior;
         final IcyButton fillExterior;
@@ -620,38 +690,43 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
         {
             super(BAND_NAME, new IcyIcon("document"));
 
-            setToolTipText("Fill operation for ROI");
-
-            fillValueField = new IcyTextField();
-            ComponentUtil.setFixedWidth(fillValueField, 90);
-            fillValueField.setToolTipText("Value used for filling");
-            fillValueField.setText("0");
-
             fillInterior = new IcyButton(RoiActions.fillInteriorAction);
+            fillInterior.setHorizontalAlignment(SwingConstants.LEADING);
             fillInterior.setFlat(true);
             fillExterior = new IcyButton(RoiActions.fillExteriorAction);
+            fillExterior.setHorizontalAlignment(SwingConstants.LEADING);
             fillExterior.setFlat(true);
+            fillValueField = new NumberTextField();
+            fillValueField.setHorizontalAlignment(SwingConstants.CENTER);
+            fillValueField.setToolTipText("Value used for filling");
+            fillValueField.setNumericValue(0);
 
             JRibbonComponent comp;
 
             comp = new JRibbonComponent(fillInterior);
             comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
             addRibbonComponent(comp);
             comp = new JRibbonComponent(fillExterior);
             comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
             addRibbonComponent(comp);
             comp = new JRibbonComponent(fillValueField);
             comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
             addRibbonComponent(comp);
 
-            RibbonUtil.setRestrictiveResizePolicies(this);
+            setToolTipText("Fill operation for ROI");
+
+            // better to do that to fix the ending gap for band containing wrapped components
+            ((BasicBandControlPanelUI) getControlPanel().getUI()).setLayoutGap(0);
+            RibbonUtil.setRestrictiveResizePolicies(this, 0);
             updateButtonsState();
         }
 
         public double getFillValue()
         {
-            double value = StringUtil.parseDouble(fillValueField.getText(), 0);
-
+            double value = fillValueField.getNumericValue();
             final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if ((sequence != null) && (!sequence.isFloatDataType()))
@@ -666,7 +741,7 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
             }
 
             // set value back if incorrect
-            fillValueField.setText(Double.toString(value));
+            fillValueField.setNumericValue(value);
 
             return value;
         }
@@ -918,6 +993,11 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
     public void toolChanged(String toolName)
     {
         fireChangedEvent(toolName);
+    }
+
+    public double getRadius()
+    {
+        return roiConversionBand.getRadius();
     }
 
     public double getFillValue()

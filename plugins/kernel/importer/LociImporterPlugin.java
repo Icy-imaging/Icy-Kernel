@@ -137,12 +137,24 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                             releaseReader(r);
                         }
 
+                        // need to adjust input region
+                        final Rectangle adjRegion = new Rectangle(region);
+                        int downScale = downScaleLevel;
+                        while (downScale > 0)
+                        {
+                            // reduce region size by a factor of 2
+                            adjRegion.setBounds(adjRegion.x / 2, adjRegion.y / 2, adjRegion.width / 2,
+                                    adjRegion.height / 2);
+                            downScale--;
+                        }
+
                         // define destination in destination
-                        final Point pt = region.getLocation();
+                        final Point pt = adjRegion.getLocation();
                         pt.translate(-imageRegion.x, -imageRegion.y);
 
                         // copy tile to result
-                        Array1DUtil.copyRect(pixels, region.getSize(), null, result, imageRegion.getSize(), pt, signed);
+                        Array1DUtil.copyRect(pixels, adjRegion.getSize(), null, result, imageRegion.getSize(), pt,
+                                signed);
                     }
                     finally
                     {
@@ -885,6 +897,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
      */
     protected void openReader(IFormatReader reader, String path, int flags) throws FormatException, IOException
     {
+        // for safety
+        reader.close();
+
         switch (flags & FLAG_METADATA_MASK)
         {
             case FLAG_METADATA_MINIMUM:
@@ -1346,9 +1361,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             }
             catch (FormatException e)
             {
-                // we can have here a "Image plane too large. Only 2GB of data can be extracted at
-                // one time." error here --> so can try to use tile loading when we need rescaling
-                if (downScaleLevel > 0)
+                if (!(e.getCause() instanceof ClosedByInterruptException) && (downScaleLevel > 0))
+                    // we can have here a "Image plane too large. Only 2GB of data can be extracted at
+                    // one time." error here --> so can try to use tile loading when we need rescaling
                     return getImageByTile(series, resolution, rectangle, z, t, c, getTileWidth(series),
                             getTileHeight(series), null);
 
@@ -1778,8 +1793,20 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 channelBuffer, pixelBuffer);
         // get pixel data type
         final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
+
+        // get final sizeX and sizeY
+        int sizeX = rect.width;
+        int sizeY = rect.height;
+        int downScale = downScaleLevel;
+        while (downScale > 0)
+        {
+            sizeX /= 2;
+            sizeY /= 2;
+            downScale--;
+        }
+
         // create the single channel result image from pixel data
-        final IcyBufferedImage result = new IcyBufferedImage(rect.width, rect.height, pixelData, dataType.isSigned());
+        final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, pixelData, dataType.isSigned());
 
         IcyColorMap map = null;
         final int rgbChannel = reader.getRGBChannelCount();
@@ -2171,6 +2198,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             return new UnsupportedFormatException(path + ": Unknown image format.", exception);
         else if (exception instanceof MissingLibraryException)
             return new UnsupportedFormatException(path + ": Missing library to load the image.", exception);
+        else if (exception.getCause() instanceof ClosedByInterruptException)
+            return new UnsupportedFormatException(path + ": loading interrupted.", exception.getCause());
         else
             return new UnsupportedFormatException(path + ": Unsupported image.", exception);
     }
