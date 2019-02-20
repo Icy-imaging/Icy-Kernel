@@ -3,6 +3,8 @@ package icy.image.cache;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import icy.file.FileUtil;
 import icy.system.IcyExceptionHandler;
@@ -20,6 +22,7 @@ import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 public class EHCache2 extends AbstractCache
 {
+    private final Set<Integer> eternalStoredKeys;
     private CacheManager cacheManager;
     private Cache cache;
     private boolean enabled;
@@ -27,6 +30,8 @@ public class EHCache2 extends AbstractCache
     public EHCache2(int cacheSizeMB, String path)
     {
         super();
+
+        eternalStoredKeys = new HashSet<>();
 
         // get old ehcache agent JAR files
         final String[] oldFiles = FileUtil.getFiles(FileUtil.getTempDirectory(), new FileFilter()
@@ -63,7 +68,9 @@ public class EHCache2 extends AbstractCache
                     .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES)
                     .maxBytesLocalDisk(Math.min(freeMB, 500000L), MemoryUnit.MEGABYTES)
                     .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(20)
-                    .timeToLiveSeconds(60).diskExpiryThreadIntervalSeconds(90).persistence(persistenceConfig);
+                    .timeToLiveSeconds(60).diskExpiryThreadIntervalSeconds(120).persistence(persistenceConfig);
+            // .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).eternal(true)
+            // .persistence(persistenceConfig);
 
             cacheManagerConfig.addCache(cacheConfig);
 
@@ -179,14 +186,28 @@ public class EHCache2 extends AbstractCache
     {
         if (profiling)
             startProf();
+
+        final boolean checkNull;
+        Object result = null;
+
+        // test if we need to check for null result
+        synchronized (eternalStoredKeys)
+        {
+            checkNull = eternalStoredKeys.contains(key);
+        }
+
         try
         {
             final Element e = cache.get(key);
 
             if (e != null)
-                return e.getObjectValue();
+                result = e.getObjectValue();
 
-            return null;
+            // check if eternal data was lost (it seems that sometime EhCache loss data put in eternal state !!)
+            if (checkNull && (result == null))
+                System.err.println("ImageCache error: data '" + key + "' couldn't be retrieved (data loss).");
+
+            return result;
         }
         finally
         {
@@ -200,6 +221,19 @@ public class EHCache2 extends AbstractCache
     {
         if (profiling)
             startProf();
+
+        if (eternal)
+        {
+            synchronized (eternalStoredKeys)
+            {
+                // save in keyset
+                if (object != null)
+                    eternalStoredKeys.add(key);
+                else
+                    eternalStoredKeys.remove(key);
+            }
+        }
+
         try
         {
             cache.put(new Element(key, object, eternal));
@@ -216,6 +250,9 @@ public class EHCache2 extends AbstractCache
     {
         if (profiling)
             startProf();
+
+        eternalStoredKeys.clear();
+
         try
         {
             cache.removeAll();
@@ -232,6 +269,13 @@ public class EHCache2 extends AbstractCache
     {
         if (profiling)
             startProf();
+
+        synchronized (eternalStoredKeys)
+        {
+            // remove from keyset
+            eternalStoredKeys.remove(key);
+        }
+
         try
         {
             cache.remove(key);
@@ -251,6 +295,7 @@ public class EHCache2 extends AbstractCache
     @Override
     public void end()
     {
+        eternalStoredKeys.clear();
         cacheManager.shutdown();
     }
 

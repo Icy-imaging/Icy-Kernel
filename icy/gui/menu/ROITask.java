@@ -278,6 +278,15 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
             // addCommandButton(convertToMaskButton, RibbonElementPriority.MEDIUM);
             // addCommandButton(convertToShapeButton, RibbonElementPriority.MEDIUM);
 
+            convertToStackButton = new IcyButton(RoiActions.convertToStackAction);
+            convertToStackButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToStackButton.setFlat(true);
+            convertToMaskButton = new IcyButton(RoiActions.convertToMaskAction);
+            convertToMaskButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToMaskButton.setFlat(true);
+            convertToShapeButton = new IcyButton(RoiActions.convertToShapeAction);
+            convertToShapeButton.setHorizontalAlignment(SwingConstants.LEADING);
+            convertToShapeButton.setFlat(true);
             convertToEllipseButton = new IcyButton(RoiActions.convertToEllipseAction);
             convertToEllipseButton.setHorizontalAlignment(SwingConstants.LEADING);
             convertToEllipseButton.setFlat(true);
@@ -288,17 +297,21 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
             radiusField.setHorizontalAlignment(SwingConstants.CENTER);
             radiusField.setToolTipText("Radius for Circle/Rectangle conversion");
             radiusField.setNumericValue(1);
-            convertToMaskButton = new IcyButton(RoiActions.convertToMaskAction);
-            convertToMaskButton.setHorizontalAlignment(SwingConstants.LEADING);
-            convertToMaskButton.setFlat(true);
-            convertToShapeButton = new IcyButton(RoiActions.convertToShapeAction);
-            convertToShapeButton.setHorizontalAlignment(SwingConstants.LEADING);
-            convertToShapeButton.setFlat(true);
-            convertToStackButton = new IcyButton(RoiActions.convertToStackAction);
-            convertToStackButton.setHorizontalAlignment(SwingConstants.LEADING);
-            convertToStackButton.setFlat(true);
 
             JRibbonComponent comp;
+
+            comp = new JRibbonComponent(convertToStackButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(convertToMaskButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(convertToShapeButton);
+            comp.setResizingAware(true);
+            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
+            addRibbonComponent(comp);
 
             comp = new JRibbonComponent(convertToEllipseButton);
             comp.setResizingAware(true);
@@ -309,19 +322,6 @@ public class ROITask extends RibbonTask implements PluginLoaderListener
             comp.setHorizontalAlignment(HorizontalAlignment.FILL);
             addRibbonComponent(comp);
             comp = new JRibbonComponent(radiusField);
-            comp.setResizingAware(true);
-            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
-            addRibbonComponent(comp);
-
-            comp = new JRibbonComponent(convertToMaskButton);
-            comp.setResizingAware(true);
-            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
-            addRibbonComponent(comp);
-            comp = new JRibbonComponent(convertToShapeButton);
-            comp.setResizingAware(true);
-            comp.setHorizontalAlignment(HorizontalAlignment.FILL);
-            addRibbonComponent(comp);
-            comp = new JRibbonComponent(convertToStackButton);
             comp.setResizingAware(true);
             comp.setHorizontalAlignment(HorizontalAlignment.FILL);
             addRibbonComponent(comp);

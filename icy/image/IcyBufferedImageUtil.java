@@ -1385,12 +1385,25 @@ public class IcyBufferedImageUtil
                     break;
             }
 
-            // use JAI scaler (use a copy to avoid source alteration)
-            final RenderedOp renderedOp = ScaleDescriptor.create(getCopy(source), xScale, yScale, Float.valueOf(0f),
-                    Float.valueOf(0f), interpolation, new RenderingHints(JAI.KEY_BORDER_EXTENDER,
-                            BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+            // use a copy as JAI may alter source data
+            final IcyBufferedImage srcCopy = getCopy(source);
 
-            result = IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
+            // better to lock raster during JAI operation
+            srcCopy.lockRaster();
+            try
+            {
+                // use JAI scaler
+                final RenderedOp renderedOp = ScaleDescriptor.create(srcCopy, xScale, yScale, Float.valueOf(0f),
+                        Float.valueOf(0f), interpolation, new RenderingHints(JAI.KEY_BORDER_EXTENDER,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+
+                // get result
+                result = IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
+            }
+            finally
+            {
+                srcCopy.releaseRaster(false);
+            }
         }
 
         return result;

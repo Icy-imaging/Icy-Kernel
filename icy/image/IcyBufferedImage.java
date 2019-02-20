@@ -152,6 +152,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * Used internally to find out an image from its identity hash code
      */
     static Map<Integer, WeakIcyBufferedImageReference> images = new HashMap<Integer, WeakIcyBufferedImageReference>();
+    // static Map<Integer, Object> imagesMax = new HashMap<Integer, Object>();
 
     /**
      * Retrieve an {@link IcyBufferedImage} from its identity hash code
@@ -565,6 +566,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     protected boolean dataInitialized;
 
+    // internal lock counter
+    protected int lockedCount = 0;
     // internal constructed state (needed for proper data initialization)
     private boolean constructed = false;
 
@@ -648,7 +651,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (dataInitialized)
         {
             // save data in cache (for volatile image)
-            saveRasterInCache(wr);
+            saveRasterInCache(wr, true);
             // update image components bounds
             if (autoUpdateChannelBounds)
                 updateChannelsBounds();
@@ -1062,15 +1065,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 }
                 catch (OutOfMemoryError e)
                 {
-                    System.out.println(e.getMessage());
-                    System.out.println(
+                    System.err.println(e.getMessage());
+                    System.err.println(
                             "IcyBufferedImage.setVolatile(false) error: not enough memory to set image data back in memory.");
                     throw e;
                 }
                 catch (Throwable e)
                 {
-                    System.out.println(e.getMessage());
-                    System.out.println(
+                    System.err.println(e.getMessage());
+                    System.err.println(
                             "IcyBufferedImage.setVolatile(..) error: cannot set parent raster field (data lost).");
                 }
             }
@@ -1179,6 +1182,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public synchronized void lockRaster()
     {
+        if (lockedCount++ != 0)
+            return;
+
         getRaster(true);
     }
 
@@ -1190,6 +1196,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public synchronized void releaseRaster(boolean saveInCache)
     {
+        if (--lockedCount != 0)
+            return;
+
         try
         {
             // force saving changed data in cache before releasing raster
@@ -1275,15 +1284,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     @Override
     public void coerceData(boolean isAlphaPremultiplied)
     {
-        lockRaster();
-        try
-        {
-            super.coerceData(isAlphaPremultiplied);
-        }
-        finally
-        {
-            releaseRaster(true);
-        }
+        // don't need to do any conversion here...
     }
 
     @Override
@@ -1474,8 +1475,49 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             saveRasterDataInCache(rasterData, false);
         }
 
+        // final int size = Array.getLength(rasterData);
+        // final double[] max = new double[size];
+        //
+        // for (int c = 0; c < max.length; c++)
+        // {
+        // Object array = Array.get(rasterData, c);
+        // max[c] = ArrayMath.max(array, false);
+        // }
+        //
+        // System.out.println("loadCache:" + System.identityHashCode(this) + "=" + Arrays.toString(max));
+
         return buildRaster(rasterData);
     }
+
+    // public double[] getDataMax(Object rasterData)
+    // {
+    // final int size = Array.getLength(rasterData);
+    // final double[] max = new double[size];
+    //
+    // for (int c = 0; c < max.length; c++)
+    // {
+    // Object array = Array.get(rasterData, c);
+    // max[c] = ArrayMath.max(array, false);
+    // }
+    //
+    // return max;
+    // }
+    //
+    // public int getKey()
+    // {
+    // return System.identityHashCode(this);
+    // }
+    //
+    // public String getDebugString(Object rasterData)
+    // {
+    // final double[] max = getDataMax(rasterData);
+    // return getKey() + "=" + Arrays.toString(max);
+    // }
+    //
+    // public String getDebugString()
+    // {
+    // return getDebugString(getRasterData(getRaster()));
+    // }
 
     /**
      * Explicitly save the image data in cache (only for volatile image)
@@ -1516,6 +1558,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 // + " - NULL - " + Boolean.valueOf(eternal).toString());
                 //
                 ImageCache.set(this, rasterData, eternal);
+                //
+                // if (eternal)
+                // imagesMax.put(Integer.valueOf(getKey()), getDataMax(rasterData));
+                // else
+                // {
+                // double[] max = (double[]) imagesMax.get(Integer.valueOf(getKey()));
+                // if (max != null)
+                // System.out.println("old=" + Arrays.toString(max) + " - new: " + getDebugString(rasterData));
+                // }
             }
             catch (Throwable e)
             {

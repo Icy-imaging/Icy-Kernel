@@ -1316,7 +1316,7 @@ public class RoiActions
 
     public static IcyAbstractAction convertToEllipseAction = new IcyAbstractAction("to Circle",
             new IcyIcon(ResourceUtil.ICON_ROI_OVAL), "Convert ROI to Circle ROI",
-            "Converts selected ROI(s) to ROI Circle centered on the mass center of the input ROI(s)")
+            "Converts selected ROI(s) to Circle ROI centered on the mass center of the input ROI(s)")
     {
         @Override
         public boolean doAction(ActionEvent e)
@@ -1391,7 +1391,7 @@ public class RoiActions
 
     public static IcyAbstractAction convertToRectangleAction = new IcyAbstractAction("to Square",
             new IcyIcon(ResourceUtil.ICON_ROI_RECTANGLE), "Convert ROI to Square ROI",
-            "Converts selected ROI(s) to ROI Square centered on the mass center of the input ROI(s)")
+            "Converts selected ROI(s) to Square ROI centered on the mass center of the input ROI(s)")
     {
         @Override
         public boolean doAction(ActionEvent e)
