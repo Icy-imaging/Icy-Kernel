@@ -250,7 +250,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         gbc_label.gridx = 3;
         gbc_label.gridy = 7;
         mainPanel.add(label, gbc_label);
-        JLabel lblCacheLocation = new JLabel(" Data cache location");
+        JLabel lblCacheLocation = new JLabel(" Disk data cache location");
         lblCacheLocation.setToolTipText(
                 "Folder used to store image data cache (it's recommended to use fast storage location as SSD disk)");
         GridBagConstraints gbc_lblCacheLocation = new GridBagConstraints();

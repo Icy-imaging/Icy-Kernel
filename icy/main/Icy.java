@@ -234,11 +234,35 @@ public class Icy
             // set LOCI debug level (do it immediately as it can quickly show some log messages)
             loci.common.DebugTools.enableLogging("ERROR");
 
-            // initialize network (need preferences)
-            NetworkUtil.init();
-            // load plugins classes (need preferences init)
-            PluginLoader.reloadAsynch();
-            WorkspaceLoader.reloadAsynch();
+            // fast start
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // force image cache initialization so GUI won't wait after it (need preferences init)
+                    ImageCache.isEnabled();
+                }
+            }, "Initializer 1").start();
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // initialize network (need preferences init)
+                    NetworkUtil.init();
+                }
+            }, "Initializer 2").start();
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // load plugins classes (need preferences init)
+                    PluginLoader.reloadAsynch();
+                    WorkspaceLoader.reloadAsynch();
+                }
+            }, "Initializer 3").start();
 
             try
             {

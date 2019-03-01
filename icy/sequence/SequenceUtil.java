@@ -676,7 +676,7 @@ public class SequenceUtil
         {
             for (int t = 0; t < sizeT; t++)
                 for (int z = 0; z < sizeZ; z++)
-                    save.setImage(t, z, sequence.getImage(t, z, false));
+                    save.setImage(t, z, sequence.getImage(t, z));
         }
         finally
         {
@@ -690,7 +690,7 @@ public class SequenceUtil
 
             for (int t = 0; t < sizeT; t++)
                 for (int z = 0; z < sizeZ; z++)
-                    sequence.setImage(sizeT - (t + 1), z, save.getImage(t, z, false));
+                    sequence.setImage(sizeT - (t + 1), z, save.getImage(t, z));
         }
         finally
         {
@@ -789,8 +789,8 @@ public class SequenceUtil
         {
             for (int t = 0; t < sizeT; t++)
             {
-                final IcyBufferedImage image1 = sequence.getImage(t, z1, false);
-                final IcyBufferedImage image2 = sequence.getImage(t, z2, false);
+                final IcyBufferedImage image1 = sequence.getImage(t, z1);
+                final IcyBufferedImage image2 = sequence.getImage(t, z2);
 
                 // set image at new position
                 if (image1 != null)
@@ -832,7 +832,7 @@ public class SequenceUtil
         {
             for (int t = 0; t < sizeT; t++)
             {
-                final IcyBufferedImage image = sequence.getImage(t, z, false);
+                final IcyBufferedImage image = sequence.getImage(t, z);
 
                 if (image != null)
                 {
@@ -952,7 +952,7 @@ public class SequenceUtil
         {
             for (int t = 0; t < sizeT; t++)
                 for (int z = 0; z < sizeZ; z++)
-                    save.setImage(t, z, sequence.getImage(t, z, false));
+                    save.setImage(t, z, sequence.getImage(t, z));
         }
         finally
         {
@@ -966,7 +966,7 @@ public class SequenceUtil
 
             for (int t = 0; t < sizeT; t++)
                 for (int z = 0; z < sizeZ; z++)
-                    sequence.setImage(t, sizeZ - (z + 1), save.getImage(t, z, false));
+                    sequence.setImage(t, sizeZ - (z + 1), save.getImage(t, z));
         }
         finally
         {

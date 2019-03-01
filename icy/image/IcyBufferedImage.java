@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -159,7 +160,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public static IcyBufferedImage getIcyBufferedImage(Integer idHashCode)
     {
-        final WeakIcyBufferedImageReference ref = images.get(idHashCode);
+        final WeakIcyBufferedImageReference ref;
+
+        synchronized (images)
+        {
+            ref = images.get(idHashCode);
+        }
 
         if (ref != null)
             return ref.get();
@@ -604,7 +610,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         super(cm, wr, false, null);
 
         // store it in the hashmap (weak reference)
-        images.put(Integer.valueOf(System.identityHashCode(this)), new WeakIcyBufferedImageReference(this));
+        synchronized (images)
+        {
+            images.put(Integer.valueOf(System.identityHashCode(this)), new WeakIcyBufferedImageReference(this));
+        }
 
         imageSourceInfo = null;
         width = wr.getWidth();
@@ -931,16 +940,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         // image has been released, be sure to clear cache
         ImageCache.remove(this);
-        // remove it from hashmap
-        images.remove(Integer.valueOf(System.identityHashCode(this)));
 
-        // if (imageSourceInfo != null)
-        // System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
-        // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
-        // + imageSourceInfo.toString());
-        // else
-        // System.out.println("Removed from cache image " + System.identityHashCode(this) + " - "
-        // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - NULL");
+        // remove it from hashmap
+        synchronized (images)
+        {
+            images.remove(Integer.valueOf(System.identityHashCode(this)));
+        }
 
         super.finalize();
     }
@@ -1443,7 +1448,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     protected WritableRaster loadRasterFromCache()
     {
-        Object rasterData;
+        Object rasterData = null;
+        boolean datalost = false;
 
         try
         {
@@ -1452,11 +1458,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
         catch (Throwable e)
         {
+            datalost = true;
             System.err.println(e.getMessage());
-            System.err.println("ImageCache error: couldn't get image data from cache (data lost)");
-
-            // create empty data (don't even try to save it in cache as disk may be full)
-            rasterData = createEmptyRasterData();
         }
 
         // should happen only for unmodified data
@@ -1464,60 +1467,29 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             // we should be able to initialize data back
             rasterData = initializeData();
-            // no data (should never happen) --> create empty data
+
+            // couldn't initialize data ? create empty data without saving in cache (we want to retry later)
             if (rasterData == null)
             {
-                createEmptyRasterData();
-                System.err.println("IcyBufferedImage.loadRasterFromCache: cannot find image data in cache (data lost)");
+                rasterData = createEmptyRasterData();
+
+                //// don't notify twice
+                // if (!datalost)
+                // System.err.println("IcyBufferedImage.loadRasterFromCache: cannot get image data (data lost)");
             }
-
-            // save it in cache but not eternal
-            saveRasterDataInCache(rasterData, false);
+            else
+            {
+                // data could not be loaded from cache but was correctly restored
+                if (datalost)
+                    System.out.println("Data re-initialized (changes are lost)");
+                
+                // save it in cache (not eternal here as this is default data) 
+                saveRasterDataInCache(rasterData, false);
+            }
         }
-
-        // final int size = Array.getLength(rasterData);
-        // final double[] max = new double[size];
-        //
-        // for (int c = 0; c < max.length; c++)
-        // {
-        // Object array = Array.get(rasterData, c);
-        // max[c] = ArrayMath.max(array, false);
-        // }
-        //
-        // System.out.println("loadCache:" + System.identityHashCode(this) + "=" + Arrays.toString(max));
 
         return buildRaster(rasterData);
     }
-
-    // public double[] getDataMax(Object rasterData)
-    // {
-    // final int size = Array.getLength(rasterData);
-    // final double[] max = new double[size];
-    //
-    // for (int c = 0; c < max.length; c++)
-    // {
-    // Object array = Array.get(rasterData, c);
-    // max[c] = ArrayMath.max(array, false);
-    // }
-    //
-    // return max;
-    // }
-    //
-    // public int getKey()
-    // {
-    // return System.identityHashCode(this);
-    // }
-    //
-    // public String getDebugString(Object rasterData)
-    // {
-    // final double[] max = getDataMax(rasterData);
-    // return getKey() + "=" + Arrays.toString(max);
-    // }
-    //
-    // public String getDebugString()
-    // {
-    // return getDebugString(getRasterData(getRaster()));
-    // }
 
     /**
      * Explicitly save the image data in cache (only for volatile image)
@@ -1548,30 +1520,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             try
             {
-                // if (imageSourceInfo != null)
-                // System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
-                // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence") + " - "
-                // + imageSourceInfo.toString() + " - " + Boolean.valueOf(eternal).toString());
-                // else
-                // System.out.println("Set in cache image " + System.identityHashCode(this) + " - "
-                // + ((getOwnerSequence() != null) ? getOwnerSequence().getName() : "no sequence")
-                // + " - NULL - " + Boolean.valueOf(eternal).toString());
-                //
                 ImageCache.set(this, rasterData, eternal);
-                //
-                // if (eternal)
-                // imagesMax.put(Integer.valueOf(getKey()), getDataMax(rasterData));
-                // else
-                // {
-                // double[] max = (double[]) imagesMax.get(Integer.valueOf(getKey()));
-                // if (max != null)
-                // System.out.println("old=" + Arrays.toString(max) + " - new: " + getDebugString(rasterData));
-                // }
             }
             catch (Throwable e)
             {
                 System.err.println(e.getMessage());
-                System.err.println("ImageCache error: couldn't save image data in cache (data may be lost)");
             }
         }
     }
@@ -1666,12 +1619,20 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             // load data from importer
             return loadDataFromImporter();
         }
+        catch (ClosedByInterruptException e)
+        {
+            System.err.println(
+                    "IcyBufferedImage.loadDataFromImporter() warning: image loading from ImageProvider was interrupted !");
+            // we want to keep the interrupted state here
+            Thread.currentThread().interrupt();
+
+            return null;
+        }
         catch (Exception e)
         {
             System.err.println(e.getMessage());
             System.err.println(
                     "IcyBufferedImage.loadDataFromImporter() warning: cannot get image from ImageProvider (possible data loss).");
-            // IcyExceptionHandler.showErrorMessage(e, true);
 
             return null;
         }

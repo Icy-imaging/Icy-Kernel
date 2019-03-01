@@ -11,7 +11,6 @@ import java.util.Map;
 
 import icy.image.IcyBufferedImage;
 import icy.preferences.ApplicationPreferences;
-import icy.sequence.Sequence;
 
 /**
  * Image Cache static util class.<br>
@@ -48,7 +47,7 @@ public class ImageCache
 
         return result;
     }
-
+    
     public static boolean isEnabled()
     {
         return cache.isEnabled();
@@ -88,7 +87,7 @@ public class ImageCache
     /**
      * Get all data {@link IcyBufferedImage} in the cache
      */
-    public static Collection<IcyBufferedImage> getAllKeys()
+    public static Collection<IcyBufferedImage> getAllKeys() throws CacheException
     {
         return getImages(cache.getAllKeys(), false);
     }
@@ -96,7 +95,7 @@ public class ImageCache
     /**
      * Get the corresponding data array (2D native array) from cache from a given {@link IcyBufferedImage}
      */
-    public static Object get(IcyBufferedImage key)
+    public static Object get(IcyBufferedImage key) throws CacheException
     {
         return cache.get(getKey(key));
     }
@@ -104,7 +103,7 @@ public class ImageCache
     /**
      * Get all data array from cache from a given Collection of {@link IcyBufferedImage}
      */
-    public static Map<IcyBufferedImage, Object> get(Collection<IcyBufferedImage> keys)
+    public static Map<IcyBufferedImage, Object> get(Collection<IcyBufferedImage> keys) throws CacheException
     {
         final Map<IcyBufferedImage, Object> result = new HashMap<IcyBufferedImage, Object>();
 
@@ -117,7 +116,7 @@ public class ImageCache
     /**
      * Put the specified data array (2D native array) into cache with its associated key
      */
-    public static void set(IcyBufferedImage key, Object object, boolean eternal)
+    public static void set(IcyBufferedImage key, Object object, boolean eternal) throws CacheException
     {
         cache.set(getKey(key), object, eternal);
     }
@@ -125,18 +124,9 @@ public class ImageCache
     /**
      * Remove an object from the cache from its key
      */
-    public static void remove(IcyBufferedImage key)
+    public static void remove(IcyBufferedImage key) throws CacheException
     {
         cache.remove(getKey(key));
-    }
-
-    /**
-     * Remove all data for this sequence from the cache
-     */
-    public static void remove(Sequence sequence)
-    {
-        for (IcyBufferedImage image : sequence.getAllImage())
-            remove(image);
     }
 
     /**

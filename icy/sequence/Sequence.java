@@ -3286,9 +3286,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public IcyBufferedImage getImage(int t, int z)
     {
+        // FIXME: check if that is *really* not needed anymore (as the image contains the importer information)
+
         // by default we prefer to load data on getImage(t,z) call as we probably need it
         // (and that is important if we want to set the image in another Sequence)
-        return getImage(t, z, true);
+        // return getImage(t, z, true);
+
+        return getImage(t, z, false);
     }
 
     /**

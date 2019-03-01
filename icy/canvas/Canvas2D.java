@@ -2779,7 +2779,6 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                     if (EventUtil.isShiftDown(e, true))
                     {
                         final Sequence sequence = getSequence();
-                        final Viewer viewer = getViewer();
                         if ((viewer != null) && (sequence != null))
                             viewer.setLut(sequence.createCompatibleLUT());
                     }

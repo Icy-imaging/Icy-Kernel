@@ -75,27 +75,27 @@ public abstract class AbstractCache
     /**
      * Get all element keys in the cache
      */
-    public abstract Collection<Integer> getAllKeys();
+    public abstract Collection<Integer> getAllKeys() throws CacheException;
 
     /**
      * Get an object from cache from its key
      */
-    public abstract Object get(Integer key);
+    public abstract Object get(Integer key) throws CacheException;
 
     /**
      * Put an object in cache with its associated key
      */
-    public abstract void set(Integer key, Object object, boolean eternal);
+    public abstract void set(Integer key, Object object, boolean eternal) throws CacheException;
 
     /**
      * Clear the cache
      */
-    public abstract void clear();
+    public abstract void clear() throws CacheException;
 
     /**
      * Remove an object from the cache from its key
      */
-    public abstract void remove(Integer key);
+    public abstract void remove(Integer key) throws CacheException;
 
     /**
      * Call it when you're done with the cache (release resources and cleanup)

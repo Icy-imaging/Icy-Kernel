@@ -1150,6 +1150,9 @@ public class VtkUtil
         polyToImgStencil.SetOutputOrigin(origin);
         polyToImgStencil.SetOutputSpacing(spacing);
         polyToImgStencil.SetOutputWholeExtent(whiteImage.GetExtent());
+        // better to set tolerance to 0 (fastest and most permissive miss) for now
+        // as more aggressive tolerance (up to 1) can add random points (known issue from VTK 6.3, maybe fixed in VTK 7.0 or >)
+        polyToImgStencil.SetTolerance(0);
         polyToImgStencil.Update();
 
         // cut the corresponding white image and set the background:
