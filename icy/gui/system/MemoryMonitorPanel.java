@@ -248,8 +248,17 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             // don't update cache stats (take sometime) at each frame
             if (--lastCacheUpdate == 0)
             {
-                setInfo(2, "Cache - Memory: " + UnitUtil.getBytesString(ImageCache.usedMemory()) + "  Disk: "
+            	try
+            	{
+            		setInfo(2, "Cache - Memory: " + UnitUtil.getBytesString(ImageCache.usedMemory()) + "  Disk: "
                         + UnitUtil.getBytesString(ImageCache.usedDisk()));
+            	}
+            	catch(Throwable t)
+            	{
+            		// can happen when we exit Icy as the cache engine may be shutdown
+            		// we can ignore safely
+            	}
+            	
                 lastCacheUpdate = 10;
             }
         }
