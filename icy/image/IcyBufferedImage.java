@@ -44,6 +44,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.media.jai.PlanarImage;
 
@@ -66,6 +73,7 @@ import icy.math.Scaler;
 import icy.preferences.GeneralPreferences;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceIdImporter;
+import icy.system.SystemUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
@@ -149,10 +157,154 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
     }
 
+    private static class ImageDataLoaderWorker implements Callable<Object>
+    {
+        final WeakReference<IcyBufferedImage> imageRef;
+
+        ImageDataLoaderWorker(IcyBufferedImage image)
+        {
+            super();
+
+            this.imageRef = new WeakReference<>(image);
+        }
+
+        @Override
+        public Object call() throws Exception
+        {
+            final IcyBufferedImage image = imageRef.get();
+
+            // image has been released, we probably don't need its data anymore...
+            if (image == null)
+                return null;
+
+            // not null here
+            final ImageSourceInfo imageSourceInfo = image.imageSourceInfo;
+            final SequenceIdImporter imp = imageSourceInfo.imp;
+
+            // importer not opened ? --> cannot load
+            if (StringUtil.isEmpty(imp.getOpened()))
+                throw new IOException("Cannot load image data: Sequence importer is closed.");
+
+            final int sizeC = image.getSizeC();
+            // create the result array (always 2D native type)
+            final Object[] result = Array2DUtil.createArray(image.getDataType_(), sizeC);
+
+            // all channels ?
+            if ((imageSourceInfo.c == -1) && (sizeC > 1))
+            {
+                // better to directly load image
+                final IcyBufferedImage newImage = imp.getImage(imageSourceInfo.series, imageSourceInfo.resolution,
+                        imageSourceInfo.region, imageSourceInfo.z, imageSourceInfo.t);
+                // then get data
+                for (int c = 0; c < sizeC; c++)
+                    result[c] = newImage.getDataXY(c);
+            }
+            else
+            {
+                // all channel for single channel image --> channel 0
+                final int startC = (imageSourceInfo.c == -1) ? 0 : imageSourceInfo.c;
+                // directly load pixel data
+                for (int c = 0; c < sizeC; c++)
+                    result[c] = imp.getPixels(imageSourceInfo.series, imageSourceInfo.resolution,
+                            imageSourceInfo.region, imageSourceInfo.z, imageSourceInfo.t, startC + c);
+            }
+
+            return result;
+        }
+
+        IcyBufferedImage getImage()
+        {
+            return imageRef.get();
+        }
+    }
+
+    private static class ImageDataLoaderTask extends FutureTask<Object>
+    {
+        final ImageDataLoaderWorker worker;
+
+        ImageDataLoaderTask(ImageDataLoaderWorker worker)
+        {
+            super(worker);
+
+            this.worker = worker;
+        }
+
+        IcyBufferedImage getImage()
+        {
+            return worker.getImage();
+        }
+    }
+
+    private static class ImageDataLoader
+    {
+        final ThreadPoolExecutor executor;
+
+        public ImageDataLoader()
+        {
+            super();
+
+            int numWorker = SystemUtil.getNumberOfCPUs();
+            executor = new ThreadPoolExecutor(numWorker, numWorker * 2, 5L, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<Runnable>());
+        }
+
+        Object loadImageData(IcyBufferedImage image) throws ExecutionException, InterruptedException
+        {
+            final ImageDataLoaderTask task = new ImageDataLoaderTask(new ImageDataLoaderWorker(image));
+
+            executor.execute(task);
+
+            try
+            {
+                return task.get();
+            }
+            catch (InterruptedException e)
+            {
+                // process interrupted ? remove task from executor queue if possible
+                executor.remove(task);
+                // cancel the task (without interrupting current running task as this close the importer)
+                task.cancel(false);
+
+                // re throw interrupt
+                throw e;
+            }
+        }
+
+        void cancelTasks(IcyBufferedImage image)
+        {
+            final List<ImageDataLoaderTask> tasks = new ArrayList<>();
+            final BlockingQueue<Runnable> queue = executor.getQueue();
+
+            synchronized (queue)
+            {
+                for (Runnable task : queue)
+                {
+                    final ImageDataLoaderTask imgTask = (ImageDataLoaderTask) task;
+                    final IcyBufferedImage imgImage = imgTask.getImage();
+
+                    if ((imgImage == null) || (imgImage == image))
+                        tasks.add(imgTask);
+                }
+            }
+
+            // remove pending tasks for that image
+            for (ImageDataLoaderTask task : tasks)
+            {
+                executor.remove(task);
+                task.cancel(false);
+            }
+        }
+    }
+
+    /**
+     * Used for image / data loading from importer
+     */
+    static ImageDataLoader imageDataLoader = new ImageDataLoader();
+
     /**
      * Used internally to find out an image from its identity hash code
      */
-    static Map<Integer, WeakIcyBufferedImageReference> images = new HashMap<Integer, WeakIcyBufferedImageReference>();
+    static Map<Integer, WeakIcyBufferedImageReference> images = new HashMap<>();
     // static Map<Integer, Object> imagesMax = new HashMap<Integer, Object>();
 
     /**
@@ -271,7 +423,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (imageList.size() == 0)
             throw new IllegalArgumentException("imageList should contains at least 1 image");
 
-        final List<IcyBufferedImage> icyImageList = new ArrayList<IcyBufferedImage>();
+        final List<IcyBufferedImage> icyImageList = new ArrayList<>();
 
         // transform images to icy images
         for (BufferedImage image : imageList)
@@ -627,7 +779,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         this.autoUpdateChannelBounds = autoUpdateChannelBounds;
 
         updater = new UpdateEventHandler(this, false);
-        listeners = new ArrayList<IcyBufferedImageListener>();
+        listeners = new ArrayList<>();
 
         // default
         rasterField = null;
@@ -938,6 +1090,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     @Override
     protected void finalize() throws Throwable
     {
+        // cancel any pending loading tasks for this image
+        imageDataLoader.cancelTasks(this);
         // image has been released, be sure to clear cache
         ImageCache.remove(this);
 
@@ -1482,8 +1636,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 // data could not be loaded from cache but was correctly restored
                 if (datalost)
                     System.out.println("Data re-initialized (changes are lost)");
-                
-                // save it in cache (not eternal here as this is default data) 
+
+                // save it in cache (not eternal here as this is default data)
                 saveRasterDataInCache(rasterData, false);
             }
         }
@@ -1619,10 +1773,22 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             // load data from importer
             return loadDataFromImporter();
         }
-        catch (ClosedByInterruptException e)
+        catch (InterruptedException e)
         {
             System.err.println(
-                    "IcyBufferedImage.loadDataFromImporter() warning: image loading from ImageProvider was interrupted !");
+                    "IcyBufferedImage.loadDataFromImporter() warning: image loading from ImageProvider was interrupted (image data not retrieved).");
+
+            // we want to keep the interrupted state here
+            Thread.currentThread().interrupt();
+
+            return null;
+        }
+        catch (ClosedByInterruptException e)
+        {
+            // this one should never happen as loading is done in a separate thread (executor)
+            System.err.println(
+                    "IcyBufferedImage.loadDataFromImporter() error: image loading from ImageProvider was interrupted (further image won't be loaded) !");
+
             // we want to keep the interrupted state here
             Thread.currentThread().interrupt();
 
@@ -1630,7 +1796,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
         catch (Exception e)
         {
-            System.err.println(e.getMessage());
+            System.err.println(e);
             System.err.println(
                     "IcyBufferedImage.loadDataFromImporter() warning: cannot get image from ImageProvider (possible data loss).");
 
@@ -1653,43 +1819,27 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         return result;
     }
 
-    protected Object loadDataFromImporter() throws UnsupportedFormatException, IOException
+    protected Object loadDataFromImporter() throws UnsupportedFormatException, IOException, InterruptedException
     {
         // image source information not defined (not attached to importer) ? --> create empty data
         if (imageSourceInfo == null)
             return createEmptyRasterData();
 
-        final SequenceIdImporter imp = imageSourceInfo.imp;
-
-        // importer not opened ? --> cannot load
-        if (StringUtil.isEmpty(imp.getOpened()))
-            throw new IOException("Cannot load image data: Sequence importer is closed.");
-
-        final int sizeC = getSizeC();
-        // create the result array (always 2D native type)
-        final Object[] result = Array2DUtil.createArray(getDataType_(), sizeC);
-
-        // all channel ?
-        if ((imageSourceInfo.c == -1) && (sizeC > 1))
+        try
         {
-            // better to directly load image
-            final IcyBufferedImage image = imp.getImage(imageSourceInfo.series, imageSourceInfo.resolution,
-                    imageSourceInfo.region, imageSourceInfo.z, imageSourceInfo.t);
-            // then get data
-            for (int c = 0; c < sizeC; c++)
-                result[c] = image.getDataXY(c);
+            // get data from importer using
+            return imageDataLoader.loadImageData(this);
         }
-        else
+        catch (ExecutionException e)
         {
-            // all channel for single channel image --> channel 0
-            final int startC = (imageSourceInfo.c == -1) ? 0 : imageSourceInfo.c;
-            // directly load pixel data
-            for (int c = 0; c < sizeC; c++)
-                result[c] = imp.getPixels(imageSourceInfo.series, imageSourceInfo.resolution, imageSourceInfo.region,
-                        imageSourceInfo.z, imageSourceInfo.t, startC + c);
-        }
+            final Throwable cause = e.getCause();
 
-        return result;
+            if (cause instanceof UnsupportedFormatException)
+                throw ((UnsupportedFormatException) cause);
+            if (cause instanceof IOException)
+                throw ((IOException) cause);
+            throw new IOException(cause);
+        }
     }
 
     /**
@@ -4795,7 +4945,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     protected void fireChangeEvent(IcyBufferedImageEvent e)
     {
-        for (IcyBufferedImageListener listener : new ArrayList<IcyBufferedImageListener>(listeners))
+        for (IcyBufferedImageListener listener : new ArrayList<>(listeners))
             listener.imageChanged(e);
     }
 
