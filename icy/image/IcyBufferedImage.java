@@ -165,7 +165,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             super();
 
-            this.imageRef = new WeakReference<>(image);
+            this.imageRef = new WeakReference<IcyBufferedImage>(image);
         }
 
         @Override
@@ -272,7 +272,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         void cancelTasks(IcyBufferedImage image)
         {
-            final List<ImageDataLoaderTask> tasks = new ArrayList<>();
+            final List<ImageDataLoaderTask> tasks = new ArrayList<ImageDataLoaderTask>();
             final BlockingQueue<Runnable> queue = executor.getQueue();
 
             synchronized (queue)
@@ -304,7 +304,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Used internally to find out an image from its identity hash code
      */
-    static Map<Integer, WeakIcyBufferedImageReference> images = new HashMap<>();
+    static Map<Integer, WeakIcyBufferedImageReference> images = new HashMap<Integer, WeakIcyBufferedImageReference>();
     // static Map<Integer, Object> imagesMax = new HashMap<Integer, Object>();
 
     /**
@@ -423,7 +423,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (imageList.size() == 0)
             throw new IllegalArgumentException("imageList should contains at least 1 image");
 
-        final List<IcyBufferedImage> icyImageList = new ArrayList<>();
+        final List<IcyBufferedImage> icyImageList = new ArrayList<IcyBufferedImage>();
 
         // transform images to icy images
         for (BufferedImage image : imageList)
@@ -779,7 +779,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         this.autoUpdateChannelBounds = autoUpdateChannelBounds;
 
         updater = new UpdateEventHandler(this, false);
-        listeners = new ArrayList<>();
+        listeners = new ArrayList<IcyBufferedImageListener>();
 
         // default
         rasterField = null;
@@ -4945,7 +4945,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     protected void fireChangeEvent(IcyBufferedImageEvent e)
     {
-        for (IcyBufferedImageListener listener : new ArrayList<>(listeners))
+        for (IcyBufferedImageListener listener : new ArrayList<IcyBufferedImageListener>(listeners))
             listener.imageChanged(e);
     }
 

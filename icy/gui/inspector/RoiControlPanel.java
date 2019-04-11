@@ -121,7 +121,7 @@ public class RoiControlPanel extends JPanel
         this.roisPanel = roisPanel;
 
         modifyingRoi = new Semaphore(1);
-        modifiedRois = new ArrayList<>();
+        modifiedRois = new ArrayList<Reference<ROI>>();
 
         roiActionsRefresher = new Runnable()
         {
@@ -859,7 +859,7 @@ public class RoiControlPanel extends JPanel
         }
 
         // at this point the text is validated so we can recover modified ROIs...
-        final List<ROI> rois = new ArrayList<>();
+        final List<ROI> rois = new ArrayList<ROI>();
         for (Reference<ROI> ref : modifiedRois)
         {
             final ROI roi = ref.get();

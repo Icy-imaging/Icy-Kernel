@@ -103,7 +103,7 @@ public class EHCache2 extends AbstractCache
     {
         super();
 
-        eternalStoredKeys = new HashSet<>();
+        eternalStoredKeys = new HashSet<Integer>();
 
         // get old ehcache agent JAR files
         final String[] oldFiles = FileUtil.getFiles(FileUtil.getTempDirectory(), new FileFilter()
