@@ -48,10 +48,8 @@ public interface SequenceFileImporter extends SequenceIdImporter
     public boolean acceptFile(String path);
 
     /**
-     * @return The path of the image file of the image currently opened or <code>null</code>
-     *         otherwise.<br>
-     *         Note that path is always returned in generic java path style (see
-     *         {@link FileUtil#getGenericPath(String)} method).
+     * @return The path of the image file of the image currently opened or <code>null</code> otherwise.<br>
+     *         Note that path is always returned in generic java path style (see {@link FileUtil#getGenericPath(String)} method).
      * @see #open(String, int)
      * @see #close()
      */
@@ -59,8 +57,7 @@ public interface SequenceFileImporter extends SequenceIdImporter
     public String getOpened();
 
     /**
-     * Open the image designed by the specified file <code>path</code> to allow image data /
-     * metadata access.<br>
+     * Open the image designed by the specified file <code>path</code> to allow image data / metadata access.<br>
      * Calling this method will automatically close the previous opened image.<br>
      * Don't forget to call {@link #close()} to close the image when you're done.<br>
      * 
