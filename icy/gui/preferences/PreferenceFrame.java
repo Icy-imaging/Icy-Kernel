@@ -18,14 +18,6 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.dialog.ConfirmDialog;
-import icy.gui.frame.IcyFrame;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.WindowPositionSaver;
-import icy.main.Icy;
-import icy.preferences.IcyPreferences;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -47,6 +39,14 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
+
+import icy.gui.dialog.ConfirmDialog;
+import icy.gui.frame.IcyFrame;
+import icy.gui.util.ComponentUtil;
+import icy.gui.util.WindowPositionSaver;
+import icy.main.Icy;
+import icy.preferences.IcyPreferences;
+import icy.util.StringUtil;
 
 /**
  * @author fab & stephane
@@ -92,9 +92,9 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
         preferencePanels = new ArrayList<PreferencePanel>();
 
         preferencePanels.add(new GeneralPreferencePanel(this));
+        preferencePanels.add(new GUICanvasPreferencePanel(this));
         preferencePanels.add(new NetworkPreferencePanel(this));
-        preferencePanels.add(new CanvasPreferencePanel(this));
-//        preferencePanels.add(new ChatPreferencePanel(this));
+        // preferencePanels.add(new ChatPreferencePanel(this));
         preferencePanels.add(new RepositoryPreferencePanel(this));
         preferencePanels.add(new PluginPreferencePanel(this));
         preferencePanels.add(new PluginLocalPreferencePanel(this));

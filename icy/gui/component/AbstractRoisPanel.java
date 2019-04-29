@@ -18,41 +18,6 @@
  */
 package icy.gui.component;
 
-import icy.action.RoiActions;
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.canvas.IcyCanvas3D;
-import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.renderer.ImageTableCellRenderer;
-import icy.gui.inspector.RoiSettingFrame;
-import icy.gui.main.ActiveSequenceListener;
-import icy.gui.util.GuiUtil;
-import icy.gui.util.LookAndFeelUtil;
-import icy.gui.viewer.Viewer;
-import icy.main.Icy;
-import icy.math.MathUtil;
-import icy.plugin.PluginLoader;
-import icy.plugin.PluginLoader.PluginLoaderEvent;
-import icy.plugin.PluginLoader.PluginLoaderListener;
-import icy.plugin.interface_.PluginROIDescriptor;
-import icy.preferences.XMLPreferences;
-import icy.roi.ROI;
-import icy.roi.ROIDescriptor;
-import icy.roi.ROIEvent;
-import icy.roi.ROIEvent.ROIEventType;
-import icy.roi.ROIListener;
-import icy.roi.ROIUtil;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent;
-import icy.sequence.SequenceEvent.SequenceEventSourceType;
-import icy.system.IcyExceptionHandler;
-import icy.system.thread.InstanceProcessor;
-import icy.system.thread.ThreadUtil;
-import icy.type.rectangle.Rectangle5D;
-import icy.util.ClassUtil;
-import icy.util.StringUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -103,6 +68,40 @@ import org.jdesktop.swingx.table.TableColumnExt;
 import org.pushingpixels.substance.api.renderers.SubstanceDefaultTableCellRenderer;
 import org.pushingpixels.substance.api.skin.SkinChangeListener;
 
+import icy.action.RoiActions;
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
+import icy.gui.component.IcyTextField.TextChangeListener;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.renderer.ImageTableCellRenderer;
+import icy.gui.inspector.RoiSettingFrame;
+import icy.gui.main.ActiveSequenceListener;
+import icy.gui.util.GuiUtil;
+import icy.gui.util.LookAndFeelUtil;
+import icy.gui.viewer.Viewer;
+import icy.main.Icy;
+import icy.math.MathUtil;
+import icy.plugin.PluginLoader;
+import icy.plugin.PluginLoader.PluginLoaderEvent;
+import icy.plugin.PluginLoader.PluginLoaderListener;
+import icy.plugin.interface_.PluginROIDescriptor;
+import icy.preferences.XMLPreferences;
+import icy.roi.ROI;
+import icy.roi.ROIDescriptor;
+import icy.roi.ROIEvent;
+import icy.roi.ROIEvent.ROIEventType;
+import icy.roi.ROIListener;
+import icy.roi.ROIUtil;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceEvent.SequenceEventSourceType;
+import icy.system.IcyExceptionHandler;
+import icy.system.thread.InstanceProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle5D;
+import icy.util.ClassUtil;
+import icy.util.StringUtil;
 import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
 import plugins.kernel.roi.descriptor.intensity.ROIMeanIntensityDescriptor;
 import plugins.kernel.roi.descriptor.intensity.ROIMinIntensityDescriptor;
@@ -2115,7 +2114,13 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                 {
                     // start with primaries descriptors
                     for (ROIResults roiResults : roiResultsList)
+                    {
+                        // active sequence changed ? --> quickly discard other calculations
+                        if (seq != getSequence())
+                            break;
+
                         computeROIResults(roiResults, seq);
+                    }
                 }
             }
         }

@@ -391,10 +391,10 @@ public class GeneralActions
                     Audit.linkUser();
             }
 
-            // refresh user infos
+            // refresh user infos (in title)
             final MainFrame frame = Icy.getMainInterface().getMainFrame();
             if (frame != null)
-                frame.refreshUserInfos();
+                frame.refreshTitle();
 
             return true;
         }

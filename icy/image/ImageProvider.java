@@ -3,12 +3,11 @@
  */
 package icy.image;
 
-import icy.common.exception.UnsupportedFormatException;
-import icy.sequence.MetaDataUtil;
-
 import java.awt.Rectangle;
 import java.io.IOException;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.sequence.MetaDataUtil;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.meta.OMEXMLMetadata;
 
@@ -110,7 +109,8 @@ public interface ImageProvider
      *        Series index for multi series image (use 0 if unsure).
      * @return thumbnail image.
      */
-    public IcyBufferedImage getThumbnail(int series) throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getThumbnail(int series)
+            throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the pixel data located for specified position of the image.<br>
@@ -240,7 +240,8 @@ public interface ImageProvider
      *        T position of the image (frame) we want retrieve
      * @return image
      */
-    public IcyBufferedImage getImage(int series, int z, int t) throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getImage(int series, int z, int t)
+            throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the image located at specified position.

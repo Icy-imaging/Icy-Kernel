@@ -60,6 +60,8 @@ import plugins.kernel.importer.LociImporterPlugin;
  */
 public class SequenceFileGroupImporter extends AbstractImageProvider implements SequenceFileImporter
 {
+    static final int MAX_IMPORTER = 16;
+
     class FileCursor
     {
         public final SequencePosition position;
@@ -226,6 +228,27 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
     }
 
     /**
+     * Open the specified importer to the given path (internal use only).
+     * 
+     * @throws IOException
+     * @throws UnsupportedFormatException
+     * @see #releaseImporter(String, SequenceFileImporter)
+     */
+    protected boolean openImporter(SequenceFileImporter result, String path)
+            throws UnsupportedFormatException, IOException
+    {
+        // importer is already opened ? --> close it first
+        if (!StringUtil.isEmpty(result.getOpened()))
+            result.close();
+
+        // disable grouping for LOCI importer as we do it here
+        if (result instanceof LociImporterPlugin)
+            ((LociImporterPlugin) result).setGroupFiles(false);
+
+        return result.open(path, openFlags);
+    }
+
+    /**
      * Create and open a new importer for the given path (internal use only)
      */
     protected SequenceFileImporter createImporter(String path)
@@ -237,11 +260,8 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         // we should always use the same importer for a file group
         final SequenceFileImporter result = currentGroup.ident.importer.getClass().newInstance();
 
-        // disable grouping for LOCI importer as we do it here
-        if (result instanceof LociImporterPlugin)
-            ((LociImporterPlugin) result).setGroupFiles(false);
-
-        result.open(path, openFlags);
+        // open the importer for given path
+        openImporter(result, path);
 
         // // try to use the default group importer
         // SequenceFileImporter result = currentGroup.ident.importer;
@@ -257,13 +277,7 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
         //
         // // try to open it
         // if (result != null)
-        // {
-        // // disable grouping for LOCI importer as we do it here
-        // if (result instanceof LociImporterPlugin)
-        // ((LociImporterPlugin) result).setGroupFiles(false);
-        //
-        // result.open(path, openFlags);
-        // }
+        // openImporter(result, path);
 
         return result;
     }
@@ -307,15 +321,33 @@ public class SequenceFileGroupImporter extends AbstractImageProvider implements 
 
         try
         {
+            final int numImporter;
             SequenceFileImporter result;
 
             synchronized (importersPool)
             {
+                numImporter = importersPool.size();
                 result = importersPool.remove(path);
             }
 
+            // no available importer for this path ?
             if (result == null)
-                result = createImporter(path);
+            {
+                // we have already enough importers (we don't want to create too much of them)
+                if (numImporter >= MAX_IMPORTER)
+                {
+                    // recycle first importer found one
+                    result = getImporter(getFirstImporterPath());
+
+                    // correctly
+                    if (result != null)
+                        openImporter(result, path);
+                }
+
+                // need to create a new importer
+                if (result == null)
+                    result = createImporter(path);
+            }
 
             return result;
         }

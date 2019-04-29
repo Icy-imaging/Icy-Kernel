@@ -18,13 +18,6 @@
  */
 package icy.image;
 
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.type.DataType;
-import icy.type.collection.array.Array1DUtil;
-import icy.type.collection.array.ArrayType;
-import icy.type.collection.array.ArrayUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -40,6 +33,13 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.RotateDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.swing.SwingConstants;
+
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayType;
+import icy.type.collection.array.ArrayUtil;
 
 /**
  * {@link IcyBufferedImage} utilities class.<br>
@@ -299,21 +299,29 @@ public class IcyBufferedImageUtil
         final int sizeC = source.getSizeC();
         final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), sizeC, dataType);
 
-        for (int c = 0; c < sizeC; c++)
+        result.lockRaster();
+        try
         {
-            // no rescale ?
-            if ((scalers == null) || (c >= scalers.length) || scalers[c].isNull())
-                // simple type change
-                ArrayUtil.arrayToSafeArray(source.getDataXY(c), result.getDataXY(c), srcSigned, dstSigned);
-            else
+            for (int c = 0; c < sizeC; c++)
             {
-                // first we convert in double
-                final double[] darray = Array1DUtil.arrayToDoubleArray(source.getDataXY(c), srcSigned);
-                // then we scale data
-                scalers[c].scale(darray);
-                // and finally we convert in wanted datatype
-                Array1DUtil.doubleArrayToSafeArray(darray, result.getDataXY(c), dstSigned);
+                // no rescale ?
+                if ((scalers == null) || (c >= scalers.length) || scalers[c].isNull())
+                    // simple type change
+                    ArrayUtil.arrayToSafeArray(source.getDataXY(c), result.getDataXY(c), srcSigned, dstSigned);
+                else
+                {
+                    // first we convert in double
+                    final double[] darray = Array1DUtil.arrayToDoubleArray(source.getDataXY(c), srcSigned);
+                    // then we scale data
+                    scalers[c].scale(darray);
+                    // and finally we convert in wanted datatype
+                    Array1DUtil.doubleArrayToSafeArray(darray, result.getDataXY(c), dstSigned);
+                }
             }
+        }
+        finally
+        {
+            result.releaseRaster(true);
         }
 
         // copy colormap from source image
@@ -344,21 +352,29 @@ public class IcyBufferedImageUtil
         final int sizeC = source.getSizeC();
         final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), sizeC, dataType);
 
-        for (int c = 0; c < sizeC; c++)
+        result.lockRaster();
+        try
         {
-            // no rescale ?
-            if ((scaler == null) || scaler.isNull())
-                // simple type change
-                ArrayUtil.arrayToSafeArray(source.getDataXY(c), result.getDataXY(c), srcSigned, dstSigned);
-            else
+            for (int c = 0; c < sizeC; c++)
             {
-                // first we convert in double
-                final double[] darray = Array1DUtil.arrayToDoubleArray(source.getDataXY(c), srcSigned);
-                // then we scale data
-                scaler.scale(darray);
-                // and finally we convert in wanted datatype
-                Array1DUtil.doubleArrayToSafeArray(darray, result.getDataXY(c), dstSigned);
+                // no rescale ?
+                if ((scaler == null) || scaler.isNull())
+                    // simple type change
+                    ArrayUtil.arrayToSafeArray(source.getDataXY(c), result.getDataXY(c), srcSigned, dstSigned);
+                else
+                {
+                    // first we convert in double
+                    final double[] darray = Array1DUtil.arrayToDoubleArray(source.getDataXY(c), srcSigned);
+                    // then we scale data
+                    scaler.scale(darray);
+                    // and finally we convert in wanted datatype
+                    Array1DUtil.doubleArrayToSafeArray(darray, result.getDataXY(c), dstSigned);
+                }
             }
+        }
+        finally
+        {
+            result.releaseRaster(true);
         }
 
         // copy colormap from source image
@@ -506,23 +522,30 @@ public class IcyBufferedImageUtil
         final boolean signed = dataType.isSigned();
 
         final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, adjSizeC, dataType);
-
         final int srcSizeX = source.getSizeX();
 
-        for (int ch = startC; ch < endC; ch++)
+        result.lockRaster();
+        try
         {
-            final Object src = source.getDataXY(ch);
-            final Object dst = result.getDataXY(ch - startC);
-
-            int srcOffset = source.getOffset(startX, startY);
-            int dstOffset = 0;
-
-            for (int curY = 0; curY < sizeY; curY++)
+            for (int ch = startC; ch < endC; ch++)
             {
-                Array1DUtil.arrayToArray(src, srcOffset, dst, dstOffset, sizeX, signed);
-                srcOffset += srcSizeX;
-                dstOffset += sizeX;
+                final Object src = source.getDataXY(ch);
+                final Object dst = result.getDataXY(ch - startC);
+
+                int srcOffset = source.getOffset(startX, startY);
+                int dstOffset = 0;
+
+                for (int curY = 0; curY < sizeY; curY++)
+                {
+                    Array1DUtil.arrayToArray(src, srcOffset, dst, dstOffset, sizeX, signed);
+                    srcOffset += srcSizeX;
+                    dstOffset += sizeX;
+                }
             }
+        }
+        finally
+        {
+            result.releaseRaster(true);
         }
 
         result.dataChanged();
@@ -1362,12 +1385,25 @@ public class IcyBufferedImageUtil
                     break;
             }
 
-            // use JAI scaler (use a copy to avoid source alteration)
-            final RenderedOp renderedOp = ScaleDescriptor.create(getCopy(source), xScale, yScale, Float.valueOf(0f),
-                    Float.valueOf(0f), interpolation, new RenderingHints(JAI.KEY_BORDER_EXTENDER,
-                            BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+            // use a copy as JAI may alter source data
+            final IcyBufferedImage srcCopy = getCopy(source);
 
-            result = IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
+            // better to lock raster during JAI operation
+            srcCopy.lockRaster();
+            try
+            {
+                // use JAI scaler
+                final RenderedOp renderedOp = ScaleDescriptor.create(srcCopy, xScale, yScale, Float.valueOf(0f),
+                        Float.valueOf(0f), interpolation, new RenderingHints(JAI.KEY_BORDER_EXTENDER,
+                                BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+
+                // get result
+                result = IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
+            }
+            finally
+            {
+                srcCopy.releaseRaster(false);
+            }
         }
 
         return result;
@@ -1459,47 +1495,55 @@ public class IcyBufferedImageUtil
             wCopy = sizeX - adx;
         }
 
-        final Object data = source.getDataXY(channel);
-
-        if (ady < 0)
+        source.lockRaster();
+        try
         {
-            final int hCopy = sizeY + ady;
-            int toOffset = 0;
-            int fromOffset = -ady * sizeX;
+            final Object data = source.getDataXY(channel);
 
-            // copy
-            for (int y = 0; y < hCopy; y++)
+            if (ady < 0)
             {
-                // copy first
-                Array1DUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
-                // then fill
-                Array1DUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
-                // adjust offset
-                fromOffset += sizeX;
-                toOffset += sizeX;
+                final int hCopy = sizeY + ady;
+                int toOffset = 0;
+                int fromOffset = -ady * sizeX;
+
+                // copy
+                for (int y = 0; y < hCopy; y++)
+                {
+                    // copy first
+                    Array1DUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
+                    // then fill
+                    Array1DUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
+                    // adjust offset
+                    fromOffset += sizeX;
+                    toOffset += sizeX;
+                }
+                // fill
+                Array1DUtil.fill(data, toOffset, fromOffset, 0d);
             }
-            // fill
-            Array1DUtil.fill(data, toOffset, fromOffset, 0d);
+            else
+            {
+                final int hCopy = sizeY - ady;
+                int toOffset = (sizeY - 1) * sizeX;
+                int fromOffset = toOffset - (ady * sizeX);
+
+                // copy
+                for (int y = 0; y < hCopy; y++)
+                {
+                    // copy first
+                    Array1DUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
+                    // then fill
+                    Array1DUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
+                    // adjust offset
+                    fromOffset -= sizeX;
+                    toOffset -= sizeX;
+                }
+                // fill
+                Array1DUtil.fill(data, 0, 0 + (ady * sizeX), 0d);
+            }
         }
-        else
+        finally
         {
-            final int hCopy = sizeY - ady;
-            int toOffset = (sizeY - 1) * sizeX;
-            int fromOffset = toOffset - (ady * sizeX);
-
-            // copy
-            for (int y = 0; y < hCopy; y++)
-            {
-                // copy first
-                Array1DUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
-                // then fill
-                Array1DUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
-                // adjust offset
-                fromOffset -= sizeX;
-                toOffset -= sizeX;
-            }
-            // fill
-            Array1DUtil.fill(data, 0, 0 + (ady * sizeX), 0d);
+            source.releaseRaster(true);
         }
 
         // notify data changed

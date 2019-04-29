@@ -18,14 +18,14 @@
  */
 package icy.image;
 
+import java.awt.Rectangle;
+import java.util.NoSuchElementException;
+
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.type.DataIterator;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
-
-import java.awt.Rectangle;
-import java.util.NoSuchElementException;
 
 /**
  * Image data iterator.<br>
@@ -54,6 +54,7 @@ public class ImageDataIterator implements DataIterator
     protected int x, y;
     protected int imgOff;
     protected int maskOff;
+    protected boolean changed;
     protected boolean done;
     protected Object data;
 
@@ -84,6 +85,8 @@ public class ImageDataIterator implements DataIterator
             imageBounds = image.getBounds();
             dataType = image.getDataType_();
             c = channel;
+            // retain data while we are iterating over image data
+            image.lockRaster();
         }
         else
         {
@@ -97,6 +100,8 @@ public class ImageDataIterator implements DataIterator
         // cached
         w = finalBounds.width;
         h = finalBounds.height;
+
+        changed = false;
 
         // start iterator
         reset();
@@ -191,6 +196,14 @@ public class ImageDataIterator implements DataIterator
     public ImageDataIterator(IcyBufferedImage image, ROI roi)
     {
         this(image, roi.getBooleanMask2D(0, 0, 0, false));
+    }
+
+    @Override
+    protected void finalize() throws Throwable
+    {
+        flush();
+        
+        super.finalize();
     }
 
     public int getMinX()
@@ -306,6 +319,7 @@ public class ImageDataIterator implements DataIterator
             throw new NoSuchElementException(null);
 
         Array1DUtil.setValue(data, imgOff, dataType, value);
+        changed = true;
     }
 
     /**
@@ -357,5 +371,13 @@ public class ImageDataIterator implements DataIterator
     public int getPositionC()
     {
         return getC();
+    }
+
+    public void flush()
+    {
+        // release image raster and save changes to cache
+        if (image != null)
+            image.releaseRaster(changed);
+        changed = false;
     }
 }

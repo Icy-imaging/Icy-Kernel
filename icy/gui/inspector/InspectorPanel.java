@@ -23,7 +23,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
@@ -32,14 +35,19 @@ import javax.swing.event.ChangeListener;
 
 import icy.gui.component.ExtTabbedPanel;
 import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.button.IcyToggleButton;
 import icy.gui.main.ActiveSequenceListener;
 import icy.gui.main.ActiveViewerListener;
+import icy.gui.main.MainFrame;
 import icy.gui.system.MemoryMonitorPanel;
 import icy.gui.system.OutputConsolePanel;
 import icy.gui.system.OutputConsolePanel.OutputConsoleChangeListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
@@ -65,6 +73,8 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
     final OutputConsolePanel outputConsolePanel;
     // final ChatPanel chatPanel;
 
+    final IcyToggleButton virtualModeBtn;
+
     /**
      * The width of the inner component of the inspector should not exceed 300.
      */
@@ -83,7 +93,29 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
         layersPanel = new LayersPanel();
         historyPanel = new UndoManagerPanel();
         outputConsolePanel = new OutputConsolePanel();
-//        chatPanel = new ChatPanel();
+        // chatPanel = new ChatPanel();
+
+        // virtual mode button (set the same size as memory monitor)
+        virtualModeBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_HDD_STREAM, 48));
+        virtualModeBtn.setToolTipText("Enable / disable the virtual mode (all images are created in virtual mode)");
+        virtualModeBtn.setHideActionText(true);
+        virtualModeBtn.setFlat(true);
+        virtualModeBtn.setFocusable(false);
+        virtualModeBtn.setSelected(GeneralPreferences.getVirtualMode());
+        virtualModeBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // switch virtual mode state
+                GeneralPreferences.setVirtualMode(!GeneralPreferences.getVirtualMode());
+
+                // refresh title (display virtual mode or not)
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+                if (mainFrame != null)
+                    mainFrame.refreshTitle();
+            }
+        });
 
         // add main tab panels
         mainPane.addTab("Sequence", null, new JScrollPane(sequencePanel,
@@ -94,7 +126,7 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("History", null, historyPanel, "Actions history");
         mainPane.addTab("Output", null, outputConsolePanel, "Console output");
-//        mainPane.addTab("Chat", null, chatPanel, "Chat room");
+        // mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
         // minimum required size for sequence infos panel
         final Dimension minDim = new Dimension(300, 480);
@@ -104,7 +136,16 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
         setLayout(new BorderLayout());
 
         add(mainPane, BorderLayout.CENTER);
-        add(new MemoryMonitorPanel(), BorderLayout.SOUTH);
+
+        // build bottom panel for inspector
+        final JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new BorderLayout());
+
+        // add virtual button and memory monitor
+        bottomPanel.add(virtualModeBtn, BorderLayout.EAST);
+        bottomPanel.add(new MemoryMonitorPanel(), BorderLayout.CENTER);
+
+        add(bottomPanel, BorderLayout.SOUTH);
 
         validate();
         setVisible(true);
@@ -212,6 +253,33 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
     {
         return null;
         // return chatPanel;
+    }
+
+    public static boolean getVirtualMode()
+    {
+        return GeneralPreferences.getVirtualMode();
+    }
+
+    public void setVirtualMode(boolean value)
+    {
+        virtualModeBtn.setSelected(value);
+        GeneralPreferences.setVirtualMode(value);
+    }
+
+    /**
+     * Call this to disable 'virtual mode' button
+     */
+    public void imageCacheDisabled()
+    {
+        // image cache is disabled so we can't use caching
+        virtualModeBtn.setEnabled(false);
+        virtualModeBtn.setSelected(false);
+        virtualModeBtn.setToolTipText("Image cache is disabled, cannot use the virtual mode");
+
+        // refresh title (display virtual mode or not)
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+        if (mainFrame != null)
+            mainFrame.refreshTitle();
     }
 
     /**

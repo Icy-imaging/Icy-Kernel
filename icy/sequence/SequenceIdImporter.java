@@ -18,13 +18,13 @@
  */
 package icy.sequence;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 import icy.common.exception.UnsupportedFormatException;
 import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.ImageProvider;
-
-import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Sequence importer interface.<br>

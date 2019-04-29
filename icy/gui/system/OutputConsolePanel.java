@@ -234,7 +234,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         copyLogButton.setToolTipText("Copy to clipboard");
         reportLogButton.setToolTipText("Report content to dev team");
         scrollLockButton.setToolTipText("Scroll Lock");
-        fileLogButton.setToolTipText("Enabled log file saving (log.txt)");
+        fileLogButton.setToolTipText("Enable/Disable log file saving (log.txt)");
 
         clearLogButton.addActionListener(new ActionListener()
         {

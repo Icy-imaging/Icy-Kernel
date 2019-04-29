@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 Institut Pasteur.
+ * Copyright 2010-2019 Institut Pasteur.
  * 
  * This file is part of Icy.
  * 
@@ -43,12 +43,14 @@ import icy.gui.frame.IcyExternalFrame;
 import icy.gui.frame.SplashScreenFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.ToolTipFrame;
+import icy.gui.inspector.InspectorPanel;
 import icy.gui.main.MainFrame;
 import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
 import icy.gui.main.MainInterfaceGui;
 import icy.gui.system.NewVersionFrame;
 import icy.gui.util.LookAndFeelUtil;
+import icy.image.cache.ImageCache;
 import icy.imagej.ImageJPatcher;
 import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
@@ -79,7 +81,7 @@ import vtk.vtkNativeLibrary;
 import vtk.vtkVersion;
 
 /**
- * <h3>Icy - copyright 2017 Institut Pasteur</h3> An open community platform for bio image analysis<br>
+ * <h3>Icy - copyright 2019 Institut Pasteur</h3> An open community platform for bio image analysis<br>
  * <i>http://icy.bioimageanalysis.org</i><br>
  * <br>
  * Icy has been created by the Bio Image Analysis team at Institut Pasteur<br>
@@ -104,7 +106,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("1.9.10.0");
+    public static Version version = new Version("2.0.1.0");
 
     /**
      * Main interface
@@ -205,6 +207,9 @@ public class Icy
                 }
             }
 
+            // fix possible IllegalArgumentException on Swing sorting
+            System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+
             if (!headless && !noSplash)
             {
                 // prepare splashScreen (ok to create it here as we are not yet in substance laf)
@@ -229,11 +234,35 @@ public class Icy
             // set LOCI debug level (do it immediately as it can quickly show some log messages)
             loci.common.DebugTools.enableLogging("ERROR");
 
-            // initialize network (need preferences)
-            NetworkUtil.init();
-            // load plugins classes (need preferences init)
-            PluginLoader.reloadAsynch();
-            WorkspaceLoader.reloadAsynch();
+            // fast start
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // force image cache initialization so GUI won't wait after it (need preferences init)
+                    ImageCache.isEnabled();
+                }
+            }, "Initializer 1").start();
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // initialize network (need preferences init)
+                    NetworkUtil.init();
+                }
+            }, "Initializer 2").start();
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // load plugins classes (need preferences init)
+                    PluginLoader.reloadAsynch();
+                    WorkspaceLoader.reloadAsynch();
+                }
+            }, "Initializer 3").start();
 
             try
             {
@@ -312,6 +341,20 @@ public class Icy
         System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getTotalMemory()));
         System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getFreeMemory()));
         System.out.println("Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
+        // image cache
+        if (ImageCache.isEnabled())
+        {
+            System.out.println("Image cache initialized (reserved memory = " + ApplicationPreferences.getCacheMemoryMB()
+                    + " MB, disk cache location = " + ApplicationPreferences.getCachePath() + ")");
+        }
+        else
+        {
+            System.err.println("Couldn't initialize image cache (cache is disabled)");
+            // disable virtual mode button from inspector
+            final InspectorPanel inspector = getMainInterface().getInspector();
+            if (inspector != null)
+                inspector.imageCacheDisabled();
+        }
         if (headless)
             System.out.println("Headless mode.");
         System.out.println();
@@ -358,11 +401,12 @@ public class Icy
         // HTTPS not supported ?
         if (!NetworkUtil.isHTTPSSupported())
         {
-            // TODO: change message when new web site is here !
-            final String text1 = "Your version of java does not support HTTPS connection required by the future new web site.";
-            final String text2 = "You need to upgrade java to 7u111 (Java 7) or 8u101 (Java 8) at least to be able to use online features in future.";
-            // final String text1 = "Your version of java does not support HTTPS connection required by the new web site !";
-            // final String text2 = "Online features (as search or plugin update) will be disabled until you update your version of java (Java 7u111 or Java
+            // final String text1 = "Your version of java does not support HTTPS connection required by the future new web site.";
+            // final String text2 = "You need to upgrade java to 7u111 (Java 7) or 8u101 (Java 8) at least to be able to use online features in future.";
+            final String text1 = "Your version of java does not support HTTPS protocol which will be used soon by the new web site.";
+            final String text2 = "You need to upgrade your version of java to 7u111 (Java 7) or 8u101 (Java 8) at least to use online features (as search or plugin update) in future.";
+            // final String text2 = "You won't be able to use online features (as search or plugin update) in future until you update your version of java (Java
+            // 7u111 or Java
             // 8u101 minimum).";
 
             System.err.println("Warning: " + text1);
@@ -370,7 +414,8 @@ public class Icy
 
             // TODO: change message when new web site is here
             if (!Icy.getMainInterface().isHeadLess())
-                new ToolTipFrame("<html><b>WARNING:</b> " + text1 + "<br>" + text2 + "</html>", 0, "httpsNotSupportedWarning");
+                new ToolTipFrame("<html><b>WARNING:</b> " + text1 + "<br>" + text2 + "</html>", 0,
+                        "httpsNotSupportedWarning");
             // new ToolTipFrame("<html><b>" + text1 + "<br>" + text2 + "</b></html>", 0, "httpsNotSupported");
         }
 
@@ -527,12 +572,23 @@ public class Icy
 
         if (!Icy.getMainInterface().isHeadLess())
         {
+            ToolTipFrame tooltip;
+
             // welcome tip !
-            final ToolTipFrame tooltip = new ToolTipFrame(
+            tooltip = new ToolTipFrame(
                     "<html>Access the main menu by clicking on top left icon<br>" + "<img src=\""
                             + Icy.class.getResource("/res/image/help/main_menu.png").toString() + "\" /></html>",
                     30, "mainMenuTip");
             tooltip.setSize(456, 240);
+
+            // new Image Cache !
+            tooltip = new ToolTipFrame("<html>" + "<img src=\""
+                    + Icy.class.getResource("/res/image/help/virtual_mode.jpg").toString() + "\" /><br>"
+                    + "This new button allow to enable/disable Icy <b>virtual mode</b>.<br><br>"
+                    + "Virtual mode will force all new created images to be in <i>virtual mode</i> which mean their data can be stored on disk to spare memory.<br>"
+                    + "Note that <i>virtual mode</i> is still experimental and <b>some plugins don't support it</b> (processed data can be lost) so use it carefully and only if you're running out of memory.<br>"
+                    + "<i>You can change the image caching settings in Icy preferences</i></html>", 30, "virtualMode");
+            tooltip.setSize(380, 240);
         }
     }
 
@@ -826,6 +882,8 @@ public class Icy
                 IcyPreferences.save();
                 // save audit data
                 Audit.save();
+                // cache cleanup
+                ImageCache.end();
 
                 // clean up native library files
                 // unPrepareNativeLibraries();

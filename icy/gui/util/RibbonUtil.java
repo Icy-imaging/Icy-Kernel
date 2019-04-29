@@ -18,8 +18,6 @@
  */
 package icy.gui.util;
 
-import icy.util.StringUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +41,8 @@ import org.pushingpixels.flamingo.api.ribbon.resize.IconRibbonBandResizePolicy;
 import org.pushingpixels.flamingo.api.ribbon.resize.RibbonBandResizePolicy;
 import org.pushingpixels.flamingo.internal.ui.ribbon.JBandControlPanel;
 import org.pushingpixels.flamingo.internal.ui.ribbon.JFlowBandControlPanel;
+
+import icy.util.StringUtil;
 
 /**
  * @author Stephane
@@ -102,7 +102,8 @@ public class RibbonUtil
         return result;
     }
 
-    private static List<RibbonBandResizePolicy> getRestrictiveResizePolicies(final JBandControlPanel controlPanel)
+    private static List<RibbonBandResizePolicy> getRestrictiveResizePolicies(final JBandControlPanel controlPanel,
+            int gap)
     {
         final ArrayList<RibbonBandResizePolicy> result = new ArrayList<RibbonBandResizePolicy>();
 
@@ -112,11 +113,11 @@ public class RibbonUtil
         final High2Low high2Low = new High2Low(controlPanel);
         final IconRibbonBandResizePolicy icon = new IconRibbonBandResizePolicy(controlPanel);
 
-        final int mirrorW = mirror.getPreferredWidth(DEFAULT_HEIGHT, DEFAULT_GAP);
-        final int mid2LowW = mid2Low.getPreferredWidth(DEFAULT_HEIGHT, DEFAULT_GAP);
-        final int high2MidW = high2Mid.getPreferredWidth(DEFAULT_HEIGHT, DEFAULT_GAP);
-        final int high2LowW = high2Low.getPreferredWidth(DEFAULT_HEIGHT, DEFAULT_GAP);
-        final int iconW = icon.getPreferredWidth(DEFAULT_HEIGHT, DEFAULT_GAP);
+        final int mirrorW = mirror.getPreferredWidth(DEFAULT_HEIGHT, gap);
+        final int mid2LowW = mid2Low.getPreferredWidth(DEFAULT_HEIGHT, gap);
+        final int high2MidW = high2Mid.getPreferredWidth(DEFAULT_HEIGHT, gap);
+        final int high2LowW = high2Low.getPreferredWidth(DEFAULT_HEIGHT, gap);
+        final int iconW = icon.getPreferredWidth(DEFAULT_HEIGHT, gap);
 
         result.add(mirror);
         if (mid2LowW < mirrorW)
@@ -188,8 +189,13 @@ public class RibbonUtil
 
     public static void setRestrictiveResizePolicies(JRibbonBand band)
     {
+        setRestrictiveResizePolicies(band, DEFAULT_GAP);
+    }
+
+    public static void setRestrictiveResizePolicies(JRibbonBand band, int gap)
+    {
         // equivalent to getCorePoliciesRestrictive(band);
-        band.setResizePolicies(getRestrictiveResizePolicies(band.getControlPanel()));
+        band.setResizePolicies(getRestrictiveResizePolicies(band.getControlPanel(), gap));
     }
 
     public static void setFixedResizePolicies(JRibbonBand band)

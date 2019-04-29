@@ -3,6 +3,9 @@
  */
 package icy.type;
 
+import icy.image.ImageDataIterator;
+import icy.sequence.SequenceDataIterator;
+
 /**
  * Utilities for {@link DataIterator} classes.
  * 
@@ -40,6 +43,11 @@ public class DataIteratorUtil
             it.set(value);
             it.next();
         }
-    }
 
+        // not really nice to do that here, but it's to preserve backward compatibility
+        if (it instanceof SequenceDataIterator)
+            ((SequenceDataIterator) it).flush();
+        else if (it instanceof ImageDataIterator)
+            ((ImageDataIterator) it).flush();
+    }
 }

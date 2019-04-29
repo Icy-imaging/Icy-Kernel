@@ -18,6 +18,13 @@
  */
 package icy.system.audit;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+
 import icy.file.FileUtil;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.main.MainFrame;
@@ -32,13 +39,6 @@ import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 
 /**
  * General audit tools class.
@@ -150,10 +150,10 @@ public class Audit
 
         updateUserLink();
 
+        // refresh user infos (in title)
         final MainFrame frame = Icy.getMainInterface().getMainFrame();
-        // refresh user infos
         if (frame != null)
-            frame.refreshUserInfos();
+            frame.refreshTitle();
     }
 
     /**
@@ -356,10 +356,10 @@ public class Audit
                                     // stop wait
                                     waitFrame.cancel();
 
-                                    // refresh user infos
+                                    // refresh user infos (in title)
                                     final MainFrame frame = Icy.getMainInterface().getMainFrame();
                                     if (frame != null)
-                                        frame.refreshUserInfos();
+                                        frame.refreshTitle();
                                 }
                             }
                             catch (InterruptedException e)

@@ -56,6 +56,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.cache"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.audit"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.progress"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.descriptor.measure"/>

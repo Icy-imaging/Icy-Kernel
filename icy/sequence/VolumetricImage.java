@@ -18,11 +18,11 @@
  */
 package icy.sequence;
 
-import icy.image.IcyBufferedImage;
-
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+
+import icy.image.IcyBufferedImage;
 
 /**
  * @author Fabrice de Chaumont

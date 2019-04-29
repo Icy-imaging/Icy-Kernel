@@ -18,16 +18,6 @@
  */
 package icy.action;
 
-import icy.gui.main.MainFrame;
-import icy.main.Icy;
-import icy.preferences.GeneralPreferences;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.swimmingPool.SwimmingPoolViewer;
-import icy.system.SystemUtil;
-import icy.util.ClassUtil;
-
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -36,13 +26,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import icy.gui.main.MainFrame;
+import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.swimmingPool.SwimmingPoolViewer;
+import icy.util.ClassUtil;
+
 /**
  * @author Stephane
  */
 public class WindowActions
 {
-    public static IcyAbstractAction stayOnTopAction = new IcyAbstractAction("Stay on top", new IcyIcon(
-            ResourceUtil.ICON_PIN), "Keep window on top", "Icy window always stays above other windows.")
+    public static IcyAbstractAction stayOnTopAction = new IcyAbstractAction("Stay on top",
+            new IcyIcon(ResourceUtil.ICON_PIN), "Keep window on top", "Icy window always stays above other windows.")
     {
         /**
          * 
@@ -63,8 +61,8 @@ public class WindowActions
         }
     };
 
-    public static IcyAbstractAction swimmingPoolAction = new IcyAbstractAction("Swimming Pool Viewer", new IcyIcon(
-            ResourceUtil.ICON_DATABASE), "Show the swimming pool objects")
+    public static IcyAbstractAction swimmingPoolAction = new IcyAbstractAction("Swimming Pool Viewer",
+            new IcyIcon(ResourceUtil.ICON_BOX), "Show the swimming pool", "Show and edit the swimming pool objects")
     {
         /**
          * 
@@ -75,7 +73,7 @@ public class WindowActions
         public boolean doAction(ActionEvent e)
         {
             new SwimmingPoolViewer();
-            
+
             return true;
         }
     };
@@ -104,9 +102,9 @@ public class WindowActions
         }
     };
 
-    public static IcyAbstractAction horizontalTileAction = new IcyAbstractAction("Horizontal (Shift+H)", new IcyIcon(
-            "tile_horizontal"), "Horizontal tile arrangement", "Reorganise all opened windows in horizontal tile.",
-            KeyEvent.VK_H, InputEvent.SHIFT_MASK)
+    public static IcyAbstractAction horizontalTileAction = new IcyAbstractAction("Horizontal (Shift+H)",
+            new IcyIcon("tile_horizontal"), "Horizontal tile arrangement",
+            "Reorganise all opened windows in horizontal tile.", KeyEvent.VK_H, InputEvent.SHIFT_MASK)
     {
         /**
          * 
@@ -128,9 +126,9 @@ public class WindowActions
         }
     };
 
-    public static IcyAbstractAction verticalTileAction = new IcyAbstractAction("Vertical (Shift+V)", new IcyIcon(
-            "tile_vertical"), "Vertical tile arrangement", "Reorganise all opened windows in vertical tile.",
-            KeyEvent.VK_V, InputEvent.SHIFT_MASK)
+    public static IcyAbstractAction verticalTileAction = new IcyAbstractAction("Vertical (Shift+V)",
+            new IcyIcon("tile_vertical"), "Vertical tile arrangement",
+            "Reorganise all opened windows in vertical tile.", KeyEvent.VK_V, InputEvent.SHIFT_MASK)
     {
         /**
          * 

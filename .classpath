@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/package.html|plugins/test/ROIBasicDescriptor.java|plugins/test/ROIDescriptorBlock.java|plugins/test/TestHeadLess.java|plugins/test/TestImgLib2.java" including="icy/**|plugins/kernel/**|plugins/test/**|res/**" kind="src" path=""/>
+	<classpathentry excluding="**/package.html" including="icy/**|plugins/kernel/**|res/**" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/customizer.jar"/>
@@ -49,5 +49,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/joal.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jocl.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jogl-all.jar"/>
-	<classpathentry kind="output" path=""/>
+	<classpathentry kind="lib" path="/Icy-App/lib/ehcache.jar"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

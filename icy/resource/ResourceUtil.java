@@ -18,10 +18,6 @@
  */
 package icy.resource;
 
-import icy.image.ImageUtil;
-import icy.resource.icon.IcyIcon;
-import icy.util.StringUtil;
-
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -30,6 +26,10 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
+
+import icy.image.ImageUtil;
+import icy.resource.icon.IcyIcon;
+import icy.util.StringUtil;
 
 /**
  * Resources (images, icons...) utilities class.
@@ -112,6 +112,7 @@ public class ResourceUtil
     public static final Image ICON_WAIT = ResourceUtil.getAlphaIconAsImage("sand.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
+    public static final Image ICON_EYE_INV = ResourceUtil.getAlphaIconAsImage("eye_inv.png");
     public static final Image ICON_UNDO = ResourceUtil.getAlphaIconAsImage("undo.png");
     public static final Image ICON_REDO = ResourceUtil.getAlphaIconAsImage("redo.png");
 
@@ -229,7 +230,10 @@ public class ResourceUtil
     public static final Image ICON_CUBE_3D = ResourceUtil.getAlphaIconAsImage("cube.png");
 
     public static final Image ICON_PLUGIN = ResourceUtil.getAlphaIconAsImage("plugin.png");
+    public static final Image ICON_BOX = ResourceUtil.getAlphaIconAsImage("box.png");
     public static final Image ICON_DATABASE = ResourceUtil.getAlphaIconAsImage("db.png");
+    public static final Image ICON_HDD = ICON_DATABASE;
+    public static final Image ICON_HDD_STREAM = ResourceUtil.getAlphaIconAsImage("hdd_stream.png");;
     public static final Image ICON_STAR = ResourceUtil.getAlphaIconAsImage("star_fav.png");
     public static final Image ICON_NETWORK = ResourceUtil.getAlphaIconAsImage("network.png");
     public static final Image ICON_BROWSER = ResourceUtil.getAlphaIconAsImage("browser.png");

@@ -18,6 +18,18 @@
  */
 package icy.roi;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import icy.image.IcyBufferedImage;
 import icy.image.IntensityInfo;
 import icy.math.DataIteratorMath;
@@ -42,19 +54,6 @@ import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
-
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import plugins.kernel.roi.descriptor.intensity.ROIIntensityDescriptorsPlugin;
 import plugins.kernel.roi.descriptor.intensity.ROIMaxIntensityDescriptor;
 import plugins.kernel.roi.descriptor.intensity.ROIMeanIntensityDescriptor;
@@ -71,11 +70,13 @@ import plugins.kernel.roi.descriptor.measure.ROISurfaceAreaDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi2d.ROI2DEllipse;
+import plugins.kernel.roi.roi2d.ROI2DPoint;
 import plugins.kernel.roi.roi2d.ROI2DPolygon;
 import plugins.kernel.roi.roi2d.ROI2DRectShape;
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
 import plugins.kernel.roi.roi2d.ROI2DShape;
 import plugins.kernel.roi.roi3d.ROI3DArea;
+import plugins.kernel.roi.roi3d.ROI3DPoint;
 import plugins.kernel.roi.roi3d.ROI3DShape;
 import plugins.kernel.roi.roi3d.ROI3DStackEllipse;
 import plugins.kernel.roi.roi3d.ROI3DStackPolygon;
@@ -1435,6 +1436,118 @@ public class ROIUtil
     }
 
     /**
+     * Converts the specified ROI to a ROI Point ({@link ROI2DPoint} or {@link ROI3DPoint}) representing the mass center of the input ROI.
+     * 
+     * @return the ROI point representing the mass center of the input ROI.
+     */
+    public static ROI convertToPoint(ROI roi)
+    {
+        final ROI result;
+        final Point5D pt = ROIMassCenterDescriptorsPlugin.computeMassCenter(roi);
+
+        if (roi instanceof ROI2D)
+        {
+            result = new ROI2DPoint(pt.getX(), pt.getY());
+            ((ROI2DPoint) result).setZ(((ROI2D) roi).getZ());
+            ((ROI2DPoint) result).setT(((ROI2D) roi).getT());
+            ((ROI2DPoint) result).setC(((ROI2D) roi).getC());
+        }
+        else if (roi instanceof ROI3D)
+        {
+            result = new ROI3DPoint(pt.getX(), pt.getY(), pt.getZ());
+            ((ROI3DPoint) result).setT(((ROI3D) roi).getT());
+            ((ROI3DPoint) result).setC(((ROI3D) roi).getC());
+        }
+        else
+        {
+            result = new ROI3DPoint(pt.getX(), pt.getY(), pt.getZ());
+            ((ROI3DPoint) result).setT((int) pt.getT());
+            ((ROI3DPoint) result).setC((int) pt.getC());
+        }
+
+        // preserve properties
+        ROIUtil.copyROIProperties(roi, result, true);
+
+        return result;
+    }
+
+    /**
+     * Converts the specified ROI to a 2D ellipse type ROI centered on the mass center of the input ROI.
+     * 
+     * @return the 2D ellipse ROI centered on the mass center of the input ROI.
+     */
+    public static ROI2DEllipse convertToEllipse(ROI roi, double radiusX, double radiusY)
+    {
+        final Point5D pt = ROIMassCenterDescriptorsPlugin.computeMassCenter(roi);
+        final double x = pt.getX();
+        final double y = pt.getY();
+        final ROI2DEllipse result = new ROI2DEllipse(x - radiusX, y - radiusY, x + radiusX, y + radiusY);
+
+        if (roi instanceof ROI2D)
+        {
+            result.setZ(((ROI2D) roi).getZ());
+            result.setT(((ROI2D) roi).getT());
+            result.setC(((ROI2D) roi).getC());
+        }
+        else if (roi instanceof ROI3D)
+        {
+            result.setZ((int) pt.getZ());
+            result.setT(((ROI3D) roi).getT());
+            result.setC(((ROI3D) roi).getC());
+        }
+        else
+        {
+            result.setZ((int) pt.getZ());
+            result.setT((int) pt.getT());
+            result.setC((int) pt.getC());
+        }
+
+        // preserve properties
+        ROIUtil.copyROIProperties(roi, result, true);
+
+        return result;
+    }
+
+    /**
+     * Converts the specified ROI to a 2D rectangle type ROI centered on the mass center of the input ROI.
+     * 
+     * @return the 2D rectangle ROI centered on the mass center of the input ROI.
+     */
+    public static ROI2DRectangle convertToRectangle(ROI roi, double width, double height)
+    {
+        final Point5D pt = ROIMassCenterDescriptorsPlugin.computeMassCenter(roi);
+        final double x = pt.getX();
+        final double y = pt.getY();
+        final double rw = width / 2;
+        final double rh = height / 2;
+        final ROI2DRectangle result = new ROI2DRectangle(x - rw, y - rh, x + rw, y + rh);
+
+        if (roi instanceof ROI2D)
+        {
+            result.setZ(((ROI2D) roi).getZ());
+            result.setT(((ROI2D) roi).getT());
+            result.setC(((ROI2D) roi).getC());
+        }
+        else if (roi instanceof ROI3D)
+        {
+            result.setZ((int) pt.getZ());
+            result.setT(((ROI3D) roi).getT());
+            result.setC(((ROI3D) roi).getC());
+        }
+        else
+        {
+            result.setZ((int) pt.getZ());
+            result.setT((int) pt.getT());
+            result.setC((int) pt.getC());
+        }
+
+        // preserve properties
+        ROIUtil.copyROIProperties(roi, result, true);
+
+        return result;
+    }
+
+    /**
      * Converts the specified 2D ROI to 3D Stack ROI (ROI3DStack) by stacking it along the Z axis given zMin and zMax
      * (inclusive) parameters.
      * 
@@ -1898,8 +2011,8 @@ public class ROIUtil
             return convertToSequence(inputRois, 0, 0, 0, 0, 0,
                     label ? ((inputRois.size() > 255) ? DataType.USHORT : DataType.UBYTE) : DataType.UBYTE, label);
 
-        return convertToSequence(inputRois, sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
-                sequence.getSizeZ(), sequence.getSizeT(), sequence.getDataType_(), label);
+        return convertToSequence(inputRois, sequence.getSizeX(), sequence.getSizeY(), 1, sequence.getSizeZ(),
+                sequence.getSizeT(), sequence.getDataType_(), label);
     }
 
     /**

@@ -18,22 +18,21 @@
  */
 package icy.file;
 
-import icy.gui.frame.progress.FileFrame;
-import icy.sequence.DimensionId;
-import icy.sequence.MetaDataUtil;
-import icy.type.DataType;
-import icy.util.StringUtil;
-import icy.util.StringUtil.AlphanumComparator;
-
 import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import icy.gui.frame.progress.FileFrame;
+import icy.sequence.DimensionId;
+import icy.sequence.MetaDataUtil;
+import icy.type.DataType;
+import icy.util.StringUtil;
+import icy.util.StringUtil.AlphanumComparator;
 import ome.xml.meta.OMEXMLMetadata;
 import plugins.kernel.importer.LociImporterPlugin;
 
@@ -1343,6 +1342,7 @@ public class SequenceFileSticher
             // normally we want the equality here
             if ((mt * mz * mc * my * mx) != size)
             {
+                // note that this can happen when thread is interrupted so just put a warning here
                 System.err.println("Warning: SequenceFileSticher - number of image doesn't match: " + size
                         + " (expected = " + (mt * mz * mc * my * mx) + ")");
             }
@@ -1438,11 +1438,8 @@ public class SequenceFileSticher
         final Map<SequenceIdent, SequenceFileGroup> result = new HashMap<SequenceIdent, SequenceFileGroup>();
 
         // clean FilePosition grouped by base path and add them to group
-        for (Entry<String, List<FilePosition>> entry : pathPositionsMap.entrySet())
+        for (List<FilePosition> positions : pathPositionsMap.values())
         {
-            // get positions
-            final List<FilePosition> positions = entry.getValue();
-
             // remove position information which never change
             while (cleanPositions(positions, DimensionId.NULL))
                 ;
@@ -1680,6 +1677,11 @@ public class SequenceFileSticher
                 // try to open it (require default metadata otherwise pixel size may miss)
                 imp.open(path, 0);
             }
+            catch (ClosedByInterruptException e)
+            {
+                // interrupted --> just return null
+                return null;
+            }
             catch (Throwable t)
             {
                 // can't be opened... try with an other importer
@@ -1744,7 +1746,7 @@ public class SequenceFileSticher
         // try to open the image
         final SequenceFileImporter imp = tryOpen(importer, position.getPath());
 
-        // can't open it ? --> return null
+        // can't open it (or interrupted) ? --> return null
         if (imp == null)
             return null;
 

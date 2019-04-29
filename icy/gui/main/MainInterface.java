@@ -19,6 +19,13 @@
 
 package icy.gui.main;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.undo.UndoManager;
+
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.LayersPanel;
@@ -39,13 +46,6 @@ import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 import icy.undo.IcyUndoManager;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.undo.UndoManager;
 
 /**
  * MainInterface
@@ -69,6 +69,26 @@ public interface MainInterface
      * Return true is the application is running in headless mode (no screen device).
      */
     public abstract boolean isHeadLess();
+
+    /**
+     * Return true is the <i>virtual mode</i> is enabled.<br>
+     * When virtual mode is enabled all Sequence are made virtual (same as volatile) so data is streamed from hard drive on demand. This is useful when you
+     * manipulate large Sequence which don't fit in memory but this can make process much slower. Also some plugins won't work correctly on virtual Sequence
+     * (modified data can be lost) so use it carefully.
+     * 
+     * @see IcyBufferedImage#setVolatile(boolean)
+     */
+    public abstract boolean isVirtualMode();
+
+    /**
+     * Sets the <i>virtual mode</i>.<br>
+     * When virtual mode is enabled all Sequence are made virtual (same as volatile) so data is streamed from hard drive on demand. This is useful when you
+     * manipulate large Sequence which don't fit in memory but this can make process much slower. Also some plugins won't work correctly on virtual Sequence
+     * (modified data can be lost) so use it carefully.
+     * 
+     * @see IcyBufferedImage#setVolatile(boolean)
+     */
+    public abstract void setVirtualMode(boolean value);
 
     /**
      * Open a viewer for the specified sequence.

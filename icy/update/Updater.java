@@ -18,18 +18,18 @@
  */
 package icy.update;
 
-import icy.file.FileUtil;
-import icy.update.ElementDescriptor.ElementFile;
-import icy.util.StringUtil;
-import icy.util.XMLUtil;
-import icy.util.ZipUtil;
-
 import java.io.File;
 import java.util.ArrayList;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import icy.file.FileUtil;
+import icy.update.ElementDescriptor.ElementFile;
+import icy.util.StringUtil;
+import icy.util.XMLUtil;
+import icy.util.ZipUtil;
 
 public class Updater
 {
@@ -488,6 +488,6 @@ public class Updater
     {
         // delete obsolete files
         for (String obsolete : getObsoletes())
-            FileUtil.delete(obsolete, false);
+            FileUtil.delete(obsolete, true);
     }
 }

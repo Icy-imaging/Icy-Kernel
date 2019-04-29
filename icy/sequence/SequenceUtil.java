@@ -18,6 +18,19 @@
  */
 package icy.sequence;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
+import javax.swing.SwingConstants;
+
 import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
@@ -36,20 +49,6 @@ import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
-
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.swing.SwingConstants;
-
 import ome.xml.meta.OMEXMLMetadata;
 
 /**
@@ -1612,7 +1611,7 @@ public class SequenceUtil
         try
         {
             for (int t = 0; t < source.getSizeT(); t++)
-                outSequence.setImage(t, 0, source.getImage(t, z));
+                outSequence.setImage(t, 0, IcyBufferedImageUtil.getCopy(source.getImage(t, z)));
         }
         finally
         {
@@ -1645,7 +1644,7 @@ public class SequenceUtil
         try
         {
             for (int z = 0; z < source.getSizeZ(); z++)
-                outSequence.setImage(0, z, source.getImage(t, z));
+                outSequence.setImage(0, z, IcyBufferedImageUtil.getCopy(source.getImage(t, z)));
         }
         finally
         {
@@ -1691,7 +1690,11 @@ public class SequenceUtil
             final double boundsSrc[];
 
             if (useDataBounds)
+            {
+                // we need to have data loaded first
+                source.loadAllData();
                 boundsSrc = source.getChannelBounds(c);
+            }
             else
                 boundsSrc = source.getChannelTypeBounds(c);
 
@@ -1801,21 +1804,24 @@ public class SequenceUtil
                     output.setImage(t, z, converted);
                 }
             }
-
-            // preserve channel informations
-            for (int c = 0; c < source.getSizeC(); c++)
-            {
-                output.setChannelName(c, source.getChannelName(c));
-                output.setDefaultColormap(c, source.getDefaultColorMap(c), true);
-                output.setColormap(c, source.getColorMap(c));
-            }
-
-            output.setName(source.getName() + " (" + output.getDataType_() + ")");
         }
         finally
         {
             output.endUpdate();
         }
+
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            output.setChannelName(c, source.getChannelName(c));
+            output.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
+            output.setColormap(c, source.getColorMap(c));
+        }
+
+        // and finally set name
+        output.setName(source.getName() + " (" + output.getDataType_() + ")");
 
         return output;
     }
@@ -1858,6 +1864,8 @@ public class SequenceUtil
         {
             result.setChannelName(c, source.getChannelName(c));
             result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
             result.setColormap(c, source.getColorMap(c));
         }
 
@@ -1941,6 +1949,8 @@ public class SequenceUtil
         {
             result.setChannelName(c, source.getChannelName(c));
             result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
             result.setColormap(c, source.getColorMap(c));
         }
 
@@ -2076,6 +2086,8 @@ public class SequenceUtil
         {
             result.setChannelName(c - startC, source.getChannelName(c));
             result.setDefaultColormap(c - startC, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
             result.setColormap(c - startC, source.getColorMap(c));
         }
 
@@ -2145,25 +2157,43 @@ public class SequenceUtil
             final int sizeC = result.getSizeC();
             final DataType dataType = result.getDataType_();
 
-            for (int t = 0; t < sizeT; t++)
+            result.beginUpdate();
+            try
             {
-                for (int z = 0; z < sizeZ; z++)
+                for (int t = 0; t < sizeT; t++)
                 {
-                    for (int c = 0; c < sizeC; c++)
+                    for (int z = 0; z < sizeZ; z++)
                     {
-                        final BooleanMask2D mask = roi.getBooleanMask2D(z + offZ, t + offT, c + offC, false);
-                        final Object data = result.getDataXY(t, z, c);
-                        int offset = 0;
+                        for (int c = 0; c < sizeC; c++)
+                        {
+                            final BooleanMask2D mask = roi.getBooleanMask2D(z + offZ, t + offT, c + offC, false);
+                            final IcyBufferedImage img = result.getImage(t, z);
 
-                        for (int y = 0; y < sizeY; y++)
-                            for (int x = 0; x < sizeX; x++, offset++)
-                                if (!mask.contains(x + offX, y + offY))
-                                    Array1DUtil.setValue(data, offset, dataType, nullValue);
+                            img.lockRaster();
+                            try
+                            {
+                                final Object data = img.getDataXY(c);
+                                int offset = 0;
+
+                                for (int y = 0; y < sizeY; y++)
+                                    for (int x = 0; x < sizeX; x++, offset++)
+                                        if (!mask.contains(x + offX, y + offY))
+                                            Array1DUtil.setValue(data, offset, dataType, nullValue);
+                            }
+                            finally
+                            {
+                                img.releaseRaster(true);
+                            }
+
+                            img.dataChanged();
+                        }
                     }
                 }
             }
-
-            result.dataChanged();
+            finally
+            {
+                result.endUpdate();
+            }
         }
 
         return result;
@@ -2209,22 +2239,24 @@ public class SequenceUtil
                 for (Overlay overlay : source.getOverlays())
                     result.addOverlay(overlay);
             }
-
-            // preserve channel informations
-            for (int c = 0; c < source.getSizeC(); c++)
-            {
-                result.setChannelName(c, source.getChannelName(c));
-                result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
-                result.setColormap(c, source.getColorMap(c));
-            }
-
-            if (nameSuffix)
-                result.setName(source.getName() + " (copy)");
         }
         finally
         {
             result.endUpdate();
         }
+
+        // preserve channel informations
+        for (int c = 0; c < source.getSizeC(); c++)
+        {
+            result.setChannelName(c, source.getChannelName(c));
+            result.setDefaultColormap(c, source.getDefaultColorMap(c), true);
+            // it's important to set user colormap after 'endUpdate' as it will internally create a new 'user LUT'
+            // based on current channel bounds
+            result.setColormap(c, source.getColorMap(c));
+        }
+
+        if (nameSuffix)
+            result.setName(source.getName() + " (copy)");
 
         return result;
     }

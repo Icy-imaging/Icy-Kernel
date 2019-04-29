@@ -34,6 +34,8 @@ import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
 
+import icy.main.Icy;
+
 public class ExitFrame extends JFrame
 {
     /**
@@ -79,7 +81,7 @@ public class ExitFrame extends JFrame
 
         // pack, center and display
         pack();
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(Icy.getMainInterface().getMainFrame());
         setAlwaysOnTop(true);
         setVisible(true);
     }
@@ -96,7 +98,7 @@ public class ExitFrame extends JFrame
 
         // pack and center
         pack();
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(Icy.getMainInterface().getMainFrame());
     }
 
     public boolean isForced()

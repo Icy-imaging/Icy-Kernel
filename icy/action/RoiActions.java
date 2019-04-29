@@ -18,6 +18,17 @@
  */
 package icy.action;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.w3c.dom.Document;
+
 import icy.clipboard.Clipboard;
 import icy.file.FileUtil;
 import icy.gui.dialog.IdConfirmDialog;
@@ -46,18 +57,6 @@ import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
 import icy.util.XMLUtil;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.io.PrintWriter;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.w3c.dom.Document;
-
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
@@ -1237,6 +1236,219 @@ public class RoiActions
                 finally
                 {
                     sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction convertToPointAction = new IcyAbstractAction("to Point",
+            new IcyIcon(ResourceUtil.ICON_ROI_POINT), "Convert ROI to Point ROI",
+            "Converts selected ROI(s) to ROI Point (2D or 3D) representing the mass center of the input ROI(s)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                // ROI point conversion
+                sequence.beginUpdate();
+                try
+                {
+                    final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                    final List<ROI> removedROIs = new ArrayList<ROI>();
+                    final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                    for (ROI roi : selectedROIs)
+                    {
+                        final ROI roiPoint = ROIUtil.convertToPoint(roi);
+
+                        if (roiPoint != null)
+                        {
+                            // select it by default
+                            roiPoint.setSelected(true);
+
+                            sequence.removeROI(roi);
+                            sequence.addROI(roiPoint);
+
+                            // add to undo manager
+                            removedROIs.add(roi);
+                            addedROIs.add(roiPoint);
+                        }
+                    }
+
+                    if (!addedROIs.isEmpty())
+                        sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                (addedROIs.size() > 1) ? "ROIs point conversion" : "ROI point conversion"));
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction convertToEllipseAction = new IcyAbstractAction("to Circle",
+            new IcyIcon(ResourceUtil.ICON_ROI_OVAL), "Convert ROI to Circle ROI",
+            "Converts selected ROI(s) to Circle ROI centered on the mass center of the input ROI(s)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+                if (mainFrame != null)
+                {
+                    final double radius = mainFrame.getMainRibbon().getROIRibbonTask().getRadius();
+
+                    // ROI point conversion
+                    sequence.beginUpdate();
+                    try
+                    {
+                        final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                        final List<ROI> removedROIs = new ArrayList<ROI>();
+                        final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                        for (ROI roi : selectedROIs)
+                        {
+                            final ROI resultRoi;
+
+                            if (radius == 0)
+                                resultRoi = ROIUtil.convertToPoint(roi);
+                            else
+                                resultRoi = ROIUtil.convertToEllipse(roi, radius, radius);
+
+                            if (resultRoi != null)
+                            {
+                                // select it by default
+                                resultRoi.setSelected(true);
+
+                                sequence.removeROI(roi);
+                                sequence.addROI(resultRoi);
+
+                                // add to undo manager
+                                removedROIs.add(roi);
+                                addedROIs.add(resultRoi);
+                            }
+                        }
+
+                        if (!addedROIs.isEmpty())
+                            sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                    (addedROIs.size() > 1) ? "ROIs circle conversion" : "ROI circle conversion"));
+                    }
+                    catch (UnsupportedOperationException ex)
+                    {
+                        MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction convertToRectangleAction = new IcyAbstractAction("to Square",
+            new IcyIcon(ResourceUtil.ICON_ROI_RECTANGLE), "Convert ROI to Square ROI",
+            "Converts selected ROI(s) to Square ROI centered on the mass center of the input ROI(s)")
+    {
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+                if (mainFrame != null)
+                {
+                    final double size = mainFrame.getMainRibbon().getROIRibbonTask().getRadius() * 2;
+
+                    // ROI point conversion
+                    sequence.beginUpdate();
+                    try
+                    {
+                        final List<ROI> selectedROIs = sequence.getSelectedROIs();
+                        final List<ROI> removedROIs = new ArrayList<ROI>();
+                        final List<ROI> addedROIs = new ArrayList<ROI>();
+
+                        for (ROI roi : selectedROIs)
+                        {
+                            final ROI resultRoi;
+
+                            if (size == 0)
+                                resultRoi = ROIUtil.convertToPoint(roi);
+                            else
+                                resultRoi = ROIUtil.convertToRectangle(roi, size, size);
+
+                            if (resultRoi != null)
+                            {
+                                // select it by default
+                                resultRoi.setSelected(true);
+
+                                sequence.removeROI(roi);
+                                sequence.addROI(resultRoi);
+
+                                // add to undo manager
+                                removedROIs.add(roi);
+                                addedROIs.add(resultRoi);
+                            }
+                        }
+
+                        if (!addedROIs.isEmpty())
+                            sequence.addUndoableEdit(new ROIReplacesSequenceEdit(sequence, removedROIs, addedROIs,
+                                    (addedROIs.size() > 1) ? "ROIs square conversion" : "ROI square conversion"));
+                    }
+                    catch (UnsupportedOperationException ex)
+                    {
+                        MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
                 }
 
                 return true;

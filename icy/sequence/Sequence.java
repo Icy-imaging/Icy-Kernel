@@ -160,6 +160,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     public static final String ID_CHANNEL_NAME = "channelName";
 
+    public static final String ID_VIRTUAL = "virtual";
+
     /**
      * id generator
      */
@@ -797,6 +799,74 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public ArrayList<Viewer> getViewers()
     {
         return Icy.getMainInterface().getViewers(this);
+    }
+
+    /**
+     * Set the volatile state for this Sequence (see {@link IcyBufferedImage#setVolatile(boolean)}).<br>
+     * 
+     * @throws OutOfMemoryError
+     *         if there is not enough memory available to store image
+     *         data when setting back to <i>non volatile</i> state
+     * @throws UnsupportedOperationException
+     *         if cache engine is not initialized (error at initialization).
+     */
+    public void setVolatile(boolean value) throws OutOfMemoryError, UnsupportedOperationException
+    {
+        final boolean vol = isVolatile();
+
+        try
+        {
+            // change volatile state for all images
+            for (IcyBufferedImage image : getAllImage())
+                if (image != null)
+                    image.setVolatile(value);
+
+            if (vol != value)
+                metaChanged(ID_VIRTUAL);
+        }
+        catch (OutOfMemoryError e)
+        {
+            // not enough memory to complete the operation --> restore previous state
+            for (IcyBufferedImage image : getAllImage())
+                if (image != null)
+                    image.setVolatile(!value);
+
+            throw e;
+        }
+    }
+
+    /**
+     * Same as {@link #setVolatile(boolean)}
+     * 
+     * @throws OutOfMemoryError
+     *         if there is not enough memory available to store image
+     *         data when setting back to <i>non volatile</i> state
+     * @throws UnsupportedOperationException
+     *         if cache engine is not initialized (error at initialization).
+     */
+    public void setVirtual(boolean value) throws OutOfMemoryError, UnsupportedOperationException
+    {
+        setVolatile(value);
+    }
+
+    /**
+     * Returns true if this sequence contains volatile image (see {@link IcyBufferedImage#isVolatile()}).
+     */
+    public boolean isVolatile()
+    {
+        final IcyBufferedImage img = getFirstNonNullImage();
+        if (img != null)
+            return img.isVolatile();
+
+        return false;
+    }
+
+    /**
+     * Same as {@link #isVolatile()}
+     */
+    public boolean isVirtual()
+    {
+        return isVolatile();
     }
 
     /**
@@ -3188,17 +3258,41 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns image at time t and depth z.
+     * 
+     * @param loadData
+     *        if <code>true</code> then we ensure that image data is loaded (in case of lazy loading) before returning the image
+     */
+    public IcyBufferedImage getImage(int t, int z, boolean loadData)
+    {
+        final VolumetricImage volImg = getVolumetricImage(t);
+
+        if (volImg != null)
+        {
+            final IcyBufferedImage result = volImg.getImage(z);
+
+            if (loadData && (result != null))
+                result.loadData();
+
+            return result;
+        }
+
+        return null;
+    }
+
+    /**
      * Returns image at time t and depth z
      */
     @Override
     public IcyBufferedImage getImage(int t, int z)
     {
-        final VolumetricImage volImg = getVolumetricImage(t);
+        // FIXME: check if that is *really* not needed anymore (as the image contains the importer information)
 
-        if (volImg != null)
-            return volImg.getImage(z);
+        // by default we prefer to load data on getImage(t,z) call as we probably need it
+        // (and that is important if we want to set the image in another Sequence)
+        // return getImage(t, z, true);
 
-        return null;
+        return getImage(t, z, false);
     }
 
     /**
@@ -3268,7 +3362,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
                     // not changing type and not compatible
                     if (!typeChange && !isCompatible(icyImg))
-                        throw new IllegalArgumentException("Sequence.setImage : image is not compatible !");
+                        throw new IllegalArgumentException("Sequence.setImage: image is not compatible !");
 
                     // we want to share the same color space for all the sequence:
                     // colormap eats a lot of memory so it's better to keep one global and we never
@@ -3277,11 +3371,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     if (colorModel != null)
                         icyImg.getIcyColorModel().setColorSpace(colorModel.getIcyColorSpace());
 
-                    // apply this parameter from sequence parameter
+                    // set automatic channel update from sequence
                     icyImg.setAutoUpdateChannelBounds(getAutoUpdateChannelBounds());
 
                     // set image
                     volImg.setImage(z, icyImg);
+
+                    // possible type change --> virtual state may have changed
+                    if (typeChange)
+                        metaChanged(ID_VIRTUAL);
                 }
             }
         }
@@ -3949,10 +4047,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final LUT lut = getUserLUT();
 
-        // we want to preserve the custom colormap
-        if (userLut == null)
-            userLut = lut;
-
         if (channel < lut.getNumChannel())
             lut.getLutChannel(channel).setColorMap(map, setAlpha);
     }
@@ -4350,6 +4444,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         if (colorModel == null)
             return new double[] {0d, 0d};
 
+        // lazy channel bounds update
+        if (channelBoundsInvalid)
+        {
+            channelBoundsInvalid = false;
+            // images channels bounds are valid at this point
+            internalUpdateChannelsBounds();
+        }
+
         return colorModel.getComponentUserBounds(channel);
     }
 
@@ -4428,6 +4530,17 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Force all image data to be loaded (so channels bounds can be correctly computed).<br>
+     * Be careful, this function can take sometime.
+     */
+    public void loadAllData()
+    {
+        for (IcyBufferedImage image : getAllImage())
+            if (image != null)
+                image.loadData();
+    }
+
+    /**
      * Returns the data value located at position (t, z, c, y, x) as double.<br>
      * It returns 0d if value is not found.
      */
@@ -4472,7 +4585,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D array data [T][Z][C][XY]
      */
     public Object getDataXYCZT()
     {
@@ -4494,7 +4607,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D array data [Z][C][XY] for specified t
      */
     public Object getDataXYCZ(int t)
     {
@@ -4516,7 +4629,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D array data [C][XY] for specified t, z
      */
     public Object getDataXYC(int t, int z)
     {
@@ -4529,7 +4642,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D array data [XY] for specified t, z, c
      */
     public Object getDataXY(int t, int z, int c)
     {
@@ -6641,6 +6754,17 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Sets 1D array data [XY] for specified t, z, c
+     */
+    public void setDataXY(int t, int z, int c, Object value)
+    {
+        final IcyBufferedImage img = getImage(t, z);
+
+        if (img != null)
+            img.setDataXY(c, value);
+    }
+
+    /**
      * @deprecated Uses {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)} instead.
      */
     @Deprecated
@@ -6924,10 +7048,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         updater.endUpdate();
 
-        // update end ?
+        // no more updating
         if (!updater.isUpdating())
         {
-            // do pending tasks
+            // lazy channel bounds update
             if (channelBoundsInvalid)
             {
                 channelBoundsInvalid = false;
@@ -7151,11 +7275,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 {
                     // generic CHANGED event
                     if (event.getSource() == null)
-                        // recalculate all images bounds and update sequence bounds
-                        updateChannelsBounds(true);
-                    else
-                        // refresh sequence channel bounds from images bounds
-                        internalUpdateChannelsBounds();
+                        // recalculate all images bounds (automatically update sequence bounds in imageChange event)
+                        recalculateAllImageChannelsBounds();
+
+                    // refresh sequence channel bounds from images bounds
+                    internalUpdateChannelsBounds();
                 }
 
                 // fire SequenceModel event

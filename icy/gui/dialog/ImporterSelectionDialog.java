@@ -3,10 +3,6 @@
  */
 package icy.gui.dialog;
 
-import icy.file.FileUtil;
-import icy.plugin.PluginDescriptor;
-import icy.plugin.PluginLoader;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -25,6 +21,11 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
+
+import icy.file.FileUtil;
+import icy.main.Icy;
+import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLoader;
 
 /**
  * Dialog to let the user select the appropriate importer to open a file when several importers are
@@ -71,7 +72,7 @@ public class ImporterSelectionDialog extends ActionDialog
 
         setPreferredSize(new Dimension(360, 240));
         pack();
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(Icy.getMainInterface().getMainFrame());
         setVisible(true);
     }
 

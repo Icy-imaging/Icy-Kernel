@@ -721,95 +721,6 @@ public class VtkUtil
     }
 
     /**
-     * Creates and returns a 3D binary (0/1 values) {@link vtkImageData} object corresponding to the ROI 3D boolean mask
-     * (C dimension is not considered) at specified T position.
-     * 
-     * @param roi
-     *        the roi we want to retrieve the vtkImageData mask
-     * @param sz
-     *        the Z size to use for ROI with infinite Z dimension (if ROI has a finite Z dimension then ROI Z size is
-     *        used).
-     * @param t
-     *        the T position we want to retrieve the 3D mask data
-     */
-    public static vtkImageData getBinaryImageData(ROI roi, int sz, int t)
-    {
-        final vtkImageData result;
-
-        final Rectangle5D bounds5d = roi.getBounds5D();
-        final int sizeX;
-        final int sizeY;
-        final int sizeZ;
-        final int x;
-        final int y;
-        final int z;
-        final int c;
-
-        x = (int) bounds5d.getX();
-        y = (int) bounds5d.getY();
-        sizeX = (int) (bounds5d.getMaxX() - x);
-        sizeY = (int) (bounds5d.getMaxY() - y);
-        if (bounds5d.isInfiniteZ())
-        {
-            z = 0;
-            sizeZ = sz;
-        }
-        else
-        {
-            z = (int) bounds5d.getZ();
-            sizeZ = (int) (bounds5d.getMaxZ() - z);
-        }
-        if (bounds5d.isInfiniteC())
-            c = 0;
-        else
-            c = (int) bounds5d.getC();
-
-        long totalSize = sizeX;
-        totalSize *= sizeY;
-        totalSize *= sizeZ;
-
-        if (totalSize > Integer.MAX_VALUE)
-            throw new RuntimeException("Can't allocate array (size > 2^31)");
-
-        // build java array
-        final int sizeXY = sizeX * sizeY;
-        final byte[] array = new byte[(int) totalSize];
-        int offset = 0;
-
-        if (bounds5d.isInfiniteZ())
-        {
-            final boolean[] mask = roi.getBooleanMask2D(x, y, sizeX, sizeY, 0, t, c, true);
-
-            for (int curZ = z; curZ < (z + sizeZ); curZ++)
-            {
-                for (int i = 0; i < sizeXY; i++)
-                    array[offset++] = mask[i] ? (byte) 1 : (byte) 0;
-            }
-        }
-        else
-        {
-            for (int curZ = z; curZ < (z + sizeZ); curZ++)
-            {
-                final boolean[] mask = roi.getBooleanMask2D(x, y, sizeX, sizeY, curZ, t, c, true);
-
-                for (int i = 0; i < sizeXY; i++)
-                    array[offset++] = mask[i] ? (byte) 1 : (byte) 0;
-            }
-        }
-
-        // create a new image data structure
-        result = new vtkImageData();
-        result.SetDimensions(sizeX, sizeY, sizeZ);
-        result.SetExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
-        // pre-allocate data
-        result.AllocateScalars(VTK_UNSIGNED_CHAR, 1);
-        // set data
-        ((vtkUnsignedCharArray) result.GetPointData().GetScalars()).SetJavaArray(array);
-
-        return result;
-    }
-
-    /**
      * Returns a {@link BooleanMask3D} from a binary (0/1 values) {@link vtkImageData}.
      */
     public static BooleanMask3D getBooleanMaskFromBinaryImage(vtkImageData image, boolean optimizeBounds)
@@ -1085,6 +996,96 @@ public class VtkUtil
     }
 
     /**
+     * Creates and returns a 3D binary (0/1 values) {@link vtkImageData} object corresponding to the ROI 3D boolean mask
+     * (C dimension is not considered) at specified T position.
+     * 
+     * @param roi
+     *        the roi we want to retrieve the vtkImageData mask
+     * @param sz
+     *        the Z size to use for ROI with infinite Z dimension (if ROI has a finite Z dimension then ROI Z size is
+     *        used).
+     * @param t
+     *        the T position we want to retrieve the 3D mask data
+     */
+    public static vtkImageData getBinaryImageData(ROI roi, int sz, int t) throws IllegalArgumentException
+    {
+        final vtkImageData result;
+
+        final Rectangle5D bounds5d = roi.getBounds5D();
+        final int sizeX;
+        final int sizeY;
+        final int sizeZ;
+        final int x;
+        final int y;
+        final int z;
+        final int c;
+
+        x = (int) bounds5d.getX();
+        y = (int) bounds5d.getY();
+        sizeX = (int) (bounds5d.getMaxX() - x);
+        sizeY = (int) (bounds5d.getMaxY() - y);
+        if (bounds5d.isInfiniteZ())
+        {
+            z = 0;
+            sizeZ = sz;
+        }
+        else
+        {
+            z = (int) bounds5d.getZ();
+            sizeZ = (int) (bounds5d.getMaxZ() - z);
+        }
+        if (bounds5d.isInfiniteC())
+            c = 0;
+        else
+            c = (int) bounds5d.getC();
+
+        long totalSize = sizeX;
+        totalSize *= sizeY;
+        totalSize *= sizeZ;
+
+        if (totalSize > Integer.MAX_VALUE)
+            throw new IllegalArgumentException(
+                    "VtkUtil.getBinaryImageData(ROI, ..): Input ROI is too large, can't allocate array (size > 2^31)");
+
+        // build java array
+        final int sizeXY = sizeX * sizeY;
+        final byte[] array = new byte[(int) totalSize];
+        int offset = 0;
+
+        if (bounds5d.isInfiniteZ())
+        {
+            final boolean[] mask = roi.getBooleanMask2D(x, y, sizeX, sizeY, 0, t, c, true);
+
+            for (int curZ = z; curZ < (z + sizeZ); curZ++)
+            {
+                for (int i = 0; i < sizeXY; i++)
+                    array[offset++] = mask[i] ? (byte) 1 : (byte) 0;
+            }
+        }
+        else
+        {
+            for (int curZ = z; curZ < (z + sizeZ); curZ++)
+            {
+                final boolean[] mask = roi.getBooleanMask2D(x, y, sizeX, sizeY, curZ, t, c, true);
+
+                for (int i = 0; i < sizeXY; i++)
+                    array[offset++] = mask[i] ? (byte) 1 : (byte) 0;
+            }
+        }
+
+        // create a new image data structure
+        result = new vtkImageData();
+        result.SetDimensions(sizeX, sizeY, sizeZ);
+        result.SetExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
+        // pre-allocate data
+        result.AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+        // set data
+        ((vtkUnsignedCharArray) result.GetPointData().GetScalars()).SetJavaArray(array);
+
+        return result;
+    }
+
+    /**
      * Transforms a {@link vtkPolyData} object to binary (0/1 values) {@link vtkImageData}
      * 
      * @param space
@@ -1112,11 +1113,12 @@ public class VtkUtil
 
         // negative value --> empty poly data
         if (size < 0)
-            throw new RuntimeException("Empty object ! OBJ file could not be correctly read.");
+            throw new IllegalArgumentException(
+                    "VtkUtil.getBinaryImageData(vtkPolyData, ..): Negative object size, cannot do the conversion !");
         // can't allocate more than Integer.MAX_VALUE
         if (size > Integer.MAX_VALUE)
-            throw new RuntimeException(
-                    "Image grid resolution is too high ! Try to increase laser resolution or decreasing scaling.");
+            throw new IllegalArgumentException(
+                    "VtkUtil.getBinaryImageData(vtkPolyData, ..): Object size is too large, can't allocate array (size > 2^31) !");
 
         // compute origin
         origin[0] = bounds[0];
@@ -1150,6 +1152,9 @@ public class VtkUtil
         polyToImgStencil.SetOutputOrigin(origin);
         polyToImgStencil.SetOutputSpacing(spacing);
         polyToImgStencil.SetOutputWholeExtent(whiteImage.GetExtent());
+        // better to set tolerance to 0 (fastest and most permissive miss) for now
+        // as more aggressive tolerance (up to 1) can add random points (known issue from VTK 6.3, maybe fixed in VTK 7.0 or >)
+        polyToImgStencil.SetTolerance(0);
         polyToImgStencil.Update();
 
         // cut the corresponding white image and set the background:

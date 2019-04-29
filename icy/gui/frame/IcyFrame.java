@@ -18,16 +18,6 @@
  */
 package icy.gui.frame;
 
-import icy.action.IcyAbstractAction;
-import icy.common.MenuCallback;
-import icy.gui.main.MainFrame;
-import icy.gui.util.ComponentUtil;
-import icy.main.Icy;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.system.thread.ThreadUtil;
-import icy.util.StringUtil;
-
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Component;
@@ -65,6 +55,16 @@ import javax.swing.border.Border;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
+
+import icy.action.IcyAbstractAction;
+import icy.common.MenuCallback;
+import icy.gui.main.MainFrame;
+import icy.gui.util.ComponentUtil;
+import icy.main.Icy;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 /**
  * This class behave either as a JFrame or a JInternalFrame.<br>
@@ -947,6 +947,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             return internalFrame.getRootPane();
 
         return externalFrame.getRootPane();
+    }
+
+    public Border getBorder()
+    {
+        if (isInternalized())
+            return internalFrame.getBorder();
+
+        return null;
     }
 
     /**

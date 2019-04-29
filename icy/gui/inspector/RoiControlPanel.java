@@ -18,6 +18,34 @@
  */
 package icy.gui.inspector;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import icy.clipboard.Clipboard;
 import icy.clipboard.Clipboard.ClipboardListener;
 import icy.gui.component.AbstractRoisPanel;
@@ -41,32 +69,6 @@ import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.StringUtil;
-
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Semaphore;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * @author Stephane
@@ -108,7 +110,7 @@ public class RoiControlPanel extends JPanel
     // internals
     private final AbstractRoisPanel roisPanel;
     final Semaphore modifyingRoi;
-    private List<ROI> modifiedRois;
+    private final List<Reference<ROI>> modifiedRois;
     final Runnable roiActionsRefresher;
     final Runnable roiPropertiesRefresher;
 
@@ -119,7 +121,7 @@ public class RoiControlPanel extends JPanel
         this.roisPanel = roisPanel;
 
         modifyingRoi = new Semaphore(1);
-        modifiedRois = null;
+        modifiedRois = new ArrayList<Reference<ROI>>();
 
         roiActionsRefresher = new Runnable()
         {
@@ -172,7 +174,8 @@ public class RoiControlPanel extends JPanel
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
         JPanel actionPanel = new JPanel();
-        actionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Properties", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+        actionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Properties",
+                TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         add(actionPanel);
         GridBagLayout gbl_actionPanel = new GridBagLayout();
         gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 60, 0, 0};
@@ -273,7 +276,8 @@ public class RoiControlPanel extends JPanel
         positionAndSizePanel.setLayout(gbl_positionAndSizePanel);
 
         JPanel positionPanel = new JPanel();
-        positionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Position", TitledBorder.LEFT, TitledBorder.TOP, null, new Color(0, 0, 0)));
+        positionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Position",
+                TitledBorder.LEFT, TitledBorder.TOP, null, new Color(0, 0, 0)));
         GridBagConstraints gbc_positionPanel = new GridBagConstraints();
         gbc_positionPanel.anchor = GridBagConstraints.NORTH;
         gbc_positionPanel.insets = new Insets(0, 0, 0, 5);
@@ -627,16 +631,11 @@ public class RoiControlPanel extends JPanel
             canSetBnd |= r.canSetBounds();
         }
 
-        final boolean hasSequence = (sequence != null);
         final boolean hasSelected = (roi != null);
         final boolean canSetPosition = canSetPos;
         final boolean canSetBounds = canSetBnd;
         final boolean editable = !readOnly;
         final int dim = (roi != null) ? roi.getDimension() : 0;
-
-        // avoid retaining ROIS when sequence is closed
-        if (!hasSequence)
-            modifiedRois = null;
 
         // wait a bit to avoid eating too much time with refresh
         ThreadUtil.sleep(1);
@@ -851,15 +850,25 @@ public class RoiControlPanel extends JPanel
         // keep trace of modified ROI and wait for validation
         if (!validate)
         {
-            modifiedRois = getSelectedRois();
+            modifiedRois.clear();
+            // better to use weak reference here to not retain ROI
+            for (ROI roi : getSelectedRois())
+                modifiedRois.add(new WeakReference<ROI>(roi));
+
             return;
         }
 
-        // at this point the text is validated...
-        final List<ROI> rois = modifiedRois;
+        // at this point the text is validated so we can recover modified ROIs...
+        final List<ROI> rois = new ArrayList<ROI>();
+        for (Reference<ROI> ref : modifiedRois)
+        {
+            final ROI roi = ref.get();
+            if (roi != null)
+                rois.add(roi);
+        }
 
         // nothing to edit ?
-        if ((rois == null) || rois.isEmpty())
+        if (rois.isEmpty())
             return;
 
         // can get semaphore ?

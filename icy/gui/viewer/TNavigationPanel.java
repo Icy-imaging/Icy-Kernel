@@ -18,14 +18,6 @@
  */
 package icy.gui.viewer;
 
-import icy.gui.component.IcySlider;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.GuiUtil;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.system.thread.ThreadUtil;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -46,6 +38,14 @@ import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import icy.gui.component.IcySlider;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.util.ComponentUtil;
+import icy.gui.util.GuiUtil;
+import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
+import icy.system.thread.ThreadUtil;
 
 /**
  * @author Stephane
@@ -147,6 +147,8 @@ public class TNavigationPanel extends JPanel
                 setRepeat(!isRepeat());
             }
         });
+        // default
+        setRepeat(true);
 
         frameRate = new JSpinner(new SpinnerNumberModel(DEFAULT_FRAME_RATE, 1, 60, 1));
         frameRate.setFocusable(false);

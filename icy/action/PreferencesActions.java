@@ -18,7 +18,7 @@
  */
 package icy.action;
 
-import icy.gui.preferences.CanvasPreferencePanel;
+import icy.gui.preferences.GUICanvasPreferencePanel;
 import icy.gui.preferences.ChatPreferencePanel;
 import icy.gui.preferences.GeneralPreferencePanel;
 import icy.gui.preferences.NetworkPreferencePanel;
@@ -93,7 +93,7 @@ public class PreferencesActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            new PreferenceFrame(CanvasPreferencePanel.NODE_NAME);
+            new PreferenceFrame(GUICanvasPreferencePanel.NODE_NAME);
             return true;
         }
     };

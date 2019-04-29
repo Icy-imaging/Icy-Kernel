@@ -18,23 +18,6 @@
  */
 package icy.image.colormodel;
 
-import icy.common.CollapsibleEvent;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
-import icy.image.colormap.IcyColorMap;
-import icy.image.colormodel.IcyColorModelEvent.IcyColorModelEventType;
-import icy.image.colorspace.IcyColorSpace;
-import icy.image.colorspace.IcyColorSpaceEvent;
-import icy.image.colorspace.IcyColorSpaceListener;
-import icy.image.lut.LUT;
-import icy.math.Scaler;
-import icy.math.ScalerEvent;
-import icy.math.ScalerListener;
-import icy.type.DataType;
-import icy.type.TypeUtil;
-import icy.type.collection.array.Array1DUtil;
-import icy.util.ReflectionUtil;
-
 import java.awt.image.BandedSampleModel;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentSampleModel;
@@ -50,6 +33,24 @@ import java.awt.image.WritableRaster;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+
+import icy.common.CollapsibleEvent;
+import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.image.colormap.IcyColorMap;
+import icy.image.colormodel.IcyColorModelEvent.IcyColorModelEventType;
+import icy.image.colorspace.IcyColorSpace;
+import icy.image.colorspace.IcyColorSpaceEvent;
+import icy.image.colorspace.IcyColorSpaceListener;
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.math.ScalerEvent;
+import icy.math.ScalerListener;
+import icy.type.DataType;
+import icy.type.TypeUtil;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayUtil;
+import icy.util.ReflectionUtil;
 
 /**
  * @author stephane
@@ -90,8 +91,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     IcyColorModel(int numComponents, DataType dataType, int[] bits)
     {
-        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT, dataType
-                .toDataBufferType());
+        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT,
+                dataType.toDataBufferType());
 
         if (numComponents == 0)
             throw new IllegalArgumentException("Number of components should be > 0");
@@ -237,10 +238,52 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         return createInstance(4, DataType.UBYTE);
     }
 
+    public static BandedSampleModel createCompatibleSampleModel(int transferType, int w, int h, int numComponent)
+    {
+        return new BandedSampleModel(transferType, w, h, numComponent);
+    }
+
+    /**
+     * Create a writable raster from specified data and size.<br>
+     * The Object data is internally a 2D array [][]
+     */
+    public static WritableRaster createWritableRaster(Object data, int w, int h)
+    {
+        if (ArrayUtil.getDim(data) != 2)
+            throw new IllegalArgumentException(
+                    "IcyColorModel.createWritableRaster(..) error: 'data' argument should be a 2D array !");
+
+        final DataType dataType = ArrayUtil.getDataType(data);
+        final int sizeC = ArrayUtil.getLength(data);
+
+        final SampleModel sm = createCompatibleSampleModel(dataType.toDataBufferType(), w, h, sizeC);
+
+        switch (dataType)
+        {
+            case UBYTE:
+            case BYTE:
+                return Raster.createWritableRaster(sm, new DataBufferByte((byte[][]) data, w * h), null);
+            case SHORT:
+                return Raster.createWritableRaster(sm, new DataBufferShort((short[][]) data, w * h), null);
+            case USHORT:
+                return Raster.createWritableRaster(sm, new DataBufferUShort((short[][]) data, w * h), null);
+            case UINT:
+            case INT:
+                return Raster.createWritableRaster(sm, new DataBufferInt((int[][]) data, w * h), null);
+            case FLOAT:
+                return Raster.createWritableRaster(sm, new DataBufferFloat((float[][]) data, w * h), null);
+            case DOUBLE:
+                return Raster.createWritableRaster(sm, new DataBufferDouble((double[][]) data, w * h), null);
+            default:
+                throw new IllegalArgumentException(
+                        "IcyColorModel.createWritableRaster(..) error: unsupported data type : " + dataType);
+        }
+    }
+
     @Override
     public SampleModel createCompatibleSampleModel(int w, int h)
     {
-        return new BandedSampleModel(transferType, w, h, getNumComponents());
+        return createCompatibleSampleModel(transferType, w, h, getNumComponents());
     }
 
     @Override
@@ -955,8 +998,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     @Override
     public String toString()
     {
-        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents
-                + " color space = " + getColorSpace());
+        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents + " color space = "
+                + getColorSpace());
     }
 
     /**

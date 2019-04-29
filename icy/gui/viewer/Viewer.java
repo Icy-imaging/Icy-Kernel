@@ -18,49 +18,6 @@
  */
 package icy.gui.viewer;
 
-import icy.action.CanvasActions;
-import icy.action.CanvasActions.ToggleLayersAction;
-import icy.action.ViewerActions;
-import icy.action.WindowActions;
-import icy.canvas.IcyCanvas;
-import icy.canvas.IcyCanvas2D;
-import icy.canvas.IcyCanvasEvent;
-import icy.canvas.IcyCanvasListener;
-import icy.common.MenuCallback;
-import icy.common.listener.ProgressListener;
-import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.component.renderer.LabelComboBoxRenderer;
-import icy.gui.dialog.ConfirmDialog;
-import icy.gui.dialog.MessageDialog;
-import icy.gui.dialog.SaverDialog;
-import icy.gui.frame.IcyFrame;
-import icy.gui.frame.IcyFrameAdapter;
-import icy.gui.frame.IcyFrameEvent;
-import icy.gui.lut.LUTViewer;
-import icy.gui.lut.abstract_.IcyLutViewer;
-import icy.gui.plugin.PluginComboBoxRenderer;
-import icy.gui.util.ComponentUtil;
-import icy.gui.viewer.ViewerEvent.ViewerEventType;
-import icy.image.IcyBufferedImage;
-import icy.image.lut.LUT;
-import icy.main.Icy;
-import icy.plugin.PluginLoader;
-import icy.plugin.PluginLoader.PluginLoaderEvent;
-import icy.plugin.PluginLoader.PluginLoaderListener;
-import icy.plugin.interface_.PluginCanvas;
-import icy.preferences.GeneralPreferences;
-import icy.sequence.DimensionId;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent;
-import icy.sequence.SequenceListener;
-import icy.system.IcyExceptionHandler;
-import icy.system.IcyHandledException;
-import icy.system.thread.ThreadUtil;
-import icy.util.GraphicsUtil;
-import icy.util.Random;
-import icy.util.StringUtil;
-
 import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -93,6 +50,52 @@ import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.WindowConstants;
 import javax.swing.event.EventListenerList;
+
+import icy.action.CanvasActions;
+import icy.action.CanvasActions.ToggleLayersAction;
+import icy.action.SequenceOperationActions.ToggleVirtualSequenceAction;
+import icy.action.ViewerActions;
+import icy.action.WindowActions;
+import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvasEvent;
+import icy.canvas.IcyCanvasListener;
+import icy.common.MenuCallback;
+import icy.common.listener.ProgressListener;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
+import icy.gui.component.renderer.LabelComboBoxRenderer;
+import icy.gui.dialog.ConfirmDialog;
+import icy.gui.dialog.MessageDialog;
+import icy.gui.dialog.SaverDialog;
+import icy.gui.frame.IcyFrame;
+import icy.gui.frame.IcyFrameAdapter;
+import icy.gui.frame.IcyFrameEvent;
+import icy.gui.frame.progress.ToolTipFrame;
+import icy.gui.lut.LUTViewer;
+import icy.gui.lut.abstract_.IcyLutViewer;
+import icy.gui.plugin.PluginComboBoxRenderer;
+import icy.gui.util.ComponentUtil;
+import icy.gui.viewer.ViewerEvent.ViewerEventType;
+import icy.image.IcyBufferedImage;
+import icy.image.cache.ImageCache;
+import icy.image.lut.LUT;
+import icy.main.Icy;
+import icy.plugin.PluginLoader;
+import icy.plugin.PluginLoader.PluginLoaderEvent;
+import icy.plugin.PluginLoader.PluginLoaderListener;
+import icy.plugin.interface_.PluginCanvas;
+import icy.preferences.GeneralPreferences;
+import icy.sequence.DimensionId;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceListener;
+import icy.system.IcyExceptionHandler;
+import icy.system.IcyHandledException;
+import icy.system.thread.ThreadUtil;
+import icy.util.GraphicsUtil;
+import icy.util.Random;
+import icy.util.StringUtil;
 
 /**
  * Viewer send an event if the IcyCanvas change.
@@ -144,6 +147,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
+     * only show it once per Icy session
+     */
+    private static boolean toolTipVirtualDone = false;
+
+    /**
      * associated LUT
      */
     private LUT lut;
@@ -173,6 +181,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     IcyButton screenShotAlternateButton;
     IcyButton duplicateButton;
     IcyButton switchStateButton;
+    IcyToggleButton virtualButton;
 
     /**
      * internals
@@ -383,8 +392,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             // save new sequence enabled ?
             if (GeneralPreferences.getSaveNewSequence())
             {
-                final int res = ConfirmDialog.confirmEx("Save sequence", "Do you want to save '" + sequence.getName()
-                        + "' before closing it ?", ConfirmDialog.YES_NO_CANCEL_OPTION);
+                final int res = ConfirmDialog.confirmEx("Save sequence",
+                        "Do you want to save '" + sequence.getName() + "' before closing it ?",
+                        ConfirmDialog.YES_NO_CANCEL_OPTION);
 
                 switch (res)
                 {
@@ -460,6 +470,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         screenShotAlternateButton = null;
         screenShotButton = null;
         switchStateButton = null;
+        virtualButton = null;
 
         super.onClosed();
     }
@@ -609,6 +620,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         switchStateButton = new IcyButton(getSwitchStateAction());
         switchStateButton.setFocusable(false);
         switchStateButton.setHideActionText(true);
+        virtualButton = new IcyToggleButton(new ToggleVirtualSequenceAction(false));
+        virtualButton.setFocusable(false);
+        virtualButton.setHideActionText(true);
 
         // and build the toolbar
         toolBar = new JToolBar();
@@ -640,6 +654,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             toolBar.addSeparator();
             toolBar.add(duplicateButton);
             toolBar.add(switchStateButton);
+            toolBar.addSeparator();
+            toolBar.add(virtualButton);
         }
     }
 
@@ -698,7 +714,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     void refreshToolBar()
     {
         // FIXME : switchStateButton stay selected after action
-
         final boolean layersVisible = (canvas != null) ? canvas.isLayersVisible() : false;
 
         layersEnabledButton.setSelected(layersVisible);
@@ -706,6 +721,34 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             layersEnabledButton.setToolTipText("Hide layers");
         else
             layersEnabledButton.setToolTipText("Show layers");
+
+        final Sequence seq = getSequence();
+        final boolean virtual = (seq != null) && seq.isVirtual();
+        // update virtual state
+        virtualButton.setSelected(virtual);
+        if (!ImageCache.isEnabled())
+            virtualButton.setToolTipText("Image cache is disabled, cannot use virtual sequence");
+        else
+        {
+            if (virtual)
+            {
+                virtualButton.setToolTipText("Disable virtual sequence (caching)");
+
+                // virtual was enabled for this sequence --> show tooltip to explain
+                if (!toolTipVirtualDone)
+                {
+                    final ToolTipFrame tooltip = new ToolTipFrame("<html>" + "<img src=\""
+                            + Icy.class.getResource("/res/image/help/viewer_virtual.jpg").toString() + "\" /><br>"
+                            + "<b>Your image has been made <i>virtual</i></b>.<br> This means that its data can be stored on disk to spare memory but this is at the cost of slower display / processing.<br>"
+                            + "Also you should note that <b>some plugins aren't compatible with <i>virtual</i> images</b> and so the result may be inconsistent (possible data lost)."
+                            + "</html>", 30, "viewerVirtual");
+                    tooltip.setSize(400, 180);
+                    toolTipVirtualDone = true;
+                }
+            }
+            else
+                virtualButton.setToolTipText("Enable virtual sequence (caching)");
+        }
 
         // refresh combos
         refreshLockCombo();
@@ -793,8 +836,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                     }
                     else if (e instanceof Exception)
                     {
-                        IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '"
-                                + pluginClassName + "' class --> cannot create the canvas.", e), true);
+                        IcyExceptionHandler.handleException(
+                                new ClassNotFoundException(
+                                        "Cannot find '" + pluginClassName + "' class --> cannot create the canvas.", e),
+                                true);
                     }
                     else
                         IcyExceptionHandler.handleException(e, true);
@@ -1480,10 +1525,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                 if (StringUtil.isEmpty(meta) || StringUtil.equals(meta, Sequence.ID_NAME))
                     refreshViewerTitle();
+                // update virtual state if needed
+                if (initialized && StringUtil.equals(meta, Sequence.ID_VIRTUAL))
+                    refreshToolBar();
                 break;
 
             case SEQUENCE_DATA:
-
                 break;
 
             case SEQUENCE_TYPE:

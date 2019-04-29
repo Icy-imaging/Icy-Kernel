@@ -2827,7 +2827,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Compute union with specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
-     * This method actually call <code>ROIUtil.getUnion(ROI, ROI)</code> internally.
+     * The default implementation use <code>ROIUtil.getUnion(ROI, ROI)</code> internally but it maybe overridden.
      */
     public ROI getUnion(ROI roi) throws UnsupportedOperationException
     {
@@ -2836,7 +2836,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Compute intersection with specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
-     * This method actually call <code>ROIUtil.getIntersection(ROI, ROI)</code> internally.
+     * The default implementation use <code>ROIUtil.getIntersection(ROI, ROI)</code> internally but it maybe overridden.
      */
     public ROI getIntersection(ROI roi) throws UnsupportedOperationException
     {
@@ -2845,7 +2845,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Compute exclusive union with specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
-     * This method actually call <code>ROIUtil.getExclusiveUnion(ROI, ROI)</code> internally.
+     * The default implementation use <code>ROIUtil.getExclusiveUnion(ROI, ROI)</code> internally but it maybe overridden.
      */
     public ROI getExclusiveUnion(ROI roi) throws UnsupportedOperationException
     {
@@ -2854,7 +2854,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Subtract the specified <code>ROI</code> and return result in a new <code>ROI</code>.<br>
-     * This method actually call <code>ROIUtil.getSubtraction(ROI, ROI)</code> internally.
+     * The default implementation use <code>ROIUtil.getSubtraction(ROI, ROI)</code> internally but it maybe overridden.
      */
     public ROI getSubtraction(ROI roi) throws UnsupportedOperationException
     {
