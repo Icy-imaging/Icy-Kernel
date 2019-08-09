@@ -803,6 +803,21 @@ public class Loader
         return result;
     }
 
+    static SequenceFileImporter cloneAndOpenSequenceFileImporter(SequenceFileImporter importer)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            NoSuchMethodException, SecurityException, IOException, UnsupportedFormatException
+    {
+
+        final SequenceFileImporter result = cloneSequenceFileImporter(importer);
+
+        if (result != null)
+            if (!result.open(importer.getOpened(), 0))
+                throw new UnsupportedFormatException("Image file '" + importer.getOpened() + "' could not be opened by "
+                        + result.toString() + " importer.");
+
+        return result;
+    }
+
     /**
      * Returns <code>true</code> if the specified path describes a file type (from extension) which
      * is well known to
@@ -1777,7 +1792,6 @@ public class Loader
      * @param showProgress
      *        Show progression of loading process.
      */
-    @SuppressWarnings("resource")
     public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int series,
             boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
     {
@@ -3802,7 +3816,36 @@ public class Loader
             // add sequence to result
             for (int s : selectedSeries)
             {
-                final Sequence seq = internalLoadSingle(importer, meta, s, 0, null, -1, -1, -1, -1, -1, forceVolatile,
+                final SequenceFileImporter imp;
+
+                // opening several series ?
+                if ((selectedSeries.length > 1) && !result.isEmpty())
+                {
+                    try
+                    {
+                        // duplicate the importer so each Sequence has its own importer instance
+                        // otherwise closing a Sequence will close importer for everyone
+                        imp = cloneAndOpenSequenceFileImporter(importer);
+                    }
+                    catch (IOException e)
+                    {
+                        throw e;
+                    }
+                    catch (UnsupportedFormatException e)
+                    {
+                        throw e;
+                    }
+                    catch (Throwable t)
+                    {
+                        IcyExceptionHandler.showErrorMessage(t, true, true);
+                        System.err.print("Couln't open, ignoring this series...");
+                        continue;
+                    }
+                }
+                else
+                    imp = importer;
+
+                final Sequence seq = internalLoadSingle(imp, meta, s, 0, null, -1, -1, -1, -1, -1, forceVolatile,
                         loadingFrame);
 
                 // group series together

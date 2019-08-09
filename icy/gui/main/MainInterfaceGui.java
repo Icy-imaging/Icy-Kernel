@@ -1330,8 +1330,18 @@ public class MainInterfaceGui implements MainInterface
     public boolean canExitExternal()
     {
         for (AcceptListener listener : listeners.getListeners(WeakAcceptListener.class))
-            if (!listener.accept(mainFrame))
-                return false;
+        {
+            // should not be interrupted by an error
+            try
+            {
+                if (!listener.accept(mainFrame))
+                    return false;
+            }
+            catch (Throwable error)
+            {
+                // ignore
+            }
+        }
 
         return true;
     }

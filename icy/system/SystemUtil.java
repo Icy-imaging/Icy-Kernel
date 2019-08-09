@@ -1051,6 +1051,13 @@ public class SystemUtil
 
     public static boolean addToJavaLibraryPath(String directories[])
     {
+        // can't patch library path on java 12 or above
+        if (getJavaVersionAsNumber() >= 12d)
+        {
+            System.out.println("Java 12 (or above) don't support patching java library path.");
+            return false;
+        }
+
         try
         {
             final String path_separator = System.getProperty("path.separator");

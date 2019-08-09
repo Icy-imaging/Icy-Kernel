@@ -3707,6 +3707,18 @@ public abstract class IcyCanvas extends JPanel
                         }
                     }
                     break;
+                    
+                    // global layer
+                case KeyEvent.VK_L:
+                    if (EventUtil.isShiftDown(e, true))
+                    {
+                        if (CanvasActions.globalToggleLayersAction.isEnabled())
+                        {
+                            CanvasActions.globalToggleLayersAction.execute();
+                            e.consume();
+                        }
+                    }
+                    break;
 
                 case KeyEvent.VK_SPACE:
                     if (tNav.isPlaying())

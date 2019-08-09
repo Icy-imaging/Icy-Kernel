@@ -105,14 +105,28 @@ public class SaverDialog extends JFileChooser
         // so the filename information is not lost when changing directory
         setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        // get filename without extension
-        String filename = FileUtil.getFileName(sequence.getOutputFilename(false), false);
-        // empty filename --> use sequence name as default filename
-        if (StringUtil.isEmpty(filename))
-            filename = sequence.getName();
+        String filename;
+
+        // filename = sequence.getFilename();
+        // // single image file ? --> re-use the filename as default filename for saving
+        // if (!StringUtil.isEmpty(filename) && FileUtil.exists(filename))
+        // filename = FileUtil.getFileName(sequence.getOutputFilename(false), false);
+        // else
+        // {
+        
+        // better to use internal metadata name by default as default filename
+        filename = sequence.getName();
+        // no specific internal name ?
+        if (StringUtil.isEmpty(filename) || filename.startsWith(Sequence.DEFAULT_NAME))
+            // get filename without extension
+            filename = FileUtil.getFileName(sequence.getOutputFilename(false), false);
+        // }
+        
+        // we have a default filename ?
         if (!StringUtil.isEmpty(filename))
         {
-            filename = FileUtil.cleanPath(filename);
+            // we should have only filename here (not full path) so we remove unwanted '/' and '\' characters
+            filename = FileUtil.cleanPath(filename.replaceAll("/", " ").replaceAll("\\\\", " "));
             // test if filename has already a valid extension
             final String ext = getDialogExtension(filename);
             // remove file extension

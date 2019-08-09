@@ -59,14 +59,26 @@ public class EHCache2 extends AbstractCache
                 System.out.println("Trying to put it back...");
                 // try to force GC and put it back in cache
                 System.gc();
-                cache.put(new Element(element.getObjectKey(), element.getObjectValue(), element.isEternal()));
+                cache.put(new Element(element.getObjectKey(), element.getObjectValue(), true));
             }
+            // else
+            // System.out.println("EHCache.eviction: "
+            // + IcyBufferedImage.getIcyBufferedImage((Integer) element.getObjectKey()).getImageSourceInfo());
         }
 
         @Override
         public void notifyElementExpired(Ehcache ehCache, Element element)
         {
-            //
+            // eternal element expiration ?
+            if (element.isEternal())
+            {
+                System.out.println("Warning: eternal element " + element.getObjectKey() + " marked as expired..");
+                System.out.println("Trying to put it back...");
+                cache.put(new Element(element.getObjectKey(), element.getObjectValue(), true));
+            }
+            // else
+            // System.out.println("EHCache.expiration: "
+            // + IcyBufferedImage.getIcyBufferedImage((Integer) element.getObjectKey()).getImageSourceInfo());
         }
 
         @Override
@@ -136,14 +148,18 @@ public class EHCache2 extends AbstractCache
             // subtract 200 MB to available space for safety
             final long freeMB = (freeBytes <= 0) ? Long.MAX_VALUE : Math.max(0, (freeBytes / (1024 * 1024)) - 200);
 
+            // Stephane: we need to put a long idle / live time otherwise not eternal data
+            // will be removed from cache as soon it expired on get(key) call even if the cache is not full...
             final CacheConfiguration cacheConfig = new CacheConfiguration().name("ehCache2")
                     .maxBytesLocalHeap(cacheSizeMB, MemoryUnit.MEGABYTES)
                     // .maxBytesLocalOffHeap(cacheSizeMB, MemoryUnit.MEGABYTES)
                     .maxBytesLocalDisk(Math.min(freeMB, 500000L), MemoryUnit.MEGABYTES)
                     // we want the disk write buffer to be at least 32 MB and 256 MB max
                     .diskSpoolBufferSizeMB(Math.max(32, Math.min(256, cacheSizeMB / 16)))
-                    .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(20)
-                    .timeToLiveSeconds(60).diskExpiryThreadIntervalSeconds(120).persistence(persistenceConfig);
+                    // .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(2).timeToLiveSeconds(5)
+                    // .diskExpiryThreadIntervalSeconds(10).persistence(persistenceConfig);
+                    .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(60 * 5)
+                    .timeToLiveSeconds(60 * 60).diskExpiryThreadIntervalSeconds(120).persistence(persistenceConfig);
             // .pinning(new PinningConfiguration().store(Store.INCACHE));
             // .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LRU).timeToIdleSeconds(2).timeToLiveSeconds(2)
 
@@ -313,6 +329,9 @@ public class EHCache2 extends AbstractCache
 
         try
         {
+            // System.out.println("EHCache.set(" + IcyBufferedImage.getIcyBufferedImage(key).getImageSourceInfo() + ", "
+            // + eternal + ")");
+            //
             cache.put(new Element(key, object, eternal));
         }
         catch (Exception e)
@@ -363,6 +382,9 @@ public class EHCache2 extends AbstractCache
 
         try
         {
+            // System.out
+            // .println("EHCache.remove(" + IcyBufferedImage.getIcyBufferedImage(key).getImageSourceInfo() + ")");
+            //
             cache.remove(key);
         }
         catch (Exception e)

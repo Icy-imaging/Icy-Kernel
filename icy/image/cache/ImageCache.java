@@ -47,7 +47,7 @@ public class ImageCache
 
         return result;
     }
-    
+
     public static boolean isEnabled()
     {
         return cache.isEnabled();

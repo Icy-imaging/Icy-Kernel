@@ -391,18 +391,20 @@ public class FileUtil
     }
     
     /**
-     * Return directory information from specified path<br>
+     * Returns directory information from specified path<br>
      * <br>
-     * getDirectory("/file.txt") --> "/"<br>
-     * getDirectory("D:/temp/file.txt") --> "D:/temp/"<br>
-     * getDirectory("D:/temp/") --> "D:/temp/"<br>
-     * getDirectory("D:/temp") --> "D:/"<br>
+     * getDirectory("/file.txt", true) --> "/"<br>
+     * getDirectory("D:/temp/file.txt", true) --> "D:/temp/"<br>
+     * getDirectory("D:/temp/", true) --> "D:/temp/"<br>
+     * getDirectory("D:/temp/", false) --> "D:/temp"<br>
+     * getDirectory("D:/temp", true) --> "D:/"<br>
+     * getDirectory("D:/temp", false) --> "D:"<br>
      * getDirectory("C:file.txt") --> "C:"<br>
      * getDirectory("file.txt") --> ""<br>
      * getDirectory("file") --> ""<br>
      * getDirectory(null) --> ""
      */
-    public static String getDirectory(String path, boolean separator)
+    public static String getDirectory(String path, boolean wantSeparator)
     {
         final String finalPath = getGenericPath(path);
 
@@ -410,7 +412,7 @@ public class FileUtil
         {
             int index = finalPath.lastIndexOf(FileUtil.separatorChar);
             if (index != -1)
-                return finalPath.substring(0, index + (separator ? 1 : 0));
+                return finalPath.substring(0, index + (wantSeparator ? 1 : 0));
 
             index = finalPath.lastIndexOf(':');
             if (index != -1)

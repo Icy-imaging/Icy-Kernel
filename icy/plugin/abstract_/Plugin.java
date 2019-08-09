@@ -349,7 +349,7 @@ public abstract class Plugin
             return false;
 
         // and load it
-        System.load(file.getPath());
+        System.load(file.getAbsolutePath());
 
         return true;
     }

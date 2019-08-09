@@ -158,7 +158,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     {
         final List<IcyColorMap> result = new ArrayList<IcyColorMap>();
 
-        result.addAll(getLinearColorMaps(false, false));
+        result.addAll(getLinearColorMaps(wantGrayInverse, wantAlpha));
         result.addAll(getSpecialColorMaps());
         result.addAll(getCustomColorMaps());
 
