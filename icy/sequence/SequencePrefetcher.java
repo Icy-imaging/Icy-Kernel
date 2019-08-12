@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import icy.image.IcyBufferedImage;
+
 /**
  * Class used to accelerate Sequence data access on first loading using data prefetching.
  * 
@@ -87,7 +89,14 @@ public class SequencePrefetcher extends Thread
         if (prefetchSet.contains(entry))
             return;
 
-        if (sequence.getImage(t, z, false).isDataInitialized())
+        final IcyBufferedImage image = sequence.getImage(t, z, false);
+
+        // nothing to prefetch here
+        if (image == null)
+            return;
+
+        // data already initialized..
+        if (image.isDataInitialized())
             return;
 
         synchronized (prefetchSet)
