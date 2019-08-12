@@ -65,6 +65,7 @@ import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
 import icy.preferences.PluginPreferences;
 import icy.sequence.Sequence;
+import icy.sequence.SequencePrefetcher;
 import icy.system.AppleUtil;
 import icy.system.IcyExceptionHandler;
 import icy.system.IcySecurityManager;
@@ -775,28 +776,28 @@ public class Icy
                         {
                             for (JInternalFrame frame : desktopPane.getAllFrames())
                             {
-                                // if (frame instanceof IcyInternalFrame)
-                                // {
-                                // final IcyInternalFrame iFrame = (IcyInternalFrame) frame;
-                                // if (!iFrame.isClosed())
-                                // iFrame.close(true);
-                                // if (iFrame.getDefaultCloseOperation() !=
-                                // WindowConstants.DISPOSE_ON_CLOSE)
-                                // iFrame.dispose();
-                                // }
-                                // else
-                                // {
                                 try
                                 {
-                                    frame.setClosed(true);
+                                    try
+                                    {
+                                        frame.setClosed(true);
+                                    }
+                                    catch (PropertyVetoException e)
+                                    {
+                                        // if (frame.getDefaultCloseOperation() !=
+                                        // WindowConstants.DISPOSE_ON_CLOSE)
+                                        frame.dispose();
+                                    }
+                                    catch (Throwable t)
+                                    {
+                                        // error on close ? --> try dispose
+                                        frame.dispose();
+                                    }
                                 }
-                                catch (PropertyVetoException e)
+                                catch (Throwable t)
                                 {
-                                    // if (frame.getDefaultCloseOperation() !=
-                                    // WindowConstants.DISPOSE_ON_CLOSE)
-                                    frame.dispose();
+                                    // ignore further error here...
                                 }
-                                // }
                             }
                         }
 
@@ -823,6 +824,8 @@ public class Icy
                 PluginLoader.stopDaemons();
                 // shutdown background processor after frame close
                 ThreadUtil.shutdown();
+                // shutdown prefetcher
+                SequencePrefetcher.shutdown();
 
                 // headless mode
                 if (Icy.getMainInterface().isHeadLess())
@@ -1044,14 +1047,14 @@ public class Icy
     {
         // build the local native library path
         final String libPath = LIB_PATH + FileUtil.separator + SystemUtil.getOSArchIdString();
-        final File libFile = new File(libPath);
+        final File libPathFile = new File(libPath);
 
         // get all files in local native library path
-        final File[] files = FileUtil.getFiles(libFile, null, true, true, false);
+        final File[] files = FileUtil.getFiles(libPathFile, null, true, true, false);
         final ArrayList<String> directories = new ArrayList<String>();
 
         // add base local native library path to user library paths
-        directories.add(libFile.getAbsolutePath());
+        directories.add(libPathFile.getAbsolutePath());
         // add base temporary native library path to user library paths
         directories.add(SystemUtil.getTempLibraryDirectory());
 
@@ -1094,16 +1097,16 @@ public class Icy
             System.err.println("Native libraries may not load correctly.");
 
         // load native libraries
-        loadVtkLibrary(libPath);
-        // loadItkLibrary(libPath);
+        loadVtkLibrary(libPathFile);
+        // loadItkLibrary(libPathFile);
 
-        // disable native lib support for JAI as we don't provide them (for the moment)
+        // disable native lib support for JAI as we don't provide them
         SystemUtil.setProperty("com.sun.media.jai.disableMediaLib", "true");
     }
 
-    private static void loadVtkLibrary(String libPath)
+    private static void loadVtkLibrary(File libPathFile)
     {
-        final String vtkLibPath = libPath + FileUtil.separator + "vtk";
+        final String vtkLibPath = FileUtil.getGenericPath(new File(libPathFile, "vtk").getAbsolutePath());
 
         // we load it directly from inner lib path if possible
         System.setProperty("vtk.lib.dir", vtkLibPath);

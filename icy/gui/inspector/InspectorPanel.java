@@ -272,14 +272,9 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
     public void imageCacheDisabled()
     {
         // image cache is disabled so we can't use caching
+        setVirtualMode(false);
         virtualModeBtn.setEnabled(false);
-        virtualModeBtn.setSelected(false);
         virtualModeBtn.setToolTipText("Image cache is disabled, cannot use the virtual mode");
-
-        // refresh title (display virtual mode or not)
-        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-        if (mainFrame != null)
-            mainFrame.refreshTitle();
     }
 
     /**

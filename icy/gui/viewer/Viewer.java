@@ -659,7 +659,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
     }
 
-    void refreshLockCombo()
+    /**
+     * Force lock combo-box refresh (should be used internally only)
+     */
+    public void refreshLockCombo()
     {
         final int syncId = getViewSyncId();
 
@@ -695,7 +698,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
     }
 
-    void refreshCanvasCombo()
+    /**
+     * Force canvas combo-box refresh (should be used internally only)
+     */
+    public void refreshCanvasCombo()
     {
         if (canvas != null)
         {
@@ -711,7 +717,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
     }
 
-    void refreshToolBar()
+    /**
+     * Force toolbar refresh (should be used internally only)
+     */
+    public void refreshToolBar()
     {
         // FIXME : switchStateButton stay selected after action
         final boolean layersVisible = (canvas != null) ? canvas.isLayersVisible() : false;
@@ -1506,9 +1515,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * Change the frame's title.
+     * Refresh frame's title
      */
-    protected void refreshViewerTitle()
+    public void refreshViewerTitle()
     {
         // have to test this as we release sequence reference on closed
         if (sequence != null)

@@ -774,8 +774,17 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                             // rebuild images
                             final LUT l = getLut();
                             for (ImageCacheTile tile : tiles)
-                                tile.image = IcyBufferedImageUtil.toBufferedImage(
-                                        IcyBufferedImageUtil.getSubImage(icyImage, tile.rect), tile.image, l);
+                            {
+                                final IcyBufferedImage icyTile = IcyBufferedImageUtil.getSubImage(icyImage, tile.rect);
+
+                                if (icyTile != null)
+                                {
+                                    // be sure that we don't keep that in cache (useless and waste cache space)
+                                    icyTile.setVolatile(false);
+                                    // convert to buffered image
+                                    tile.image = IcyBufferedImageUtil.toBufferedImage(icyTile, tile.image, l);
+                                }
+                            }
                         }
 
                         notEnoughMemory = false;
@@ -3191,6 +3200,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
 
                     ThreadUtil.invokeLater(new Runnable()
                     {
+
                         @Override
                         public void run()
                         {
@@ -3219,6 +3229,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 // mouse position changed outside mouse move event ?
                 if (!canvasView.handlingMouseMoveEvent && !canvasView.isDragging() && !isSynchSlave())
                 {
+
                     // mouse position in canvas
                     final Point mousePos = getMousePos();
                     final Point mouseAbsolutePos = getMousePos();
@@ -3241,6 +3252,7 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 if (!canvasView.hasMouseFocus)
                     canvasView.refresh();
                 break;
+
         }
     }
 

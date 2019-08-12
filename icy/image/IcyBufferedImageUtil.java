@@ -1285,7 +1285,12 @@ public class IcyBufferedImageUtil
 
         // process fast down scaling
         while (it-- > 0)
+        {
+            // don't waste cache space with temporary image
+            if (result != source)
+                result.setVolatile(false);
             result = IcyBufferedImageUtil.downscaleBy2(result, true);
+        }
 
         return result;
     }

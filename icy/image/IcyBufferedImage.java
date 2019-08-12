@@ -195,6 +195,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 // better to directly load image
                 final IcyBufferedImage newImage = imp.getImage(imageSourceInfo.series, imageSourceInfo.resolution,
                         imageSourceInfo.region, imageSourceInfo.z, imageSourceInfo.t);
+                // we want data in memory
+                newImage.setVolatile(false);
                 // then get data
                 for (int c = 0; c < sizeC; c++)
                     result[c] = newImage.getDataXY(c);

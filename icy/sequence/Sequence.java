@@ -42,6 +42,7 @@ import icy.common.UpdateEventHandler;
 import icy.common.exception.TooLargeArrayException;
 import icy.common.listener.ChangeListener;
 import icy.file.FileUtil;
+import icy.file.SequenceFileGroupImporter;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageEvent;
@@ -892,6 +893,23 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public String getName()
     {
         return MetaDataUtil.getName(metaData, 0);
+    }
+
+    /**
+     * Returns the origin filename for the specified image position.<br>
+     * This method is useful for sequence loaded from multiple files.
+     * 
+     * @return the origin filename for the given image position
+     */
+    public String getFilename(int t, int z, int c)
+    {
+        final ImageProvider importer = getImageProvider();
+
+        // group importer ? we can retrieve the original filename
+        if (importer instanceof SequenceFileGroupImporter)
+            return ((SequenceFileGroupImporter) importer).getPath(z, t, c);
+
+        return filename;
     }
 
     /**
@@ -3263,7 +3281,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * @param loadData
      *        if <code>true</code> then we ensure that image data is loaded (in case of lazy loading) before returning the image
      */
-    public IcyBufferedImage getImage(int t, int z, boolean loadData)
+    protected IcyBufferedImage getImage(int t, int z, boolean loadData)
     {
         final VolumetricImage volImg = getVolumetricImage(t);
 
@@ -3271,7 +3289,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             final IcyBufferedImage result = volImg.getImage(z);
 
-            if (loadData && (result != null))
+            if ((result != null) && loadData)
                 result.loadData();
 
             return result;
@@ -3286,13 +3304,34 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public IcyBufferedImage getImage(int t, int z)
     {
-        // FIXME: check if that is *really* not needed anymore (as the image contains the importer information)
+        // get image (no data loading at this point)
+        final IcyBufferedImage result = getImage(t, z, false);
 
-        // by default we prefer to load data on getImage(t,z) call as we probably need it
-        // (and that is important if we want to set the image in another Sequence)
-        // return getImage(t, z, true);
+        final int sizeZ = getSizeZ();
+        final int sizeT = getSizeT();
 
-        return getImage(t, z, false);
+        // dumb data prefetch around T
+        for (int i = -5; i < 5; i++)
+        {
+            final int pt = t + i;
+
+            if ((pt != t) && (pt >= 0) && (pt < sizeT))
+                SequencePrefetcher.prefetch(this, pt, z);
+        }
+        // 3D stack ?
+        if (z > 0)
+        {
+            // dumb data prefetch around current Z
+            for (int i = -5; i < 5; i++)
+            {
+                final int pz = z + i;
+
+                if ((pz != z) && (pz >= 0) && (pz < sizeZ))
+                    SequencePrefetcher.prefetch(this, t, pz);
+            }
+        }
+
+        return result;
     }
 
     /**
