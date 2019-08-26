@@ -3,8 +3,13 @@
  */
 package icy.sequence;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -19,7 +24,7 @@ public class SequencePrefetcher extends Thread
 {
     private static class PrefetchEntry
     {
-        final Sequence sequence;
+        final Reference<Sequence> sequence;
         final int t;
         final int z;
         final int hc;
@@ -28,7 +33,7 @@ public class SequencePrefetcher extends Thread
         {
             super();
 
-            this.sequence = sequence;
+            this.sequence = new WeakReference<Sequence>(sequence);
             this.t = t;
             this.z = z;
 
@@ -48,7 +53,7 @@ public class SequencePrefetcher extends Thread
             {
                 final PrefetchEntry entry = (PrefetchEntry) obj;
 
-                return (entry.sequence == sequence) && (entry.t == t) && (entry.z == z);
+                return (entry.sequence.get() == sequence.get()) && (entry.t == t) && (entry.z == z);
             }
 
             return super.equals(obj);
@@ -61,6 +66,11 @@ public class SequencePrefetcher extends Thread
     public static void prefetch(Sequence sequence, int t, int z)
     {
         prefetcher.prefetchInternal(sequence, t, z);
+    }
+
+    public static void cancel(Sequence sequence)
+    {
+        prefetcher.cancelInternal(sequence);
     }
 
     public static void shutdown()
@@ -106,6 +116,29 @@ public class SequencePrefetcher extends Thread
         }
     }
 
+    private void cancelInternal(Sequence sequence)
+    {
+        final List<PrefetchEntry> toRemove = new ArrayList<PrefetchEntry>();
+
+        // build list of element to remove
+        synchronized (prefetchSet)
+        {
+            final Iterator<PrefetchEntry> it = prefetchSet.iterator();
+
+            while (it.hasNext())
+            {
+                final PrefetchEntry entry = it.next();
+                final Sequence entrySeq = entry.sequence.get();
+
+                if ((entrySeq == null) || (entrySeq == sequence))
+                    toRemove.add(entry);
+            }
+
+            prefetchSet.removeAll(toRemove);
+            prefetchQueue.removeAll(toRemove);
+        }
+    }
+
     @Override
     public void run()
     {
@@ -123,8 +156,12 @@ public class SequencePrefetcher extends Thread
             // need to prefetch something ?
             if (entry != null)
             {
+                // we use weak reference to not retain Sequence with prefetch process..
+                final Sequence entrySeq = entry.sequence.get();
+
                 // prefetch data
-                entry.sequence.getImage(entry.t, entry.z, true);
+                if (entrySeq != null)
+                    entrySeq.getImage(entry.t, entry.z, true);
             }
             else
             {

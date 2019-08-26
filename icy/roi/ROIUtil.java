@@ -1908,17 +1908,29 @@ public class ROIUtil
     {
         final List<ROI> rois = new ArrayList<ROI>();
         final Rectangle5D bounds = new Rectangle5D.Double();
+        // we cannot merge ROI for labeled sequence
+        boolean canMerge = !label;
 
-        try
+        // can merge ROI ? (faster)
+        if (canMerge)
         {
-            // compute the union of all ROI
-            final ROI roi = ROIUtil.merge(inputRois, BooleanOperator.OR);
-            // get bounds of result
-            bounds.add(roi.getBounds5D());
-            // add this single ROI to list
-            rois.add(roi);
+            try
+            {
+                // compute the union of all ROI
+                final ROI roi = ROIUtil.merge(inputRois, BooleanOperator.OR);
+                // get bounds of result
+                bounds.add(roi.getBounds5D());
+                // add this single ROI to list
+                rois.add(roi);
+            }
+            catch (Exception e)
+            {
+                // merge failed
+                canMerge = false;
+            }
         }
-        catch (Exception e)
+
+        if (!canMerge)
         {
             for (ROI roi : inputRois)
             {
