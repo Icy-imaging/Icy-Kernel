@@ -18,17 +18,13 @@
  */
 package icy.search;
 
+import org.w3c.dom.Document;
+
 import icy.network.NetworkUtil;
-import icy.network.URLUtil;
 import icy.network.WebInterface;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
-import icy.util.XMLUtil;
-
-import java.net.URLEncoder;
-
-import org.w3c.dom.Document;
 
 /**
  * The OnlineSearchResultProducer is the basic class for {@link SearchResult} producer from online
@@ -109,12 +105,12 @@ public abstract class OnlineSearchResultProducer extends SearchResultProducer
      */
     protected Document doSearchRequest(String text) throws Exception
     {
+        // TODO: deprecated, to remove
         // send request to website and get result
-        return XMLUtil.loadDocument(URLUtil.getURL(SEARCH_URL + URLEncoder.encode(text, "UTF-8")), true);
+        // return XMLUtil.loadDocument(URLUtil.getURL(SEARCH_URL + URLEncoder.encode(text, "UTF-8")), true);
 
         // by default we use the default WEB interface search
-        // TODO: uncomment when ready
-        // return WebInterface.doSearch(text);
+        return WebInterface.doSearch(text);
     }
 
     /**

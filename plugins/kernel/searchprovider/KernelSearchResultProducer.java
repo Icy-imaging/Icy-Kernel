@@ -18,6 +18,12 @@
  */
 package plugins.kernel.searchprovider;
 
+import java.awt.Image;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.pushingpixels.flamingo.api.common.RichTooltip;
+
 import icy.action.ActionManager;
 import icy.action.IcyAbstractAction;
 import icy.resource.icon.IcyIcon;
@@ -25,11 +31,6 @@ import icy.search.SearchResult;
 import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
 import icy.util.StringUtil;
-
-import java.awt.Image;
-import java.util.ArrayList;
-
-import org.pushingpixels.flamingo.api.common.RichTooltip;
 
 /**
  * This class is used to provide kernel command elements to the search engine.
@@ -44,8 +45,8 @@ public class KernelSearchResultProducer extends SearchResultProducer
         private final int priority;
         private String description;
 
-        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action, String searchWords[],
-                int priority)
+        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action, List<SearchWord> searchWords,
+                int priority, boolean startWithOnly)
         {
             super(provider);
 
@@ -63,11 +64,11 @@ public class KernelSearchResultProducer extends SearchResultProducer
                     description = StringUtil.limit(lds[0], 80, true);
 
                 // highlight search keywords (only for more than 2 characters search)
-                if ((searchWords.length > 1) || (searchWords[0].length() > 2))
+                if (!startWithOnly)
                 {
                     // highlight search keywords in description
-                    for (String word : searchWords)
-                        description = StringUtil.htmlBoldSubstring(description, word, true);
+                    for (SearchWord sw : searchWords)
+                        description = StringUtil.htmlBoldSubstring(description, sw.word, true);
                 }
             }
             else
@@ -179,49 +180,53 @@ public class KernelSearchResultProducer extends SearchResultProducer
     }
 
     @Override
-    public void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(String text, SearchResultConsumer consumer)
     {
-        if (hasWaitingSearch())
+        final List<SearchWord> words = getSearchWords(text);
+
+        if (words.isEmpty())
             return;
 
-        final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
-        final boolean shortSearch = (words.length == 1) && (words[0].length() <= 2);
+        final List<SearchResult> tmpResults = new ArrayList<SearchResult>();
+        final boolean startWithOnly = getShortSearch(words);
 
         for (IcyAbstractAction action : ActionManager.actions)
         {
-            // abort
             if (hasWaitingSearch())
                 return;
 
             // action match filter
-            final int prio = searchInAction(action, words, shortSearch);
+            final int prio = searchInAction(action, words, startWithOnly);
 
             if (prio > 0)
-                tmpResults.add(new KernelSearchResult(this, action, words, prio));
+                tmpResults.add(new KernelSearchResult(this, action, words, prio, startWithOnly));
         }
 
         results = tmpResults;
         consumer.resultsChanged(this);
     }
 
-    public static int searchInAction(IcyAbstractAction action, String words[], boolean startWithOnly)
+    public static int searchInAction(IcyAbstractAction action, List<SearchWord> words, boolean startWithOnly)
     {
         int result = 0;
 
         // we accept action which contains all words only
-        for (String word : words)
+        for (SearchWord sw : words)
         {
-            final int r = searchInAction(action, word, startWithOnly);
+            final int r = searchInAction(action, sw.word, startWithOnly);
 
-            // word not found ? --> reject
-            if (r == 0)
+            // mandatory word not found ? --> reject
+            if ((r == 0) && sw.mandatory)
+                return 0;
+            // reject word found ? --> reject
+            if ((r > 0) && sw.reject)
                 return 0;
 
             result += r;
         }
 
         // return mean score
-        return result / words.length;
+        return result / words.size();
     }
 
     public static int searchInAction(IcyAbstractAction action, String word, boolean startWithOnly)
