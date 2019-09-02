@@ -18,13 +18,13 @@
  */
 package icy.search;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The SearchResultProducer create {@link SearchResult} objects from given search keywords.<br>
@@ -83,6 +83,73 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
             // search completed (do it after searching set to false)
             consumer.searchCompleted(SearchResultProducer.this);
         }
+    }
+
+    public static class SearchWord
+    {
+        public final String word;
+        public final boolean mandatory;
+        public final boolean reject;
+
+        public SearchWord(String word)
+        {
+            super();
+
+            if (word.startsWith("+"))
+            {
+                mandatory = true;
+                reject = false;
+                if (word.length() > 1)
+                    this.word = word.substring(1);
+                else
+                    this.word = "";
+            }
+            else if (word.startsWith("-"))
+            {
+                mandatory = false;
+                reject = true;
+                if (word.length() > 1)
+                    this.word = word.substring(1);
+                else
+                    this.word = "";
+            }
+            else
+            {
+                mandatory = false;
+                reject = false;
+                this.word = word;
+            }
+        }
+
+        public boolean isEmpty()
+        {
+            return StringUtil.isEmpty(word);
+        }
+
+        public int length()
+        {
+            return word.length();
+        }
+    }
+
+    public static List<SearchWord> getSearchWords(String text)
+    {
+        final List<String> words = StringUtil.split(text);
+        final List<SearchWord> result = new ArrayList<SearchWord>();
+
+        for (String w : words)
+        {
+            final SearchWord sw = new SearchWord(w);
+            if (!sw.isEmpty())
+                result.add(sw);
+        }
+
+        return result;
+    }
+
+    public static boolean getShortSearch(List<SearchWord> words)
+    {
+        return (words.size() == 1) && (words.get(0).length() <= 2);
     }
 
     /** Result list */

@@ -18,19 +18,18 @@
  */
 package plugins.kernel.searchprovider;
 
-import icy.gui.plugin.PluginRichToolTip;
-import icy.network.NetworkUtil;
-import icy.plugin.PluginDescriptor;
-import icy.search.SearchResult;
-import icy.search.SearchResultProducer;
-import icy.util.StringUtil;
-
 import java.awt.Image;
 import java.util.List;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 
-import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
+import icy.gui.plugin.PluginRichToolTip;
+import icy.network.NetworkUtil;
+import icy.plugin.PluginDescriptor;
+import icy.search.SearchResult;
+import icy.search.SearchResultProducer;
+import icy.search.SearchResultProducer.SearchWord;
+import icy.util.StringUtil;
 
 public abstract class PluginSearchResult extends SearchResult
 {

@@ -18,6 +18,12 @@
  */
 package plugins.kernel.searchprovider;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import icy.gui.plugin.PluginDetailPanel;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
@@ -33,15 +39,7 @@ import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import plugins.kernel.searchprovider.LocalPluginSearchResultProducer.LocalPluginResult;
-import plugins.kernel.searchprovider.PluginSearchResultProducerHelper.SearchWord;
 
 /**
  * This class is used to provide online plugin elements to the search engine.
@@ -163,6 +161,11 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
         if (hasWaitingSearch())
             return;
 
+        final List<SearchWord> words = getSearchWords(text);
+
+        if (words.isEmpty())
+            return;
+
         // get online plugins
         final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins();
         // get online result node
@@ -182,8 +185,8 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                     lpsrp = (LocalPluginSearchResultProducer) srp;
         }
 
-        final List<SearchWord> words = PluginSearchResultProducerHelper.getSearchWords(text);
         final List<SearchResult> tmpResults = new ArrayList<SearchResult>();
+        final boolean startWithOnly = getShortSearch(words);
 
         for (Element plugin : XMLUtil.getElements(resultElement, ID_PLUGIN))
         {
@@ -191,7 +194,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
             if (hasWaitingSearch())
                 return;
 
-            final SearchResult result = getResult(consumer, onlinePlugins, plugin, words, lpsrp);
+            final SearchResult result = getResult(consumer, onlinePlugins, plugin, words, startWithOnly, lpsrp);
 
             if (result != null)
                 tmpResults.add(result);
@@ -239,7 +242,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
     }
 
     private OnlinePluginResult getResult(SearchResultConsumer consumer, List<PluginDescriptor> onlinePlugins,
-            Element pluginNode, List<SearchWord> words, LocalPluginSearchResultProducer lpsrp)
+            Element pluginNode, List<SearchWord> words, boolean startWithOnly, LocalPluginSearchResultProducer lpsrp)
     {
         final String className = XMLUtil.getElementValue(pluginNode, ID_CLASSNAME, "");
         final String text = XMLUtil.getElementValue(pluginNode, ID_TEXT, "");
@@ -270,7 +273,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                 // not already present in local result --> add it
                 if (!alreadyExists)
                 {
-                    priority = PluginSearchResultProducerHelper.searchInPlugin(localPlugin, words);
+                    priority = LocalPluginSearchResultProducer.searchInPlugin(localPlugin, words, startWithOnly);
 
                     // not found in local description --> assume low priority
                     if (priority == 0)
@@ -291,7 +294,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
 
         // try to get priority on result
         onlinePlugin.loadDescriptor();
-        priority = PluginSearchResultProducerHelper.searchInPlugin(onlinePlugin, words);
+        priority = LocalPluginSearchResultProducer.searchInPlugin(onlinePlugin, words, startWithOnly);
 
         // only keep high priority info from local data
         if (priority <= 5)

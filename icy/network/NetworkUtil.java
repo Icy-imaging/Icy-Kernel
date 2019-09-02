@@ -80,6 +80,10 @@ public class NetworkUtil
     public static final String WEBSITE_HOST = "icy.bioimageanalysis.org";
     public static final String WEBSITE_URL = "http://" + WEBSITE_HOST + "/";
 
+    /**
+     * @deprecated Use {@link WebInterface#reportError(icy.plugin.PluginDescriptor, String, String)}
+     */
+    @Deprecated
     static final String REPORT_URL = WEBSITE_URL + "index.php";
 
     /**
@@ -1388,11 +1392,10 @@ public class NetworkUtil
     }
 
     /**
-     * Send report (asynchronous processing)<br>
-     * 
-     * @param values
-     *        list of <key,value>
+     * @deprecated Use {@link WebInterface#reportError(icy.plugin.PluginDescriptor, String, String)}
+     *             or {@link #postData(String, Map)} methods instead
      */
+    @Deprecated
     public static void report(final Map<String, String> values)
     {
         ThreadUtil.bgRun(new Runnable()

@@ -80,7 +80,7 @@ public class WebInterface
     public static Document doSearch(String text, String type) throws UnsupportedEncodingException
     {
         // build request (encode search text in UTF8)
-        String request = BASE_URL + " ?" + PARAM_ACTION + "=" + ACTION_TYPE_SEARCH + "&" + PARAM_SEARCH + "="
+        String request = BASE_URL + "?" + PARAM_ACTION + "=" + ACTION_TYPE_SEARCH + "&" + PARAM_SEARCH + "="
                 + URLEncoder.encode(text, "UTF-8");
 
         // specific type ?
@@ -219,14 +219,11 @@ public class WebInterface
             values.put(PARAM_DEVELOPERID, "");
 
         // add client id
-        values.put(PARAM_CLIENT_ID, "2532495");
-        // values.put(PARAM_CLIENT_ID, Integer.toString(ApplicationPreferences.getId()));
+        // values.put(PARAM_CLIENT_ID, "2532495");
+        values.put(PARAM_CLIENT_ID, Integer.toString(ApplicationPreferences.getId()));
 
         // and finally the error log itself
         values.put(PARAM_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
-
-        // TODO: change when ready !
-        // NetworkUtil.report(values);
 
         // send report in background task (we don't want to wait for response from server)
         ThreadUtil.bgRun(new Runnable()

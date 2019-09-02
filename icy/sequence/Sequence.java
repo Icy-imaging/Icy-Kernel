@@ -49,6 +49,7 @@ import icy.image.IcyBufferedImageEvent;
 import icy.image.IcyBufferedImageListener;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.ImageProvider;
+import icy.image.cache.ImageCache;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
@@ -443,6 +444,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     protected void finalize() throws Throwable
     {
+        // cancel any pending prefetch tasks for this sequence
+        SequencePrefetcher.cancel(this);
+        
         try
         {
             // close image provider if needed
@@ -471,6 +475,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void closed()
     {
+        // cancel any pending prefetch tasks for this sequence
+        SequencePrefetcher.cancel(this);
+
         // do this in background as it can take sometime
         while (!ThreadUtil.bgRun(new Runnable()
         {

@@ -18,6 +18,19 @@
  */
 package icy.gui.lut;
 
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+
 import icy.canvas.IcyCanvas3D;
 import icy.file.xml.XMLPersistentHelper;
 import icy.gui.component.button.IcyButton;
@@ -37,19 +50,6 @@ import icy.image.lut.LUT.LUTChannel;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
-
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
 
 /**
  * @author stephane
@@ -263,9 +263,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
 
         bottomPanel.add(GuiUtil.createLineBoxPanel(rgbBtn, grayBtn, alphaBtn), BorderLayout.WEST);
         bottomPanel.add(Box.createGlue(), BorderLayout.CENTER);
-        bottomPanel.add(
-                GuiUtil.createLineBoxPanel(colormapComboBox, new JSeparator(SwingConstants.VERTICAL), loadButton,
-                        Box.createHorizontalStrut(2), saveButton), BorderLayout.EAST);
+        bottomPanel.add(GuiUtil.createLineBoxPanel(colormapComboBox, new JSeparator(SwingConstants.VERTICAL),
+                loadButton, Box.createHorizontalStrut(2), saveButton), BorderLayout.EAST);
         // bottomPanel.add(Box.createHorizontalStrut(6));
         // bottomPanel.add(alphaEnabled);
 
@@ -334,12 +333,15 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             if (viewer.getCanvas() instanceof IcyCanvas3D)
             {
                 // copy alpha component only if we have specific alpha info
-                // copyAlpha = !src.alpha.isAllSame();
+                final boolean copyAlpha = !src.alpha.isAllSame();
+
                 colormap.beginUpdate();
                 try
                 {
                     colormap.copyFrom(src, false);
-                    colormap.setAlphaToLinear3D();
+                    //colormap.copyFrom(src, copyAlpha);
+                    if (!copyAlpha)
+                        colormap.setAlphaToLinear3D();
                 }
                 finally
                 {

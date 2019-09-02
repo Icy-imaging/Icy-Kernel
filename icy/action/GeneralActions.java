@@ -358,47 +358,48 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction linkAction = new IcyAbstractAction("Link", new IcyIcon(ResourceUtil.ICON_LINK),
-            "Link / unlink online user account",
-            "Link / unlink with online user account.\nGive access to extra features as plugin rating")
-    {
-
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 3449298011169150396L;
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            if (Audit.isUserLinked())
-            {
-                // ask for confirmation
-                if (!Icy.getMainInterface().isHeadLess()
-                        && !ConfirmDialog.confirm("Do you want to unlink user account ?"))
-                    return false;
-
-                // unlink user
-                Audit.unlinkUser();
-            }
-            else
-            {
-                // update link first
-                Audit.updateUserLink();
-
-                // still not linked --> link user
-                if (!Audit.isUserLinked())
-                    Audit.linkUser();
-            }
-
-            // refresh user infos (in title)
-            final MainFrame frame = Icy.getMainInterface().getMainFrame();
-            if (frame != null)
-                frame.refreshTitle();
-
-            return true;
-        }
-    };
+    //TODO: uncomment when done !
+//    public static IcyAbstractAction linkAction = new IcyAbstractAction("Link", new IcyIcon(ResourceUtil.ICON_LINK),
+//            "Link / unlink online user account",
+//            "Link / unlink with online user account.\nGive access to extra features as plugin rating")
+//    {
+//
+//        /**
+//         * 
+//         */
+//        private static final long serialVersionUID = 3449298011169150396L;
+//
+//        @Override
+//        public boolean doAction(ActionEvent e)
+//        {
+//            if (Audit.isUserLinked())
+//            {
+//                // ask for confirmation
+//                if (!Icy.getMainInterface().isHeadLess()
+//                        && !ConfirmDialog.confirm("Do you want to unlink user account ?"))
+//                    return false;
+//
+//                // unlink user
+//                Audit.unlinkUser();
+//            }
+//            else
+//            {
+//                // update link first
+//                Audit.updateUserLink();
+//
+//                // still not linked --> link user
+//                if (!Audit.isUserLinked())
+//                    Audit.linkUser();
+//            }
+//
+//            // refresh user infos (in title)
+//            final MainFrame frame = Icy.getMainInterface().getMainFrame();
+//            if (frame != null)
+//                frame.refreshTitle();
+//
+//            return true;
+//        }
+//    };
 
     public static IcyAbstractAction checkUpdateAction = new IcyAbstractAction("Check for update",
             new IcyIcon(ResourceUtil.ICON_DOWNLOAD), "Check for updates",
