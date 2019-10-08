@@ -28,6 +28,7 @@ import icy.image.ImageUtil;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.LinearColorMap;
 import icy.plugin.abstract_.PluginSequenceFileImporter;
+import icy.preferences.GeneralPreferences;
 import icy.sequence.MetaDataUtil;
 import icy.system.SystemUtil;
 import icy.system.thread.Processor;
@@ -402,7 +403,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                         }
 
                         // define destination point in destination
-                        final Point pt = region.getLocation();
+                        final Point pt = new Point(region.x >> downScaleLevel, region.y >> downScaleLevel);
                         pt.translate(-imageRegion.x, -imageRegion.y);
 
                         // copy tile to image result
@@ -498,6 +499,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             final Processor readerProcessor = new Processor(numThread);
 
             readerProcessor.setThreadName("Image tile reader");
+
+            // force working in RAM as we will do many write operations (too slow with cache) 
+            result.setVolatile(false);
             // to avoid multiple update
             result.beginUpdate();
 
@@ -579,6 +583,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             for (int i = 0; i < colormaps.length; i++)
                 result.setColorMap(i, colormaps[i], true);
 
+            // restore volatile state
+            result.setVolatile(GeneralPreferences.getVirtualMode());
+            
             // faster memory release
             buffers.clear();
         }
