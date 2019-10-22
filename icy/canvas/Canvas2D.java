@@ -2976,15 +2976,23 @@ public class Canvas2D extends IcyCanvas2D implements ROITaskListener
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             }
 
-            // create temporary image, overlay and layer so we can choose the correct image
-            // (not optimal for memory and performance)
-            final BufferedImage img = getARGBImage(t, z, c, null);
-            final Overlay imgOverlay = new ImageOverlay("Image", img);
-            final Layer imgLayer = new Layer(imgOverlay);
+            final Layer imgLayer;
 
-            // keep visibility and priority information
-            imgLayer.setVisible(getImageLayer().isVisible());
-            imgLayer.setPriority(getImageLayer().getPriority());
+            // can we use the current image layer directly ?
+            if ((t == prevT) && (z == prevZ) && (c == -1))
+                imgLayer = getImageLayer();
+            else
+            {
+                // create temporary image, overlay and layer so we can choose the correct image
+                // (not optimal for memory and performance)
+                final BufferedImage img = getARGBImage(t, z, c, null);
+                final Overlay imgOverlay = new ImageOverlay("Image", img);
+                imgLayer = new Layer(imgOverlay);
+
+                // keep visibility and priority information
+                imgLayer.setVisible(getImageLayer().isVisible());
+                imgLayer.setPriority(getImageLayer().getPriority());
+            }
 
             // draw image and layers
             canvasView.drawImageAndLayers(g, imgLayer);
