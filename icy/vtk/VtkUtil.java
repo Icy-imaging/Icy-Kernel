@@ -858,14 +858,15 @@ public class VtkUtil
     /**
      * @deprecated Uses {@link #getBooleanMaskFromBinaryImage(vtkImageData)} then {@link ROI3DArea#ROI3DArea(BooleanMask3D)} instead.
      */
+    @Deprecated
     public static ROI getROIFromBinaryImage(vtkImageData image, boolean force3DROI)
     {
         final BooleanMask3D mask = getBooleanMaskFromBinaryImage(image, true);
 
         if ((mask.bounds.getSizeZ() > 1) || force3DROI)
             return new ROI3DArea(mask);
-        else
-            return new ROI2DArea(mask.getMask2D(mask.bounds.z));
+
+        return new ROI2DArea(mask.getMask2D(mask.bounds.z));
     }
 
     /**
