@@ -400,7 +400,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         sizeUnitComboBox = new JComboBox();
         sizeUnitComboBox.setMaximumRowCount(3);
         sizeUnitComboBox.setToolTipText("Width / Height unit");
-        sizeUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"pixel", "%", "\u00B5m"}));
+        sizeUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"pixel", "%", UnitUtil.MICRO_STRING + "m"}));
         sizeUnitComboBox.setSelectedIndex(0);
         GridBagConstraints gbc_sizeUnitComboBox = new GridBagConstraints();
         gbc_sizeUnitComboBox.fill = GridBagConstraints.HORIZONTAL;
