@@ -49,7 +49,6 @@ import icy.image.IcyBufferedImageEvent;
 import icy.image.IcyBufferedImageListener;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.ImageProvider;
-import icy.image.cache.ImageCache;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
@@ -446,7 +445,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         // cancel any pending prefetch tasks for this sequence
         SequencePrefetcher.cancel(this);
-        
+
         try
         {
             // close image provider if needed
@@ -3090,6 +3089,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Return <i>true</i> if image data at given position is loaded.
+     */
+    public boolean isDataLoaded(int t, int z)
+    {
+        final IcyBufferedImage img = getImage(t, z, false);
+
+        return (img != null) && img.isDataInitialized();
+    }
+
+    /**
      * Returns the VolumetricImage at position t
      */
     public VolumetricImage getVolumetricImage(int t)
@@ -3316,9 +3325,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         final int sizeZ = getSizeZ();
         final int sizeT = getSizeT();
+        final int prefetchRange = 2;
 
         // dumb data prefetch around T
-        for (int i = -5; i < 5; i++)
+        for (int i = -prefetchRange; i <= prefetchRange; i++)
         {
             final int pt = t + i;
 
@@ -3329,7 +3339,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         if (z > 0)
         {
             // dumb data prefetch around current Z
-            for (int i = -5; i < 5; i++)
+            for (int i = -prefetchRange; i <= prefetchRange; i++)
             {
                 final int pz = z + i;
 
