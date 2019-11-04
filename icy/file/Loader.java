@@ -782,14 +782,14 @@ public class Loader
         return getSequenceFileImporter(path, true);
     }
 
-    static SequenceFileImporter cloneSequenceFileImporter(SequenceFileImporter importer)
+    static <T extends SequenceFileImporter> T cloneSequenceFileImporter(T importer)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             NoSuchMethodException, SecurityException
     {
         if (importer == null)
             return null;
 
-        final SequenceFileImporter result = importer.getClass().getDeclaredConstructor().newInstance();
+        final T result = (T) importer.getClass().getDeclaredConstructor().newInstance();
 
         if (result instanceof LociImporterPlugin)
         {
@@ -803,12 +803,12 @@ public class Loader
         return result;
     }
 
-    static SequenceFileImporter cloneAndOpenSequenceFileImporter(SequenceFileImporter importer)
+    static <T extends SequenceFileImporter> T cloneAndOpenSequenceFileImporter(T importer)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             NoSuchMethodException, SecurityException, IOException, UnsupportedFormatException
     {
 
-        final SequenceFileImporter result = cloneSequenceFileImporter(importer);
+        final T result = cloneSequenceFileImporter(importer);
 
         if (result != null)
             if (!result.open(importer.getOpened(), 0))
@@ -2165,8 +2165,7 @@ public class Loader
                 if (singlePaths.size() > 0)
                 {
                     // get first found importer for remaining files
-                    final Map<SequenceFileImporter, List<String>> importers = getSequenceFileImporters(singlePaths,
-                            true);
+                    final Map<FileImporter, List<String>> importers = getFileImporters(singlePaths, true);
 
                     // user canceled action for these paths so we remove them
                     for (List<String> values : importers.values())
@@ -3247,9 +3246,9 @@ public class Loader
                 // load each file in a separate sequence
                 for (String path : paths)
                 {
-                    // load the file
-                    final List<Sequence> sequences = internalLoadSingle(importer, path, series, forceVolatile,
-                            !separate, loadingFrame);
+                    // load the file (need to clone the importer so each sequence has its own importer)
+                    final List<Sequence> sequences = internalLoadSingle(cloneSequenceFileImporter(importer), path,
+                            series, forceVolatile, !separate, loadingFrame);
 
                     // special case where loading was interrupted
                     if (sequences == null)

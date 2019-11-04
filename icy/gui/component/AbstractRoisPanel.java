@@ -2752,6 +2752,23 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                 // System.err.println(e.getMessage());
             }
         }
+        
+        @Override
+        public int convertRowIndexToModel(int index)
+        {
+            try
+            {
+                return super.convertRowIndexToModel(index);
+            }
+            catch (Exception e)
+            {
+                return 0;
+                
+                // ignore this...
+                // System.err.println("ROI table column sort failed:");
+                // System.err.println(e.getMessage());
+            }
+        }
 
         // @Override
         // protected void fireSortOrderChanged()

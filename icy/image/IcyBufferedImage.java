@@ -1129,6 +1129,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Same as {@link #isDataInitialized()}
+     * 
+     * @see #isDataInitialized()
+     */
+    public boolean isDataLoaded()
+    {
+        return isDataInitialized();
+    }
+
+    /**
      * Returns <code>true</code> if data is currently loaded in memory.<br>
      * It returns <code>false</code> if data has not yet be initialized (see {@link #isDataInitialized()}) or if data is cached on disk (not anymore in memory)
      */

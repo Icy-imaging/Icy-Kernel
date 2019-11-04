@@ -338,8 +338,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
                 colormap.beginUpdate();
                 try
                 {
-                    colormap.copyFrom(src, false);
-                    //colormap.copyFrom(src, copyAlpha);
+                    colormap.copyFrom(src, copyAlpha);
                     if (!copyAlpha)
                         colormap.setAlphaToLinear3D();
                 }

@@ -32,8 +32,11 @@ public class UnitUtil
     /**
      * Constants for special characters
      */
-    public static final char MICRO_CHAR = '\u00B5';
-    public static final String MICRO_STRING = "\u00B5";
+//    public static final char MICRO_CHAR = '\u00B5';
+//    public static final String MICRO_STRING = "\u00B5";
+    // for the sake of easy compatibility with others softwares
+    public static final char MICRO_CHAR = 'u';
+    public static final String MICRO_STRING = "u";
 
     public static enum UnitPrefix
     {

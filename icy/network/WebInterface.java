@@ -147,12 +147,12 @@ public class WebInterface
         values.put(PARAM_OSVERSION, SystemUtil.getOSVersion());
         values.put(PARAM_OSARCH, SystemUtil.getOSArch());
 
-        icyId = "Icy Version " + Icy.version + "\n";
+        icyId = "Icy Version " + Icy.version + "<br>";
         javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " (" + SystemUtil.getJavaArchDataModel()
-                + " bit)\n";
+                + " bit)<br>";
         osId = "Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " (" + SystemUtil.getOSArch()
-                + ")\n";
-        memory = "Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + "\n";
+                + ")<br>";
+        memory = "Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + "<br>";
 
         if (plugin != null)
         {
@@ -184,21 +184,21 @@ public class WebInterface
                 }
             }
 
-            pluginId += "\n\n";
+            pluginId += "<br><br>";
 
             if (originPlugin.getRequired().size() > 0)
             {
-                pluginDepsId = "Dependances:\n";
+                pluginDepsId = "Dependances:<br>";
                 for (PluginIdent ident : originPlugin.getRequired())
                 {
                     final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
 
                     if (installed == null)
-                        pluginDepsId += "Class " + ident.getClassName() + " not found !\n";
+                        pluginDepsId += "Class " + ident.getClassName() + " not found !<br>";
                     else
-                        pluginDepsId += "Plugin " + installed.toString() + " is correctly installed\n";
+                        pluginDepsId += "Plugin " + installed.toString() + " is correctly installed<br>";
                 }
-                pluginDepsId += "\n";
+                pluginDepsId += "<br>";
             }
             else
                 pluginDepsId = "";
@@ -223,7 +223,8 @@ public class WebInterface
         values.put(PARAM_CLIENT_ID, Integer.toString(ApplicationPreferences.getId()));
 
         // and finally the error log itself
-        values.put(PARAM_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
+        values.put(PARAM_ERRORLOG,
+                icyId + javaId + osId + memory + "<br>" + pluginId + pluginDepsId + errorLog.replaceAll("\n", "<br>"));
 
         // send report in background task (we don't want to wait for response from server)
         ThreadUtil.bgRun(new Runnable()

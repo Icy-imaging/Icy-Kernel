@@ -19,6 +19,7 @@
 package icy.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -309,21 +310,32 @@ public class XMLUtil
             return null;
         }
 
-        final DocumentBuilder builder = createDocumentBuilder();
-
-        if (builder != null)
+        try
         {
+            final FileInputStream is = new FileInputStream(f);
+
             try
             {
-                return builder.parse(f);
+                return loadDocument(is);
             }
-            catch (Exception e)
+            finally
             {
-                if (showError)
+                try
                 {
-                    System.err.println("XMLUtil.loadDocument('" + f.getPath() + "') error:");
-                    IcyExceptionHandler.showErrorMessage(e, false);
+                    is.close();
                 }
+                catch (Exception e)
+                {
+                    // ignore
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            if (showError)
+            {
+                System.err.println("XMLUtil.loadDocument('" + f.getPath() + "') error:");
+                IcyExceptionHandler.showErrorMessage(e, false);
             }
         }
 
@@ -371,37 +383,52 @@ public class XMLUtil
             return loadDocument(f);
         }
 
+        final InputStream is = NetworkUtil.getInputStream(url, auth, true, showError);
+
+        if (is != null)
+        {
+            try
+            {
+                return loadDocument(is);
+            }
+            finally
+            {
+                try
+                {
+                    is.close();
+                }
+                catch (IOException e)
+                {
+                    // ignore
+                }
+            }
+        }
+
+        if (showError)
+            System.err.println("XMLUtil.loadDocument('" + url + "') failed.");
+
+        return null;
+    }
+
+    /**
+     * Load XML Document from specified InputStream.<br>
+     * Return null if no document can be loaded.
+     */
+    public static Document loadDocument(InputStream is)
+    {
         final DocumentBuilder builder = createDocumentBuilder();
 
         if (builder != null)
         {
-            final InputStream ip = NetworkUtil.getInputStream(url, auth, true, showError);
-
-            if (ip != null)
+            try
             {
-                try
-                {
-                    return builder.parse(ip);
-                }
-                catch (Exception e)
-                {
-                    System.err.println("XMLUtil.loadDocument('" + url + "') error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                }
-                finally
-                {
-                    try
-                    {
-                        ip.close();
-                    }
-                    catch (IOException e)
-                    {
-                        // ignore
-                    }
-                }
+                return builder.parse(is);
             }
-            else if (showError)
-                System.err.println("XMLUtil.loadDocument('" + url + "') failed.");
+            catch (Exception e)
+            {
+                System.err.println("XMLUtil.loadDocument('" + is.toString() + "') error :");
+                IcyExceptionHandler.showErrorMessage(e, false);
+            }
         }
 
         return null;
