@@ -239,6 +239,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
     protected Map<ROI, ROIResults> roiResultsMap;
     protected List<ROI> filteredRoiList;
     protected List<ROIResults> filteredRoiResultsList;
+    protected List<SequenceEvent> savedSequenceEvents;
 
     // internals
     protected final XMLPreferences basePreferences;
@@ -249,6 +250,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
     // complete refresh of the roiTable
     protected final Runnable roiListRefresher;
     protected final Runnable filteredRoiListRefresher;
+    protected final Runnable descriptorsValueRefresher;
     protected final Runnable tableDataStructureRefresher;
     protected final Runnable tableDataRefresher;
     protected final Runnable tableSelectionRefresher;
@@ -279,6 +281,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
         roiResultsMap = new HashMap<ROI, ROIResults>();
         filteredRoiList = new ArrayList<ROI>();
         filteredRoiResultsList = new ArrayList<ROIResults>();
+        savedSequenceEvents = new ArrayList<SequenceEvent>();
         modifySelection = new Semaphore(1);
         columnInfoList = new ArrayList<ColumnInfo>();
 
@@ -300,6 +303,14 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
             public void run()
             {
                 refreshFilteredRoisInternal();
+            }
+        };
+        descriptorsValueRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshDescriptorsValueInternal();
             }
         };
         tableDataStructureRefresher = new Runnable()
@@ -1053,6 +1064,39 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
         refreshTableDataStructureInternal();
     }
 
+    public void refreshDescriptorsValue()
+    {
+        processor.submit(true, descriptorsValueRefresher);
+    }
+
+    protected void refreshDescriptorsValueInternal()
+    {
+        final ROIResults[] allRoiResults;
+        final List<SequenceEvent> events;
+
+        // get all ROI results
+        synchronized (roiResultsMap)
+        {
+            allRoiResults = roiResultsMap.values().toArray(new ROIResults[roiResultsMap.size()]);
+        }
+
+        // get saved events
+        synchronized (savedSequenceEvents)
+        {
+            events = new ArrayList<SequenceEvent>(savedSequenceEvents);
+            // so we know we processed them
+            savedSequenceEvents.clear();
+        }
+
+        // notify ROI results that sequence has changed
+        for (ROIResults roiResults : allRoiResults)
+            for (SequenceEvent event : events)
+                roiResults.sequenceChanged(event);
+
+        // refresh table data
+        refreshTableData();
+    }
+
     public void refreshTableDataStructure()
     {
         processor.submit(true, tableDataStructureRefresher);
@@ -1582,6 +1626,15 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                         // already handled by ROIResults directly
                         break;
                 }
+
+                // need to save event for refreshDescriptorsValue
+                synchronized (savedSequenceEvents)
+                {
+                    savedSequenceEvents.add(event);
+                }
+
+                // refresh descriptors value (as some rely on others ROIs, for instance 'Intersected ROI' descriptor)
+                refreshDescriptorsValue();
                 break;
 
             case SEQUENCE_META:
@@ -1597,20 +1650,13 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                 // don't use break, we also need to send the event to descriptors
 
             case SEQUENCE_DATA:
-                final ROIResults[] allRoiResults;
-
-                // get all ROI results
-                synchronized (roiResultsMap)
+                synchronized (savedSequenceEvents)
                 {
-                    allRoiResults = roiResultsMap.values().toArray(new ROIResults[roiResultsMap.size()]);
+                    savedSequenceEvents.add(event);
                 }
 
-                // notify ROI results that sequence has changed
-                for (ROIResults roiResults : allRoiResults)
-                    roiResults.sequenceChanged(event);
-
-                // refresh table data
-                refreshTableData();
+                // refresh descriptors value (as some rely on others ROIs, for instance 'Intersected ROI' descriptor)
+                refreshDescriptorsValue();
                 break;
 
             case SEQUENCE_TYPE:
@@ -2752,7 +2798,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                 // System.err.println(e.getMessage());
             }
         }
-        
+
         @Override
         public int convertRowIndexToModel(int index)
         {
@@ -2763,7 +2809,7 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
             catch (Exception e)
             {
                 return 0;
-                
+
                 // ignore this...
                 // System.err.println("ROI table column sort failed:");
                 // System.err.println(e.getMessage());
