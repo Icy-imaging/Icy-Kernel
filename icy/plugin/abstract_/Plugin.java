@@ -307,9 +307,21 @@ public abstract class Plugin
      * <li>lib/win64</li>
      * </ul>
      */
-    protected String getResourceLibraryPath()
+    protected static String getResourceNativeLibraryPath()
     {
         return "lib" + FileUtil.separator + SystemUtil.getOSArchIdString();
+    }
+
+    /**
+     * Return the resource URL from given resource name and class instance.<br>
+     * Ex: <code>getResource(Plugin.class, "plugins/author/resources/def.xml");</code>
+     * 
+     * @param name
+     *        resource name
+     */
+    public static URL getResource(Class clazz, String name)
+    {
+        return clazz.getClassLoader().getResource(name);
     }
 
     /**
@@ -341,9 +353,9 @@ public abstract class Plugin
      * @return true if the library was correctly loaded.
      * @see #prepareLibrary(String)
      */
-    public boolean loadLibrary(String libName)
+    public static boolean loadLibrary(Class clazz, String libName)
     {
-        final File file = prepareLibrary(libName);
+        final File file = prepareLibrary(clazz, libName);
 
         if (file == null)
             return false;
@@ -383,17 +395,17 @@ public abstract class Plugin
      * @return the extracted native library file.
      * @see #loadLibrary(String)
      */
-    public File prepareLibrary(String libName)
+    public static File prepareLibrary(Class clazz, String libName)
     {
         try
         {
             // get mapped library name
             String mappedlibName = System.mapLibraryName(libName);
             // get base resource path for native library
-            final String basePath = getResourceLibraryPath() + FileUtil.separator;
+            final String basePath = getResourceNativeLibraryPath() + FileUtil.separator;
 
             // search for library in resource
-            URL libUrl = getResource(basePath + mappedlibName);
+            URL libUrl = getResource(clazz, basePath + mappedlibName);
 
             // not found ?
             if (libUrl == null)
@@ -402,13 +414,13 @@ public abstract class Plugin
                 if (mappedlibName.endsWith(".jnilib"))
                 {
                     mappedlibName = mappedlibName.substring(0, mappedlibName.length() - 7) + ".dylib";
-                    libUrl = getResource(basePath + mappedlibName);
+                    libUrl = getResource(clazz, basePath + mappedlibName);
                 }
                 // do the contrary in case we have an old "jnilib" file and system use "dylib" by default
                 else if (mappedlibName.endsWith(".dylib"))
                 {
                     mappedlibName = mappedlibName.substring(0, mappedlibName.length() - 6) + ".jnilib";
-                    libUrl = getResource(basePath + mappedlibName);
+                    libUrl = getResource(clazz, basePath + mappedlibName);
                 }
             }
 
@@ -417,7 +429,7 @@ public abstract class Plugin
                 throw new IOException("Couldn't find resource " + basePath + mappedlibName);
 
             // extract resource
-            final File extractedFile = extractResource(
+            final File extractedFile = extractResourceTo(
                     SystemUtil.getTempLibraryDirectory() + FileUtil.separator + mappedlibName, libUrl);
 
             return extractedFile;
@@ -440,7 +452,7 @@ public abstract class Plugin
      * @return the extracted file
      * @throws IOException
      */
-    protected File extractResource(String outputPath, URL resource) throws IOException
+    protected static File extractResourceTo(String outputPath, URL resource) throws IOException
     {
         // open resource stream
         final InputStream in = resource.openStream();
@@ -473,6 +485,92 @@ public abstract class Plugin
         FileUtil.save(result, data, true);
 
         return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getResourceNativeLibraryPath()} instead.
+     */
+    @Deprecated
+    protected String getResourceLibraryPath()
+    {
+        return getResourceNativeLibraryPath();
+    }
+
+    /**
+     * Load a packed native library from the JAR file.<br/>
+     * Native libraries should be packaged with the following directory & file structure:
+     * 
+     * <pre>
+     * /lib/unix32
+     *   libxxx.so
+     * /lib/unix64
+     *   libxxx.so
+     * /lib/mac32
+     *   libxxx.dylib
+     * /lib/mac64
+     *   libxxx.dylib
+     * /lib/win32
+     *   xxx.dll
+     * /lib/win64
+     *   xxx.dll
+     * /plugins/myname/mypackage    
+     *   MyPlugin.class
+     *   ....
+     * </pre>
+     * 
+     * Here "xxx" is the name of the native library.<br/>
+     * Current approach is to unpack the native library into a temporary file and load from there.
+     * 
+     * @param libName
+     * @return true if the library was correctly loaded.
+     * @see #prepareLibrary(String)
+     */
+    public boolean loadLibrary(String libName)
+    {
+        return loadLibrary(getClass(), libName);
+    }
+
+    /**
+     * Extract a packed native library from the JAR file to a temporary native library folder so it can be easily loaded
+     * later.<br/>
+     * Native libraries should be packaged with the following directory & file structure:
+     * 
+     * <pre>
+     * /lib/unix32
+     *   libxxx.so
+     * /lib/unix64
+     *   libxxx.so
+     * /lib/mac32
+     *   libxxx.dylib
+     * /lib/mac64
+     *   libxxx.dylib
+     * /lib/win32
+     *   xxx.dll
+     * /lib/win64
+     *   xxx.dll
+     * /plugins/myname/mypackage    
+     *   MyPlugin.class
+     *   ....
+     * </pre>
+     * 
+     * Here "xxx" is the name of the native library.<br/>
+     * 
+     * @param libName
+     * @return the extracted native library file.
+     * @see #loadLibrary(String)
+     */
+    public File prepareLibrary(String libName)
+    {
+        return prepareLibrary(getClass(), libName);
+    }
+
+    /**
+     * @deprecated Use {@link #extractResourceTo(String, URL)}
+     */
+    @Deprecated
+    protected File extractResource(String outputPath, URL resource) throws IOException
+    {
+        return extractResourceTo(outputPath, resource);
     }
 
     /**
