@@ -22,7 +22,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.InputEvent;
@@ -1656,11 +1656,36 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         if ((width <= 0) || (height <= 0))
             return new boolean[0];
 
-        // special case
-        if (inclusive && (width == 1) && (height == 1) && getPosition().equals(new Point(x, y)))
-            return new boolean[] {true};
+        if (inclusive)
+        {
+            final Rectangle bounds = getBounds();
+            final int wr = bounds.width;
+            final int hr = bounds.height;
+
+            // special case of very small ROI with inclusive mask to fix Graphics draw inaccuracy issue
+            if ((wr == 1) || (hr == 1))
+            {
+                final boolean[] result = new boolean[width * height];
+                final Rectangle r = new Rectangle(x, y, width, height);
+                final int xr = bounds.x;
+                final int yr = bounds.y;
+
+                // mask contains something ?
+                if (r.intersects(xr, yr, wr, hr))
+                {
+                    int ind = 0;
+
+                    for (int j = 0; j < height; j++)
+                        for (int i = 0; i < width; i++)
+                            result[ind++] = bounds.contains(x + i, y + j);
+                }
+
+                return result;
+            }
+        }
 
         final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+        final byte[] buffer = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
         final Graphics2D g = img.createGraphics();
 
         // we want accurate rendering as we use the image for the mask
@@ -1687,7 +1712,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
         g.dispose();
 
-        final byte[] buffer = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
         final boolean[] result = new boolean[width * height];
 
         // compute mask from image
