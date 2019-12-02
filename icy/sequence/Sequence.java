@@ -341,7 +341,26 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         if (Double.isNaN(MetaDataUtil.getPixelSizeZ(metaData, 0, Double.NaN)))
             MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
         if (Double.isNaN(MetaDataUtil.getTimeInterval(metaData, 0, Double.NaN)))
-            MetaDataUtil.setTimeInterval(metaData, 0, 1d);
+        {
+            final double ti = MetaDataUtil.getTimeIntervalFromTimePositions(metaData, 0);
+            // we got something --> set it as the time interval
+            if (ti != 0d)
+                MetaDataUtil.setTimeInterval(metaData, 0, ti);
+            // set to 1d by default
+            else MetaDataUtil.setTimeInterval(metaData, 0, 1d);
+        }
+        
+        double result = MetaDataUtil.getTimeInterval(metaData, 0, 0d);
+
+        // not yet defined ?
+        if (result == 0d)
+        {
+            result = MetaDataUtil.getTimeIntervalFromTimePositions(metaData, 0);
+            // we got something --> set it as the time interval
+            if (result != 0d)
+                MetaDataUtil.setTimeInterval(metaData, 0, result);
+        }
+        
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         overlays = new HashSet<Overlay>();
