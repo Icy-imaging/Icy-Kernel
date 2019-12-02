@@ -538,8 +538,7 @@ public class Saver
 
     /**
      * Save the specified sequence in the specified file.<br>
-     * If sequence contains severals images then file is used as a directory<br>
-     * to store all single images.
+     * If sequence contains severals images then file is save as a directory to store all single images.
      * 
      * @param sequence
      *        sequence to save

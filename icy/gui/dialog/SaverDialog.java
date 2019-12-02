@@ -139,7 +139,7 @@ public class SaverDialog extends JFileChooser
         // create extra setting panel
         settingPanel = new SaverOptionPanel();
         settingPanel.setMultipleFiles(preferences.getBoolean(ID_MULTIPLEFILE, false));
-        settingPanel.setOverwriteMetadata(preferences.getBoolean(ID_OVERWRITENAME, false));
+        settingPanel.setOverwriteMetadata(preferences.getBoolean(ID_OVERWRITENAME, true));
 
         // try to set time interval from metadata
         final double ti = sequence.getTimeInterval() * 1000d;
