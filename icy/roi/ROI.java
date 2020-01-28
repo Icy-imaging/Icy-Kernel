@@ -155,6 +155,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final Color DEFAULT_NORMAL_COLOR = DEFAULT_COLOR;
 
     public static final String PROPERTY_NAME = ID_NAME;
+    public static final String PROPERTY_ID = ID_ID;
     public static final String PROPERTY_GROUPID = ID_GROUPID;
     public static final String PROPERTY_ICON = "icon";
     public static final String PROPERTY_CREATING = "creating";
@@ -3207,6 +3208,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             if (!preserveId)
             {
                 id = XMLUtil.getElementIntValue(node, ID_ID, 0);
+                propertyChanged(PROPERTY_ID);
                 synchronized (ROI.class)
                 {
                     // avoid having same id
@@ -3215,6 +3217,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 }
             }
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
+            setGroupId(ROIGroupId.values()[XMLUtil.getElementIntValue(node, ID_GROUPID, 0)]);
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
 
@@ -3255,6 +3258,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
         XMLUtil.setElementIntValue(node, ID_ID, id);
         XMLUtil.setElementValue(node, ID_NAME, getName());
+        XMLUtil.setElementIntValue(node, ID_GROUPID, getGroupId().ordinal());
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
         XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
 
