@@ -107,7 +107,7 @@ public class Icy
     /**
      * Icy Version
      */
-    public static Version version = new Version("2.0.3.0");
+    public static Version version = new Version("2.0.4.0");
 
     /**
      * Main interface
@@ -210,6 +210,8 @@ public class Icy
 
             // fix possible IllegalArgumentException on Swing sorting
             System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+            // set LOCI debug level (do it immediately as it can quickly show some log messages)
+            loci.common.DebugTools.enableLogging("ERROR");
 
             if (!headless && !noSplash)
             {
@@ -231,9 +233,6 @@ public class Icy
                     }
                 });
             }
-
-            // set LOCI debug level (do it immediately as it can quickly show some log messages)
-            loci.common.DebugTools.enableLogging("ERROR");
 
             // fast start
             new Thread(new Runnable()
@@ -399,27 +398,6 @@ public class Icy
             GeneralPreferences.setLastUpdateCheckTime(0);
         }
 
-        // HTTPS not supported ?
-        if (!NetworkUtil.isHTTPSSupported())
-        {
-            // final String text1 = "Your version of java does not support HTTPS connection required by the future new web site.";
-            // final String text2 = "You need to upgrade java to 7u111 (Java 7) or 8u101 (Java 8) at least to be able to use online features in future.";
-            final String text1 = "Your version of java does not support HTTPS protocol which will be used soon by the new web site.";
-            final String text2 = "You need to upgrade your version of java to 7u111 (Java 7) or 8u101 (Java 8) at least to use online features (as search or plugin update) in future.";
-            // final String text2 = "You won't be able to use online features (as search or plugin update) in future until you update your version of java (Java
-            // 7u111 or Java
-            // 8u101 minimum).";
-
-            System.err.println("Warning: " + text1);
-            System.err.println(text2);
-
-            // TODO: change message when new web site is here
-            if (!Icy.getMainInterface().isHeadLess())
-                new ToolTipFrame("<html><b>WARNING:</b> " + text1 + "<br>" + text2 + "</html>", 0,
-                        "httpsNotSupportedWarning");
-            // new ToolTipFrame("<html><b>" + text1 + "<br>" + text2 + "</b></html>", 0, "httpsNotSupported");
-        }
-
         final long currentTime = System.currentTimeMillis();
         final long halfDayInterval = 1000 * 60 * 60 * 12;
 
@@ -475,7 +453,7 @@ public class Icy
             else
                 startupPlugin = PluginLauncher.start(plugin);
         }
-
+        
         // headless mode ? we can exit now...
         if (headless)
             exit(false);
@@ -549,6 +527,27 @@ public class Icy
 
             if (!Icy.getMainInterface().isHeadLess())
                 new ToolTipFrame("<html>" + text + "</html>", 15, "outdatedJavaOSX");
+        }
+        
+        // HTTPS not supported ?
+        if (!NetworkUtil.isHTTPSSupported())
+        {
+            // final String text1 = "Your version of java does not support HTTPS connection required by the future new web site.";
+            // final String text2 = "You need to upgrade java to 7u111 (Java 7) or 8u101 (Java 8) at least to be able to use online features in future.";
+            final String text1 = "Your version of java does not support HTTPS protocol which will be used soon by the new web site.";
+            final String text2 = "You need to upgrade your version of java to 7u111 (Java 7) or 8u101 (Java 8) at least to use online features (as search or plugin update) in future.";
+            // final String text2 = "You won't be able to use online features (as search or plugin update) in future until you update your version of java (Java
+            // 7u111 or Java
+            // 8u101 minimum).";
+
+            System.err.println("Warning: " + text1);
+            System.err.println(text2);
+
+            // TODO: change message when new web site is here
+            if (!Icy.getMainInterface().isHeadLess())
+                new ToolTipFrame("<html><b>WARNING:</b> " + text1 + "<br>" + text2 + "</html>", 0,
+                        "httpsNotSupportedWarning");
+            // new ToolTipFrame("<html><b>" + text1 + "<br>" + text2 + "</b></html>", 0, "httpsNotSupported");
         }
 
         // detect bad memory setting
@@ -746,7 +745,7 @@ public class Icy
                 // mark the application as exiting
                 exiting = true;
 
-                System.out.println("Exiting...");
+                System.out.print("Exiting...");
 
                 final ImageJ ij = Icy.getMainInterface().getImageJ();
 
@@ -900,6 +899,8 @@ public class Icy
                 // launch updater if needed
                 if (doUpdate || restart)
                     IcyUpdater.launchUpdater(doUpdate, restart);
+
+                System.out.println(" done");
 
                 // good exit
                 System.exit(0);
