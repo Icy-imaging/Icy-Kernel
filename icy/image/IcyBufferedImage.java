@@ -1095,7 +1095,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // cancel any pending loading tasks for this image
         imageDataLoader.cancelTasks(this);
         // image has been released, be sure to clear cache
-        ImageCache.remove(this);
+        if (ImageCache.isEnabled())
+            ImageCache.remove(this);
 
         // remove it from hashmap
         synchronized (images)
@@ -1144,7 +1145,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public boolean isDataInMemory()
     {
-        return ImageCache.isOnMemoryCache(this);
+        return (!ImageCache.isEnabled()) || ImageCache.isOnMemoryCache(this);
     }
 
     /**

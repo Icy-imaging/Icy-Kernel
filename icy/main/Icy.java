@@ -159,6 +159,21 @@ public class Icy
     static Thread terminer = null;
 
     /**
+     * Flag indicating fast headless mode for Icy
+     */
+    private static boolean fastHeadless;
+
+    /**
+     * Flag indicating cache module loading
+     */
+    private static boolean loadCache;
+
+    /**
+     * Flag indicating network module loading
+     */
+    private static boolean loadNetwork;
+
+    /**
      * @param args
      *        Received from the command line.
      */
@@ -243,7 +258,7 @@ public class Icy
                     // force image cache initialization so GUI won't wait after it (need preferences init)
                     ImageCache.isEnabled();
                 }
-            }, "Initializer 1").start();
+            }, "Initializer: Cache").start();
             new Thread(new Runnable()
             {
                 @Override
@@ -252,7 +267,7 @@ public class Icy
                     // initialize network (need preferences init)
                     NetworkUtil.init();
                 }
-            }, "Initializer 2").start();
+            }, "Initializer: Network").start();
             new Thread(new Runnable()
             {
                 @Override
@@ -262,7 +277,7 @@ public class Icy
                     PluginLoader.reloadAsynch();
                     WorkspaceLoader.reloadAsynch();
                 }
-            }, "Initializer 3").start();
+            }, "Initializer: Plugin and WS").start();
 
             try
             {
@@ -347,7 +362,7 @@ public class Icy
             System.out.println("Image cache initialized (reserved memory = " + ApplicationPreferences.getCacheMemoryMB()
                     + " MB, disk cache location = " + ApplicationPreferences.getCachePath() + ")");
         }
-        else
+        else if (loadCache)
         {
             System.err.println("Couldn't initialize image cache (cache is disabled)");
             // disable virtual mode button from inspector
@@ -453,7 +468,7 @@ public class Icy
             else
                 startupPlugin = PluginLauncher.start(plugin);
         }
-        
+
         // headless mode ? we can exit now...
         if (headless)
             exit(false);
@@ -468,6 +483,9 @@ public class Icy
         startupPlugin = null;
         boolean execute = false;
         boolean headless = false;
+        loadCache = true;
+        loadNetwork = true;
+        fastHeadless = false;
 
         // save the base arguments
         Icy.args = args;
@@ -485,6 +503,15 @@ public class Icy
             // headless mode
             else if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
                 headless = true;
+            else if (arg.equalsIgnoreCase("--fastheadless") || arg.equalsIgnoreCase("-fhl"))
+            {
+                headless = true;
+                fastHeadless = true;
+            }
+            else if (arg.equalsIgnoreCase("--nocache") || arg.equalsIgnoreCase("-nc"))
+                loadCache = false;
+            else if (arg.equalsIgnoreCase("--nonetwork") || arg.equalsIgnoreCase("-nnt"))
+                loadNetwork = false;
             // disable splash-screen
             else if (arg.equalsIgnoreCase("--nosplash") || arg.equalsIgnoreCase("-ns"))
                 noSplash = true;
@@ -528,7 +555,7 @@ public class Icy
             if (!Icy.getMainInterface().isHeadLess())
                 new ToolTipFrame("<html>" + text + "</html>", 15, "outdatedJavaOSX");
         }
-        
+
         // HTTPS not supported ?
         if (!NetworkUtil.isHTTPSSupported())
         {
@@ -885,7 +912,8 @@ public class Icy
                 // save audit data
                 Audit.save();
                 // cache cleanup
-                ImageCache.end();
+                if (ImageCache.isEnabled())
+                    ImageCache.end();
 
                 // clean up native library files
                 // unPrepareNativeLibraries();
@@ -946,6 +974,14 @@ public class Icy
     public static boolean isHeadLess()
     {
         return getMainInterface().isHeadLess();
+    }
+
+    /**
+     * @return {@code true} if the cache module has been loaded. {@code false} otherwise.
+     */
+    public static boolean isCacheEnabled()
+    {
+        return loadCache;
     }
 
     /**
