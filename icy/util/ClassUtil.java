@@ -18,12 +18,6 @@
  */
 package icy.util;
 
-import icy.file.FileUtil;
-import icy.network.URLUtil;
-import icy.plugin.PluginLoader;
-import icy.system.IcyExceptionHandler;
-import icy.system.SystemUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,6 +36,11 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import icy.file.FileUtil;
+import icy.plugin.PluginLoader;
+import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 
 /**
  * @author stephane
@@ -257,16 +256,18 @@ public class ClassUtil
         {
             String result;
             int ind;
-            
-            // extract 
+
+            // extract
             result = url.getPath();
-            
+
             ind = result.indexOf(':');
-            if (ind != -1) result= result.substring(ind+1);
-            
+            if (ind != -1)
+                result = result.substring(ind + 1);
+
             ind = result.indexOf('!');
-            if (ind != -1) result = result.substring(0, ind);
-            
+            if (ind != -1)
+                result = result.substring(0, ind);
+
             return new File(result).getAbsolutePath();
         }
 

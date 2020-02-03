@@ -222,7 +222,7 @@ public class ImageCache
 
     private static void checkCacheLoaded() throws RuntimeException
     {
-        if (isEnabled())
+        if (!isEnabled())
         {
             throw new RuntimeException("Cache module is not been enabled. Check launch parameters!");
         }

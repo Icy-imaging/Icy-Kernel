@@ -159,11 +159,6 @@ public class Icy
     static Thread terminer = null;
 
     /**
-     * Flag indicating fast headless mode for Icy
-     */
-    private static boolean fastHeadless;
-
-    /**
      * Flag indicating cache module loading
      */
     private static boolean loadCache;
@@ -382,7 +377,8 @@ public class Icy
         // initialize exception handler
         IcyExceptionHandler.init();
         // initialize action manager
-        ActionManager.init();
+        if (!headless)
+            ActionManager.init();
         // prepare native library files (need preferences init)
         nativeLibrariesInit();
 
@@ -417,7 +413,7 @@ public class Icy
         final long halfDayInterval = 1000 * 60 * 60 * 12;
 
         // check only once per 12 hours slice
-        if (currentTime > (GeneralPreferences.getLastUpdateCheckTime() + halfDayInterval))
+        if (loadNetwork && currentTime > (GeneralPreferences.getLastUpdateCheckTime() + halfDayInterval))
         {
             // check for core update
             if (GeneralPreferences.getAutomaticUpdate())
@@ -485,7 +481,6 @@ public class Icy
         boolean headless = false;
         loadCache = true;
         loadNetwork = true;
-        fastHeadless = false;
 
         // save the base arguments
         Icy.args = args;
@@ -503,11 +498,6 @@ public class Icy
             // headless mode
             else if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
                 headless = true;
-            else if (arg.equalsIgnoreCase("--fastheadless") || arg.equalsIgnoreCase("-fhl"))
-            {
-                headless = true;
-                fastHeadless = true;
-            }
             else if (arg.equalsIgnoreCase("--nocache") || arg.equalsIgnoreCase("-nc"))
                 loadCache = false;
             else if (arg.equalsIgnoreCase("--nonetwork") || arg.equalsIgnoreCase("-nnt"))
@@ -982,6 +972,14 @@ public class Icy
     public static boolean isCacheEnabled()
     {
         return loadCache;
+    }
+
+    /**
+     * @return {@code true} if the network module has been loaded and set up. {@code false} otherwise.
+     */
+    public static boolean isNetworkEnabled()
+    {
+        return loadNetwork;
     }
 
     /**
@@ -1465,6 +1463,7 @@ public class Icy
         }
     }
 
+    @SuppressWarnings("unused")
     private static void loadItkLibrary(String osDir)
     {
         final String itkLibDir = osDir + FileUtil.separator + "itk";

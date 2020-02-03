@@ -62,6 +62,7 @@ import icy.common.Version;
 import icy.common.listener.ProgressListener;
 import icy.common.listener.weak.WeakListener;
 import icy.file.FileUtil;
+import icy.main.Icy;
 import icy.preferences.NetworkPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
@@ -247,6 +248,11 @@ public class NetworkUtil
      * Internet monitor
      */
     public static final InternetMonitorThread internetMonitor = new InternetMonitorThread();
+
+    /**
+     * Network module enabled flag. Set at Icy start up
+     */
+    public static final boolean networkEnabled = Icy.isNetworkEnabled();
     /**
      * Internet access up flag
      */
@@ -306,8 +312,11 @@ public class NetworkUtil
         // }
 
         // start monitor thread
-        internetMonitor.setPriority(Thread.MIN_PRIORITY);
-        internetMonitor.start();
+        if (networkEnabled || !Icy.getMainInterface().isHeadLess())
+        {
+            internetMonitor.setPriority(Thread.MIN_PRIORITY);
+            internetMonitor.start();
+        }
     }
 
     private static void installTruster()
@@ -399,141 +408,147 @@ public class NetworkUtil
      */
     public static void updateNetworkSetting()
     {
-        HttpURLConnection.setFollowRedirects(false);
-
-        final int proxySetting = NetworkPreferences.getProxySetting();
-
-        if (proxySetting == NO_PROXY)
+        if (networkEnabled)
         {
-            // no proxy
-            disableProxySetting();
-            disableHTTPProxySetting();
-            disableHTTPSProxySetting();
-            disableFTPProxySetting();
-            disableSOCKSProxySetting();
-            disableSystemProxy();
-        }
-        else if (proxySetting == SYSTEM_PROXY)
-        {
-            // system proxy
-            disableProxySetting();
-            disableHTTPProxySetting();
-            disableHTTPSProxySetting();
-            disableFTPProxySetting();
-            disableSOCKSProxySetting();
-            enableSystemProxy();
-        }
-        else
-        {
-            final String user = NetworkPreferences.getProxyUser();
-            final String pass = NetworkPreferences.getProxyPassword();
-            final boolean auth = NetworkPreferences.getProxyAuthentication() && (!StringUtil.isEmpty(user))
-                    && (!StringUtil.isEmpty(pass));
-            String host;
+            HttpURLConnection.setFollowRedirects(false);
 
-            // authentication enabled ?
-            if (auth)
+            final int proxySetting = NetworkPreferences.getProxySetting();
+
+            if (proxySetting == NO_PROXY)
             {
-                Authenticator.setDefault(new Authenticator()
-                {
-                    @Override
-                    public PasswordAuthentication getPasswordAuthentication()
-                    {
-                        return new PasswordAuthentication(user, pass.toCharArray());
-                    }
-                });
-            }
-
-            // manual proxy
-            disableSystemProxy();
-
-            // HTTP proxy (use it as general proxy)
-            host = NetworkPreferences.getProxyHTTPHost();
-            if (!StringUtil.isEmpty(host))
-            {
-                final int port = NetworkPreferences.getProxyHTTPPort();
-
-                setProxyHost(host);
-                setProxyPort(port);
-                setHTTPProxyHost(host);
-                setHTTPProxyPort(port);
-                if (auth)
-                {
-                    setHTTPProxyUser(user);
-                    setHTTPProxyPassword(pass);
-                }
-                enableProxySetting();
-                enableHTTPProxySetting();
-            }
-            else
-            {
+                // no proxy
                 disableProxySetting();
                 disableHTTPProxySetting();
-            }
-
-            // HTTPS proxy
-            host = NetworkPreferences.getProxyHTTPSHost();
-            if (!StringUtil.isEmpty(host))
-            {
-                setHTTPSProxyHost(host);
-                setHTTPSProxyPort(NetworkPreferences.getProxyHTTPSPort());
-                if (auth)
-                {
-                    setHTTPSProxyUser(user);
-                    setHTTPSProxyPassword(pass);
-                }
-                enableHTTPSProxySetting();
-            }
-            else
                 disableHTTPSProxySetting();
-
-            // FTP proxy
-            host = NetworkPreferences.getProxyFTPHost();
-            if (!StringUtil.isEmpty(host))
-            {
-                setFTPProxyHost(host);
-                setFTPProxyPort(NetworkPreferences.getProxyFTPPort());
-                if (auth)
-                {
-                    setFTPProxyUser(user);
-                    setFTPProxyPassword(pass);
-                }
-                enableFTPProxySetting();
-            }
-            else
                 disableFTPProxySetting();
-
-            // SOCKS proxy
-            host = NetworkPreferences.getProxySOCKSHost();
-            if (!StringUtil.isEmpty(host))
+                disableSOCKSProxySetting();
+                disableSystemProxy();
+            }
+            else if (proxySetting == SYSTEM_PROXY)
             {
-                setSOCKSProxyHost(host);
-                setSOCKSProxyPort(NetworkPreferences.getProxySOCKSPort());
-                if (auth)
-                {
-                    setSOCKSProxyUser(user);
-                    setSOCKSProxyPassword(pass);
-                }
-                enableSOCKSProxySetting();
+                // system proxy
+                disableProxySetting();
+                disableHTTPProxySetting();
+                disableHTTPSProxySetting();
+                disableFTPProxySetting();
+                disableSOCKSProxySetting();
+                enableSystemProxy();
             }
             else
-                disableSOCKSProxySetting();
+            {
+                final String user = NetworkPreferences.getProxyUser();
+                final String pass = NetworkPreferences.getProxyPassword();
+                final boolean auth = NetworkPreferences.getProxyAuthentication() && (!StringUtil.isEmpty(user))
+                        && (!StringUtil.isEmpty(pass));
+                String host;
+
+                // authentication enabled ?
+                if (auth)
+                {
+                    Authenticator.setDefault(new Authenticator()
+                    {
+                        @Override
+                        public PasswordAuthentication getPasswordAuthentication()
+                        {
+                            return new PasswordAuthentication(user, pass.toCharArray());
+                        }
+                    });
+                }
+
+                // manual proxy
+                disableSystemProxy();
+
+                // HTTP proxy (use it as general proxy)
+                host = NetworkPreferences.getProxyHTTPHost();
+                if (!StringUtil.isEmpty(host))
+                {
+                    final int port = NetworkPreferences.getProxyHTTPPort();
+
+                    setProxyHost(host);
+                    setProxyPort(port);
+                    setHTTPProxyHost(host);
+                    setHTTPProxyPort(port);
+                    if (auth)
+                    {
+                        setHTTPProxyUser(user);
+                        setHTTPProxyPassword(pass);
+                    }
+                    enableProxySetting();
+                    enableHTTPProxySetting();
+                }
+                else
+                {
+                    disableProxySetting();
+                    disableHTTPProxySetting();
+                }
+
+                // HTTPS proxy
+                host = NetworkPreferences.getProxyHTTPSHost();
+                if (!StringUtil.isEmpty(host))
+                {
+                    setHTTPSProxyHost(host);
+                    setHTTPSProxyPort(NetworkPreferences.getProxyHTTPSPort());
+                    if (auth)
+                    {
+                        setHTTPSProxyUser(user);
+                        setHTTPSProxyPassword(pass);
+                    }
+                    enableHTTPSProxySetting();
+                }
+                else
+                    disableHTTPSProxySetting();
+
+                // FTP proxy
+                host = NetworkPreferences.getProxyFTPHost();
+                if (!StringUtil.isEmpty(host))
+                {
+                    setFTPProxyHost(host);
+                    setFTPProxyPort(NetworkPreferences.getProxyFTPPort());
+                    if (auth)
+                    {
+                        setFTPProxyUser(user);
+                        setFTPProxyPassword(pass);
+                    }
+                    enableFTPProxySetting();
+                }
+                else
+                    disableFTPProxySetting();
+
+                // SOCKS proxy
+                host = NetworkPreferences.getProxySOCKSHost();
+                if (!StringUtil.isEmpty(host))
+                {
+                    setSOCKSProxyHost(host);
+                    setSOCKSProxyPort(NetworkPreferences.getProxySOCKSPort());
+                    if (auth)
+                    {
+                        setSOCKSProxyUser(user);
+                        setSOCKSProxyPassword(pass);
+                    }
+                    enableSOCKSProxySetting();
+                }
+                else
+                    disableSOCKSProxySetting();
+            }
         }
     }
 
     static void setInternetAccess(boolean value)
     {
-        if (internetAccess != value)
+        if (networkEnabled)
         {
-            internetAccess = value;
-
-            fireInternetConnectionEvent(value);
-
-            // local stuff to do on connection recovery
-            if (value)
+            if (internetAccess != value)
             {
-                // process id audit
-                Audit.onConnect();
+                internetAccess = value;
+
+                fireInternetConnectionEvent(value);
+
+                // local stuff to do on connection recovery
+                if (value)
+                {
+                    // process id audit
+                    Audit.onConnect();
+                }
             }
         }
     }
