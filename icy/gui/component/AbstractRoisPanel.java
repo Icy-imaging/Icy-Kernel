@@ -118,7 +118,6 @@ import plugins.kernel.roi.descriptor.measure.ROIPerimeterDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROISurfaceAreaDescriptor;
 import plugins.kernel.roi.descriptor.measure.ROIVolumeDescriptor;
 import plugins.kernel.roi.descriptor.property.ROIColorDescriptor;
-import plugins.kernel.roi.descriptor.property.ROIGroupIdDescriptor;
 import plugins.kernel.roi.descriptor.property.ROIIconDescriptor;
 import plugins.kernel.roi.descriptor.property.ROINameDescriptor;
 import plugins.kernel.roi.descriptor.property.ROIOpacityDescriptor;
@@ -2334,9 +2333,9 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
             if (StringUtil.equals(id, ROIColorDescriptor.ID))
                 return order;
             order++;
-            if (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
-                return order;
-            order++;
+            // if (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+            // return order;
+            // order++;
             if (StringUtil.equals(id, ROINameDescriptor.ID))
                 return order;
 
@@ -2435,8 +2434,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                 return 22;
             if (StringUtil.equals(id, ROIColorDescriptor.ID))
                 return 18;
-            if (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
-                return 18;
+            // if (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+            // return 18;
             if (StringUtil.equals(id, ROINameDescriptor.ID))
                 return 60;
 
@@ -2465,8 +2464,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
                 return 22;
             if (StringUtil.equals(id, ROIColorDescriptor.ID))
                 return 18;
-            if (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
-                return 18;
+            // if (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+            // return 18;
 
             return Integer.MAX_VALUE;
         }
@@ -2497,7 +2496,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
             final String id = descriptor.getId();
 
             return (StringUtil.equals(id, ROIIconDescriptor.ID)) || (StringUtil.equals(id, ROIColorDescriptor.ID))
-                    || (StringUtil.equals(id, ROINameDescriptor.ID)) || (StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+                    || (StringUtil.equals(id,
+                            ROINameDescriptor.ID)) /* || (StringUtil.equals(id, ROIGroupIdDescriptor.ID)) */
                     || (StringUtil.equals(id, ROIPositionXDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionYDescriptor.ID))
                     || (StringUtil.equals(id, ROIPositionZDescriptor.ID))
@@ -2629,8 +2629,8 @@ public abstract class AbstractRoisPanel extends ExternalizablePanel
             final String id = descriptor.getId();
 
             // we don't want to display name for these descriptors
-            if (StringUtil.equals(id, ROIIconDescriptor.ID) || StringUtil.equals(id, ROIColorDescriptor.ID)
-                    || StringUtil.equals(id, ROIGroupIdDescriptor.ID))
+            if (StringUtil.equals(id, ROIIconDescriptor.ID) || StringUtil.equals(id, ROIColorDescriptor.ID))
+                // || StringUtil.equals(id, ROIGroupIdDescriptor.ID))
                 showName = false;
             else
                 showName = true;
