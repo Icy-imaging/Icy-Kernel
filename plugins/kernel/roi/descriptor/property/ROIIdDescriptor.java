@@ -34,7 +34,7 @@ public class ROIIdDescriptor extends ROIDescriptor
     public boolean needRecompute(ROIEvent change)
     {
         return (change.getType() == ROIEventType.PROPERTY_CHANGED)
-                && (StringUtil.equals(change.getPropertyName(), ROI.PROPERTY_GROUPID));
+                && (StringUtil.equals(change.getPropertyName(), ROI.PROPERTY_ID));
     }
 
     @Override

@@ -2756,7 +2756,7 @@ public class ROIUtil
         destination.setReadOnly(source.isReadOnly());
         destination.setSelected(source.isSelected());
         destination.setShowName(source.getShowName());
-        destination.setGroupId(source.getGroupId());
+//        destination.setGroupId(source.getGroupId());
 
         // copy extended properties
         for (Entry<String, String> propertyEntry : source.getProperties().entrySet())

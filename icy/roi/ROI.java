@@ -126,7 +126,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_CLASSNAME = "classname";
     public static final String ID_ID = "id";
     public static final String ID_NAME = "name";
-    public static final String ID_GROUPID = "groupid";
+//    public static final String ID_GROUPID = "groupid";
     public static final String ID_COLOR = "color";
     public static final String ID_STROKE = "stroke";
     public static final String ID_OPACITY = "opacity";
@@ -156,7 +156,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     public static final String PROPERTY_NAME = ID_NAME;
     public static final String PROPERTY_ID = ID_ID;
-    public static final String PROPERTY_GROUPID = ID_GROUPID;
+//    public static final String PROPERTY_GROUPID = ID_GROUPID;
     public static final String PROPERTY_ICON = "icon";
     public static final String PROPERTY_CREATING = "creating";
     public static final String PROPERTY_READONLY = ID_READONLY;
@@ -1318,7 +1318,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     protected int id;
     protected String name;
-    protected ROIGroupId groupid;
+//    protected ROIGroupId groupid;
     protected boolean creating;
     protected boolean focused;
     protected boolean selected;
@@ -1355,7 +1355,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         id = generateId();
         painter = createPainter();
         name = "";
-        groupid = null;
+//        groupid = null;
         readOnly = false;
         creating = false;
         focused = false;
@@ -1644,26 +1644,26 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
     }
 
-    /**
-     * @return the group id
-     */
-    public ROIGroupId getGroupId()
-    {
-        return groupid;
-    }
-
-    /**
-     * @param value
-     *        the group id to set
-     */
-    public void setGroupId(ROIGroupId value)
-    {
-        if (groupid != value)
-        {
-            groupid = value;
-            propertyChanged(PROPERTY_GROUPID);
-        }
-    }
+//    /**
+//     * @return the group id
+//     */
+//    public ROIGroupId getGroupId()
+//    {
+//        return groupid;
+//    }
+//
+//    /**
+//     * @param value
+//     *        the group id to set
+//     */
+//    public void setGroupId(ROIGroupId value)
+//    {
+//        if (groupid != value)
+//        {
+//            groupid = value;
+//            propertyChanged(PROPERTY_GROUPID);
+//        }
+//    }
 
     /**
      * @return the default name for this ROI class
@@ -3217,7 +3217,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 }
             }
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
-            setGroupId(ROIGroupId.values()[XMLUtil.getElementIntValue(node, ID_GROUPID, 0)]);
+//            setGroupId(ROIGroupId.values()[XMLUtil.getElementIntValue(node, ID_GROUPID, 0)]);
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
 
@@ -3258,7 +3258,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
         XMLUtil.setElementIntValue(node, ID_ID, id);
         XMLUtil.setElementValue(node, ID_NAME, getName());
-        XMLUtil.setElementIntValue(node, ID_GROUPID, getGroupId().ordinal());
+//        XMLUtil.setElementIntValue(node, ID_GROUPID, getGroupId().ordinal());
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
         XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
 
