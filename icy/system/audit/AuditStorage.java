@@ -127,12 +127,19 @@ public class AuditStorage implements XMLPersistent
 
     public void pluginLaunched(Plugin plugin)
     {
-        final PluginDescriptor descriptor;
+        PluginDescriptor descriptor = null;
 
-        if (plugin.isBundled())
-            descriptor = PluginLoader.getPlugin(plugin.getOwnerClassName());
-        else
-            descriptor = plugin.getDescriptor();
+        try
+        {
+            if (plugin.isBundled())
+                descriptor = PluginLoader.getPlugin(plugin.getOwnerClassName());
+            else
+                descriptor = plugin.getDescriptor();
+        }
+        catch (Throwable t)
+        {
+            // ignore possible ClassNotFound error here...
+        }
 
         // ignore if no descriptor
         if (descriptor == null)
@@ -153,12 +160,19 @@ public class AuditStorage implements XMLPersistent
 
     public void pluginInstanced(Plugin plugin)
     {
-        final PluginDescriptor descriptor;
+        PluginDescriptor descriptor = null;
 
-        if (plugin.isBundled())
-            descriptor = PluginLoader.getPlugin(plugin.getOwnerClassName());
-        else
-            descriptor = plugin.getDescriptor();
+        try
+        {
+            if (plugin.isBundled())
+                descriptor = PluginLoader.getPlugin(plugin.getOwnerClassName());
+            else
+                descriptor = plugin.getDescriptor();
+        }
+        catch (Throwable t)
+        {
+            // ignore possible ClassNotFound error here...
+        }
 
         // ignore if no descriptor
         if (descriptor == null)
